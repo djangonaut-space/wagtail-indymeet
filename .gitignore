@@ -1,0 +1,28 @@
+.idea/
+.temp_cache/
+db.sqlite3
+node_modules/
+venv/
+build/
+__pycache__
+*.pyc
+*.db
+mediafiles/*
+media/*
+.env
+
+# dependencies
+node_modules
+
+# production
+build
+
+# misc
+.DS_Store
+
+npm-debug.log
+yarn-error.log
+yarn.lock
+.yarnclean
+.vscode
+.idea
