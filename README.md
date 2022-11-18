@@ -69,11 +69,11 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-We want to run a light weight virtual meetup/video series. 
+We want to run a light weight virtual meetup/video series.
 
 Here's why:
 * Sometimes you want to connect with a community in real time.
-* The culture of Twitch first streaming alienates as many audiences as it invites. 
+* The culture of Twitch first streaming alienates as many audiences as it invites.
 * Having a list of events easily shown as well as resources about speakers in the series.
 
 We thought contributing.today did it well, but it's build on ASP.NET so we're building it in Python!
@@ -101,16 +101,15 @@ This section should list any major frameworks/libraries used to bootstrap your p
 ### Prerequisites
 
 This is an example of how to list things you need to use the software and how to install them.
-* Python
+* Python version 3.10.5
 
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
-   git clone https://github.com/dawnwages/wagtail-.git
+   git clone https://github.com/dawnwages/wagtail-indymeet.git
    ```
-3. create your virtual environment
+2. create your virtual environment
    ```sh
    python -m venv venv
    ```
@@ -122,14 +121,18 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    > venv\Scripts\activate
    ```
-4. Run migrations and create superuser
+5. install requirements:
+   ```
+   pip install -r requirements.txt
+   ```
+6. Run migrations and create superuser
    ```python
    $ python manage.py migrate
    ```
    ```python
    $ python manage.py createsuperuser
    ```
-5. Run locally
+7. Run locally
     ```python
     $ python manage.py runserver
     ```

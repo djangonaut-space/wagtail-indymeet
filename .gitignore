@@ -10,6 +10,7 @@ __pycache__
 mediafiles/*
 media/*
 .env
+.python-version
 
 # dependencies
 node_modules
