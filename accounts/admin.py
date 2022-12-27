@@ -4,10 +4,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.http import HttpResponse
 
-from accounts.models import Link
+from accounts.models import Link, CustomUser
 
-# from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import CustomUser
 
 class ExportCsvMixin:
     def export_as_csv(self, request, queryset):
