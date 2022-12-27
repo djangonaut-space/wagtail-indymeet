@@ -12,7 +12,7 @@ class ExportCsvMixin:
         """
         Export all fields in a model via django admin
         """
-        ignore_fields = ['password', 'token']
+        ignore_fields = ['password', 'token', 'bio_image']
         meta = self.model._meta
         field_names = [field.name for field in meta.fields if field.name not in ignore_fields]
         response = HttpResponse(content_type='text/csv')

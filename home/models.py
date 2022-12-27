@@ -10,6 +10,7 @@ from wagtail.core.models import  Orderable
 from wagtail.snippets.models import register_snippet
 
 from home.forms import SignUpPage
+from accounts.models import Link
 
 def sign_up_forms(context):
     return{
@@ -34,14 +35,14 @@ class Speaker(ClusterableModel):
         FieldPanel('name'),
         FieldPanel('image'),
         FieldPanel('bio'),
-        InlinePanel('links', label='Link items'),
+        InlinePanel('speaker_links', label='Link items'),
     ]
 
     def __str__(self):
         return self.name
 
-class Link(Orderable):
-    speaker = ParentalKey("Speaker", related_name="links", on_delete=models.CASCADE)
+class SpeakerLink(Orderable):
+    speaker = ParentalKey("Speaker", related_name="speaker_links", on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField( max_length=255)
     url = models.URLField(max_length=255)
 
