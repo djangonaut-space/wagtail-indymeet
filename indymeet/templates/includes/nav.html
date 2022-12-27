@@ -10,26 +10,27 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">Home</a>
+            <a class="nav-link active" aria-current="page" href="/">Home</a>
             </li>
             <li class="nav-item">
-            <a href="{% wagtail_documentation_path %}/releases/{% wagtail_release_notes_path %}">
-                {% trans "View the release notes" %}
+            <a class="nav-link" href="https://github.com/dawnwages/wagtail-indymeet/wiki">
+                {% trans "Program Wiki" %}
             </a>
             </li>
             <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Dropdown
+                {% trans "How to Join" %}
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li><a class="dropdown-item" href="#">Action</a></li>
-                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><a class="dropdown-item" href="#">Become a Contributor</a></li>
+                <li><a class="dropdown-item" href="#">Become a Subject Matter Expert Coach</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                <li><a class="dropdown-item" href="#">Interested in Speaking to the Cadre?</a></li>
+                <li><a class="dropdown-item" href="#">Looking for Python and Django Talent?</a></li>
             </ul>
             </li>
             <li class="nav-item">
-            <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+            <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Join Spring 2023 Session</a>
             </li>
         </ul>
         <form class="d-flex">
