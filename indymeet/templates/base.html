@@ -1,5 +1,10 @@
-{% load static wagtailcore_tags wagtailuserbar %}
+{% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
 
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -25,20 +30,18 @@
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
 
         {% block extra_css %}
-        {# Override this in templates to add extra stylesheets #}
-        {% endblock %}
+        <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+        {% endblock extra_css %}
     </head>
-
     <body class="{% block body_class %}{% endblock %}">
+        {% include 'includes/nav.html' %}
+        <script src="https://unpkg.com/htmx.org@1.8.4"></script>
         {% wagtailuserbar %}
-
-        {% block content %}{% endblock %}
-
+        {% block content %}
+            {# other page stuff goes here #}
+        {% endblock %}
         {# Global javascript #}
         <script type="text/javascript" src="{% static 'js/indymeet.js' %}"></script>
-
-        {% block extra_js %}
-        {# Override this in templates to add extra javascript #}
-        {% endblock %}
+        {% include 'includes/footer.html' %}
     </body>
 </html>
