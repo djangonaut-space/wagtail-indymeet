@@ -176,5 +176,7 @@ WAGTAIL_USER_CUSTOM_FIELDS = [
     'member_role',
     'member_status',
     'pronouns',
-    'receiving_newsletter'
+    'receiving_newsletter',
+    'bio',
+    'bio_image'
     ]
