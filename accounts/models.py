@@ -38,12 +38,6 @@ class CustomUser(AbstractUser):
     bio = models.TextField(verbose_name='bio', blank=True, null=True)
     bio_image = models.ImageField(blank=True, null=True)
 
-    panels = [
-        FieldPanel('image'),
-        FieldPanel('bio'),
-        InlinePanel('links', label='Link items'),
-    ]
-
     def __str__(self):
         return self.username
 
@@ -52,11 +46,6 @@ class Link(Orderable):
     member = models.ForeignKey("CustomUser", related_name="links", on_delete=models.CASCADE)
     name = models.CharField( max_length=255)
     url = models.URLField(max_length=255)
-
-    panels = [
-        FieldPanel('name'),
-        FieldPanel('url')
-    ]
 
 class MemberList(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True)
