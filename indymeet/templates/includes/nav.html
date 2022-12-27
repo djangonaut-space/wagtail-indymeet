@@ -33,6 +33,26 @@
             <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Join Spring 2023 Session</a>
             </li>
         </ul>
+        {% if user.is_authenticated and user.is_active or request.is_preview %}
+        <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img class="event-team-member-icon" src="https://images.unsplash.com/photo-1608190003443-86b2636f2fe3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80">
+                    <div>{{ user }}</div>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="#">Sign out</a></li>
+                    <li><a class="dropdown-item" href="#"># Registered Events</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    {# If user is participating in an active session, else "Sign up for session" #}
+                    <li><a class="dropdown-item" href="#">You're participating in [SESSION NAME] </a></li>
+                    <li><a class="dropdown-item" href="#">Next Session begins [DATE] <a href="#">register by [DATE] to sign up</a></a></li>
+                </ul>
+            </li>
+        </ul>
+        {% else %}
+        <button class="btn btn-outline" type="submit">Sign In</button>
+        {% endif %}
         <form class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
             <button class="btn btn-outline-success" type="submit">Search</button>

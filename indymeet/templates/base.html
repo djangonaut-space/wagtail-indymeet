@@ -35,6 +35,9 @@
     </head>
     <body class="{% block body_class %}{% endblock %}">
         {% include 'includes/nav.html' %}
+        {% if 'Home' not in page.title  %}
+            {% include 'includes/breadcrumbs.html' %}
+        {% endif %}
         <script src="https://unpkg.com/htmx.org@1.8.4"></script>
         {% wagtailuserbar %}
         {% block content %}
