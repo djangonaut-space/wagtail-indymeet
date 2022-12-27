@@ -8,10 +8,12 @@
 {% bootstrap_javascript %}
 
 {% block content %}
-<main class="main">
+<main class="main main-center">
     <a href="/">
         <img src="{% static 'img/temp_logo.png' %}" />    
     </a>
 </main>
 {% include 'home/includes/welcome_page.html' %}
+{% include 'home/includes/events_upcoming.html' %}
+{% include 'home/includes/events_past.html' %}
 {% endblock content %}

@@ -74,6 +74,9 @@ svg:not(:root) {
 .main {
     padding: 40px 0;
     margin: 0 auto;
+ }
+
+.main-center {
     text-align: center;
 }
 
@@ -148,7 +151,20 @@ svg:not(:root) {
     font-size: 15px;
     font-weight: 300;
 }
+/* ---------------------------------------------------------------------
+ EVENTS - HOME PAGE
+----------------------------------------------------------------------*/
+.event-team-member-icon {
+    height: 2.5rem;
+    width: 2.5rem;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+}
 
+/* ---------------------------------------------------------------------
+ MEDIA QUERIES
+----------------------------------------------------------------------*/
 @media (max-width: 996px) {
     body {
         max-width: 780px;
