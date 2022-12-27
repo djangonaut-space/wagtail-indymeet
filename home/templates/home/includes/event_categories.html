@@ -1,0 +1,16 @@
+{% load static i18n wagtailcore_tags %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="row">
+    <div class="event-categories">
+        {# for cat in categories #}
+        <span class="badge bg-secondary">New</span>
+        <span class="badge bg-secondary">Intro</span>
+        <span class="badge bg-secondary">RSVP required</span>
+        <span class="badge bg-secondary">DSF</span>
+        <span class="badge bg-secondary">PSF</span>
+    </div>
+</div>
+{% endblock content %}

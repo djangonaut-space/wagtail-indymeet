@@ -27,6 +27,9 @@ INSTALLED_APPS = [
     "accounts",
     "home",
     "search",
+
+    "django_bootstrap5",
+
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.embeds",

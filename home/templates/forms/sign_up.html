@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block content %}
+<main class="main main-center">
+{% if user.is_authenticated and user.is_active or request.is_preview %}
+    <div>Thanks for signing up!</div>
+{% else %}
+    {% if form %}
+        <form action="/sign-up" method="POST">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <input type="submit">
+            {% bootstrap_form_errors form layout='inline' %}
+        </form>
+    {% else %}
+        <div>You can fill in the from only one time.</div>
+    {% endif %}
+{% endif %}
+</main>
+{% endblock %}

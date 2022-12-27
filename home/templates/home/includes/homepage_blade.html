@@ -1,0 +1,18 @@
+{% load static i18n wagtailcore_tags %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/events.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<main class="main" style="background-color: {{color}}">
+<div class="container-lg">
+        <h3>{{ title }}</h3>
+        <p>
+            {{ content }}
+        </p>
+    </div>
+</main>
+{% endblock content %}

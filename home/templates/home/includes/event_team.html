@@ -1,0 +1,12 @@
+{% load static i18n wagtailcore_tags %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {# for member in event_team #}
+    {% include 'home/includes/event_team_member.html' %}
+    {% include 'home/includes/event_team_member.html' %}
+    {% include 'home/includes/event_team_member.html' %}
+</div>
+{% endblock content %}
