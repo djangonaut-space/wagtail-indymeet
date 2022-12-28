@@ -24,6 +24,7 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 # Application definition
 
 INSTALLED_APPS = [
+    "accounts",
     "home",
     "search",
 
@@ -167,3 +168,15 @@ WAGTAILSEARCH_BACKENDS = {
 # Base URL to use when referring to full URLs within the Wagtail admin backend -
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
 WAGTAILADMIN_BASE_URL = "http://example.com"
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
+WAGTAIL_USER_EDIT_FORM = 'accounts.forms.CustomUserEditForm'
+WAGTAIL_USER_CREATION_FORM = 'accounts.forms.CustomUserCreationForm'
+WAGTAIL_USER_CUSTOM_FIELDS = [
+    'member_role',
+    'member_status',
+    'pronouns',
+    'receiving_newsletter',
+    'bio',
+    'bio_image'
+    ]

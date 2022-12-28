@@ -1,0 +1,11 @@
+{% extends "wagtailusers/users/create.html" %}
+
+{% block extra_fields %}
+    <li>{% include "wagtailadmin/shared/field.html" with field=form.member_role %}</li>
+    <li>{% include "wagtailadmin/shared/field.html" with field=form.member_status %}</li>
+    <li>{% include "wagtailadmin/shared/field.html" with field=form.bio %}</li>
+    <li>{% include "wagtailadmin/shared/field.html" with field=form.bio_image %}</li>
+    <li>{% include "wagtailadmin/shared/field.html" with field=form.pronouns %}</li>
+    <li>{% include "wagtailadmin/shared/field.html" with field=form.receiving_newsletter %}</li>
+    <li>{% include "wagtailadmin/shared/field.html" with field=form.links %}</li>
+{% endblock extra_fields %}
