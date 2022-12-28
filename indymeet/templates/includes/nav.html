@@ -41,7 +41,7 @@
                     <div>{{ user }}</div>
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <li><a class="dropdown-item" href="#">Sign out</a></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}">Sign out</a></li>
                     <li><a class="dropdown-item" href="#"># Registered Events</a></li>
                     <li><hr class="dropdown-divider"></li>
                     {# If user is participating in an active session, else "Sign up for session" #}
@@ -51,7 +51,7 @@
             </li>
         </ul>
         {% else %}
-        <button class="btn btn-outline" type="submit">Sign In</button>
+        <a class="btn btn-outline" href="{% url 'login' %}" type="submit">Sign In</a>
         {% endif %}
         <form class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">

@@ -7,7 +7,7 @@ from wagtail.admin.edit_handlers import (
     InlinePanel, MultiFieldPanel,
 )
 from django.db.models.fields import EmailField, CharField
-from wagtail.core.fields import RichTextField 
+from wagtail.core.fields import RichTextField
 from wagtail.contrib.forms.models import AbstractForm, AbstractFormField
 from wagtail.snippets.models import register_snippet
 

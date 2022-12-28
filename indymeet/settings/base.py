@@ -170,8 +170,6 @@ WAGTAILSEARCH_BACKENDS = {
 WAGTAILADMIN_BASE_URL = "http://example.com"
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
-WAGTAIL_USER_EDIT_FORM = 'accounts.forms.CustomUserEditForm'
-WAGTAIL_USER_CREATION_FORM = 'accounts.forms.CustomUserCreationForm'
 WAGTAIL_USER_CUSTOM_FIELDS = [
     'member_role',
     'member_status',
@@ -180,3 +178,6 @@ WAGTAIL_USER_CUSTOM_FIELDS = [
     'bio',
     'bio_image'
     ]
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
