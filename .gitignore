@@ -27,3 +27,4 @@ yarn.lock
 .yarnclean
 .vscode
 .idea
+.env

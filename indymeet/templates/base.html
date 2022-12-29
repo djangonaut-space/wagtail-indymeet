@@ -27,9 +27,8 @@
         {% endif %}
 
         {# Global stylesheets #}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
-
         {% block extra_css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
         <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
         {% endblock extra_css %}
     </head>

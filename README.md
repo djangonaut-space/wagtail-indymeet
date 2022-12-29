@@ -122,9 +122,21 @@ This is an example of how to list things you need to use the software and how to
    > venv\Scripts\activate
    ```
 5. install requirements:
+   ```sh
+   $ pip install -r requirements/requirements-dev.txt
    ```
-   pip install -r requirements.txt
+6. Create a posgresql database **if you want to use quick and dirty SQLite db, set your `ENVIRONMENT` variable to `dev` (path not actively supported)**
+   ```sh
+   $ psql -u posgres
    ```
+   ```sh
+   postgres=# CREATE DATABASE local_djangonaut_space;
+   CREATE DATABASE
+   ```
+   ```sh
+   postgres=# exit
+   ```
+<!-- 7. Copy `.template.env` file, rename to `.env` and use variables for your local postgres database. -->
 6. Run migrations and create superuser
    ```python
    $ python manage.py migrate
