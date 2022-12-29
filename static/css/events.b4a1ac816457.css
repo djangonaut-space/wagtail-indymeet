@@ -1,10 +1,20 @@
 /* ---------------------------------------------------------------------
- NAVIGATION
+ EVENTS - HOME PAGE
 ----------------------------------------------------------------------*/
-.nav-icon {
+.event-team-member-icon {
     height: 2.5rem;
     width: 2.5rem;
     object-fit: cover;
     border-radius: 50%;
     margin-bottom: 1.5rem;
+}
+
+.event-team-member {
+    vertical-align: middle;
+}
+
+.event-card-img {
+    object-fit: cover; 
+    width: auto;
+    height: 150px;
 }
