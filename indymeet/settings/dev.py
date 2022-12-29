@@ -1,4 +1,15 @@
+# ----------------------------------------------
+# For developing locally with SQLite (depricated)
+# ----------------------------------------------
 from .base import *
+
+if os.getenv('ENVIRONMENT') == 'dev':
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        }
+    }
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
