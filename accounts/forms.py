@@ -1,13 +1,33 @@
 from django import forms
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
-from wagtail.users.forms import UserEditForm, UserCreationForm
+from .models import CustomUser
 
-from accounts.models import CustomUser
-
-
-class CustomUserEditForm(UserEditForm):
-    pass
 
 class CustomUserCreationForm(UserCreationForm):
-    pass
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "bio_image",
+            "receiving_newsletter"
+        )
+
+class CustomUserChangeForm(UserChangeForm):
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "bio_image",
+            "receiving_newsletter"
+        )

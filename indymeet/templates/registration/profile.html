@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<main class="main main-center container-lg">
+<div class="row">
+    <h1>ACCOUNT PAGE</h1>
+</div>
+<div class="row">
+    <div class="col-2">
+        <img class="profile-img" src="https://images.unsplash.com/photo-1608190003443-86b2636f2fe3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80">
+    </div>
+    <div class="col-8">
+        <div class="row">
+            <table>
+                <thead>Account Details</th>
+                <tbody>
+                    <tr>
+                        <td>Name:</td>
+                        <td>{{ user }}</td>
+                    </tr>
+                    <tr>
+                        <td>Session Participations</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Interested in Recruitment?</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-2">
+        <div class="row">
+            <table>
+                <thead>Socials</th>
+                <tbody>
+                    {# for link in link_list #}
+                    <tr>
+                        <td>GitHub:</td>
+                        <td>{{ user }}</td>
+                    </tr>
+                    <tr>
+                        <td>Link:</td>
+                        <td>example.com</td>
+                    </tr>
+                    <tr>
+                        <td>Twitter:</td>
+                        <td>example.com</td>
+                    </tr>
+                    <tr>
+                        <td>Mastodon:</td>
+                        <td>example.com</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="upcoming-events">
+    <h1>UPCOMING REGISTERED EVENTS</h1>
+    {% include 'home/includes/events_upcoming.html' %}
+</div> 
+</main>
+{% endblock content %}

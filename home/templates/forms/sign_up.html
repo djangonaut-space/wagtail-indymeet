@@ -13,7 +13,7 @@
     <div>Thanks for signing up!</div>
 {% else %}
     {% if form %}
-        <form action="/sign-up" method="POST">
+        <form action="{% url 'signup' %}" method="POST">
             {% csrf_token %}
             {% bootstrap_form form %}
             <input type="submit">

@@ -1,5 +1,5 @@
 {% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags %}
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-light {% if 'Home' in page.title %}stars{% endif %}">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">
         <img src="{% static 'img/rocket.png' %}" width="50rem"/>
@@ -37,11 +37,12 @@
         <ul class="navbar-nav">
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img class="event-team-member-icon" src="https://images.unsplash.com/photo-1608190003443-86b2636f2fe3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80">
+                    <img class="nav-icon" src="https://images.unsplash.com/photo-1608190003443-86b2636f2fe3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80">
                     <div>{{ user }}</div>
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <li><a class="dropdown-item" href="#">Sign out</a></li>
+                    <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}">Sign out</a></li>
                     <li><a class="dropdown-item" href="#"># Registered Events</a></li>
                     <li><hr class="dropdown-divider"></li>
                     {# If user is participating in an active session, else "Sign up for session" #}
@@ -51,7 +52,9 @@
             </li>
         </ul>
         {% else %}
-        <button class="btn btn-outline" type="submit">Sign In</button>
+        <a href="{% url 'login' %}">
+            <button class="btn btn-outline" type="submit">Sign In</button>
+        </a>
         {% endif %}
         <form class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">

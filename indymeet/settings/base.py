@@ -88,11 +88,16 @@ WSGI_APPLICATION = "indymeet.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+# Dummy local test database
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
-    }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',  # 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'local_djangonaut_space',                      # Or path to database file if using sqlite3.
+        'USER': 'postgres',                      # Not used with sqlite3.
+        'PASSWORD': 4,                  # Not used with sqlite3.
+        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': 5432,                      # Set to empty string for default. Not used with sqlite3.
+    },
 }
 
 
@@ -170,8 +175,6 @@ WAGTAILSEARCH_BACKENDS = {
 WAGTAILADMIN_BASE_URL = "http://example.com"
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
-WAGTAIL_USER_EDIT_FORM = 'accounts.forms.CustomUserEditForm'
-WAGTAIL_USER_CREATION_FORM = 'accounts.forms.CustomUserCreationForm'
 WAGTAIL_USER_CUSTOM_FIELDS = [
     'member_role',
     'member_status',
@@ -180,3 +183,6 @@ WAGTAIL_USER_CUSTOM_FIELDS = [
     'bio',
     'bio_image'
     ]
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"

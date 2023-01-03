@@ -5,7 +5,6 @@ from django.contrib import admin
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
-
 from home import views as home_views
 from search import views as search_views
 
@@ -15,6 +14,7 @@ urlpatterns = [
     path("documents/", include(wagtaildocs_urls)),
     path("search/", search_views.search, name="search"),
     # path("home/", home_views.test_page, name="test"),
+    path("accounts/", include("accounts.urls")),
 ]
 
 
