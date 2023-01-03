@@ -13,9 +13,6 @@ class CustomUserCreationForm(UserCreationForm):
             "email",
             "first_name",
             "last_name",
-            "bio",
-            "bio_image",
-            "receiving_newsletter"
         )
 
 class CustomUserChangeForm(UserChangeForm):
@@ -27,7 +24,4 @@ class CustomUserChangeForm(UserChangeForm):
             "email",
             "first_name",
             "last_name",
-            "bio",
-            "bio_image",
-            "receiving_newsletter"
         )

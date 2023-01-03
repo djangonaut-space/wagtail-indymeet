@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
 ]
 
 MIDDLEWARE = [
@@ -175,14 +176,6 @@ WAGTAILSEARCH_BACKENDS = {
 WAGTAILADMIN_BASE_URL = "http://example.com"
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
-WAGTAIL_USER_CUSTOM_FIELDS = [
-    'member_role',
-    'member_status',
-    'pronouns',
-    'receiving_newsletter',
-    'bio',
-    'bio_image'
-    ]
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"

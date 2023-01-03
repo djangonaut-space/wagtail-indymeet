@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.http import HttpResponse
 
-from accounts.models import Link, CustomUser
+from accounts.models import Link, CustomUser, UserProfile
 
 
 class ExportCsvMixin:
@@ -40,15 +40,12 @@ class LinksInline(admin.StackedInline):
 class CustomUserAdmin(ExportCsvMixin, BaseUserAdmin):
 
     model = CustomUser
-    list_display = BaseUserAdmin.list_display + ('is_active', 'member_role')
     actions = ['export_as_csv']
-    inlines = (LinksInline, )
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Custom Fields', {
-            'fields': ('member_role', 'member_status', 'pronouns', 'receiving_newsletter', 'bio', 'bio_image')
-        }),
-    )
-
-
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
+class UserProfileAdmin(ExportCsvMixin, admin.ModelAdmin):
+    model = UserProfile
+    actions = ['export_as_csv']
+
+admin.site.register(UserProfile, UserProfileAdmin)
