@@ -35,7 +35,7 @@ class ExportCsvMixin:
 
 class LinksInline(admin.StackedInline):
     model = Link
-    verbose_name_plural = 'link'
+    verbose_name_plural = 'links'
 
 class CustomUserAdmin(ExportCsvMixin, BaseUserAdmin):
 
@@ -45,6 +45,7 @@ class CustomUserAdmin(ExportCsvMixin, BaseUserAdmin):
 admin.site.register(CustomUser, CustomUserAdmin)
 
 class UserProfileAdmin(ExportCsvMixin, admin.ModelAdmin):
+    inlines = (LinksInline, )
     model = UserProfile
     actions = ['export_as_csv']
 

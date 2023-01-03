@@ -33,7 +33,7 @@ class UserProfile(models.Model):
         (ACTIVE, "Active"),
         (INACTIVE, "Inactive"),
     )
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name="profile")
+    user = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name="profile")
     member_status = models.CharField(choices=MEMBER_STATUS, default=ACTIVE, max_length=50)
     member_role = models.CharField(choices=MEMBER_ROLES, default=PARTICIPANT, max_length=50)
     pronouns = models.CharField(max_length=20, blank=True, null=True)
@@ -48,8 +48,8 @@ class UserProfile(models.Model):
 
 
 class Link(Orderable):
-    member = models.ForeignKey("CustomUser", related_name="links", on_delete=models.CASCADE)
-    name = models.CharField( max_length=255)
+    member = models.ForeignKey("UserProfile", related_name="links", on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
     url = models.URLField(max_length=255)
 
 class MemberList(models.Model):
