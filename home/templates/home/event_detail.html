@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block content %}
+<main class="main main-center">
+    <a href="/">
+        <img src="{% static 'img/temp_logo.png' %}" />
+    </a>
+</main>
+<div class="row">
+    <a href="{% url 'calendar' %}">Back to Calendar</a>
+    <div class="col">
+        <h1>{{event.title}}</h1>
+        <p>{{ event.description }}</p>
+        <p>Start: {{ event.start_time }}</p>
+        <p>End : {{ event.end_time }}</p>
+        <p>Location: {{ event.location }}</p>
+        <p>Status: {{ event.status }}</p>
+        <p>Speakers: {% for speaker in event.speakers.all %}{{ speaker.name }}{% endfor %}</p>
+        <p>Categories: {% for cat in event.categories.all %} {{ cat }} {% endfor %}</p>
+    </div>
+</div>
+</main>
+{% endblock content %}
