@@ -119,6 +119,13 @@ svg:not(:root) {
     justify-content: space-between;
     border-top: 1px solid #e6e6e6;
     padding: 10px;
+    margin: auto !important;
+}
+
+.footer-bottom {
+    padding-top: 5rem;
+    margin: auto; 
+    text-align: center;
 }
 
 .option {
