@@ -6,11 +6,20 @@
 }
 
 .nav-icon {
-    height: 1.5rem;
-    width: 1.5rem;
+    height: 3em;
+    width: 3em;
     object-fit: cover;
     border-radius: 50%;
-    margin-bottom: 1.5rem;
+    padding: 0;
+}
+
+.acct-text {
+    margin: auto;
+    padding-right: 2rem;
+}
+
+.acct::after {
+    display: none;
 }
 
 .nav-brand-icon {
@@ -44,6 +53,11 @@
     width: 100%; 
 }
 
+.acct {
+    display: inline-flex;
+    display: -ms-inline-flexbox;
+}
+
 .badge {
     margin: 1px;
 }
@@ -51,3 +65,4 @@
 body {
     font-size: 13px;
 }
+
