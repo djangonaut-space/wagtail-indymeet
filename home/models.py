@@ -82,9 +82,20 @@ class Event(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     capacity = models.IntegerField(blank=True, null=True)
-    rsvped_members = models.ManyToManyField('accounts.CustomUSer', related_name='rsvp_events', blank=True, null=True)
-    organizers = models.ManyToManyField('accounts.CustomUSer', blank=True, null=True)
+    rsvped_members = models.ManyToManyField('accounts.CustomUser', related_name='rsvp_events', blank=True, null=True)
+    organizers = models.ManyToManyField('accounts.CustomUser', blank=True, null=True)
+    session = models.ForeignKey('Session', blank=True, null=True, related_name="events", on_delete=models.SET_NULL)
 
+    def __str__(self):
+        return self.title
+
+
+class Session(models.Model):
+    start_date = models.DateField()
+    end_date = models.DateField()
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    participants = models.ManyToManyField('accounts.CustomUser', related_name='sessions', blank=True, null=True)
 
     def __str__(self):
         return self.title

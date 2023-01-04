@@ -13,6 +13,7 @@
         <img src="{% static 'img/temp_logo.png' %}" />
     </a>
 </main>
+<div class="container my-3">
 <div class="row">
     <a href="{% url 'calendar' %}">Back to Calendar</a>
     <div class="col">
@@ -25,6 +26,6 @@
         <p>Speakers: {% for speaker in event.speakers.all %}{{ speaker.name }}{% endfor %}</p>
         <p>Categories: {% for cat in event.categories.all %} {{ cat }} {% endfor %}</p>
     </div>
+  </div>
 </div>
-</main>
 {% endblock content %}
