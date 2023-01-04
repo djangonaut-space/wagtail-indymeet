@@ -53,6 +53,10 @@
     width: 100%; 
 }
 
+.dropdown-menu {
+    font-size: 13px;
+}
+
 .acct {
     display: inline-flex;
     display: -ms-inline-flexbox;
