@@ -32,6 +32,7 @@
         <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
         {% endblock extra_css %}
     </head>
+    
     <body class="{% block body_class %}{% endblock %}">
         {% include 'includes/nav.html' %}
         {% if 'Home' not in page.title  %}
