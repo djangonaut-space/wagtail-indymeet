@@ -12,6 +12,7 @@ class CustomUser(AbstractUser):
 
 class UserProfile(models.Model):
     PARTICIPANT = "Participant"
+    SPEAKER = "Speaker"
     MENTOR = "Mentor"
     EXPERT = "Expert"
     PROJECT_OWNER = "Project Owner"
@@ -19,6 +20,7 @@ class UserProfile(models.Model):
     ORGANIZER = "Organizer"
     MEMBER_ROLES = (
         (PARTICIPANT, "Participant"),
+        (SPEAKER, "Speaker"),
         (MENTOR, "Mentor"),
         (EXPERT, "Expert"),
         (PROJECT_OWNER, "Project Owner"),

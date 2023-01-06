@@ -22,31 +22,3 @@ class HomePage(Page):
     content_panels = Page.content_panels + [
 
     ]
-
-
-
-@register_snippet
-class Speaker(ClusterableModel):
-    bio = models.TextField(verbose_name='bio', blank=True, null=True)
-    image = models.ImageField(blank=True, null=True)
-    name = models.CharField(max_length=255)
-
-    panels = [
-        FieldPanel('name'),
-        FieldPanel('image'),
-        FieldPanel('bio'),
-        InlinePanel('speaker_links', label='Link items'),
-    ]
-
-    def __str__(self):
-        return self.name
-
-class SpeakerLink(Orderable):
-    speaker = ParentalKey("Speaker", related_name="speaker_links", on_delete=models.CASCADE, null=True, blank=True)
-    name = models.CharField( max_length=255)
-    url = models.URLField(max_length=255)
-
-    panels = [
-        FieldPanel('name'),
-        FieldPanel('url')
-    ]
