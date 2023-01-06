@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Event, Category, Speaker
+from .models import Event, Category
 
 class EventAdmin(admin.ModelAdmin):
     model = Event
@@ -8,10 +8,6 @@ class EventAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     model = Category
 
-class SpeakerAdmin(admin.ModelAdmin):
-    model = Speaker
-
 
 admin.site.register(Event, EventAdmin)
 admin.site.register(Category, CategoryAdmin)
-admin.site.register(Speaker, SpeakerAdmin)

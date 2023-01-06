@@ -24,33 +24,6 @@ class HomePage(Page):
     ]
 
 
-
-@register_snippet
-class Speaker(ClusterableModel):
-    bio = models.TextField(verbose_name='bio', blank=True, null=True)
-    image = models.ImageField(blank=True, null=True)
-    name = models.CharField(max_length=255)
-
-    panels = [
-        FieldPanel('name'),
-        FieldPanel('image'),
-        FieldPanel('bio'),
-        InlinePanel('speaker_links', label='Link items'),
-    ]
-
-    def __str__(self):
-        return self.name
-
-class SpeakerLink(Orderable):
-    speaker = ParentalKey("Speaker", related_name="speaker_links", on_delete=models.CASCADE, null=True, blank=True)
-    name = models.CharField( max_length=255)
-    url = models.URLField(max_length=255)
-
-    panels = [
-        FieldPanel('name'),
-        FieldPanel('url')
-    ]
-
 class Category(models.Model):
     name = models.CharField(max_length=25)
 
@@ -78,7 +51,7 @@ class Event(models.Model):
     description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=EVENT_STATUS, default=PENDING)
     categories = models.ManyToManyField('Category', related_name="events", blank=True, null=True)
-    speakers = models.ManyToManyField('Speaker', related_name="speaker_events", blank=True, null=True)
+    # speakers = models.ManyToManyField('accounts.CustomUser', related_name="speaker_events", blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     capacity = models.IntegerField(blank=True, null=True)
