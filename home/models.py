@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 
 from modelcluster.fields import ParentalKey
@@ -51,7 +52,7 @@ class Event(models.Model):
     description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=EVENT_STATUS, default=PENDING)
     categories = models.ManyToManyField('Category', related_name="events", blank=True, null=True)
-    # speakers = models.ManyToManyField('accounts.CustomUser', related_name="speaker_events", blank=True, null=True)
+    speakers = models.ManyToManyField('accounts.CustomUser', related_name="speaker_events", blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     capacity = models.IntegerField(blank=True, null=True)
@@ -62,6 +63,16 @@ class Event(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        ordering = ('start_time',)
+
+    @property
+    def is_future(self):
+        return self.start_time.date() >= timezone.now().date()
+
+    @property
+    def accepting_rsvps(self):
+        return self.is_future and self.status == self.SCHEDULED
 
 class Session(models.Model):
     start_date = models.DateField()

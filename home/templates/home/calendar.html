@@ -18,13 +18,17 @@
           events: [
                 {% for event in events %}
                 {
-                    title: "{{ event.title}}",
-                    start: '{{ event.start_time|date:"Y-m-d" }}',
-                    end: '{{ event.end_time|date:"Y-m-d" }}',
+                    title: "{{ event.title|safe }}",
+                    start: '{{ event.start_time|date:"Y-m-d H:i" }}',
+                    end: '{{ event.end_time|date:"Y-m-d H:i" }}',
                     id: '{{ event.id }}',
                     description: '{{ event.description }}',
-                    url: "{% url 'event_detail' pk=event.id %}"
-
+                    url: "{% url 'event_detail' pk=event.id %}",
+                    {% if event.status == 'Canceled' %}
+                        backgroundColor: '#d3d3d3',
+                    {% elif event.status == 'Rescheduled' %}
+                        backgroundColor: 'orange',
+                    {% endif %}
                 },
                 {% endfor %}
 
