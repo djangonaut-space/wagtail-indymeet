@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "search",
 
     "django_bootstrap5",
+    "captcha",
 
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",

@@ -11,7 +11,7 @@ DEBUG = False
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 if os.getenv('ENVIRONMENT') == 'production':
-    
+
     ALLOWED_HOSTS = ['djangonaut.azurewebsites.net']
 
     DATABASES = {
@@ -32,3 +32,7 @@ try:
     from .local import *
 except ImportError:
     pass
+
+
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
