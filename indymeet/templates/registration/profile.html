@@ -47,7 +47,9 @@
                     </tr>
                    <tr>
                         <td>Session Participations</td>
-                        <td>{{ user.profile.session_participant }}</td>
+                        <td>{% for session in user.sessions.all %}
+                                {{ session }}{% if forloop.last %}{% else %}, {% endif %}
+                            {% endfor %}</td>
                     </tr>
                     <tr>
                         <td>Interested in Recruitment?</td>
