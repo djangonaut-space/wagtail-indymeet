@@ -57,7 +57,6 @@ class SignUpView(CreateView):
         user = self.object
         invite_link = reverse(
             "activate_account",
-
             kwargs={
                 "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
                 "token": account_activation_token.make_token(user),
@@ -66,7 +65,7 @@ class SignUpView(CreateView):
         registration_url =  f"{invite_link}"
         send_mail(
             'Djangonaut Space Registration Confirmation',
-            f'The invitation link is: {registration_url}',
+            f'To confirm your email address on djangonaut.space please visit the link: {self.request.build_absolute_uri(invite_link)}',
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             fail_silently=False,
