@@ -1,9 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from wagtail.core.models import  Orderable
-
 
 
 class CustomUser(AbstractUser):
@@ -45,6 +45,7 @@ class UserProfile(models.Model):
     session_participant = models.BooleanField(default=False)
     recruitment_interest = models.BooleanField(default=False)
     accepted_coc = models.BooleanField(default=False)
+    email_confirmed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
@@ -61,3 +62,16 @@ class MemberList(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active =  models.BooleanField(default=True)
+
+
+
+##################### Signals #######################
+@receiver(post_save, sender=CustomUser)
+def create_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=CustomUser)
+def save_profile(sender, instance, **kwargs):
+    instance.profile.save()
