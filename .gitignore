@@ -12,6 +12,8 @@ media/*
 .env
 .python-version
 
+staticfiles/*
+
 # dependencies
 node_modules
 
