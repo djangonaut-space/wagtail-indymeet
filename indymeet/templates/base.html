@@ -11,11 +11,15 @@
         <meta charset="utf-8" />
         <title>
             {% block title %}
-            {% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }}{% endif %}
+                {% if blog_page %}
+                    {{ blog_page.title }}{% if blog_page.description %} | {{ blog_page.description }}{% endif %}
+                {% else %}
+                    {% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }}{% endif %}
+                {% endif %}
             {% endblock %}
             {% block title_suffix %}
-            {% wagtail_site as current_site %}
-            {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
+                {% wagtail_site as current_site %}
+                {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
             {% endblock %}
         </title>
         <meta name="description" content="" />
@@ -28,9 +32,36 @@
 
         {# Global stylesheets #}
         {% block extra_css %}
+        <link rel="stylesheet" href="{% static 'puput/css/puput.css' %}"/>
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
         <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
         {% endblock extra_css %}
+        {% block css %}
+            <link rel="stylesheet" href="{% static 'puput/css/font-awesome.min.css' %}">
+            <style>
+                body {
+                    --main-color: {{blog_page.main_color}};
+                }
+            </style>
+        {% endblock %}
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="title"
+              content="{% block meta_title %}
+                            {% if blog_page.seo_title %}
+                                {{ blog_page.seo_title }}
+                            {% else %}
+                                {{ blog_page.title }}
+                            {% endif %}
+                       {% endblock meta_title %}"/>
+        <meta name="description"
+              content="{% block meta_description %}
+                            {{ blog_page.search_description }}
+                       {% endblock meta_description %}"/>
+        {% block social_share %}{% endblock social_share %}    
+        <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+        <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <link href='//fonts.googleapis.com/css?family=Roboto:400,300,300italic,100italic,100,400italic,500,500italic,700,900,700italic,900italic' rel='stylesheet' type='text/css'>
     </head>
     <body class="{% block body_class %}{% endblock %}">
         {% include 'includes/nav.html' %}
