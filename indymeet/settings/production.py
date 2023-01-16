@@ -1,6 +1,6 @@
 from .base import *
 
-DEBUG = False
+DEBUG = os.getenv('DEBUG')
 
 # Deploy instructions
 # https://tonybaloney.github.io/posts/django-on-azure-beyond-hello-world.html
@@ -17,7 +17,7 @@ if os.getenv('ENVIRONMENT') == 'production':
     print('----------------------------------')
     print('----------------------------------')
     SECRET_KEY = os.environ['SECRET_KEY']
-    ALLOWED_HOSTS = ['localhost', 'djangonaut-space.azurewebsites.net', 'dj-space.azurewebsites.net']
+    ALLOWED_HOSTS = ['localhost', 'https://djangonaut-space.azurewebsites.net',  'djangonaut-space.azurewebsites.net', 'https://djangonaut.space', 'djangonaut.space'] 
 
     DATABASES = {
         'default': {
