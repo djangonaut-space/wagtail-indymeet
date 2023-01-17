@@ -33,6 +33,13 @@ if os.getenv('ENVIRONMENT') == 'production':
         },
     }
 
+    MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
+    ANYMAIL = {
+        "MAILGUN_API_KEY": MAILGUN_API_KEY,
+    }
+
+    EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+
 try:
     from .local import *
 except ImportError:

@@ -191,11 +191,5 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 
-MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
-ANYMAIL = {
-    "MAILGUN_API_KEY": MAILGUN_API_KEY,
-}
-
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 DEFAULT_FROM_EMAIL = 'contact@djangonaut.space'
 SERVER_EMAIL = 'contact@djangonaut.space'
