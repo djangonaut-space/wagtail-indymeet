@@ -20,7 +20,13 @@
 </div>
 <div class="row">
     <div class="col-2">
-        <img class="profile-img" src="https://images.unsplash.com/photo-1608190003443-86b2636f2fe3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80">
+        <img class="profile-img"
+        {% if user.profile.bio_image %}
+            src="{{user.profile.bio_image.url}}"
+        {% else %}
+            src="https://images.unsplash.com/photo-1608190003443-86b2636f2fe3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80"
+        {% endif %}
+        >
     </div>
     <div class="col-8">
         <div class="row">
@@ -32,12 +38,28 @@
                         <td>{{ user }}</td>
                     </tr>
                     <tr>
+                        <td>Bio</td>
+                        <td>{{ user.profile.bio }}</td>
+                    </tr>
+                    <tr>
+                        <td>Pronouns</td>
+                        <td>{{ user.profile.pronouns }}</td>
+                    </tr>
+                   <tr>
                         <td>Session Participations</td>
-                        <td></td>
+                        <td>{{ user.profile.session_participant }}</td>
                     </tr>
                     <tr>
                         <td>Interested in Recruitment?</td>
-                        <td></td>
+                        <td>{{ user.profile.recruitment_interest }}</td>
+                    </tr>
+                    <tr>
+                        <td>Recieving Newsletter?</td>
+                        <td>{{ user.profile.receiving_newsletter }}</td>
+                    </tr>
+                    <tr>
+                        <td>Reviewed CoC</td>
+                        <td>{{ user.profile.accepted_coc }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -48,23 +70,12 @@
             <table>
                 <thead>Socials</th>
                 <tbody>
-                    {# for link in link_list #}
+                    {% for link in user.profile.links.all %}
                     <tr>
-                        <td>GitHub:</td>
-                        <td>{{ user }}</td>
+                        <td>{{ link.name }}</td>
+                        <td>{{ link.url }}</td>
                     </tr>
-                    <tr>
-                        <td>Link:</td>
-                        <td>example.com</td>
-                    </tr>
-                    <tr>
-                        <td>Twitter:</td>
-                        <td>example.com</td>
-                    </tr>
-                    <tr>
-                        <td>Mastodon:</td>
-                        <td>example.com</td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -73,6 +84,6 @@
 <div class="upcoming-events">
     <h1>UPCOMING REGISTERED EVENTS</h1>
     {% include 'home/includes/events_upcoming.html' %}
-</div> 
+</div>
 </main>
 {% endblock content %}

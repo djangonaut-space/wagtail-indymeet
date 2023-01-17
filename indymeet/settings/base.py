@@ -20,9 +20,9 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
+from puput import PUPUT_APPS
 
 # Application definition
-
 INSTALLED_APPS = [
     "accounts",
     "home",
@@ -41,6 +41,13 @@ INSTALLED_APPS = [
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
+
+    # puput support
+    'wagtail.contrib.sitemaps',
+    'wagtail.contrib.routable_page',
+    'django_social_share',
+    'puput',
+
     "modelcluster",
     "taggit",
     "django.contrib.admin",
@@ -49,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
 ]
 
 MIDDLEWARE = [
@@ -177,14 +185,6 @@ WAGTAILSEARCH_BACKENDS = {
 WAGTAILADMIN_BASE_URL = "http://example.com"
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
-WAGTAIL_USER_CUSTOM_FIELDS = [
-    'member_role',
-    'member_status',
-    'pronouns',
-    'receiving_newsletter',
-    'bio',
-    'bio_image'
-    ]
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"

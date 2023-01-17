@@ -5,3 +5,5 @@ django-storages
 psycopg2-binary
 whitenoise
 python-dotenv
+-e git+ssh://git@github.com/Djangonaut-Space/puput.git@3525203b25a7c2e4ddbae4f82773b060c41d5feb#egg=puput
+
