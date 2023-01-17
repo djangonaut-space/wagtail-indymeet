@@ -15,6 +15,13 @@ if os.getenv('ENVIRONMENT') == 'dev':
         }
     }
 
+print('----------------------------------')
+print('----------------------------------')
+print('DEV')
+print('----------------------------------')
+print('----------------------------------')
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

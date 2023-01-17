@@ -1,6 +1,6 @@
 from .base import *
 
-DEBUG = False
+DEBUG = os.getenv('DEBUG')
 
 # Deploy instructions
 # https://tonybaloney.github.io/posts/django-on-azure-beyond-hello-world.html
@@ -11,13 +11,18 @@ DEBUG = False
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 if os.getenv('ENVIRONMENT') == 'production':
-
-    ALLOWED_HOSTS = ['djangonaut.azurewebsites.net']
+    print('----------------------------------')
+    print('----------------------------------')
+    print('PRODUCTION')
+    print('----------------------------------')
+    print('----------------------------------')
+    SECRET_KEY = os.environ['SECRET_KEY']
+    ALLOWED_HOSTS = ['localhost', 'https://djangonaut-space.azurewebsites.net',  'djangonaut-space.azurewebsites.net', 'https://djangonaut.space', 'djangonaut.space'] 
 
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',  # 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-            'NAME': 'djangonaut_space',                      # Or path to database file if using sqlite3.
+            'NAME': 'djangonaut-space',                      # Or path to database file if using sqlite3.
             'USER': os.environ['USER'],                      # Not used with sqlite3.
             'PASSWORD': os.environ['PASSWORD'],                  # Not used with sqlite3.
             'HOST': os.environ['HOST'],                      # Set to empty string for localhost. Not used with sqlite3.
