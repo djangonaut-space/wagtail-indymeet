@@ -1,8 +1,12 @@
 # ----------------------------------------------
-# For developing locally with SQLite (depricated)
+# For developing locally
 # ----------------------------------------------
 from .base import *
+from dotenv import load_dotenv
 
+load_dotenv()
+
+###  SQLite (deprecated)
 if os.getenv('ENVIRONMENT') == 'dev':
     DATABASES = {
         "default": {
@@ -34,3 +38,9 @@ try:
     from .local import *
 except ImportError:
     pass
+
+
+RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
