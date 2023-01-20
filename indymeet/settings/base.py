@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
     "django_bootstrap5",
     "anymail",
+    "captcha",
 
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
