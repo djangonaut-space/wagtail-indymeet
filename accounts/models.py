@@ -46,6 +46,7 @@ class UserProfile(models.Model):
     recruitment_interest = models.BooleanField(default=False)
     accepted_coc = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
+    receiving_event_updates = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username

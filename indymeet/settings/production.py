@@ -17,7 +17,7 @@ if os.getenv('ENVIRONMENT') == 'production':
     print('----------------------------------')
     print('----------------------------------')
     SECRET_KEY = os.environ['SECRET_KEY']
-    ALLOWED_HOSTS = ['localhost', 'https://djangonaut-space.azurewebsites.net',  'djangonaut-space.azurewebsites.net', 'https://djangonaut.space', 'djangonaut.space'] 
+    ALLOWED_HOSTS = ['localhost', 'https://djangonaut-space.azurewebsites.net',  'djangonaut-space.azurewebsites.net', 'https://djangonaut.space', 'djangonaut.space']
 
     DATABASES = {
         'default': {
@@ -33,12 +33,11 @@ if os.getenv('ENVIRONMENT') == 'production':
         },
     }
 
-    MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
+    EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
+    SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
     ANYMAIL = {
-        "MAILGUN_API_KEY": MAILGUN_API_KEY,
+        "SENDGRID_API_KEY": SENDGRID_API_KEY,
     }
-
-    EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 
 try:
     from .local import *

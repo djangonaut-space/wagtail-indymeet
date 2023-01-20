@@ -9,6 +9,19 @@ from .models import CustomUser
 
 class CustomUserCreationForm(UserCreationForm):
     captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox())
+    email_consent = forms.BooleanField(
+        help_text="""Required: Please check this to consent to receiving administrative
+        emails like: email verification, password reset etc.""",
+        label="Email Consent*")
+    receive_newsletter = forms.BooleanField(
+        required=False,
+        help_text="""Optional: Please check this to opt-in for receiving general updates about community and events.
+            You can opt-out on your profile page at anytime.""")
+    receive_event_updates = forms.BooleanField(
+        required=False,
+        help_text="""Optional: Please check this to opt-in for receiving emails to events you register to.
+            You can opt-out on your profile page at anytime.""")
+
 
     class Meta:
         model = CustomUser
@@ -17,6 +30,11 @@ class CustomUserCreationForm(UserCreationForm):
             "email",
             "first_name",
             "last_name",
+            "password1",
+            "password2",
+            "email_consent",
+            "receive_newsletter",
+            "receive_event_updates",
         )
 
     def __init__(self, *args, **kwargs):

@@ -55,6 +55,9 @@ class SignUpView(CreateView):
 
         self.object = form.save()
         user = self.object
+        user.profile.receiving_newsletter = form.cleaned_data['receive_newsletter']
+        user.profile.receiving_event_updates = form.cleaned_data['receive_event_updates']
+        user.profile.save(update_fields=['receiving_newsletter', 'receiving_event_updates'])
         invite_link = reverse(
             "activate_account",
             kwargs={
