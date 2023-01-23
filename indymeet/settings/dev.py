@@ -39,6 +39,7 @@ try:
 except ImportError:
     pass
 
+BASE_URL = 'http://localhost:8000'
 
 RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
 RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'

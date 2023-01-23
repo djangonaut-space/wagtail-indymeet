@@ -1,0 +1,20 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>RVSP Cancelation</title>
+    </head>
+    <body>
+        <div class="container">
+            Hello {{ user.first_name }},
+
+            This is a reminder that you successfully canceled your RSVP for an event with Djangonaut Space on {{ event.start_time }}.
+
+            To see event details or to change your RSVP please visit the event page at {{ event.get_full_url }}.
+
+            Thank you,
+
+            Djangonaut Space Organizers
+        </div>
+    </body>
+</html>

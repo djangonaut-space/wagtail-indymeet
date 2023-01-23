@@ -17,7 +17,7 @@ if os.getenv('ENVIRONMENT') == 'production':
     print('----------------------------------')
     print('----------------------------------')
     SECRET_KEY = os.environ['SECRET_KEY']
-    ALLOWED_HOSTS = ['localhost', 'https://djangonaut-space.azurewebsites.net',  'djangonaut-space.azurewebsites.net', 'https://djangonaut.space', 'djangonaut.space'] 
+    ALLOWED_HOSTS = ['localhost', 'https://djangonaut-space.azurewebsites.net',  'djangonaut-space.azurewebsites.net', 'https://djangonaut.space', 'djangonaut.space']
 
     DATABASES = {
         'default': {
@@ -38,6 +38,7 @@ try:
 except ImportError:
     pass
 
+BASE_URL = 'https://djangonaut.space'
 
 RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
 RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')

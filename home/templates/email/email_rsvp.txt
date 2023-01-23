@@ -1,0 +1,9 @@
+Hello {{ user.first_name }},
+
+This is a reminder that you successfully RSVPed for an event with Djangonaut Space on {{ event.start_time }}.
+
+To see event details or to cancel your RSVP please visit the event page at {{ event.get_full_url  }}.
+
+Thank you,
+
+Djangonaut Space Organizers
