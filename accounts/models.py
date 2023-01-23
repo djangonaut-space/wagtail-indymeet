@@ -3,8 +3,11 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from wagtail.core.models import  Orderable
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.urls import reverse
+from django.conf import settings
 
+from wagtail.core.models import  Orderable
 
 class CustomUser(AbstractUser):
     pass
@@ -50,6 +53,22 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+    def create_unsubscribe_link(self):
+        user_id, token = self.make_token().split(":", 1)
+        return  settings.BASE_URL + reverse('unsubscribe',
+                    kwargs={'user_id': user_id, 'token': token,})
+
+    def make_token(self):
+        return TimestampSigner().sign(self.user.id)
+
+    def check_token(self, token):
+        try:
+            key = f'{self.user.id}:{token}'
+            TimestampSigner().unsign(key, max_age=60 * 60 * 48) # Valid for 2 days
+        except (BadSignature, SignatureExpired):
+            return False
+        return True
 
 
 class Link(Orderable):

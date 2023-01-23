@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<main class="main main-center">
+    <a href="/">
+        <img src="{% static 'img/temp_logo.png' %}" />
+    </a>
+    <h1> You've been successfully unsubscribed from {{ email_type }}.</h1>
+</main>
+{% endblock content %}

@@ -5,12 +5,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect
-from django.urls import reverse_lazy
 from django.urls import reverse
 from django.utils.encoding import force_str, force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic.edit import CreateView
 from django.views import View
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
 
 
 User = get_user_model()
@@ -79,3 +80,29 @@ class SignUpView(CreateView):
 @login_required(login_url='/accounts/login') #redirect when user is not logged in
 def profile(request):
     return render(request, 'registration/profile.html')
+
+
+def unsubscribe(request, user_id, token):
+    """
+    User is immediately unsubscribed if user is found. Otherwise, they are
+    redirected to the login page and unsubscribed as soon as they log in.
+    """
+
+    user = get_object_or_404(User, id=user_id, is_active=True)
+
+    if ( (request.user.is_authenticated and request.user == user) or user.profile.check_token(token)):
+        # unsubscribe them
+        profile = user.profile
+        if request.GET.get('events', None):
+            email_type = 'events'
+            profile.receiving_event_updates = False
+        else:
+            email_type = 'newsletters'
+            profile.receiving_newsletter = False
+        profile.save()
+
+        return render(request, 'registration/unsubscribed.html', {'email_type': email_type})
+
+    # Otherwise redirect to login page
+    next_url = reverse('unsubscribe', kwargs={'user_id': user_id, 'token': token,})
+    return HttpResponseRedirect(f"{reverse('login')}?next={next_url}")
