@@ -32,7 +32,6 @@
         </div>
         <div class="card-footer">
             <a href="{% url 'event_detail' pk=event.id %}" class="btn btn-primary">About</a>
-            {% if cat == "upcoming" %}
               {% if show_rsvp and event.accepting_rsvps %}
                 {% if user in event.rsvped_members.all %}
                 <a href="{% url 'event_detail' event.id %}?rsvp=false" class="btn btn-secondary">Cancel RSVP</a>
@@ -40,7 +39,6 @@
                 <a href="{% url 'event_detail' event.id %}?rsvp=true" class="btn btn-primary">Register</a>
                 {% endif %}
               {% endif %}
-            {% endif %}
         </div>
       </div>
 </div>
