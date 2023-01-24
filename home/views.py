@@ -9,8 +9,7 @@ from .models import Event
 
 
 def event_calendar(request):
-    all_events = Event.objects.exclude(status=Event.PENDING)
-
+    all_events = Event.objects.visible()
     context = {
         "events":all_events,
 
@@ -53,7 +52,7 @@ class EventListView(ListView):
 
     def get_event_tags(self):
         tags = []
-        events = Event.objects.exclude(status=Event.PENDING)
+        events = Event.objects.visible()
         for event in events:
             tags += [tag.name for tag in event.tags.all()]
         tags = sorted(set(tags))

@@ -13,8 +13,8 @@ class EventQuerySet(QuerySet):
     def canceled(self):
         return self.filter(status=self.model.CANCELED)
 
-    def pending(self):
-        return self.filter(status=self.model.PENDING)
+    def rescheduled(self):
+        return self.filter(status=self.model.RESCHEDULED)
 
     def visible(self):
         return self.exclude(status=self.model.PENDING)
@@ -23,6 +23,5 @@ class EventQuerySet(QuerySet):
         return self.filter(start_time__gte=timezone.now())
 
     def past(self):
-        print('time zone now', timezone.now())
         return self.filter(start_time__lte=timezone.now())
 
