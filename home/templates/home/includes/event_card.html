@@ -6,22 +6,40 @@
 <div class="col">
     <div class="card text-align-left" style="width: auto">
         <div class="card-header">
-            <h5 class="card-title">Card title</h5>
-            <substitle>Event Date</substitle>
+            <h5 class="card-title">{{ event.title }}</h5>
+            <substitle>{{ event.start_time }}</substitle>
         </div>
         {# TODO: Add default image when no event image is selected #}
-        <img src="https://images.unsplash.com/photo-1612299273045-362a39972259?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1771&q=80" class="card-img-top event-card-img" alt="person with brown skin and facial hair and locs wearing black tshirt sitting at table smiling at screen of mac with a white mug next to them">
+        {% if event.cover_image %}
+        <img
+        src="{{ event.cover_image.url }}"
+        class="card-img-top event-card-img"
+        alt=""
+        >
+        {% else %}
+        <img
+        src="https://images.unsplash.com/photo-1612299273045-362a39972259?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1771&q=80"
+        class="card-img-top event-card-img"
+        alt="person with brown skin and facial hair and locs wearing black tshirt sitting at table smiling at screen of mac with a white mug next to them"
+        >
+        {% endif %}
         {# Photo by Good Faces on Unsplash #}
         {# https://unsplash.com/backgrounds/apps/zoom?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText #}
         <div class="card-body">
-          {% include 'home/includes/event_categories.html' %}   
-          <p class="card-text pt-4">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+          {% include 'home/includes/event_categories.html' %}
+          <p class="card-text pt-4">{{ event.description }}</p>
         {% include 'home/includes/event_team.html' %}
         </div>
         <div class="card-footer">
-            <a href="#" class="btn btn-primary">About</a>
+            <a href="{% url 'event_detail' pk=event.id %}" class="btn btn-primary">About</a>
             {% if cat == "upcoming" %}
-            <a href="#" class="btn btn-primary">Register</a>
+              {% if show_rsvp and event.accepting_rsvps %}
+                {% if user in event.rsvped_members.all %}
+                <a href="{% url 'event_detail' event.id %}?rsvp=false" class="btn btn-secondary">Cancel RSVP</a>
+                {% else %}
+                <a href="{% url 'event_detail' event.id %}?rsvp=true" class="btn btn-primary">Register</a>
+                {% endif %}
+              {% endif %}
             {% endif %}
         </div>
       </div>

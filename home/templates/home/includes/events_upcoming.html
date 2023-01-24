@@ -12,12 +12,9 @@
     <div class="container-lg">
         <h3># Upcoming Events</h3>
         <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
-            {# for event in events_list where "upcoming" limit 6? #}
+            {% for event in future_events %}
             {% include 'home/includes/event_card.html' with cat="upcoming" %}
-            {% include 'home/includes/event_card.html' with cat="upcoming" %}
-            {% include 'home/includes/event_card.html' with cat="upcoming" %}
-            {% include 'home/includes/event_card.html' with cat="upcoming" %}
-            {# if more events then, else # nothing #}
+            {% endfor %}
 
         </div>
         <div class="row text-center pt-4">

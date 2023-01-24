@@ -4,9 +4,8 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    {# for member in event_team #}
-    {% include 'home/includes/event_team_member.html' %}
-    {% include 'home/includes/event_team_member.html' %}
-    {% include 'home/includes/event_team_member.html' %}
+    {% for speaker in event.speakers.all %}
+        {% include 'home/includes/event_team_member.html' %}
+    {% endfor %}
 </div>
 {% endblock content %}

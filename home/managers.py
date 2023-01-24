@@ -1,0 +1,28 @@
+
+import datetime
+from django.utils import timezone
+from django.db.models.query import QuerySet
+
+class EventQuerySet(QuerySet):
+    def pending(self):
+        return self.filter(status=self.model.PENDING)
+
+    def scheduled(self):
+        return self.filter(status=self.model.SCHEDULED)
+
+    def canceled(self):
+        return self.filter(status=self.model.CANCELED)
+
+    def pending(self):
+        return self.filter(status=self.model.PENDING)
+
+    def visible(self):
+        return self.exclude(status=self.model.PENDING)
+
+    def upcoming(self):
+        return self.filter(start_time__gte=timezone.now())
+
+    def past(self):
+        print('time zone now', timezone.now())
+        return self.filter(start_time__lte=timezone.now())
+
