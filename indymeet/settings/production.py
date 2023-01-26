@@ -33,10 +33,12 @@ if os.getenv('ENVIRONMENT') == 'production':
         },
     }
 
-    EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
-    SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+    EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
+    MAILJET_API_KEY = os.getenv('MAILJET_API_KEY')
+    MAILJET_SECRET_KEY = os.getenv('MAILJET_SECRET_KEY')
     ANYMAIL = {
-        "SENDGRID_API_KEY": SENDGRID_API_KEY,
+        "MAILJET_API_KEY": MAILJET_API_KEY,
+        "MAILJET_SECRET_KEY": MAILJET_SECRET_KEY,
     }
 
 try:
