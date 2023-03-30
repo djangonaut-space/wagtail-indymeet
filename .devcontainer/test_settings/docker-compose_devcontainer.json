@@ -1,0 +1,64 @@
+// .devcontainer/devcontainer.json or stored as a .devcontainer.json file (note the dot-prefix) in the root of your project.
+
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-docker-compose
+{
+    "name": "Djangonaut Space",
+
+    // Update the 'dockerComposeFile' list if you have more compose files or use different names.
+    // The .devcontainer/docker-compose.yml file contains any overrides you need/want to make.
+    // More info: https://containers.dev/guide/dockerfile
+    "dockerComposeFile": [
+        "docker-compose.yml", // development docker-compose
+        "../docker-compose.yml" // production docker-compose
+    ],
+
+    // The 'service' property is the name of the service for the container that VS Code should
+    // use. Update this value and .devcontainer/docker-compose.yml to the real service name.
+    "service": "app",
+    "shutdownAction": "stopCompose",
+    // The optional 'workspaceFolder' property is the path VS Code should open by default when
+    // connected. This is typically a file mount in .devcontainer/docker-compose.yml
+    // "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
+    "workspaceFolder": "/app/",
+
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    // "features": {},
+
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    "forwardPorts": [8000, 5432],
+
+    "portsAttributes": {
+		"8000": {"label": "Django port", "onAutoForward": "notify"},
+		"5432": {"label": "PostgreSQL port", "onAutoForward": "silent"}
+	},
+    // Uncomment the next line if you want start specific services in your Docker Compose config.
+    // "runServices": [],
+
+    // Uncomment the next line if you want to keep your containers running after VS Code shuts down.
+    // "shutdownAction": "none",
+
+    // Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "pip3 install -r requirements/requirements-dev.txt",
+
+    // Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-pyton.vscode-pylance",
+                "ms-python.pylint",
+                "ms-python.black",
+                "ms-python.isort",
+                // "donjayamanne.pythonExtensionPack",
+                // "donjayamanne.pythonenvironmentmanager",
+                // "microsoft.docker",
+                "MS-vsliveshare.vsliveshare",
+                "ms-vscode-remote.remote-wsl"
+            ]
+        }
+    }
+
+    // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
+    // "remoteUser": "devcontainer"
+}

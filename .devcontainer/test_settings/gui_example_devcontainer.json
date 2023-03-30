@@ -1,0 +1,75 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/python
+{
+	"name": "Djangonaut Space",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/python:0-3.11",
+	"features": {
+		"ghcr.io/devcontainers/features/aws-cli:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/oryx:1": {},
+		"ghcr.io/devcontainers/features/python:1": {
+			"installTools": true,
+			"version": "3.11"
+		},
+		"ghcr.io/devcontainers-contrib/features/aws-eb-cli:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/bandit:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/bash-command:1": {
+			"command": "echo hi!"
+		},
+		"ghcr.io/devcontainers-contrib/features/black:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/cookiecutter:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/flake8:2": {
+			"version": "latest",
+			"plugins": "flake8-black"
+		},
+		"ghcr.io/devcontainers-contrib/features/isort:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/mkdocs:2": {
+			"version": "latest",
+			"plugins": "mkdocs-material pymdown-extensions mkdocstrings[crystal,python] mkdocs-monorepo-plugin mkdocs-pdf-export-plugin mkdocs-awesome-pages-plugin"
+		},
+		"ghcr.io/devcontainers-contrib/features/poetry:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {
+			"version": "latest"
+		},
+		"ghcr.io/eliises/devcontainer-features/bash-profile:1": {
+			"command": "alias k=kubectl",
+			"file": "/etc/bash.bashrc"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode-remote.remote-wsl"
+			]
+		}
+	}
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "pip3 install --user -r requirements.txt",
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
