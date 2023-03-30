@@ -54,7 +54,7 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "pip install --user -r requirements.txt",
 	// "postCreateCommand": "pip install --user -r indymeet/requirements/requirements-dev.txt"
-	"postCreateCommand": "pip install -r indymeet/requirements/requirements-dev.txt",
+	"postCreateCommand": "sudo apt-get update / sudo apt-get install postgresql-client / pip install -r indymeet/requirements/requirements-dev.txt",
 	"features": {
 		"ghcr.io/devcontainers/features/github-cli:1": {
 			"installDirectlyFromGitHubRelease": true,
