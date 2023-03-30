@@ -1,4 +1,4 @@
-Django>=4.1,<4.2
+Django
 wagtail>=4.1,<4.2
 django-bootstrap5==22.2
 django-storages
@@ -6,5 +6,6 @@ psycopg2-binary
 
 django-recaptcha==3.0.*
 whitenoise
-git+ssh://git@github.com/Djangonaut-Space/puput.git@3525203b25a7c2e4ddbae4f82773b060c41d5feb#egg=puput
+puput
+#git+ssh://git@github.com/Djangonaut-Space/puput.git@3525203b25a7c2e4ddbae4f82773b060c41d5feb#egg=puput
 
