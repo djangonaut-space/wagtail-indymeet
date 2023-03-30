@@ -31,7 +31,10 @@
 				"donjayamanne.python-extension-pack",
 				"ms-vsliveshare.vsliveshare",
 				"ms-vscode-remote.remote-wsl",
-				"ms-vscode-remote.vscode-remote-extensionpack"
+				"ms-vscode-remote.vscode-remote-extensionpack",
+				"charliermarsh.ruff",
+				"mtxr.sqltools",
+				"mtxr.sqltools-driver-pg"
 			]
 		}
 	},
