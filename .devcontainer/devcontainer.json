@@ -1,0 +1,79 @@
+// .devcontainer/devcontainer.json or stored as a .devcontainer.json file (note the dot-prefix) in the root of your project.
+
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/postgres
+{
+	"name": "Python 3 & PostgreSQL",
+    "dockerComposeFile": [
+        "docker-compose.yml" // development docker-compose
+        // "../docker-compose.yml" // production docker-compose
+    ],
+	
+	// The 'service' property is the name of the service for the container that VS Code should
+    // use. Update this value and .devcontainer/docker-compose.yml to the real service name.
+	"service": "app",
+
+	// Uncomment the next line if you want to keep your containers running after VS Code shuts down.
+	"shutdownAction": "stopCompose",
+
+	// The optional 'workspaceFolder' property is the path VS Code should open by default when
+    // connected. This is typically a file mount in .devcontainer/docker-compose.yml
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.vscode-pylance",
+				"donjayamanne.python-environment-manager",
+				"ms-python.python",
+				"ms-python.pylint",
+				"ms-python.black-formatter",
+				"ms-python.isort",
+				"donjayamanne.python-extension-pack",
+				"ms-vsliveshare.vsliveshare",
+				"ms-vscode-remote.remote-wsl",
+				"ms-vscode-remote.vscode-remote-extensionpack",
+				"charliermarsh.ruff",
+				"mtxr.sqltools",
+				"mtxr.sqltools-driver-pg"
+			]
+		}
+	},
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// This can be used to network with other containers or the host.
+	"forwardPorts": [8000, 5432],
+
+	"portsAttributes": {
+		"8000": {"label": "Django port", "onAutoForward": "notify"},
+		"5432": {"label": "PostgreSQL port", "onAutoForward": "silent"}
+	},
+
+	// Uncomment the next line if you want start specific services in your Docker Compose config.
+    // "runServices": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "pip install --user -r requirements.txt",
+	// "postCreateCommand": "pip install --user -r indymeet/requirements/requirements-dev.txt"
+	"postCreateCommand": "sudo apt-get update / sudo apt-get install postgresql-client / pip install -r indymeet/requirements/requirements-dev.txt",
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {
+			"installDirectlyFromGitHubRelease": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/gh-release:1": {
+			"repo": "digitalocean/doctl",
+			"target": "gh",
+			"version": "latest"
+		}
+	}
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+	// "remoteUser": "devcontainer"
+}

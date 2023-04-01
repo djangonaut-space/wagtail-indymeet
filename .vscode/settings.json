@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/0ced3c22-2e60-46c5-9c3e-82ce5cc5e930/AppServices/subscriptions/0ced3c22-2e60-46c5-9c3e-82ce5cc5e930/resourceGroups/appsvc_linux_centralus_basic/providers/Microsoft.Web/sites/djangonaut-space",
+    "appService.deploySubpath": "./indymeet/",
+}

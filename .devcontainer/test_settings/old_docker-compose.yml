@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+ # Update this to the name of the service you want to work with in your docker-compose.yml file
+  app:
+   # Uncomment if you want to override the service's Dockerfile to one in the .devcontainer 
+    # folder. Note that the path of the Dockerfile and context is relative to the *primary* 
+    # docker-compose.yml file (the first in the devcontainer.json "dockerComposeFile"
+    # array). The sample below assumes your primary file is in the root of your project.
+    #
+    
+    # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
+    # cap_add:
+    #   - SYS_PTRACE
+    # security_opt:
+    #   - seccomp:unconfined
+
+    # Official Docker Image https://hub.docker.com/_/python/
+    image: python:3.11
+    platform: linux/amd64
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    # Overrides default command so things don't shut down after the process ends.
+    command: python manage.py runserver 0.0.0.0:8000 /bin/sh -c "while sleep 1000; do :; done"
+    ports:
+      - 8000:8000
+    working_dir: /demo-code
+    volumes:
+      - ./demo-code:/demo-code:cached
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+# volumes:
+#   postgres-data:
