@@ -1,12 +1,44 @@
 {% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
 
-{% block title %}Sign Up{% endblock %}
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+{% endblock extra_css %}
 
 {% block content %}
-<h2>Sign Up</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Sign Up</button>
-</form>
-{% endblock %}
+<main class="main container-lg">
+<div class="row">
+    <h1>Sign Up</h1>
+</div>
+{% if form.errors and not form.non_field_errors %}
+<div class=" alert alert-danger">
+ {% for key, error in form.errors.items %}
+<p> {{ key }}:{{ error }}</p>
+ {% endfor %}
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col">
+  <form method="post">
+    {% csrf_token %}
+
+    {% bootstrap_form form layout="horizontal" %}
+    <button type="submit" class="btn btn-primary">Submit</button>
+
+  </form>
+</div>
+<div class="col"></div>
+</div>
+
+
+
+{% endblock content %}

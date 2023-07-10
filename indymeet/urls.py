@@ -13,8 +13,9 @@ urlpatterns = [
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("search/", search_views.search, name="search"),
-    # path("home/", home_views.test_page, name="test"),
     path("accounts/", include("accounts.urls")),
+    path("", include("home.urls")),
+    path('content/', include('puput.urls')),
 ]
 
 

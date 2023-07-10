@@ -29,6 +29,19 @@
                     <li><a class="dropdown-item" href="#">Interested in Speaking to the Cadre?</a></li>
                     <li><a class="dropdown-item" href="#">Looking for Python and Django Talent?</a></li>
                 </ul>
+
+            </li>
+        </ul>
+        {% else %}
+        <a href="{% url 'login' %}">
+            <button class="btn btn-outline" type="submit">Sign In</button>
+        </a>
+        {% endif %}
+        <form class="d-flex">
+            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-success" type="submit"><i class="fa fa-search"></i></button>
+        </form>
+<!--
                 </li>
                 <li class="nav-item">
                 <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Join Spring 2023 Session</a>
@@ -64,6 +77,7 @@
                 <button class="btn btn-outline-success nav-btn" type="submit">Search</button>
             </form>
             </div>
+-->
         </div>
     </nav>
 </div>

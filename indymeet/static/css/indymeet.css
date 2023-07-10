@@ -10,6 +10,17 @@
     width: 3em;
     object-fit: cover;
     border-radius: 50%;
+    margin-bottom: 1.5rem;
+}
+
+.img-responsive>img {
+    width:100%;
+    margin-top: 15px;
+}
+
+article.row {
+    margin-left: 0;
+}
     padding: 0;
 }
 
@@ -69,4 +80,3 @@
 body {
     font-size: 13px;
 }
-
