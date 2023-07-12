@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+
+{% block content %}
+<main class="main">
+
+    <div class="container-lg">
+        <h3>Events</h3>
+        <div class="row">
+            <div class="col">
+            {% if current_tag %}
+                <p><a href="{% url 'event_list' %}">See all</a></p>
+            {% endif %}
+            {% if tags %}
+            {% for tag in tags %}
+                {% if tag == current_tag %}
+               <strong><a href="?tag={{ tag }}">{{ tag }}</a></strong>
+                {% else %}
+                <a href="?tag={{ tag }}">{{ tag }}</a>
+                {% endif %}
+                {% endfor %}
+            {% endif %}
+            </div>
+        </div>
+        <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
+
+            {% for event in events %}
+            {% include 'home/includes/event_card.html' %}
+            {% endfor %}
+
+        </div>
+        <div class="row text-center pt-4">
+            <a class="col" href="{% url 'calendar' %}">view # upcoming event(s) on calendar >> </a>
+        </div>
+    </div>
+</main>
+{% endblock content %}

@@ -5,13 +5,18 @@ from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 
 from wagtail.models import Page
-from wagtail.snippets.edit_handlers import SnippetChooserPanel
-from wagtail.admin.edit_handlers import FieldPanel, InlinePanel
-from wagtail.core.models import  Orderable
+from wagtail.admin.edit_handlers import FieldPanel
 from wagtail.snippets.models import register_snippet
+from modelcluster.fields import ParentalKey
+from modelcluster.models import ClusterableModel
+from taggit.models import TaggedItemBase
+from taggit.managers import TaggableManager
 
 from home.forms import SignUpPage
 from accounts.models import Link
+
+from .managers import EventQuerySet
+
 
 def sign_up_forms(context):
     return{
@@ -24,14 +29,27 @@ class HomePage(Page):
 
     ]
 
+    def get_context(self, request):
+        context = super().get_context(request)
+        events = Event.objects.visible()
+        past_events = events.past()
+        future_events = events.upcoming()
+        show_rsvp = False
+        if request.user.is_authenticated and request.user.profile.accepted_coc:
+            show_rsvp = True
+        context['past_events'] = past_events[:6]
+        context['future_events'] = future_events[:6]
+        context['show_rsvp'] = show_rsvp
+        return context
 
-class Category(models.Model):
-    name = models.CharField(max_length=25)
 
-    def __str__(self):
-        return self.name
 
-class Event(models.Model):
+class EventTag(TaggedItemBase):
+    content_object = ParentalKey('Event', on_delete=models.CASCADE, related_name='tagged_events')
+
+
+@register_snippet
+class Event(ClusterableModel):
     PENDING = 'Pending'
     SCHEDULED = 'Scheduled'
     CANCELED = 'Canceled'
@@ -51,7 +69,7 @@ class Event(models.Model):
     location = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=EVENT_STATUS, default=PENDING)
-    categories = models.ManyToManyField('Category', related_name="events", blank=True, null=True)
+    tags = TaggableManager(through=EventTag, blank=True)
     speakers = models.ManyToManyField('accounts.CustomUser', related_name="speaker_events", blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -59,6 +77,9 @@ class Event(models.Model):
     rsvped_members = models.ManyToManyField('accounts.CustomUser', related_name='rsvp_events', blank=True, null=True)
     organizers = models.ManyToManyField('accounts.CustomUser', blank=True, null=True)
     session = models.ForeignKey('Session', blank=True, null=True, related_name="events", on_delete=models.SET_NULL)
+
+    objects = EventQuerySet.as_manager()
+
 
     def __str__(self):
         return self.title
