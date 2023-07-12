@@ -14,4 +14,7 @@ class SignUpView(CreateView):
 
 @login_required(login_url='/accounts/login') #redirect when user is not logged in
 def profile(request):
-    return render(request, 'registration/profile.html')
+    show_rsvp = False
+    if request.user.is_authenticated and request.user.profile.accepted_coc:
+        show_rsvp = True
+    return render(request, 'registration/profile.html', {"show_rsvp": show_rsvp})
