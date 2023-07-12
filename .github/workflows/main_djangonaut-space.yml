@@ -20,6 +20,17 @@ jobs:
     env:
       ENVIRONMENT: 'production'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
+      APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.APPINSIGHTS_INSTRUMENTATIONKEY }}
+      APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
+      DEBUG: 'True'
+      HOST: ${{ secrets.HOST }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+      RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      USER: ${{ secrets.USER }}
+      WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
     environment: prod-djangonaut-space
     runs-on: ubuntu-latest
 
