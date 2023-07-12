@@ -32,6 +32,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt 
           echo ENV
+          printenv -0
         
       - name: Building web app
         uses: azure/appservice-build@v2
