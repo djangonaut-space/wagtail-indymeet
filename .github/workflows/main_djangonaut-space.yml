@@ -1,6 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idenv
 
 name: Build and deploy Python app to Azure Web App - djangonaut-space
 
@@ -16,6 +17,9 @@ env:
 
 jobs:
   build:
+    env:
+      ENVIRONMENT: 'production'
+      DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
     environment: prod-djangonaut-space
     runs-on: ubuntu-latest
 
@@ -39,7 +43,6 @@ jobs:
       - name: Deploy web App using GH Action azure/webapps-deploy
         uses: azure/webapps-deploy@v2
         with:
-          ENVIRONMENT: 'production'
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
