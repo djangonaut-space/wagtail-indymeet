@@ -1,0 +1,49 @@
+{% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>
+            {% block title %}
+            {% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }}{% endif %}
+            {% endblock %}
+            {% block title_suffix %}
+            {% wagtail_site as current_site %}
+            {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
+            {% endblock %}
+        </title>
+        <meta name="description" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        {# Force all links in the live preview panel to be opened in a new tab #}
+        {% if request.in_preview_panel %}
+        <base target="_blank">
+        {% endif %}
+
+        {# Global stylesheets #}
+        {% block extra_css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
+        <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+        {% endblock extra_css %}
+    </head>
+    
+    <body class="{% block body_class %}{% endblock %}">
+        {% if 'Home' not in page.title  %}
+            {% include 'includes/breadcrumbs.html' %}
+        {% endif %}
+        <script src="https://unpkg.com/htmx.org@1.8.4"></script>
+        {% wagtailuserbar %}
+        {% block content %}
+            {# other page stuff goes here #}
+        {% endblock %}
+        {# Global javascript #}
+        <script type="text/javascript" src="{% static 'js/particles/particles.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/indymeet.js' %}"></script>
+    </body>
+</html>

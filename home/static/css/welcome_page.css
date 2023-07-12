@@ -20,12 +20,12 @@ body {
 
 a {
     background-color: transparent;
-    color: #308282;
+    color: #71f4f5;
     text-decoration: underline;
 }
 
 a:hover {
-    color: #ea1b10;
+    color: #308282;
 }
 
 h1,
@@ -74,7 +74,7 @@ svg:not(:root) {
 .main {
     padding: 40px 0;
     margin: 0 auto;
- }
+}
 
 .main-center {
     text-align: center;
@@ -85,9 +85,12 @@ svg:not(:root) {
 }
 
 @keyframes pos {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: rotate(-6deg);
     }
+
     50% {
         transform: rotate(6deg);
     }
@@ -119,6 +122,18 @@ svg:not(:root) {
     justify-content: space-between;
     border-top: 1px solid #e6e6e6;
     padding: 10px;
+    margin: auto !important;
+    text-align: center;
+}
+
+.footer-bottom {
+    padding-top: 5rem;
+    margin: auto; 
+    text-align: center;
+}
+
+.footer-ul {
+    list-style-type: none;
 }
 
 .option {
@@ -151,6 +166,86 @@ svg:not(:root) {
     font-size: 15px;
     font-weight: 300;
 }
+
+/* ---------------------------------------------------------------------
+ LANDING PAGE
+----------------------------------------------------------------------*/
+.landing {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: black;
+    color: white;
+}
+
+.landing-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+.landing-page::before {
+    content: "";
+    position: absolute;
+    margin: 0px auto;
+    left: 0px;
+    top: -10%;
+    filter: brightness(0.4) sepia(1) hue-rotate(205deg) saturate(8);
+    opacity: 0.9;
+    -webkit-mask-image: radial-gradient(70% 80% at 50% 50%,
+            black 40%,
+            transparent 70%);
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.landing-page::after {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    content: "";
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg,
+            rgb(0, 73, 255) 0%,
+            rgb(255, 105, 185) 100%);
+    opacity: 0.6;
+    z-index: -2;
+    -webkit-mask-image: radial-gradient(70% 80% at 50% 50%,
+            black -40%,
+            transparent 60%);
+}
+
+.landing-page a {
+    display: inline-block;
+    text-align: center;
+}
+
+.landing-page input[name="email"] {
+    margin-right: 1em;
+}
+
+.landing-page img {
+    max-width: 100%;
+    width: 90%;
+}
+
+.landing-page .links a {
+    padding: 0 0.5rem;
+    font-size: 20px;
+}
+
+#particules-js {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
 /* ---------------------------------------------------------------------
  EVENTS - HOME PAGE
 ----------------------------------------------------------------------*/

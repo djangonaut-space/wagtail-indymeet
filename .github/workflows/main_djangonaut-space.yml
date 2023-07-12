@@ -1,0 +1,59 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idenv
+
+name: Build and deploy Python app to Azure Web App - djangonaut-space
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env: 
+  AZURE_WEBAPP_NAME: djangonaut-space
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+
+jobs:
+  build:
+    env:
+      ENVIRONMENT: 'production'
+      DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
+      APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.APPINSIGHTS_INSTRUMENTATIONKEY }}
+      APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
+      DEBUG: 'True'
+      HOST: ${{ secrets.HOST }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+      RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      USER: ${{ secrets.USER }}
+      WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
+    environment: prod-djangonaut-space
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt 
+          echo ENV
+          printenv -0
+        
+      - name: Building web app
+        uses: azure/appservice-build@v2
+      - name: Deploy web App using GH Action azure/webapps-deploy
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
