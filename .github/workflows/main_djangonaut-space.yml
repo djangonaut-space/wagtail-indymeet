@@ -16,6 +16,7 @@ env:
 
 jobs:
   build:
+    environment: prod-djangonaut-space
     runs-on: ubuntu-latest
 
     steps:
