@@ -42,13 +42,13 @@ class UserProfile(models.Model):
     member_status = models.CharField(choices=MEMBER_STATUS, default=ACTIVE, max_length=50)
     member_role = models.CharField(choices=MEMBER_ROLES, default=PARTICIPANT, max_length=50)
     pronouns = models.CharField(max_length=20, blank=True, null=True)
-    receiving_newsletter = models.BooleanField(default=False)
     bio = models.TextField(blank=True, null=True)
     bio_image = models.ImageField(blank=True, null=True)
     session_participant = models.BooleanField(default=False)
     recruitment_interest = models.BooleanField(default=False)
     accepted_coc = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
+    receiving_newsletter = models.BooleanField(default=False)
     receiving_event_updates = models.BooleanField(default=False)
 
     def __str__(self):

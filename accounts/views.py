@@ -56,6 +56,7 @@ class SignUpView(CreateView):
 
         self.object = form.save()
         user = self.object
+        user.profile.accepted_coc = form.cleaned_data['accepted_coc']
         user.profile.receiving_newsletter = form.cleaned_data['receive_newsletter']
         user.profile.receiving_event_updates = form.cleaned_data['receive_event_updates']
         user.profile.save(update_fields=['receiving_newsletter', 'receiving_event_updates'])

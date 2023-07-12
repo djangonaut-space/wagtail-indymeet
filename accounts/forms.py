@@ -21,6 +21,11 @@ class CustomUserCreationForm(UserCreationForm):
         required=False,
         help_text="""Optional: Please check this to opt-in for receiving emails to events you register to.
             You can opt-out on your profile page at anytime.""")
+    accepted_coc = forms.BooleanField(
+        required=True,
+        label="Accept CoC*",
+        help_text="""Required: please read over and accept <a href='https://github.com/djangonaut-space/pilot-program/blob/main/CODE_OF_CONDUCT.md'>the CoC</a>"""
+        )
 
 
     class Meta:
@@ -33,6 +38,7 @@ class CustomUserCreationForm(UserCreationForm):
             "password1",
             "password2",
             "email_consent",
+            "accepted_coc",
             "receive_newsletter",
             "receive_event_updates",
         )
