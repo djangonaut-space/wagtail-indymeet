@@ -6,19 +6,18 @@
     </head>
     <body>
         <div class="container">
-            Hello {{ user.first_name }},
+            <h1>Event RVSP Confirmation</h1>
+           <p>Hello {{ user.first_name }},</p>
 
-            We are excited that you decided to join us!
+            <p>We are excited that you decided to join us!</p>
 
-            This is a reminder that you successfully RSVPed for an event with Djangonaut Space on {{ event.start_time }}.
+            <p>This is a reminder that you successfully RSVPed for an event with Djangonaut Space on {{ event.start_time|date:"Y/m/d" }}.</p>
 
-            To see event details or to cancel your RSVP please visit the event page at {{ event.get_full_url }}.
+            <p>To see event details or to cancel your RSVP please visit the event page at {{ event.get_full_url }}.</p>
 
-            Thank you,
+            <p>Thank you,</p>
 
-            Djangonaut Space Organizers
-
-
+            <p>Djangonaut Space Organizers</p>
         </div>
     </body>
 </html>

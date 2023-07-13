@@ -1,7 +1,7 @@
 from django.utils import timezone
 from django.db import models
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -89,21 +89,19 @@ class Event(models.Model):
             "user": user,
         }
 
-        subject = 'Djangonaut Space RSVP'
-        text_message = render_to_string('email/email_rsvp.txt', email_dict)
-        html_message = render_to_string('email/email_rsvp.html', email_dict)
-
-        email_kwargs = {
-            'subject': subject,
-            'body': text_message,
-            'from_email': settings.DEFAULT_FROM_EMAIL,
-            'to': [user.email],
-            'reply_to': [settings.DEFAULT_FROM_EMAIL,],
-        }
-
-        email = EmailMultiAlternatives(**email_kwargs)
-        email.attach_alternative(html_message, "text/html")
-        email.send()
+        send_mail(
+            recipient_list=[user.email],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            subject='Djangonaut Space RSVP',
+            message=render_to_string(
+                'email/email_rsvp.txt',
+                email_dict
+            ),
+            html_message=render_to_string(
+                'email/email_rsvp.html',
+                email_dict
+            )
+        )
 
 
     def remove_participant_email_verification(self, user):
@@ -116,22 +114,19 @@ class Event(models.Model):
             "user": user,
         }
 
-        subject = 'Djangonaut Space RSVP Cancelation'
-        text_message = render_to_string('email/email_rsvp_cancel.txt', email_dict)
-        html_message = render_to_string('email/email_rsvp_cancel.html', email_dict)
-
-        email_kwargs = {
-            'subject': subject,
-            'body': text_message,
-            'from_email': settings.DEFAULT_FROM_EMAIL,
-            'to': [user.email],
-            'reply_to': [settings.DEFAULT_FROM_EMAIL,],
-        }
-
-        email = EmailMultiAlternatives(**email_kwargs)
-        email.attach_alternative(html_message, "text/html")
-        email.send()
-
+        send_mail(
+            recipient_list=[user.email],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            subject='Djangonaut Space RSVP Cancelation',
+            message=render_to_string(
+                'email/email_rsvp_cancel.txt',
+                email_dict
+            ),
+            html_message=render_to_string(
+                'email/email_rsvp_cancel.html',
+                email_dict
+            )
+        )
 
 
     def get_full_url(self):
