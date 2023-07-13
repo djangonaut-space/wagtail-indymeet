@@ -7,7 +7,7 @@
     <div class="card text-align-left" style="width: auto">
         <div class="card-header">
             <h5 class="card-title">{{ event.title }}</h5>
-            <substitle>{{ event.start_time }}</substitle>
+            <substitle>{{ event.start_time|date:"Y/m/d" }}</substitle>
         </div>
         {# TODO: Add default image when no event image is selected #}
         {% if event.cover_image %}
