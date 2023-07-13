@@ -1,5 +1,10 @@
 from django.utils import timezone
 from django.db import models
+from django.conf import settings
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse
+
 
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
@@ -94,6 +99,62 @@ class Event(ClusterableModel):
     @property
     def accepting_rsvps(self):
         return self.is_future and self.status == self.SCHEDULED
+
+    def add_participant_email_verification(self, user):
+        self.rsvped_members.add(user.id)
+        if not user.email:
+            return
+
+        email_dict = {
+            "event" : self,
+            "user": user,
+        }
+
+        send_mail(
+            recipient_list=[user.email],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            subject='Djangonaut Space RSVP',
+            message=render_to_string(
+                'email/email_rsvp.txt',
+                email_dict
+            ),
+            html_message=render_to_string(
+                'email/email_rsvp.html',
+                email_dict
+            )
+        )
+
+
+    def remove_participant_email_verification(self, user):
+        self.rsvped_members.remove(user)
+        if not user.email:
+            return
+
+        email_dict = {
+            "event" : self,
+            "user": user,
+        }
+
+        send_mail(
+            recipient_list=[user.email],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            subject='Djangonaut Space RSVP Cancelation',
+            message=render_to_string(
+                'email/email_rsvp_cancel.txt',
+                email_dict
+            ),
+            html_message=render_to_string(
+                'email/email_rsvp_cancel.html',
+                email_dict
+            )
+        )
+
+
+    def get_full_url(self):
+        return settings.BASE_URL + self.get_absolute_url()
+
+    def get_absolute_url(self):
+        return reverse('event_detail', kwargs={'pk': self.pk})
 
 class Session(models.Model):
     start_date = models.DateField()
