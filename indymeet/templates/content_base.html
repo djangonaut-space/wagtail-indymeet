@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+
+<main class="main container-lg">
+    <div class="col main-center">
+        <img class="registration-logo" src="{% static 'img/temp_logo.png' %}" />
+    </div>
+    <div class="row">
+        <h1 class="my-3">{% block page_title %}{% endblock %}</h1>
+    </div>
+    <div class="row">
+
+        {% block main_content %}
+
+        {% endblock main_content %}
+    </div>
+</main>
+{% endblock content %}
