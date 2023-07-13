@@ -3,7 +3,8 @@ wagtail>=4.1,<4.2
 django-bootstrap5==22.2
 django-storages
 psycopg2-binary
-
+django-anymail==9.0
+six==1.16.*
 django-recaptcha==3.0.*
 whitenoise
 python-dotenv
