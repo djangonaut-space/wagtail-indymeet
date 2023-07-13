@@ -85,7 +85,9 @@
 </div>
 <div class="upcoming-events">
     <h1>UPCOMING REGISTERED EVENTS</h1>
-    {% include 'home/includes/events_upcoming.html' %}
+    {% with user.rsvp_events.upcoming as future_events %}
+        {% include 'home/includes/events_upcoming.html' %}
+    {% endwith %}
 </div>
 </main>
 {% endblock content %}

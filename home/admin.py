@@ -1,14 +1,10 @@
 from django.contrib import admin
 
-from .models import Event, Category, Session
+from .models import Event, Session
 
 class EventAdmin(admin.ModelAdmin):
     model = Event
-    filter_horizontal = ('categories', 'speakers', 'rsvped_members', 'organizers')
-
-class CategoryAdmin(admin.ModelAdmin):
-    model = Category
-
+    filter_horizontal = ('speakers', 'rsvped_members', 'organizers')
 
 class SessionAdmin(admin.ModelAdmin):
     model = Session
@@ -16,5 +12,4 @@ class SessionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Event, EventAdmin)
-admin.site.register(Category, CategoryAdmin)
 admin.site.register(Session, SessionAdmin)

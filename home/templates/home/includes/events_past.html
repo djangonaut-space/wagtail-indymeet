@@ -12,13 +12,9 @@
     <div class="container-lg">
         <h3># Past Events</h3>
         <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
-            {# for event in events_list where "past" limit 6? #}
-            {% include 'home/includes/event_card.html' %}
-            {% include 'home/includes/event_card.html' %}
-            {% include 'home/includes/event_card.html' %}
-            {% include 'home/includes/event_card.html' %}
-            {# if more events then, else # nothing #}
-
+            {% for event in past_events %}
+                {% include 'home/includes/event_card.html' %}
+            {% endfor %}
         </div>
         <div class="row text-center pt-4">
             <a class="col" href="{% url 'calendar' %}">view # past event(s) on calendar >> </a>

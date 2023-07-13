@@ -1,4 +1,6 @@
 from .base import *
+from dotenv import load_dotenv
+load_dotenv()
 
 DEBUG = os.getenv('DEBUG')
 
@@ -31,6 +33,14 @@ if os.getenv('ENVIRONMENT') == 'production':
                 'sslmode': 'require'
             },
         },
+    }
+
+    EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
+    MAILJET_API_KEY = os.getenv('MAILJET_API_KEY')
+    MAILJET_SECRET_KEY = os.getenv('MAILJET_SECRET_KEY')
+    ANYMAIL = {
+        "MAILJET_API_KEY": MAILJET_API_KEY,
+        "MAILJET_SECRET_KEY": MAILJET_SECRET_KEY,
     }
 
 try:

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block content %}
+<main class="main main-center">
+    <a href="/">
+        <img src="{% static 'img/temp_logo.png' %}" />    
+    </a>
+</main>
+{% include 'home/includes/welcome_page.html' %}
+{% include 'home/includes/events_upcoming.html' %}
+{% with content_text="Long text about Djangonaut space and what we're doing here, how we came to be" %}
+    {% include 'home/includes/homepage_blade.html' with title="Djangonaut Space" content=content_text color="#cccccc"%}
+{% endwith %}
+{% include 'home/includes/events_past.html' %}
+{% with content_text="We do three session per year. This is completely free and sponsored by Django Software Foundation. You're welcome to join any session at any time but you get the full benefit of the program by starting the session with your peers." %}
+    {% include 'home/includes/homepage_blade.html' with title="How it works" content=content_text color="#cccccc"%}
+{% endwith %}
+
+{% with content_text="<a href='/'> Sign Up Today</a>" %}
+    {% include 'home/includes/homepage_blade.html' with title="What are you waiting for?" content=content_text color="#FFF"%}
+{% endwith %}
+{% endblock content %}
