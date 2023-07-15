@@ -32,7 +32,7 @@ on:
 jobs:
   build:
     env:
-      ENVIRONMENT: 'staging'
+      ENVIRONMENT: 'production'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
       APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.STAGING_APPINSIGHTS_INSTRUMENTATIONKEY }}
       APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
