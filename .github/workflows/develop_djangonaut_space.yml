@@ -34,16 +34,16 @@ jobs:
     env:
       ENVIRONMENT: 'staging'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
-      APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.APPINSIGHTS_INSTRUMENTATIONKEY }}
+      APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.STAGING_APPINSIGHTS_INSTRUMENTATIONKEY }}
       APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
       DEBUG: 'True'
-      HOST: ${{ secrets.HOST }}
-      PASSWORD: ${{ secrets.PASSWORD }}
+      HOST: ${{ secrets.STAGING_HOST }}
+      PASSWORD: ${{ secrets.STAGING_PASSWORD }}
       RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
       RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
       SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      USER: ${{ secrets.USER }}
+      SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
+      USER: ${{ secrets.STAGING_USER }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
     environment: staging-djangonaut-space
     runs-on: ubuntu-latest
