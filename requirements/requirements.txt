@@ -9,3 +9,4 @@ django-recaptcha==3.0.*
 whitenoise
 python-dotenv
 puput
+urllib3==1.26.6
