@@ -10,3 +10,4 @@ whitenoise
 python-dotenv
 puput
 django-recaptcha==3.0.*
+django-anymail==9.0
