@@ -27,11 +27,9 @@ INSTALLED_APPS = [
     "accounts",
     "home",
     "search",
-
     "django_bootstrap5",
     "anymail",
     "captcha",
-
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.embeds",
@@ -43,13 +41,11 @@ INSTALLED_APPS = [
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
-
     # puput support
-    'wagtail.contrib.sitemaps',
-    'wagtail.contrib.routable_page',
-    'django_social_share',
-    'puput',
-
+    "wagtail.contrib.sitemaps",
+    "wagtail.contrib.routable_page",
+    "django_social_share",
+    "puput",
     "modelcluster",
     "taggit",
     "django.contrib.admin",
@@ -58,7 +54,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
 ]
 
 MIDDLEWARE = [
@@ -71,7 +66,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
-
 ]
 
 ROOT_URLCONF = "indymeet.urls"
@@ -102,13 +96,13 @@ WSGI_APPLICATION = "indymeet.wsgi.application"
 
 # Dummy local test database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',  # 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'local_djangonaut_space',                      # Or path to database file if using sqlite3.
-        'USER': 'postgres',                      # Not used with sqlite3.
-        'PASSWORD': 4,                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': 5432,                      # Set to empty string for default. Not used with sqlite3.
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",  # 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        "NAME": "local_djangonaut_space",  # Or path to database file if using sqlite3.
+        "USER": "postgres",  # Not used with sqlite3.
+        "PASSWORD": 4,  # Not used with sqlite3.
+        "HOST": "localhost",  # Set to empty string for localhost. Not used with sqlite3.
+        "PORT": 5432,  # Set to empty string for default. Not used with sqlite3.
     },
 }
 
@@ -186,11 +180,11 @@ WAGTAILSEARCH_BACKENDS = {
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
 WAGTAILADMIN_BASE_URL = "http://example.com"
 
-AUTH_USER_MODEL = 'accounts.CustomUser'
+AUTH_USER_MODEL = "accounts.CustomUser"
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 
-DEFAULT_FROM_EMAIL = 'contact@djangonaut.space'
-SERVER_EMAIL = 'contact@djangonaut.space'
+DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
+SERVER_EMAIL = "contact@djangonaut.space"

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ###  SQLite (deprecated)
-if os.getenv('ENVIRONMENT') == 'dev':
+if os.getenv("ENVIRONMENT") == "dev":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -15,11 +15,11 @@ if os.getenv('ENVIRONMENT') == 'dev':
         }
     }
 
-print('----------------------------------')
-print('----------------------------------')
-print('DEV')
-print('----------------------------------')
-print('----------------------------------')
+print("----------------------------------")
+print("----------------------------------")
+print("DEV")
+print("----------------------------------")
+print("----------------------------------")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -39,9 +39,9 @@ try:
 except ImportError:
     pass
 
-BASE_URL = 'http://localhost:8000'
+BASE_URL = "http://localhost:8000"
 
-RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
-RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+RECAPTCHA_PUBLIC_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+RECAPTCHA_PRIVATE_KEY = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
 
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]

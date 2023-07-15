@@ -12,21 +12,23 @@ class CustomUserCreationForm(UserCreationForm):
     email_consent = forms.BooleanField(
         help_text="""Required: Please check this to consent to receiving administrative
         emails like: email verification, password reset etc.""",
-        label="Email Consent*")
+        label="Email Consent*",
+    )
     receive_newsletter = forms.BooleanField(
         required=False,
         help_text="""Optional: Please check this to opt-in for receiving general updates about community and events.
-            You can opt-out on your profile page at anytime.""")
+            You can opt-out on your profile page at anytime.""",
+    )
     receive_event_updates = forms.BooleanField(
         required=False,
         help_text="""Optional: Please check this to opt-in for receiving emails to events you register to.
-            You can opt-out on your profile page at anytime.""")
+            You can opt-out on your profile page at anytime.""",
+    )
     accepted_coc = forms.BooleanField(
         required=True,
         label="Accept CoC*",
-        help_text="""Required: please read over and accept <a href='https://github.com/djangonaut-space/pilot-program/blob/main/CODE_OF_CONDUCT.md'>the CoC</a>"""
-        )
-
+        help_text="""Required: please read over and accept <a href='https://github.com/djangonaut-space/pilot-program/blob/main/CODE_OF_CONDUCT.md'>the CoC</a>""",
+    )
 
     class Meta:
         model = CustomUser
@@ -45,10 +47,10 @@ class CustomUserCreationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super(CustomUserCreationForm, self).__init__(*args, **kwargs)
-        self.fields['email'].required = True
+        self.fields["email"].required = True
+
 
 class CustomUserChangeForm(UserChangeForm):
-
     class Meta:
         model = CustomUser
         fields = (

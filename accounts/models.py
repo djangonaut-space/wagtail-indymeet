@@ -7,7 +7,8 @@ from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.urls import reverse
 from django.conf import settings
 
-from wagtail.core.models import  Orderable
+from wagtail.core.models import Orderable
+
 
 class CustomUser(AbstractUser):
     pass
@@ -29,7 +30,7 @@ class UserProfile(models.Model):
         (PROJECT_OWNER, "Project Owner"),
         (VOLUNTEER, "Volunteer"),
         (ORGANIZER, "Organizer"),
-        )
+    )
 
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -38,9 +39,15 @@ class UserProfile(models.Model):
         (ACTIVE, "Active"),
         (INACTIVE, "Inactive"),
     )
-    user = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name="profile")
-    member_status = models.CharField(choices=MEMBER_STATUS, default=ACTIVE, max_length=50)
-    member_role = models.CharField(choices=MEMBER_ROLES, default=PARTICIPANT, max_length=50)
+    user = models.OneToOneField(
+        "CustomUser", on_delete=models.CASCADE, related_name="profile"
+    )
+    member_status = models.CharField(
+        choices=MEMBER_STATUS, default=ACTIVE, max_length=50
+    )
+    member_role = models.CharField(
+        choices=MEMBER_ROLES, default=PARTICIPANT, max_length=50
+    )
     pronouns = models.CharField(max_length=20, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     bio_image = models.ImageField(blank=True, null=True)
@@ -56,33 +63,40 @@ class UserProfile(models.Model):
 
     def create_unsubscribe_link(self):
         user_id, token = self.make_token().split(":", 1)
-        return  settings.BASE_URL + reverse('unsubscribe',
-                    kwargs={'user_id': user_id, 'token': token,})
+        return settings.BASE_URL + reverse(
+            "unsubscribe",
+            kwargs={
+                "user_id": user_id,
+                "token": token,
+            },
+        )
 
     def make_token(self):
         return TimestampSigner().sign(self.user.id)
 
     def check_token(self, token):
         try:
-            key = f'{self.user.id}:{token}'
-            TimestampSigner().unsign(key, max_age=60 * 60 * 48) # Valid for 2 days
+            key = f"{self.user.id}:{token}"
+            TimestampSigner().unsign(key, max_age=60 * 60 * 48)  # Valid for 2 days
         except (BadSignature, SignatureExpired):
             return False
         return True
 
 
 class Link(Orderable):
-    member = models.ForeignKey("UserProfile", related_name="links", on_delete=models.CASCADE)
+    member = models.ForeignKey(
+        "UserProfile", related_name="links", on_delete=models.CASCADE
+    )
     name = models.CharField(max_length=255)
     url = models.URLField(max_length=255)
+
 
 class MemberList(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True)
     members = models.ManyToManyField("CustomUser", related_name="member_lists")
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_active =  models.BooleanField(default=True)
-
+    is_active = models.BooleanField(default=True)
 
 
 ##################### Signals #######################

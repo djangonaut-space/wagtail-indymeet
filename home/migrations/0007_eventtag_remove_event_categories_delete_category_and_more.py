@@ -7,42 +7,63 @@ import taggit.managers
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('taggit', '0005_auto_20220424_2025'),
-        ('home', '0006_category_session_event'),
+        ("taggit", "0005_auto_20220424_2025"),
+        ("home", "0006_category_session_event"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='EventTag',
+            name="EventTag",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.RemoveField(
-            model_name='event',
-            name='categories',
+            model_name="event",
+            name="categories",
         ),
         migrations.DeleteModel(
-            name='Category',
+            name="Category",
         ),
         migrations.AddField(
-            model_name='eventtag',
-            name='content_object',
-            field=modelcluster.fields.ParentalKey(on_delete=django.db.models.deletion.CASCADE, related_name='tagged_events', to='home.event'),
+            model_name="eventtag",
+            name="content_object",
+            field=modelcluster.fields.ParentalKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="tagged_events",
+                to="home.event",
+            ),
         ),
         migrations.AddField(
-            model_name='eventtag',
-            name='tag',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(app_label)s_%(class)s_items', to='taggit.tag'),
+            model_name="eventtag",
+            name="tag",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="%(app_label)s_%(class)s_items",
+                to="taggit.tag",
+            ),
         ),
         migrations.AddField(
-            model_name='event',
-            name='tags',
-            field=taggit.managers.TaggableManager(blank=True, help_text='A comma-separated list of tags.', through='home.EventTag', to='taggit.Tag', verbose_name='Tags'),
+            model_name="event",
+            name="tags",
+            field=taggit.managers.TaggableManager(
+                blank=True,
+                help_text="A comma-separated list of tags.",
+                through="home.EventTag",
+                to="taggit.Tag",
+                verbose_name="Tags",
+            ),
         ),
     ]

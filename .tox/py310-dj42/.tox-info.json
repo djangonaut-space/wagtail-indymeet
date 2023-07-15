@@ -1,0 +1,6 @@
+{
+  "ToxEnv": {
+    "name": "py310-dj42",
+    "type": "VirtualEnvRunner"
+  }
+}
