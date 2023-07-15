@@ -20,7 +20,7 @@
 name: Staging build and deploy Python app to Azure Web App - djangonaut-space
 
 env:
-  AZURE_WEBAPP_NAME: djangonaut-space  # set this to the name of your Azure Web App
+  AZURE_WEBAPP_NAME: staging-djangonaut-space  # set this to the name of your Azure Web App
   AZURE_WEBAPP_PACKAGE_PATH: '.'
   PYTHON_VERSION: '3.9'              # set this to the Python version to use
 
@@ -72,12 +72,5 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          publish-profile: ${{ secrets.STAGING_AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
