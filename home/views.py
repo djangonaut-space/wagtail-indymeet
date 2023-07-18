@@ -6,7 +6,7 @@ from .models import Event
 
 
 def event_calendar(request):
-    all_events = Event.objects.visible()
+    all_events = Event.objects.visible()  # type: ignore
     context = {
         "events": all_events,
     }
@@ -20,16 +20,16 @@ class EventDetailView(DetailView):
         if self.request.GET.get("rsvp", None):
             if (
                 self.request.GET.get("rsvp") == "true"
-                and self.request.user.profile
-                and self.request.user.profile.accepted_coc
-                and self.request.user not in self.object.rsvped_members.all()
+                and self.request.user.profile  # type: ignore
+                and self.request.user.profile.accepted_coc  # type: ignore
+                and self.request.user not in self.object.rsvped_members.all()  # type: ignore
             ):
-                self.object.add_participant_email_verification(self.request.user)
+                self.object.add_participant_email_verification(self.request.user)  # type: ignore
             elif (
                 self.request.GET.get("rsvp") == "false"
-                and self.request.user in self.object.rsvped_members.all()
+                and self.request.user in self.object.rsvped_members.all() # type: ignore
             ):
-                self.object.remove_participant_email_verification(self.request.user)
+                self.object.remove_participant_email_verification(self.request.user) # type: ignore
         return super().get_context_data(**kwargs)
 
 
@@ -41,7 +41,7 @@ class EventListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        events = Event.objects.visible().order_by("-start_time")
+        events = Event.objects.visible().order_by("-start_time") # type: ignore
 
         tag = self.request.GET.get("tag")
         if tag:
@@ -54,7 +54,7 @@ class EventListView(ListView):
 
     def get_event_tags(self):
         tags = []
-        events = Event.objects.visible()
+        events = Event.objects.visible() # type: ignore
         for event in events:
             tags += [tag.name for tag in event.tags.all()]
         tags = sorted(set(tags))

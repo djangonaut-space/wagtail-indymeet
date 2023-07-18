@@ -31,7 +31,7 @@ class HomePage(Page):
 
     def get_context(self, request):
         context = super().get_context(request)
-        events = Event.objects.visible()
+        events = Event.objects.visible()  # type: ignore
         past_events = events.past()
         future_events = events.upcoming()
         show_rsvp = False
