@@ -186,5 +186,7 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 
+
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
 SERVER_EMAIL = "contact@djangonaut.space"
+

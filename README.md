@@ -191,6 +191,17 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## Running `production` or `staging` locally 
+Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space). Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
+
+**Running production or staging locally**
+- Set .env variables `USER`, `PASSWORD` and `HOST` for either `staging` or `production` in order to access staging db. Credentials are in the password manager
+- `python manage.py runserver --settings=indymeet.settings.production`
+
+**Migrate production or staging db**
+- Set terminal variables for `USER`, `PASSWORD` and `HOST` for either `staging` or `production` db. Credentials are in the password manager.
+- `python manage.py migrate --settings=indymeet.settings.production`
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
