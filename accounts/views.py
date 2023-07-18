@@ -26,8 +26,7 @@ class ActivateAccountView(View):
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
-        if user is not None and account_activation_token.check_token(user,
-                                                                     token):
+        if user is not None and account_activation_token.check_token(user, token):
             user.profile.email_confirmed = True
             user.save()
             login(request, user)
@@ -113,8 +112,7 @@ def unsubscribe(request, user_id, token):
         profile.save()
 
         return render(
-            request, "registration/unsubscribed.html",
-            {"email_type": email_type}
+            request, "registration/unsubscribed.html", {"email_type": email_type}
         )
 
     # Otherwise redirect to login page
