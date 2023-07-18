@@ -4,7 +4,7 @@
 -->
 
 
-
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 <!-- PROJECT SHIELDS -->
 <!-- [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
@@ -181,6 +181,12 @@ Don't forget to give the project a star! Thanks again!
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Test and lint for code quality
+  - (recommended) Run pytest, Black, flake8 and ruff locally (`tox`)
+  - Run only one test (`tox -e py30 -- test_method`)
+  - Run only `Black` formatter (`python -m black .`)
+  - Run only `flake8` (`python -m flake8 --exclude venv,migrations,__pycache__,manage.py,settings,.tox`) and address issues
+  - Run only `ruff` (`ruff check . --exclude venv,migrations,__pycache__,manage.py,settings,.tox`) and address issues
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request

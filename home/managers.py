@@ -1,7 +1,6 @@
-
-import datetime
 from django.utils import timezone
 from django.db.models.query import QuerySet
+
 
 class EventQuerySet(QuerySet):
     def pending(self):
@@ -24,4 +23,3 @@ class EventQuerySet(QuerySet):
 
     def past(self):
         return self.filter(start_time__lte=timezone.now())
-

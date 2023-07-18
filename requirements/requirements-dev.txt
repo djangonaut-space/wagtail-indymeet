@@ -1,4 +1,5 @@
 -r requirements.txt
 black
 flake8
-python-dotenv==0.21.*
+ruff
+isort
