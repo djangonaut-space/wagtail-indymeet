@@ -1,4 +1,3 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
@@ -77,7 +76,8 @@ class UserProfile(models.Model):
     def check_token(self, token):
         try:
             key = f"{self.user.id}:{token}"
-            TimestampSigner().unsign(key, max_age=60 * 60 * 48)  # Valid for 2 days
+            # Valid for 2 days
+            TimestampSigner().unsign(key, max_age=60 * 60 * 48)
         except (BadSignature, SignatureExpired):
             return False
         return True
@@ -99,7 +99,11 @@ class MemberList(models.Model):
     is_active = models.BooleanField(default=True)
 
 
-##################### Signals #######################
+"""
+    ##################### Signals #######################
+"""
+
+
 @receiver(post_save, sender=CustomUser)
 def create_profile(sender, instance, created, **kwargs):
     if created:

@@ -1,12 +1,9 @@
 from django import forms
 from django.db import models
-from django.shortcuts import render
 from modelcluster.fields import ParentalKey
 from wagtail.admin.edit_handlers import (
     FieldPanel,
-    FieldRowPanel,
     InlinePanel,
-    MultiFieldPanel,
 )
 from django.db.models.fields import EmailField, CharField
 from wagtail.core.fields import RichTextField

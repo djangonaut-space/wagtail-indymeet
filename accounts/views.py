@@ -1,4 +1,6 @@
-# Create your views here.
+from .forms import CustomUserCreationForm
+from .tokens import account_activation_token
+
 from django.conf import settings
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -16,9 +18,6 @@ from django.http import HttpResponseRedirect
 
 User = get_user_model()
 
-from .forms import CustomUserCreationForm
-from .tokens import account_activation_token
-
 
 class ActivateAccountView(View):
     def get(self, request, uidb64, token):
@@ -27,7 +26,8 @@ class ActivateAccountView(View):
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
-        if user is not None and account_activation_token.check_token(user, token):
+        if user is not None and account_activation_token.check_token(user,
+                                                                     token):
             user.profile.email_confirmed = True
             user.save()
             login(request, user)
@@ -48,7 +48,8 @@ class SignUpView(CreateView):
         messages.add_message(
             self.request,
             messages.INFO,
-            "Your registration was successful. Please check your email provided for a confirmation link.",
+            "Your registration was successful. Please check your email \
+                provided for a confirmation link.",
         )
         return reverse("signup")
 
@@ -72,10 +73,11 @@ class SignUpView(CreateView):
                 "token": account_activation_token.make_token(user),
             },
         )
-        registration_url = f"{invite_link}"
         send_mail(
             "Djangonaut Space Registration Confirmation",
-            f"To confirm your email address on djangonaut.space please visit the link: {self.request.build_absolute_uri(invite_link)}",
+            f"To confirm your email address on djangonaut.space \
+                please visit the link: \
+                {self.request.build_absolute_uri(invite_link)}",
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             fail_silently=False,
@@ -83,7 +85,8 @@ class SignUpView(CreateView):
         return super().form_valid(form)
 
 
-@login_required(login_url="/accounts/login")  # redirect when user is not logged in
+# redirect when user is not logged in
+@login_required(login_url="/accounts/login")
 def profile(request):
     return render(request, "registration/profile.html")
 
@@ -110,7 +113,8 @@ def unsubscribe(request, user_id, token):
         profile.save()
 
         return render(
-            request, "registration/unsubscribed.html", {"email_type": email_type}
+            request, "registration/unsubscribed.html",
+            {"email_type": email_type}
         )
 
     # Otherwise redirect to login page

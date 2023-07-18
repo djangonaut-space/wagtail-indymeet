@@ -10,15 +10,11 @@ from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 
 from wagtail.models import Page
-from wagtail.admin.edit_handlers import FieldPanel
 from wagtail.snippets.models import register_snippet
-from modelcluster.fields import ParentalKey
-from modelcluster.models import ClusterableModel
 from taggit.models import TaggedItemBase
 from taggit.managers import TaggableManager
 
 from home.forms import SignUpPage
-from accounts.models import Link
 
 from .managers import EventQuerySet
 
