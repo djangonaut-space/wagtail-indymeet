@@ -1,4 +1,6 @@
 -r requirements.txt
 pytest
-pytest-djangopytest-cov
+pytest-django
+pytest-cov
 tox
+pytest-django
