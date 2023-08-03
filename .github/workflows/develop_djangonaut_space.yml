@@ -37,13 +37,13 @@ jobs:
       APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.STAGING_APPINSIGHTS_INSTRUMENTATIONKEY }}
       APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
       DEBUG: 'True'
-      HOST: ${{ secrets.STAGING_HOST }}
-      PASSWORD: ${{ secrets.STAGING_PASSWORD }}
+      HOST: ${{ secrets.HOST_ADDON }}
+      PASSWORD: ${{ secrets.PASSWORD_ADDON }}
       RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
       RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
       SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
       SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
-      USER: ${{ secrets.STAGING_USER }}
+      USER: ${{ secrets.USER_ADDON }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
     environment: staging-djangonaut-space
     runs-on: ubuntu-latest
