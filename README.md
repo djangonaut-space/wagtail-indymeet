@@ -115,19 +115,19 @@ This is an example of how to list things you need to use the software and how to
    ```
    activate in Linux:
    ```sh
-   $ source venv/bin/activate
+   source venv/bin/activate
    ```
    activate in Windows:
    ```sh
-   > venv\Scripts\activate
+   venv\Scripts\activate
    ```
 5. install requirements:
    ```sh
-   $ pip install -r requirements/requirements-dev.txt
+   pip install -r requirements/requirements-dev.txt
    ```
 6. Create a posgresql database **if you want to use quick and dirty SQLite db, set your `ENVIRONMENT` variable to `dev` (path not actively supported)**
    ```sh
-   $ psql -u posgres
+   psql -u posgres
    ```
    ```sh
    postgres=# CREATE DATABASE local_djangonaut_space;
@@ -139,14 +139,14 @@ This is an example of how to list things you need to use the software and how to
 <!-- 7. Copy `.template.env` file, rename to `.env` and use variables for your local postgres database. -->
 6. Run migrations and create superuser
    ```python
-   $ python manage.py migrate
+   python manage.py migrate
    ```
    ```python
-   $ python manage.py createsuperuser
+   python manage.py createsuperuser
    ```
 7. Run locally
     ```python
-    $ python manage.py runserver
+    python manage.py runserver
     ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
