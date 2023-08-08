@@ -121,11 +121,11 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    > venv\Scripts\activate
    ```
-5. install requirements:
+3. install requirements:
    ```sh
    $ pip install -r requirements/requirements-dev.txt
    ```
-6. Create a posgresql database **if you want to use quick and dirty SQLite db, set your `ENVIRONMENT` variable to `dev` (path not actively supported)**
+4. Create a posgresql database **if you want to use quick and dirty SQLite db, set your `ENVIRONMENT` variable to `dev` (path not actively supported)**
    ```sh
    $ psql -u posgres
    ```
@@ -136,18 +136,26 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    postgres=# exit
    ```
-<!-- 7. Copy `.template.env` file, rename to `.env` and use variables for your local postgres database. -->
+5. Copy `.env.template` file, rename to `.env` and use variables for your local postgres database.
+   Copy in Linux:
+   ```sh
+   cp .env.template .env
+   ```
+   activate in Windows:
+   ```sh
+   copy .env.template .env
+   ```
 6. Run migrations and create superuser
    ```python
-   $ python manage.py migrate
+   python manage.py migrate
    ```
    ```python
-   $ python manage.py createsuperuser
+   python manage.py createsuperuser
    ```
 7. Run locally
-    ```python
-    $ python manage.py runserver
-    ```
+   ```python
+   python manage.py runserver
+   ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
