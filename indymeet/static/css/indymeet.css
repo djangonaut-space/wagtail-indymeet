@@ -79,4 +79,9 @@ article.row {
 
 body {
     font-size: 13px;
+    font-family: 'Inter', sans-serif;
+}
+
+h1 {
+    font-family: 'Fraunces', serif;
 }

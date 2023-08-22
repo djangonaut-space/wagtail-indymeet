@@ -20,6 +20,7 @@
         </title>
         <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
 
         {# Force all links in the live preview panel to be opened in a new tab #}
         {% if request.in_preview_panel %}
@@ -28,6 +29,9 @@
 
         {# Global stylesheets #}
         {% block extra_css %}
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
         <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
         <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/fontawesome.min.css' %}">
