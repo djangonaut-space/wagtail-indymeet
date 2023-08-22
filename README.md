@@ -115,19 +115,19 @@ This is an example of how to list things you need to use the software and how to
    ```
    activate in Linux:
    ```sh
-   $ source venv/bin/activate
+   source venv/bin/activate
    ```
    activate in Windows:
    ```sh
-   > venv\Scripts\activate
+   venv\Scripts\activate
    ```
 3. install requirements:
    ```sh
-   $ pip install -r requirements/requirements-dev.txt
+   pip install -r requirements/requirements-dev.txt
    ```
 4. Create a posgresql database **if you want to use quick and dirty SQLite db, set your `ENVIRONMENT` variable to `dev` (path not actively supported)**
    ```sh
-   $ psql -u posgres
+   psql -u posgres
    ```
    ```sh
    postgres=# CREATE DATABASE local_djangonaut_space;
