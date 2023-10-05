@@ -9,6 +9,9 @@ from django.conf import settings
 
 from wagtail.core.models import  Orderable
 
+from accounts.fields import DefaultOneToOneField
+
+
 class CustomUser(AbstractUser):
     pass
 
@@ -38,7 +41,7 @@ class UserProfile(models.Model):
         (ACTIVE, "Active"),
         (INACTIVE, "Inactive"),
     )
-    user = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name="profile")
+    user = DefaultOneToOneField('CustomUser', create=True, on_delete=models.CASCADE, related_name="profile")
     member_status = models.CharField(choices=MEMBER_STATUS, default=ACTIVE, max_length=50)
     member_role = models.CharField(choices=MEMBER_ROLES, default=PARTICIPANT, max_length=50)
     pronouns = models.CharField(max_length=20, blank=True, null=True)
