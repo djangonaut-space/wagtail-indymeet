@@ -28,7 +28,7 @@ class ActivateAccountView(View):
             user = None
         if user is not None and account_activation_token.check_token(user, token):
             user.profile.email_confirmed = True
-            user.save()
+            user.profile.save()
             login(request, user)
             return redirect('profile')
         else:
@@ -59,7 +59,7 @@ class SignUpView(CreateView):
         user.profile.accepted_coc = form.cleaned_data['accepted_coc']
         user.profile.receiving_newsletter = form.cleaned_data['receive_newsletter']
         user.profile.receiving_event_updates = form.cleaned_data['receive_event_updates']
-        user.profile.save(update_fields=['receiving_newsletter', 'receiving_event_updates'])
+        user.profile.save(update_fields=['accepted_coc', 'receiving_newsletter', 'receiving_event_updates'])
         invite_link = reverse(
             "activate_account",
             kwargs={
@@ -67,7 +67,7 @@ class SignUpView(CreateView):
                 "token": account_activation_token.make_token(user),
             },
         )
-        registration_url =  f"{invite_link}"
+        registration_url = f"{invite_link}"
         send_mail(
             'Djangonaut Space Registration Confirmation',
             f'To confirm your email address on djangonaut.space please visit the link: {self.request.build_absolute_uri(invite_link)}',
