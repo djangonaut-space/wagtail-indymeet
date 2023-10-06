@@ -23,7 +23,7 @@
                     end: '{{ event.end_time|date:"Y-m-d H:i" }}',
                     id: '{{ event.id }}',
                     description: '{{ event.description }}',
-                    url: "{% url 'event_detail' pk=event.id %}",
+                    url: "{{ event.get_absolute_url }}",
                     {% if event.status == 'Canceled' %}
                         backgroundColor: '#d3d3d3',
                     {% elif event.status == 'Rescheduled' %}

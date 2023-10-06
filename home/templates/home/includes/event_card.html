@@ -31,12 +31,12 @@
         {% include 'home/includes/event_team.html' %}
         </div>
         <div class="card-footer">
-            <a href="{% url 'event_detail' pk=event.id %}" class="btn btn-primary">About</a>
+            <a href="{{ event.get_absolute_url }}" class="btn btn-primary">About</a>
               {% if show_rsvp and event.accepting_rsvps %}
                 {% if user in event.rsvped_members.all %}
-                <a href="{% url 'event_detail' event.id %}?rsvp=false" class="btn btn-secondary">Cancel RSVP</a>
+                <a href="{{ event.get_absolute_url }}?rsvp=false" class="btn btn-secondary">Cancel RSVP</a>
                 {% else %}
-                <a href="{% url 'event_detail' event.id %}?rsvp=true" class="btn btn-primary">Register</a>
+                <a href="{{ event.get_absolute_url }}?rsvp=true" class="btn btn-primary">Register</a>
                 {% endif %}
               {% endif %}
         </div>

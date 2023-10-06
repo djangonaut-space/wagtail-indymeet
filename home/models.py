@@ -67,9 +67,10 @@ class Event(ClusterableModel):
         (RESCHEDULED, 'Rescheduled')
     )
     title = models.CharField(max_length=255)
+    slug = models.SlugField(help_text="This is used in the URL to identify the event.", null=True)
 
     cover_image = models.ImageField(blank=True, null=True)
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(help_text="Changing this will change the link for the event. Use caution.")
     end_time = models.DateTimeField()
     location = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -154,7 +155,8 @@ class Event(ClusterableModel):
         return settings.BASE_URL + self.get_absolute_url()
 
     def get_absolute_url(self):
-        return reverse('event_detail', kwargs={'pk': self.pk})
+        return reverse('event_detail', kwargs={'year': self.start_time.year, 'month': self.start_time.month, 'slug': self.slug})
+
 
 class Session(models.Model):
     start_date = models.DateField()
