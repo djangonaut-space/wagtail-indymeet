@@ -19,6 +19,7 @@ def event_calendar(request):
 
 class EventDetailView(DetailView):
     model = Event
+    template_name = "home/prerelease/event_detail.html"
 
     def get_context_data(self, **kwargs):
         if self.request.GET.get('rsvp', None):
@@ -37,8 +38,7 @@ class EventDetailView(DetailView):
 
 class EventListView(ListView):
     model = Event
-    paginate_by = 100  # if pagination is desired
-    template_name = 'home/event_list.html'
+    template_name = 'home/prerelease/event_list.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -56,7 +56,7 @@ class EventListView(ListView):
 
     def get_event_tags(self):
         tags = []
-        events = Event.objects.visible()
+        events = Event.objects.visible().prefetch_related("tags")
         for event in events:
             tags += [tag.name for tag in event.tags.all()]
         tags = sorted(set(tags))
