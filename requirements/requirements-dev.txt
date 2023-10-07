@@ -2,3 +2,4 @@
 black
 flake8
 python-dotenv==0.21.*
+django-extensions

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 
 from modelcluster.fields import ParentalKey
@@ -20,7 +21,7 @@ from taggit.managers import TaggableManager
 from home.forms import SignUpPage
 from accounts.models import Link
 
-from .managers import EventQuerySet
+from .managers import EventQuerySet, SessionMembershipQuerySet
 
 
 def sign_up_forms(context):
@@ -67,7 +68,7 @@ class Event(ClusterableModel):
         (RESCHEDULED, 'Rescheduled')
     )
     title = models.CharField(max_length=255)
-    slug = models.SlugField(help_text="This is used in the URL to identify the event.", null=True)
+    slug = models.SlugField(help_text="This is used in the URL to identify the event.")
 
     cover_image = models.ImageField(blank=True, null=True)
     start_time = models.DateTimeField(help_text="Changing this will change the link for the event. Use caution.")
@@ -159,11 +160,48 @@ class Event(ClusterableModel):
 
 
 class Session(models.Model):
+    """Represents a mentoring session / cohort for Djangonaut Space"""
     start_date = models.DateField()
     end_date = models.DateField()
     title = models.CharField(max_length=255)
+    slug = models.SlugField(help_text="This is used in the URL to identify the session.", unique=True)
     description = models.TextField(blank=True, null=True)
-    participants = models.ManyToManyField('accounts.CustomUser', related_name='sessions', blank=True, null=True)
+    # This gives you the users who are participants. If you want to find
+    # the users who have a specific role, you'll need to use SessionMembership
+    participants = models.ManyToManyField('accounts.CustomUser', through='SessionMembership', related_name='sessions', blank=True)
+    invitation_date = models.DateField(help_text="This is the date when the first round of Djangonaut invitations will be sent out.")
+    application_start_date = models.DateField(help_text="This is the start date for Djangonaut applications.")
+    application_end_date = models.DateField(help_text="This is the end date for Djangonaut applications.")
+    application_url = models.URLField(help_text="This is a URL to the Djangonaut application form. Likely Google Forms.")
 
     def __str__(self):
         return self.title
+
+    def is_accepting_applications(self):
+        """Determine if the current date is within the application window"""
+        return self.application_start_date <= timezone.now().date() < self.application_end_date
+
+    def get_absolute_url(self):
+        return reverse('session_detail', kwargs={'slug': self.slug})
+
+
+class SessionMembership(models.Model):
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'session'], name='unique_session_membership')
+        ]
+
+    DJANGONAUT = "Djangonaut"
+    NAVIGATOR = "Navigator"
+    CAPTAIN = "Captain"
+
+    ROLES = (
+        (DJANGONAUT, _("Djangonaut")),
+        (NAVIGATOR, _("Navigator")),
+        (CAPTAIN, _("Mentor")),
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey('accounts.CustomUser', related_name='session_memberships', on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, related_name='session_memberships', on_delete=models.CASCADE)
+    role = models.CharField(max_length=64, choices=ROLES, default=DJANGONAUT)
+    objects = models.Manager.from_queryset(SessionMembershipQuerySet)()

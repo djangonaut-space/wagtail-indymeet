@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+
+{% block content %}
+<main class="main">
+    <div class="container-lg">
+        <h3>Program Sessions</h3>
+        <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
+            {% for session in sessions %}
+                {% include 'home/includes/session_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock content %}

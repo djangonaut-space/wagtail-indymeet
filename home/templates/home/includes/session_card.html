@@ -1,0 +1,27 @@
+{% block content %}
+<div class="col col-lg-3 col-md-4 col-sm-6 col-12">
+    <div class="card text-align-left" style="width: auto">
+      <div class="card-body">
+        <h5 class="card-title">{{ session.title }}</h5>
+        <p class="card-text">
+          {{ session.description|urlize|linebreaksbr }}
+        </p>
+        <br />
+        <h6>Applications Open</h6>
+        <p>{{ session.application_start_date|date:"Y/m/d" }}</p>
+        <br />
+        <h6>Applications Close</h6>
+        <p>{{ session.application_end_date|date:"Y/m/d" }}</p>
+        <br />
+        <h6>Starts</h6>
+        <p>{{ session.start_date|date:"Y/m/d" }}</p>
+      </div>
+      <div class="card-footer">
+        {% if session.is_accepting_applications %}
+          <a href="{{ session.application_url }}" target="_blank" class="card-link btn btn-success">Apply</a>
+        {% endif %}
+        <a href="{{ session.get_absolute_url }}" class="card-link">Details</a>
+      </div>
+    </div>
+</div>
+{% endblock content %}

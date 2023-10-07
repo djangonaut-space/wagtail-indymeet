@@ -5,10 +5,9 @@
 {% block content %}
 <div class="col col-lg-3 col-md-4 col-sm-6 col-12">
     <div class="card text-align-left" style="width: auto">
-        <div class="card-header">
-            <h5 class="card-title">{{ event.title }}</h5>
-            <substitle>{{ event.start_time|date:"Y/m/d" }}</substitle>
-        </div>
+      <div class="card-body">
+        <h5 class="card-title">{{ event.title }}</h5>
+        <h6 class="card-subtitle">{{ event.start_time|date:"Y/m/d" }}</h6>
         {# TODO: Add default image when no event image is selected #}
         {% if event.cover_image %}
         <img
@@ -25,7 +24,6 @@
         {% endif %}
         {# Photo by Good Faces on Unsplash #}
         {# https://unsplash.com/backgrounds/apps/zoom?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText #}
-        <div class="card-body">
           {% include 'home/includes/event_categories.html' %}
           <p class="card-text pt-4">{{ event.description }}</p>
         {% include 'home/includes/event_team.html' %}
@@ -40,6 +38,6 @@
                 {% endif %}
               {% endif %}
         </div>
-      </div>
+    </div>
 </div>
 {% endblock content %}
