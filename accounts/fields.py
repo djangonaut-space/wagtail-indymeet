@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.db.models.fields import related
 
 
@@ -52,4 +54,3 @@ class DefaultOneToOneField(related.OneToOneField):
         if self.create is not None:
             kwargs["create"] = self.create
         return name, path, args, kwargs
-

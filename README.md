@@ -146,14 +146,14 @@ This is an example of how to list things you need to use the software and how to
    copy .env.template .env
    ```
 6. Run migrations and create superuser
-   ```python
+   ```sh
    python manage.py migrate
    ```
-   ```python
+   ```sh
    python manage.py createsuperuser
    ```
-7. Run locally
-   ```python
+7. Run server locally
+   ```sh
    python manage.py runserver
    ```
 
@@ -193,7 +193,7 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Running `production` or `staging` locally 
+## Running `production` or `staging` locally
 Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space). Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
 
 **Running production or staging locally**

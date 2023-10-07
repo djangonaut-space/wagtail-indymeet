@@ -42,7 +42,7 @@
         <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/solid.min.css' %}">
         {% endblock extra_css %}
     </head>
-    
+
     <body class="{% block body_class %}{% endblock %}">
         {% if 'Home' not in page.title  %}
             {% include 'includes/breadcrumbs.html' %}

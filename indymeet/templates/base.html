@@ -59,12 +59,12 @@
               content="{% block meta_description %}
                             {{ blog_page.search_description }}
                        {% endblock meta_description %}"/>
-        {% block social_share %}{% endblock social_share %}    
+        {% block social_share %}{% endblock social_share %}
         <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
         <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
         <link href='//fonts.googleapis.com/css?family=Roboto:400,300,300italic,100italic,100,400italic,500,500italic,700,900,700italic,900italic' rel='stylesheet' type='text/css'>
     </head>
-    
+
     <body class="{% block body_class %}{% endblock %}">
         {% include 'includes/nav.html' %}
         {% if 'Home' not in page.title  %}

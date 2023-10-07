@@ -1,7 +1,8 @@
+from __future__ import annotations
 
-import datetime
-from django.utils import timezone
 from django.db.models.query import QuerySet
+from django.utils import timezone
+
 
 class EventQuerySet(QuerySet):
     def pending(self):
@@ -38,4 +39,3 @@ class SessionMembershipQuerySet(QuerySet):
 
     def captains(self):
         return self.filter(role=self._SessionMembership.CAPTAIN)
-
