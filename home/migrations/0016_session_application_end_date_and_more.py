@@ -35,7 +35,8 @@ class Migration(migrations.Migration):
             name="application_url",
             field=models.URLField(
                 default="https://djangonaut.space",
-                help_text="This is a URL to the Djangonaut application form. Likely Google Forms.",
+                help_text="This is a URL to the Djangonaut application "
+                "form. Likely Google Forms.",
             ),
             preserve_default=False,
         ),
@@ -44,7 +45,8 @@ class Migration(migrations.Migration):
             name="invitation_date",
             field=models.DateField(
                 default=django.utils.timezone.now,
-                help_text="This is the date when the first round of Djangonaut invitations will be sent out.",
+                help_text="This is the date when the first round of "
+                "Djangonaut invitations will be sent out.",
             ),
             preserve_default=False,
         ),

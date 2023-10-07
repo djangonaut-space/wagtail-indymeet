@@ -54,7 +54,8 @@ class SignUpView(CreateView):
         messages.add_message(
             self.request,
             messages.INFO,
-            "Your registration was successful. Please check your email provided for a confirmation link.",
+            "Your registration was successful. Please check "
+            "your email provided for a confirmation link.",
         )
         return reverse("signup")
 
@@ -82,9 +83,13 @@ class SignUpView(CreateView):
                 "token": account_activation_token.make_token(user),
             },
         )
+        message = (
+            "To confirm your email address on djangonaut.space please visit the link: "
+            + self.request.build_absolute_uri(invite_link)
+        )
         send_mail(
             "Djangonaut Space Registration Confirmation",
-            f"To confirm your email address on djangonaut.space please visit the link: {self.request.build_absolute_uri(invite_link)}",
+            message,
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             fail_silently=False,

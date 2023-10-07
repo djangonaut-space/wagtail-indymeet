@@ -35,7 +35,7 @@ if os.getenv("ENVIRONMENT") == "production":
 
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",  # 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+            "ENGINE": "django.db.backends.postgresql",
             "NAME": "djangonaut-space",  # Or path to database file if using sqlite3.
             "USER": os.environ["USER"],  # Not used with sqlite3.
             "PASSWORD": os.environ["PASSWORD"],  # Not used with sqlite3.

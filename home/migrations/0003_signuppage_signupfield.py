@@ -60,7 +60,8 @@ class Migration(migrations.Migration):
                     models.CharField(
                         blank=True,
                         default="",
-                        help_text="Safe name of the form field, the label converted to ascii_snake_case",
+                        help_text="Safe name of the form field, the label "
+                        "converted to ascii_snake_case",
                         max_length=255,
                         verbose_name="name",
                     ),
@@ -103,7 +104,8 @@ class Migration(migrations.Migration):
                     "choices",
                     models.TextField(
                         blank=True,
-                        help_text="Comma or new line separated list of choices. Only applicable in checkboxes, radio and dropdown.",
+                        help_text="Comma or new line separated list of choices. "
+                        "Only applicable in checkboxes, radio and dropdown.",
                         verbose_name="choices",
                     ),
                 ),
@@ -111,7 +113,8 @@ class Migration(migrations.Migration):
                     "default_value",
                     models.TextField(
                         blank=True,
-                        help_text="Default value. Comma or new line separated values supported for checkboxes.",
+                        help_text="Default value. Comma or new line separated "
+                        "values supported for checkboxes.",
                         verbose_name="default value",
                     ),
                 ),

@@ -177,7 +177,8 @@ class Session(models.Model):
         blank=True,
     )
     invitation_date = models.DateField(
-        help_text="This is the date when the first round of Djangonaut invitations will be sent out."
+        help_text="This is the date when the first round of Djangonaut invitations "
+        "will be sent out."
     )
     application_start_date = models.DateField(
         help_text="This is the start date for Djangonaut applications."
