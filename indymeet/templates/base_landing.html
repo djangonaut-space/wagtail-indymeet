@@ -31,17 +31,18 @@
         {% endif %}
 
         {# Global stylesheets #}
-        {% block extra_css %}
+        {% block css %}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
-        <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
         <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/fontawesome.min.css' %}">
         <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/brands.min.css' %}">
         <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/solid.min.css' %}">
-        {% endblock extra_css %}
+
         <script defer data-domain="djangonaut.space" src="https://plausible.io/js/script.js"></script>
+        {% endblock css %}
     </head>
 
     <body class="{% block body_class %}{% endblock %}">

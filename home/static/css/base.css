@@ -168,93 +168,54 @@ svg:not(:root) {
 }
 
 /* ---------------------------------------------------------------------
- LANDING PAGE
+ BOOTSTRAP THEME
 ----------------------------------------------------------------------*/
-.landing {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: black;
-    color: white;
+:root {
+    --blue: #007bff;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #e83e8c;
+    --red: #dc3545;
+    --orange: #fd7e14;
+    --yellow: #ffc107;
+    --green: #28a745;
+    --teal: #20c997;
+    --cyan: #17a2b8;
+    --white: #fff;
+    --gray: #6c757d;
+    --gray-dark: #343a40;
+    --primary: #5c0287;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --breakpoint-xs: 0;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-.landing-page {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 2;
-}
-
-.landing-page::before {
-    content: "";
-    position: absolute;
-    margin: 0px auto;
-    left: 0px;
-    top: -10%;
-    filter: brightness(0.4) sepia(1) hue-rotate(205deg) saturate(8);
-    opacity: 0.9;
-    -webkit-mask-image: radial-gradient(70% 80% at 50% 50%,
-            black 40%,
-            transparent 70%);
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-}
-
-.landing-page::after {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    content: "";
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg,
-            rgb(0, 73, 255) 0%,
-            rgb(255, 105, 185) 100%);
-    opacity: 0.6;
-    z-index: -2;
-    -webkit-mask-image: radial-gradient(70% 80% at 50% 50%,
-            black -40%,
-            transparent 60%);
-}
-
-.landing-page a {
-    display: inline-block;
-    text-align: center;
-}
-
-.landing-page input[name="email"] {
-    margin-right: 1em;
-}
-
-.landing-page img {
-    max-width: 100%;
-    width: 90%;
-}
-
-.landing-page .links a {
-    padding: 0 0.5rem;
-    font-size: 20px;
-}
-
-#particules-js {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-/* ---------------------------------------------------------------------
- EVENTS - HOME PAGE
-----------------------------------------------------------------------*/
-.event-team-member-icon {
-    height: 2.5rem;
-    width: 2.5rem;
-    object-fit: cover;
-    border-radius: 50%;
-    margin-bottom: 1.5rem;
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--primary);
+    --bs-btn-border-color: var(--primary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #0b5ed7;
+    --bs-btn-hover-border-color: #0a58ca;
+    --bs-btn-focus-shadow-rgb: 49,132,253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #0a58ca;
+    --bs-btn-active-border-color: #0a53be;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--primary);
+    --bs-btn-disabled-border-color: var(--primary);
 }
 
 /* ---------------------------------------------------------------------

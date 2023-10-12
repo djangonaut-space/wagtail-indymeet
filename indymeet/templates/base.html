@@ -32,19 +32,21 @@
         {% endif %}
 
         {# Global stylesheets #}
-        {% block extra_css %}
+        {% block css %}
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="{% static 'puput/css/puput.css' %}"/>
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
-        <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
-        {% endblock extra_css %}
-        {% block css %}
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
             <link rel="stylesheet" href="{% static 'puput/css/font-awesome.min.css' %}">
             <style>
                 body {
                     --main-color: {{blog_page.main_color}};
                 }
             </style>
-        {% endblock %}
+        {% endblock css %}
+        {% block extra_css %}{% endblock extra_css %}
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <meta name="title"
