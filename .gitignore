@@ -30,3 +30,6 @@ yarn.lock
 .vscode
 .idea
 .env
+
+# Ignore local settings override
+indymeet/settings/local.py
