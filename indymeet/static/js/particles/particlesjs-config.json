@@ -26,7 +26,7 @@
       }
     },
     "opacity": {
-      "value": 0.5,
+      "value": 0.4,
       "random": false,
       "anim": {
         "enable": false,
@@ -54,7 +54,7 @@
     },
     "move": {
       "enable": true,
-      "speed": 6,
+      "speed": 1,
       "direction": "none",
       "random": false,
       "straight": false,
@@ -91,7 +91,7 @@
         "distance": 400,
         "size": 40,
         "duration": 2,
-        "opacity": 8,
+        "opacity": 7,
         "speed": 3
       },
       "repulse": {

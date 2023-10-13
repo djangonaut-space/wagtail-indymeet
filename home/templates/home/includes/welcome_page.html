@@ -4,10 +4,9 @@
 
 
 {% block content %}
-<main class="main main-center">
+<main class="section main-center">
     {% if not user.is_authenticated %}
         {% bootstrap_button button_type="link" href='/accounts/signup' content="sign up" button_class="btn-primary" %}
     {% endif %}
 </main>
 {% endblock content %}
-

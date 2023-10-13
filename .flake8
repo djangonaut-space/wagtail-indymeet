@@ -1,0 +1,10 @@
+# TODO: move this to pyproject.toml when supported, see https://github.com/PyCQA/flake8/issues/234
+# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#flake8
+
+[flake8]
+max-line-length = 90
+select = B950
+extend-ignore = E203, E501
+per-file-ignores =
+    */__init__.py:F401
+    indymeet/settings/*.py:F403,F405

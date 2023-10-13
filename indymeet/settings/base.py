@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from __future__ import annotations
+
 import os
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,18 +21,14 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-from puput import PUPUT_APPS
-
 # Application definition
 INSTALLED_APPS = [
     "accounts",
     "home",
     "search",
-
     "django_bootstrap5",
     "anymail",
     "captcha",
-
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.embeds",
@@ -43,13 +40,11 @@ INSTALLED_APPS = [
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
-
     # puput support
-    'wagtail.contrib.sitemaps',
-    'wagtail.contrib.routable_page',
-    'django_social_share',
-    'puput',
-
+    "wagtail.contrib.sitemaps",
+    "wagtail.contrib.routable_page",
+    "django_social_share",
+    "puput",
     "modelcluster",
     "taggit",
     "django.contrib.admin",
@@ -58,7 +53,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
 ]
 
 MIDDLEWARE = [
@@ -71,7 +65,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
-
 ]
 
 ROOT_URLCONF = "indymeet.urls"
@@ -102,13 +95,13 @@ WSGI_APPLICATION = "indymeet.wsgi.application"
 
 # Dummy local test database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',  # 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'local_djangonaut_space',                      # Or path to database file if using sqlite3.
-        'USER': 'postgres',                      # Not used with sqlite3.
-        'PASSWORD': 4,                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': 5432,                      # Set to empty string for default. Not used with sqlite3.
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "local_djangonaut_space",  # Or path to database file if using sqlite3.
+        "USER": "postgres",  # Not used with sqlite3.
+        "PASSWORD": 4,  # Not used with sqlite3.
+        "HOST": "localhost",  # Set to empty string for localhost. Not used with sqlite3.
+        "PORT": 5432,  # Set to empty string for default. Not used with sqlite3.
     },
 }
 
@@ -141,7 +134,6 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_L10N = True
 
 USE_TZ = True
 
@@ -161,7 +153,14 @@ STATICFILES_DIRS = [
 # ManifestStaticFilesStorage is recommended in production, to prevent outdated
 # JavaScript / CSS assets being served from cache (e.g. after a Wagtail upgrade).
 # See https://docs.djangoproject.com/en/4.1/ref/contrib/staticfiles/#manifeststaticfilesstorage
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "/static/"
@@ -186,13 +185,11 @@ WAGTAILSEARCH_BACKENDS = {
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
 WAGTAILADMIN_BASE_URL = "http://example.com"
 
-AUTH_USER_MODEL = 'accounts.CustomUser'
+AUTH_USER_MODEL = "accounts.CustomUser"
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-
-DEFAULT_FROM_EMAIL = 'contact@djangonaut.space'
-SERVER_EMAIL = 'contact@djangonaut.space'
-
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
+SERVER_EMAIL = "contact@djangonaut.space"
+SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]

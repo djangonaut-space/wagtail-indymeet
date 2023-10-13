@@ -1,25 +1,28 @@
 # ----------------------------------------------
 # For developing locally
 # ----------------------------------------------
-from .base import *
+from __future__ import annotations
+
 from dotenv import load_dotenv
+
+from .base import *  # noqa F403 F401
 
 load_dotenv()
 
-###  SQLite (deprecated)
-if os.getenv('ENVIRONMENT') == 'dev':
+#  SQLite (deprecated)
+if os.getenv("ENVIRONMENT") == "dev":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),  # noqa F405
         }
     }
 
-print('----------------------------------')
-print('----------------------------------')
-print('DEV')
-print('----------------------------------')
-print('----------------------------------')
+print("----------------------------------")
+print("----------------------------------")
+print("DEV")
+print("----------------------------------")
+print("----------------------------------")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -33,15 +36,16 @@ ALLOWED_HOSTS = ["*"]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+INSTALLED_APPS += ["django_extensions"]  # noqa F405
 
 try:
-    from .local import *
+    from .local import *  # noqa F403 F401
 except ImportError:
     pass
 
-BASE_URL = 'http://localhost:8000'
+BASE_URL = "http://localhost:8000"
 
-RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
-RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+RECAPTCHA_PUBLIC_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+RECAPTCHA_PRIVATE_KEY = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
 
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]

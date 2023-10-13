@@ -8,7 +8,7 @@
 {% bootstrap_javascript %}
 
 {% block content %}
-<main class="main main-center">
+<main class="section main-center">
     <a href="/">
         <img src="{% static 'img/temp_logo.png' %}" />
     </a>
@@ -23,9 +23,9 @@
             {% if user.is_authenticated %}
                 {% if user.profile.accepted_coc %}
                     {% if user not in event.rsvped_members.all %}
-                        <a href="{% url 'event_detail' pk=event.id %}?rsvp=true" class="btn btn-primary">RSVP</a>
+                        <a href="{{ event.get_absolute_url }}?rsvp=true" class="btn btn-primary">RSVP</a>
                     {% else %}
-                        <a href="{% url 'event_detail' pk=event.id %}?rsvp=false" class="btn btn-danger">Cancel RSVP</a>
+                        <a href="{{ event.get_absolute_url }}?rsvp=false" class="btn btn-danger">Cancel RSVP</a>
                         <p class="text-muted">You have already RSVPed</p>
 
                     {% endif %}
@@ -42,7 +42,7 @@
 </div>
 <div class="row">
     <div class="col">
-        <p><strong>Start:</strong> {{ event.start_time|date:"Y-m-d H:i" }}</p>
+        <p><strong>Start:</strong> {{ event.start_time|date:"Y-m-d H:i" }}</p> aaa
         <p><strong>End:</strong> {{ event.end_time|date:"Y-m-d H:i" }}</p>
         <p><strong>Location:</strong> {{ event.location }}</p>
         <p><strong>Status:</strong> {{ event.status }}</p>

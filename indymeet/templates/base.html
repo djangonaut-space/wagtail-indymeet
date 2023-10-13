@@ -24,6 +24,7 @@
         </title>
         <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
 
         {# Force all links in the live preview panel to be opened in a new tab #}
         {% if request.in_preview_panel %}
@@ -31,19 +32,21 @@
         {% endif %}
 
         {# Global stylesheets #}
-        {% block extra_css %}
+        {% block css %}
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="{% static 'puput/css/puput.css' %}"/>
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
-        <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
-        {% endblock extra_css %}
-        {% block css %}
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
             <link rel="stylesheet" href="{% static 'puput/css/font-awesome.min.css' %}">
             <style>
                 body {
                     --main-color: {{blog_page.main_color}};
                 }
             </style>
-        {% endblock %}
+        {% endblock css %}
+        {% block extra_css %}{% endblock extra_css %}
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <meta name="title"
@@ -58,12 +61,13 @@
               content="{% block meta_description %}
                             {{ blog_page.search_description }}
                        {% endblock meta_description %}"/>
-        {% block social_share %}{% endblock social_share %}    
+        {% block social_share %}{% endblock social_share %}
         <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
         <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
         <link href='//fonts.googleapis.com/css?family=Roboto:400,300,300italic,100italic,100,400italic,500,500italic,700,900,700italic,900italic' rel='stylesheet' type='text/css'>
+        <script defer data-domain="djangonaut.space" src="https://plausible.io/js/script.js"></script>
     </head>
-    
+
     <body class="{% block body_class %}{% endblock %}">
         {% include 'includes/nav.html' %}
         {% if 'Home' not in page.title  %}
@@ -76,7 +80,6 @@
             {# other page stuff goes here #}
         {% endblock %}
         {# Global javascript #}
-        <script type="text/javascript" src="{% static 'js/indymeet.js' %}"></script>
         {% include 'includes/footer.html' %}
     </body>
 </html>

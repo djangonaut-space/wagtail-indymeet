@@ -1,7 +1,8 @@
+from __future__ import annotations
 
-import datetime
-from django.utils import timezone
 from django.db.models.query import QuerySet
+from django.utils import timezone
+
 
 class EventQuerySet(QuerySet):
     def pending(self):
@@ -25,3 +26,16 @@ class EventQuerySet(QuerySet):
     def past(self):
         return self.filter(start_time__lte=timezone.now())
 
+
+class SessionMembershipQuerySet(QuerySet):
+    def _SessionMembership(self):
+        return self.model.session._meta.model
+
+    def djangonauts(self):
+        return self.filter(role=self._SessionMembership.DJANGONAUT)
+
+    def navigators(self):
+        return self.filter(role=self._SessionMembership.NAVIGATOR)
+
+    def captains(self):
+        return self.filter(role=self._SessionMembership.CAPTAIN)

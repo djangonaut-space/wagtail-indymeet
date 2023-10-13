@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block content %}
+<div class="container main my-3">
+  <div class="row my-3">
+      <div class="col">
+          <h1 class="my-3">{{ session.title }}</h1>
+      </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <dl class="row">
+        <dt class="col-sm-3">Applications Open:</dt>
+        <dd class="col-sm-9">{{ session.application_start_date|date:"Y-m-d" }}</dd>
+        <dt class="col-sm-3">Applications Close:</dt>
+        <dd class="col-sm-9">{{ session.application_end_date|date:"Y-m-d" }}</dd>
+        <dt class="col-sm-3">Invitations Sent:</dt>
+        <dd class="col-sm-9">{{ session.invitation_date|date:"Y-m-d" }}</dd>
+        <dt class="col-sm-3">Start:</dt>
+        <dd class="col-sm-9">{{ session.start_date|date:"Y-m-d" }}</dd>
+        <dt class="col-sm-3">End:</dt>
+        <dd class="col-sm-9">{{ session.end_date|date:"Y-m-d" }}</dd>
+      </dl>
+      <p>{{ session.description }}</p>
+      {% if session.is_accepting_applications %}
+        <br />
+        <h2>You have {{ session.application_end_date|timeuntil}} to submit your application</h2>
+        <br />
+        <a href="{{ session.application_url }}" target="_blank" class="btn btn-success btn-lg">Apply</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock content %}

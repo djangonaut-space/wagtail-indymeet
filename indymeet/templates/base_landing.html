@@ -18,8 +18,12 @@
             {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
             {% endblock %}
         </title>
-        <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Djangonaut Space is a contributor mentorship program placing an emphasis on group-learning, sustainability and longevity.">
+        <meta property="og:description" content="Djangonaut Space is a contributor mentorship program placing an emphasis on group-learning, sustainability and longevity.">
+        <meta property="og:image" content="{% static 'img/main-white-transparent.png' %}">
+        <meta property="og:title" content="Djangonaut Space - Where contributors launch!">
+        <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
 
         {# Force all links in the live preview panel to be opened in a new tab #}
         {% if request.in_preview_panel %}
@@ -27,12 +31,20 @@
         {% endif %}
 
         {# Global stylesheets #}
-        {% block extra_css %}
+        {% block css %}
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
-        <link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
-        {% endblock extra_css %}
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+        <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/fontawesome.min.css' %}">
+        <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/brands.min.css' %}">
+        <link rel="stylesheet" href="{% static 'fontawesome-6.4.2/css/solid.min.css' %}">
+
+        <script defer data-domain="djangonaut.space" src="https://plausible.io/js/script.js"></script>
+        {% endblock css %}
     </head>
-    
+
     <body class="{% block body_class %}{% endblock %}">
         {% if 'Home' not in page.title  %}
             {% include 'includes/breadcrumbs.html' %}
@@ -42,8 +54,9 @@
         {% block content %}
             {# other page stuff goes here #}
         {% endblock %}
+        <div class="landing-page-overlay"></div>
         {# Global javascript #}
         <script type="text/javascript" src="{% static 'js/particles/particles.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/indymeet.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/load_particles.js' %}"></script>
     </body>
 </html>

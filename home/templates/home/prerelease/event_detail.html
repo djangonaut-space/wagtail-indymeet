@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{% block content %}
+<div class="container main my-3">
+  <div class="row my-3">
+      <div class="col">
+          <h1 class="my-3">{{ event.title }}</h1>
+      </div>
+  </div>
+  <div class="row">
+    <div class="col">
+        <p><strong>Start:</strong> {{ event.start_time|date:"Y-m-d H:i e" }}</p>
+        <p><strong>End:</strong> {{ event.end_time|date:"Y-m-d H:i e" }}</p>
+        <p><strong>Location:</strong> {{ event.location }}</p>
+        <br>
+        <p>{{ event.description }}</p>
+    </div>
+  </div>
+</div>
+{% endblock content %}
