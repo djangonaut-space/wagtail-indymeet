@@ -24,12 +24,13 @@ if os.getenv("ENVIRONMENT") == "production":
     print("----------------------------------")
     SECRET_KEY = os.environ["SECRET_KEY"]
     ALLOWED_HOSTS = [
-        "localhost",
-        "https://djangonaut-space.azurewebsites.net",
         "djangonaut-space.azurewebsites.net",
-        "https://djangonaut.space",
         "djangonaut.space",
         "staging-djangonaut-space.azurewebsites.net",
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        "https://djangonaut.space",
+        "https://djangonaut-space.azurewebsites.net",
         "https://staging-djangonaut-space.azurewebsites.net",
     ]
 
