@@ -14,7 +14,6 @@ body {
     margin: 0 auto;
     padding: 0 15px;
     color: #231f20;
-    font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
     line-height: 1.25;
 }
 
@@ -71,7 +70,7 @@ svg:not(:root) {
     font-size: 14px;
 }
 
-.main {
+.section {
     padding: 40px 0;
     margin: 0 auto;
 }
@@ -197,8 +196,8 @@ svg:not(:root) {
     --breakpoint-md: 768px;
     --breakpoint-lg: 992px;
     --breakpoint-xl: 1200px;
-    --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --font-family-sans-serif: "Inter",-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --font-family-monospace: "Frauces", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .btn-primary {
@@ -206,12 +205,12 @@ svg:not(:root) {
     --bs-btn-bg: var(--primary);
     --bs-btn-border-color: var(--primary);
     --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #0b5ed7;
-    --bs-btn-hover-border-color: #0a58ca;
+    --bs-btn-hover-bg: #8D4EAB;
+    --bs-btn-hover-border-color: #6D1C93;
     --bs-btn-focus-shadow-rgb: 49,132,253;
     --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #0a58ca;
-    --bs-btn-active-border-color: #0a53be;
+    --bs-btn-active-bg: #6D1C93;
+    --bs-btn-active-border-color: #7D359F;
     --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
     --bs-btn-disabled-color: #fff;
     --bs-btn-disabled-bg: var(--primary);
@@ -242,10 +241,8 @@ svg:not(:root) {
         max-width: 200px;
     }
 
-    .footer {
-        display: block;
-        width: 300px;
-        margin: 0 auto;
+    .footer a {
+        text-align: center;
     }
 }
 
