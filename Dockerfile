@@ -48,6 +48,7 @@ USER wagtail
 # Collect static files.
 RUN python manage.py collectstatic --noinput --clear
 
+RUN python manage.py migrate --noinput;
 # Runtime command that executes when "docker run" is called, it does the
 # following:
 #   1. Migrate the database.
