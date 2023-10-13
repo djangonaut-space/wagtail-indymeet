@@ -22,7 +22,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
       APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.APPINSIGHTS_INSTRUMENTATIONKEY }}
       APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
-      DEBUG: 'True'
+      DEBUG: 'False'
       HOST: ${{ secrets.HOST }}
       PASSWORD: ${{ secrets.PASSWORD }}
       RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
