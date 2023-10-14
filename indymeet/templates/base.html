@@ -13,8 +13,10 @@
             {% block title %}
                 {% if blog_page %}
                     {{ blog_page.title }}{% if blog_page.description %} | {{ blog_page.description }}{% endif %}
-                {% else %}
+                {% elif page %}
                     {% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }}{% endif %}
+                {% else %}
+                    Djangonaut Space - Where contributors launch!
                 {% endif %}
             {% endblock %}
             {% block title_suffix %}
@@ -22,7 +24,6 @@
                 {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
             {% endblock %}
         </title>
-        <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
 
@@ -51,17 +52,31 @@
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <meta name="title"
               content="{% block meta_title %}
-                            {% if blog_page.seo_title %}
-                                {{ blog_page.seo_title }}
+                            {% if blog_page %}
+                              {% if blog_page.seo_title %}
+                                  {{ blog_page.seo_title }}
+                              {% else %}
+                                  {{ blog_page.title }}
+                              {% endif %}
                             {% else %}
-                                {{ blog_page.title }}
+                              Djangonaut Space - Where contributors launch!
                             {% endif %}
                        {% endblock meta_title %}"/>
         <meta name="description"
               content="{% block meta_description %}
-                            {{ blog_page.search_description }}
+                            {% if blog_page %}
+                                {{ blog_page.search_description }}
+                            {% else %}
+                                Djangonaut Space is a contributor mentorship program placing an emphasis on group-learning, sustainability and longevity.
+                            {% endif %}
                        {% endblock meta_description %}"/>
-        {% block social_share %}{% endblock social_share %}
+        {% block social_share %}
+            {%  if not blog_page %}
+                <meta property="og:description" content="Djangonaut Space is a contributor mentorship program placing an emphasis on group-learning, sustainability and longevity.">
+                <meta property="og:image" content="{% static 'img/main-white-transparent.png' %}">
+                <meta property="og:title" content="Djangonaut Space - Where contributors launch!">
+            {% endif %}
+        {% endblock social_share %}
         <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
         <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
         <link href='//fonts.googleapis.com/css?family=Roboto:400,300,300italic,100italic,100,400italic,500,500italic,700,900,700italic,900italic' rel='stylesheet' type='text/css'>

@@ -7,6 +7,15 @@
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 
+{% block title %}{{ event.title }} | Djangonaut Space{% endblock %}
+{% block meta_title %}{{ event.title }} | Djangonaut Space{% endblock %}
+{% block meta_description %}{{ event.description }}{% endblock %}
+{% block social_share %}
+    <meta property="og:description" content="{{ event.description }}">
+    <meta property="og:image" content="{% static 'img/main-white-transparent.png' %}">
+    <meta property="og:title" content="{ event.title }} | Djangonaut Space">
+{% endblock social_share %}
+
 {% block content %}
 <div class="container main my-3">
   <div class="row my-3">
