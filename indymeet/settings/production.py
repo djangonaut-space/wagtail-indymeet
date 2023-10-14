@@ -7,8 +7,6 @@ from .base import *
 load_dotenv()
 
 DEBUG = os.getenv("DEBUG")
-# Hardcode debug for DCUS 2023. This can be removed after 2023/10/20
-DEBUG = True
 
 # Deploy instructions
 # https://tonybaloney.github.io/posts/django-on-azure-beyond-hello-world.html
