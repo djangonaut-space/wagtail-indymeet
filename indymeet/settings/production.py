@@ -6,7 +6,7 @@ from .base import *
 
 load_dotenv()
 
-DEBUG = False
+DEBUG = True
 
 # Deploy instructions
 # https://tonybaloney.github.io/posts/django-on-azure-beyond-hello-world.html
