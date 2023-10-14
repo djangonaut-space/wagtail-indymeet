@@ -4,7 +4,7 @@
       <div class="card-body">
         <h5 class="card-title">{{ session.title }}</h5>
         <p class="card-text">
-          {{ session.description|urlize|linebreaksbr }}
+          {{ session.description|linebreaksbr|urlizetrunc:25|truncatewords_html:60 }}
         </p>
         <br />
         <h6>Applications Open</h6>
