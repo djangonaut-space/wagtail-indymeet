@@ -37,7 +37,7 @@
         <dt class="col-sm-3">End:</dt>
         <dd class="col-sm-9">{{ session.end_date|date:"Y-m-d" }}</dd>
       </dl>
-      <p>{{ session.description }}</p>
+      <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
       {% if session.is_accepting_applications %}
         <br />
         <h2>You have {{ session.application_end_date|timeuntil}} to submit your application</h2>
