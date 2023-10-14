@@ -49,7 +49,7 @@
         <p><strong>Categories:</strong>{% for cat in event.categories.all %} {{ cat }} {% endfor %}</p>
         <br>
 
-        <p>{{ event.description }}</p>
+        <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>
         <br>
         <h3><strong>Speakers:</strong></h3>
 
