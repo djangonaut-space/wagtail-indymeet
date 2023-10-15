@@ -25,8 +25,8 @@
   </div>
   <div class="row">
     <div class="col">
-        <p><strong>Start:</strong> {{ event.start_time|date:"Y-m-d H:i e" }}</p>
-        <p><strong>End:</strong> {{ event.end_time|date:"Y-m-d H:i e" }}</p>
+        <p><strong>Start:</strong> {{ event.start_time|date:"M d, Y H:i e" }}</p>
+        <p><strong>End:</strong> {{ event.end_time|date:"M d, Y H:i e" }}</p>
         <p><strong>Location:</strong> {{ event.location }}</p>
         <br>
         <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>
