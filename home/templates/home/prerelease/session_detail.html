@@ -27,15 +27,15 @@
     <div class="col">
       <dl class="row">
         <dt class="col-sm-3">Applications Open:</dt>
-        <dd class="col-sm-9">{{ session.application_start_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.application_start_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">Applications Close:</dt>
-        <dd class="col-sm-9">{{ session.application_end_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.application_end_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">Invitations Sent:</dt>
-        <dd class="col-sm-9">{{ session.invitation_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.invitation_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">Start:</dt>
-        <dd class="col-sm-9">{{ session.start_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.start_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">End:</dt>
-        <dd class="col-sm-9">{{ session.end_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.end_date|date:"M d, Y" }}</dd>
       </dl>
       <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
       {% if session.is_accepting_applications %}

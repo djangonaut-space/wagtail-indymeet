@@ -19,8 +19,8 @@
                 {% for event in events %}
                 {
                     title: "{{ event.title|safe }}",
-                    start: '{{ event.start_time|date:"Y-m-d H:i" }}',
-                    end: '{{ event.end_time|date:"Y-m-d H:i" }}',
+                    start: '{{ event.start_time|date:"M d, Y H:i" }}',
+                    end: '{{ event.end_time|date:"M d, Y H:i" }}',
                     id: '{{ event.id }}',
                     description: '{{ event.description }}',
                     url: "{{ event.get_absolute_url }}",
