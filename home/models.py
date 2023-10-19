@@ -18,6 +18,22 @@ from .managers import EventQuerySet
 from .managers import SessionMembershipQuerySet
 from home.forms import SignUpPage
 
+# BLOG PUPUT IMPORTS
+from puput.abstracts import EntryAbstract
+from wagtail.core.fields import StreamField
+from . import blocks as blog_blocks
+from wagtail.core import blocks
+from wagtail.images.blocks import ImageChooserBlock
+from wagtail.contrib.table_block.blocks import TableBlock
+from wagtail.admin.edit_handlers import (
+    FieldPanel,
+    InlinePanel,
+    MultiFieldPanel,
+    StreamFieldPanel,
+    PageChooserPanel,
+)
+from wagtail.images.edit_handlers import ImageChooserPanel
+
 
 def sign_up_forms(context):
     return {
@@ -233,3 +249,68 @@ class SessionMembership(models.Model):
     )
     role = models.CharField(max_length=64, choices=ROLES, default=DJANGONAUT)
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()
+
+
+class EntryAbstract(EntryAbstract):
+    content = StreamField(
+        [
+            ("heading", blog_blocks.HeadingBlock(class_name="full")),
+            ("subheading", blocks.CharBlock(class_name="full")),
+            ("paragraph", blocks.RichTextBlock()),
+            ("html", blocks.RawHTMLBlock(icon="code", label="Raw HTML")),
+            ("image", ImageChooserBlock()),
+            ("text_with_heading", blog_blocks.TextWithHeadingBlock(class_name="full")),
+            (
+                "text_with_heading_and_right_image",
+                blog_blocks.TextWithHeadingWithRightImageBlock(class_name="full"),
+            ),
+            (
+                "text_with_heading_and_left_image",
+                blog_blocks.TextWithHeadingWithLeftImageBlock(class_name="full"),
+            ),
+            (
+                "right_image_left_text",
+                blog_blocks.RightImageLeftTextBlock(class_name="full"),
+            ),
+            (
+                "left_image_right_text",
+                blog_blocks.LeftImageRightTextBlock(class_name="full"),
+            ),
+            (
+                "left_quote_right_image",
+                blog_blocks.QuoteLeftImageBlock(class_name="full"),
+            ),
+            ("video_embed", blog_blocks.LiteYoutubeEmbed(class_name="full")),
+            ("table", TableBlock(class_name="full")),
+            ("code_block", blog_blocks.CodeBlock(class_name="full")),
+        ],
+        blank=True,
+        null=True,
+    )
+    content_panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel("title", classname="title"),
+                ImageChooserPanel("header_image"),
+                FieldPanel("body", classname="full"),
+                StreamFieldPanel("content"),
+                FieldPanel("excerpt", classname="full"),
+            ],
+            heading=_("Content"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("tags"),
+                InlinePanel("entry_categories", label=_("Categories")),
+                InlinePanel(
+                    "related_entrypage_from",
+                    label=_("Related Entries"),
+                    panels=[PageChooserPanel("entrypage_to")],
+                ),
+            ],
+            heading=_("Page Metadata"),
+        ),
+    ]
+
+    class Meta:
+        abstract = True
