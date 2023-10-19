@@ -7,11 +7,24 @@
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 
+{% block title %}Program Sessions | Djangonaut Space{% endblock %}
+{% block meta_title %}Program Sessions | Djangonaut Space{% endblock %}
+
 
 {% block content %}
 <main class="section">
     <div class="container-lg">
         <h3>Program Sessions</h3>
+        <div class="row">
+          <div class="col">
+            <p>
+              These sessions are limited to those who are accepted from an application
+              process. If a session is accepting applications, you'll see an Apply
+              button. If not, you can express interest in joining
+              <a target="_blank" href="https://forms.gle/4vNuqQwEK6o48WqHA">here</a>.
+            </p>
+          </div>
+        </div>
         <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
             {% for session in sessions %}
                 {% include 'home/includes/session_card.html' %}

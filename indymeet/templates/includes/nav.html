@@ -22,6 +22,16 @@
                   {% trans "Join us!" %}
               </a>
           </li>
+          <li class="nav-item dropdown">
+              <a class="nav-link"  href="{% url 'event_list' %}">
+                  {% trans "Events" %}
+              </a>
+          </li>
+          <li class="nav-item dropdown">
+              <a class="nav-link"  href="{% url 'session_list' %}">
+                  {% trans "Sessions" %}
+              </a>
+          </li>
       </ul>
     </div>
 </nav>

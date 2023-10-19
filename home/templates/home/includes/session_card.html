@@ -4,17 +4,17 @@
       <div class="card-body">
         <h5 class="card-title">{{ session.title }}</h5>
         <p class="card-text">
-          {{ session.description|urlize|linebreaksbr }}
+          {{ session.description|linebreaksbr|urlizetrunc:25|truncatewords_html:60 }}
         </p>
         <br />
         <h6>Applications Open</h6>
-        <p>{{ session.application_start_date|date:"Y/m/d" }}</p>
+        <p>{{ session.application_start_date|date:"M d, Y" }}</p>
         <br />
         <h6>Applications Close</h6>
-        <p>{{ session.application_end_date|date:"Y/m/d" }}</p>
+        <p>{{ session.application_end_date|date:"M d, Y" }}</p>
         <br />
         <h6>Starts</h6>
-        <p>{{ session.start_date|date:"Y/m/d" }}</p>
+        <p>{{ session.start_date|date:"M d, Y" }}</p>
       </div>
       <div class="card-footer">
         {% if session.is_accepting_applications %}

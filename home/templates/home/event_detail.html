@@ -42,14 +42,14 @@
 </div>
 <div class="row">
     <div class="col">
-        <p><strong>Start:</strong> {{ event.start_time|date:"Y-m-d H:i" }}</p> aaa
-        <p><strong>End:</strong> {{ event.end_time|date:"Y-m-d H:i" }}</p>
+        <p><strong>Start:</strong> {{ event.start_time|date:"M d, Y H:i" }}</p>
+        <p><strong>End:</strong> {{ event.end_time|date:"M d, Y H:i" }}</p>
         <p><strong>Location:</strong> {{ event.location }}</p>
         <p><strong>Status:</strong> {{ event.status }}</p>
         <p><strong>Categories:</strong>{% for cat in event.categories.all %} {{ cat }} {% endfor %}</p>
         <br>
 
-        <p>{{ event.description }}</p>
+        <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>
         <br>
         <h3><strong>Speakers:</strong></h3>
 

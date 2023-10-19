@@ -7,6 +7,15 @@
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 
+{% block title %}{{ session.title }} | Djangonaut Space{% endblock %}
+{% block meta_title %}{{ session.title }} | Djangonaut Space{% endblock %}
+{% block meta_description %}{{ session.description }}{% endblock %}
+{% block social_share %}
+    <meta property="og:description" content="{{ session.description }}">
+    <meta property="og:image" content="{% static 'img/main-white-purple-background.png' %}">
+    <meta property="og:title" content="{{ session.title }} | Djangonaut Space">
+{% endblock social_share %}
+
 {% block content %}
 <div class="container main my-3">
   <div class="row my-3">
@@ -18,17 +27,17 @@
     <div class="col">
       <dl class="row">
         <dt class="col-sm-3">Applications Open:</dt>
-        <dd class="col-sm-9">{{ session.application_start_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.application_start_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">Applications Close:</dt>
-        <dd class="col-sm-9">{{ session.application_end_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.application_end_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">Invitations Sent:</dt>
-        <dd class="col-sm-9">{{ session.invitation_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.invitation_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">Start:</dt>
-        <dd class="col-sm-9">{{ session.start_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.start_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">End:</dt>
-        <dd class="col-sm-9">{{ session.end_date|date:"Y-m-d" }}</dd>
+        <dd class="col-sm-9">{{ session.end_date|date:"M d, Y" }}</dd>
       </dl>
-      <p>{{ session.description }}</p>
+      <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
       {% if session.is_accepting_applications %}
         <br />
         <h2>You have {{ session.application_end_date|timeuntil}} to submit your application</h2>
