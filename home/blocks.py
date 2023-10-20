@@ -99,6 +99,18 @@ class LeftImageRightTextBlock(blocks.StructBlock):
         template = "blocks/left-image-right-text.html"
 
 
+class QuoteBlock(blocks.StructBlock):
+    text = blocks.CharBlock(max_length=255)
+    attribution = blocks.CharBlock(max_length=255)
+
+    def __str__(self):
+        return self.attribution
+
+    class Meta:
+        label = "Quote Block"
+        template = "blocks/quote-block.html"
+
+
 class QuoteLeftImageBlock(blocks.StructBlock):
     quote = blocks.TextBlock()
     byline = blocks.CharBlock(max_length=255)
@@ -113,20 +125,17 @@ class QuoteLeftImageBlock(blocks.StructBlock):
         form_classname = "Full"
 
 
-class LiteYoutubeEmbed(blocks.StructBlock):
-    title = blocks.CharBlock(max_length=255, required=False)
-    border = blocks.CharBlock(max_length=20, required=False)
-    embed = blocks.CharBlock(
-        max_length=20,
-        verbose_name="Youtube Video ID",
-        help_text="Youtube ID only, example: WGNKjQGYIpg",
-    )
+class VideoEmbed(blocks.StructBlock):
+    heading = blocks.CharBlock(max_length=255)
+    text = blocks.TextBlock()
+    # TODO: Add color and embed field
 
     def __str__(self):
-        return self.title
+        return self.heading
 
     class Meta:
-        template = "blocks/lite-youtube-embed.html"
+        label = "Video Embed"
+        template = "blocks/video-embed.html"
 
 
 class CodeBlock(blocks.StructBlock):
@@ -140,106 +149,18 @@ class CodeBlock(blocks.StructBlock):
 
     class Meta:
         label = "Code Block"
-        template = "home/blocks/code-block.html"
+        template = "blocks/code-block.html"
 
 
-class HeadingBlock(blocks.StructBlock):
-    heading = blocks.CharBlock(max_length=255, class_name="heading-blog")
+class TextHeadingImageBlock(blocks.StructBlock):
+    heading = blocks.CharBlock(max_length=255)
+    text = blocks.TextBlock()
+    image = ImageChooserBlock()
+    # TODO: Add left or right side
 
     def __str__(self):
         return self.heading
 
     class Meta:
-        template = "blocks/heading.html"
-
-
-class TextWithHeadingBlock(blocks.StructBlock):
-    heading = blocks.CharBlock(max_length=255, class_name="heading-blog")
-    text = blocks.TextBlock()
-
-    def __str__(self):
-        return self.heading
-
-    class Meta:
-        label = "Text Block with Header"
-        template = "blocks/text-with-heading.html"
-
-
-class TextWithHeadingWithRightImageBlock(blocks.StructBlock):
-    heading = blocks.CharBlock(max_length=255, class_name="heading-blog")
-    text = blocks.TextBlock()
-    image = ImageChooserBlock()
-
-    def __str__(self):
-        return self.heading
-
-    class Meta:
-        label = "Text Block with Header: Right Image"
-        template = "blocks/text-with-heading-right-image.html"
-
-
-class TextWithHeadingWithLeftImageBlock(blocks.StructBlock):
-    heading = blocks.CharBlock(max_length=255, class_name="blog")
-    text = blocks.TextBlock()
-    image = ImageChooserBlock()
-
-    def __str__(self):
-        return self.heading
-
-    class Meta:
-        label = "Text Block with Header: Left Image"
-        template = "blocks/text-with-heading-left-image.html"
-
-
-class RightImageLeftTextBlock(blocks.StructBlock):
-    image = ImageChooserBlock()
-    text = blocks.TextBlock()
-
-    def __str__(self):
-        return self.text
-
-    class Meta:
-        label = "Text Block: Right Image"
-        template = "blocks/right-image-left-text.html"
-
-
-class LeftImageRightTextBlock(blocks.StructBlock):
-    image = ImageChooserBlock()
-    text = blocks.TextBlock()
-
-    def __str__(self):
-        return self.text
-
-    class Meta:
-        label = "Text Block: Left Image"
-        template = "blocks/left-image-right-text.html"
-
-
-class QuoteLeftImageBlock(blocks.StructBlock):
-    quote = blocks.TextBlock()
-    byline = blocks.CharBlock(max_length=255)
-    image = ImageChooserBlock()
-
-    def __str__(self):
-        return self.byline
-
-    class Meta:
-        template = "blocks/quote-left-image.html"
-        label = "Person Quote and Image"
-        form_classname = "Full"
-
-
-class LiteYoutubeEmbed(blocks.StructBlock):
-    title = blocks.CharBlock(max_length=255, required=False)
-    border = blocks.CharBlock(max_length=20, required=False)
-    embed = blocks.CharBlock(
-        max_length=20,
-        verbose_name="Youtube Video ID",
-        help_text="Youtube ID only, example: WGNKjQGYIpg",
-    )
-
-    def __str__(self):
-        return self.title
-
-    class Meta:
-        template = "blocks/lite-youtube-embed.html"
+        label = "Text, Header and Image"
+        template = "blocks/text-image-heading.html"

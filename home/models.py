@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from taggit.managers import TaggableManager
@@ -20,7 +21,7 @@ from home.forms import SignUpPage
 
 # BLOG PUPUT IMPORTS
 from puput.abstracts import EntryAbstract
-from wagtail.core.fields import StreamField
+from wagtail.core.fields import StreamField, RichTextField
 from . import blocks as blog_blocks
 from wagtail.core import blocks
 from wagtail.images.blocks import ImageChooserBlock
@@ -280,7 +281,7 @@ class BlogAbstract(EntryAbstract):
                 "left_quote_right_image",
                 blog_blocks.QuoteLeftImageBlock(class_name="full"),
             ),
-            ("video_embed", blog_blocks.LiteYoutubeEmbed(class_name="full")),
+            ("video_embed", blog_blocks.VideoEmbed(class_name="full")),
             ("table", TableBlock(class_name="full")),
             ("code_block", blog_blocks.CodeBlock(class_name="full")),
         ],
@@ -314,3 +315,51 @@ class BlogAbstract(EntryAbstract):
 
     class Meta:
         abstract = True
+
+
+class GeneralTag(TaggedItemBase):
+    content_object = ParentalKey(
+        "GeneralPage",
+        related_name="tagged_items",
+        on_delete=models.CASCADE,
+    )
+
+
+class GeneralPage(Page):
+    intro = RichTextField(blank=True)
+    body = RichTextField(blank=True)
+    tags = ClusterTaggableManager(through=GeneralTag, blank=True)
+    date = models.DateTimeField("Post Date")
+    content = StreamField(
+        [
+            ("heading", blog_blocks.HeadingBlock(class_name="full")),
+            ("subheading", blocks.CharBlock(class_name="full")),
+            ("paragraph", blocks.RichTextBlock(class_name="full")),
+            ("HTML", blocks.RawHTMLBlock(class_name="full")),
+            ("image", ImageChooserBlock()),
+            ("text_with_heading", blog_blocks.HeadingBlock(class_name="full")),
+            (
+                "text_heading_image",
+                blog_blocks.TextHeadingImageBlock(class_name="full"),
+            ),
+            ("video_embed", blog_blocks.VideoEmbed(class_name="full")),
+            ("table", TableBlock(class_name="full")),
+            ("code_block", blog_blocks.CodeBlock(class_name="full")),
+            ("quote_block", blog_blocks.QuoteBlock(class_name="full")),
+        ],
+        blank=True,
+        null=True,
+    )
+
+    content_panels = Page.content_panels + [
+        MultiFieldPanel(
+            [
+                FieldPanel("date"),
+                FieldPanel("tags"),
+            ],
+            heading="Page Information",
+        ),
+        FieldPanel("intro"),
+        FieldPanel("body"),
+        StreamFieldPanel("content"),
+    ]

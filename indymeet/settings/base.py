@@ -195,4 +195,4 @@ SERVER_EMAIL = "contact@djangonaut.space"
 SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
 
 PUPUT_AS_PLUGIN = True
-PUPUT_ENTRY_MODEL = "home.models.EntryAbstract"
+PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"
