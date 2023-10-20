@@ -17,8 +17,7 @@ urlpatterns = [
     path("search/", search_views.search, name="search"),
     path("accounts/", include("accounts.urls")),
     path("", include("home.urls")),
-    path("comms/", include("puput.urls")),
-    path("", include(wagtail_urls)),
+    path("", include("puput.urls")),
 ]
 
 
