@@ -251,7 +251,7 @@ class SessionMembership(models.Model):
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()
 
 
-class EntryAbstract(EntryAbstract):
+class BlogAbstract(EntryAbstract):
     content = StreamField(
         [
             ("heading", blog_blocks.HeadingBlock(class_name="full")),
