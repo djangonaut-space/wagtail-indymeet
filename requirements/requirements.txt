@@ -10,3 +10,4 @@ whitenoise
 python-dotenv
 puput
 urllib3==1.26.6
+django-extensions
