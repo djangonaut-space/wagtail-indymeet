@@ -14,8 +14,8 @@
 <main class="section">
 
     <div class="container-lg">
-        <h3>Events</h3>
-        <div class="row">
+        <h1>Events</h1>
+        <div class="row pt-4 pb-4">
           <div class="col">
             <p>These events are open to the public and free to attend. We'd love to meet you, so come say hi!</p>
           </div>
@@ -27,10 +27,29 @@
             {% endif %}
             </div>
         </div>
+        <h2>Upcoming Events</h2>
         <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
 
-            {% for event in events %}
+            {% for event in upcoming_events %}
             {% include 'home/includes/event_card.html' %}
+            {% empty %}
+            <div class="text-center">
+                <img alt="No data image" class="no-data-img" src="{% static 'img/no_data.svg' %}" />
+                <p class="pt-4">No upcoming events.</p>
+            </div>
+            {% endfor %}
+
+        </div>
+        <h2>Past Events</h2>
+        <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
+
+            {% for event in past_events %}
+            {% include 'home/includes/event_card.html' %}
+            {% empty %}
+            <div class="text-center">
+                <img alt="No data image" class="no-data-img" src="{% static 'img/no_data.svg' %}" />
+                <p class="pt-4">No past events.</p>
+            </div>
             {% endfor %}
 
         </div>
