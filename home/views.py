@@ -56,16 +56,14 @@ class EventListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        upcoming_events = Event.objects.visible().upcoming().order_by("-start_time")
-        past_events = Event.objects.visible().past().order_by("-start_time")
+        events = Event.objects.visible().order_by("-start_time")
 
         tag = self.request.GET.get("tag")
         if tag:
-            upcoming_events = upcoming_events.filter(tags__name=tag)
-            past_events = past_events.filter(tags__name=tag)
+            events = events.filter(tags__name=tag)
 
-        context["upcoming_events"] = upcoming_events
-        context["past_events"] = past_events
+        context["upcoming_events"] = events.upcoming()
+        context["past_events"] = events.past()
         context["tags"] = self.get_event_tags()
         context["current_tag"] = tag
         return context
