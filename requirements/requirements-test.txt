@@ -1,6 +1,2 @@
 -r requirements.txt
-pytest
-pytest-cov
-pytest-django
-pytest-django
-tox
+freezegun
