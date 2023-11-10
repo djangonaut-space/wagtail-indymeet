@@ -62,7 +62,8 @@ class EventListView(ListView):
         if tag:
             events = events.filter(tags__name=tag)
 
-        context["events"] = events
+        context["upcoming_events"] = events.upcoming()
+        context["past_events"] = events.past()
         context["tags"] = self.get_event_tags()
         context["current_tag"] = tag
         return context
