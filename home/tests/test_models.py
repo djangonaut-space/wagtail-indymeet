@@ -23,6 +23,10 @@ class SessionTests(TestCase):
         with freeze_time("2023-10-15"):
             self.assertFalse(self.session.is_accepting_applications())
 
+        with freeze_time("2023-10-15 12:00:00"):
+            # In UTC, so this is the 16th somewhere in the world
+            self.assertTrue(self.session.is_accepting_applications())
+
         with freeze_time("2023-10-16"):
             self.assertTrue(self.session.is_accepting_applications())
 
@@ -30,4 +34,9 @@ class SessionTests(TestCase):
             self.assertTrue(self.session.is_accepting_applications())
 
         with freeze_time("2023-11-16"):
+            # In UTC, so is the 15th still somewhere in the world
+            self.assertTrue(self.session.is_accepting_applications())
+
+        with freeze_time("2023-11-16 12:00:00"):
+            # No longer 15th AoE
             self.assertFalse(self.session.is_accepting_applications())
