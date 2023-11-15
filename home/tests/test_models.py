@@ -10,16 +10,19 @@ class SessionTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.session = Session.objects.create(
-            start_date=datetime(2024, 1, 15),
-            end_date=datetime(2024, 3, 11),
+            start_date=datetime(2024, 1, 15).date(),
+            end_date=datetime(2024, 3, 11).date(),
             title="2024 Session 1",
             slug="2024-session-1",
-            invitation_date=datetime(2023, 12, 1),
-            application_start_date=datetime(2023, 10, 16),
-            application_end_date=datetime(2023, 11, 15),
+            invitation_date=datetime(2023, 12, 1).date(),
+            application_start_date=datetime(2023, 10, 16).date(),
+            application_end_date=datetime(2023, 11, 15).date(),
         )
 
     def test_is_accepting_applications(self):
+        # Ensure that the types of fields are from django, not from when I created the object in memory
+        self.session.refresh_from_db()
+
         with freeze_time("2023-10-15"):
             self.assertFalse(self.session.is_accepting_applications())
 

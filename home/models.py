@@ -201,8 +201,8 @@ class Session(models.Model):
         aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
         today_early_aoe = datetime.datetime.now(tz=aoe_early_timezone).date()
         today_late_aoe = datetime.datetime.now(tz=aoe_late_timezone).date()
-        return (self.application_start_date.date() <= today_early_aoe) and (
-            today_late_aoe <= self.application_end_date.date()
+        return (self.application_start_date <= today_early_aoe) and (
+            today_late_aoe <= self.application_end_date
         )
 
     def get_absolute_url(self):
