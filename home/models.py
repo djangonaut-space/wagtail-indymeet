@@ -196,9 +196,9 @@ class Session(models.Model):
     def is_accepting_applications(self):
         """Determine if the current date is within the application window"""
         return (
-            self.application_start_date
+            self.application_start_date.date()
             <= timezone.now().date()
-            < self.application_end_date
+            <= self.application_end_date.date()
         )
 
     def get_absolute_url(self):
