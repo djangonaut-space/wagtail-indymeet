@@ -2,6 +2,7 @@
 {% load i18n wagtailcore_tags static %}
 {# Load the tag library #}
 {% load django_bootstrap5 %}
+{% load tz %}
 
 {# Load CSS and JavaScript #}
 {% bootstrap_css %}
@@ -25,9 +26,11 @@
   </div>
   <div class="row">
     <div class="col">
+        {% localtime on %}
         <p><strong>Start:</strong> {{ event.start_time|date:"M d, Y H:i e" }}</p>
         <p><strong>End:</strong> {{ event.end_time|date:"M d, Y H:i e" }}</p>
-        <p><strong>Location:</strong> {{ event.location }}</p>
+        {% endlocaltime %}
+        <p><strong>Location:</strong> {{ event.location|urlizetrunc:25 }}</p>
         <br>
         <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>
     </div>

@@ -27,9 +27,9 @@
     <div class="col">
       <dl class="row">
         <dt class="col-sm-3">Applications Open:</dt>
-        <dd class="col-sm-9">{{ session.application_start_date|date:"M d, Y" }}</dd>
+        <dd class="col-sm-9">{{ session.application_start_date|date:"M d, Y" }} AOE</dd>
         <dt class="col-sm-3">Applications Close:</dt>
-        <dd class="col-sm-9">{{ session.application_end_date|date:"M d, Y" }}</dd>
+        <dd class="col-sm-9">{{ session.application_end_date|date:"M d, Y" }} AOE</dd>
         <dt class="col-sm-3">Invitations Sent:</dt>
         <dd class="col-sm-9">{{ session.invitation_date|date:"M d, Y" }}</dd>
         <dt class="col-sm-3">Start:</dt>
@@ -40,7 +40,7 @@
       <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
       {% if session.is_accepting_applications %}
         <br />
-        <h2>You have {{ session.application_end_date|timeuntil}} to submit your application</h2>
+        <h2>You have {{ session.application_end_anywhere_on_earth|timeuntil}} to submit your application</h2>
         <br />
         <a href="{{ session.application_url }}" target="_blank" class="btn btn-success btn-lg">Apply</a>
       {% endif %}
