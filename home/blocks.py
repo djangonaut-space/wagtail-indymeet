@@ -1,5 +1,8 @@
 from wagtail.core import blocks
+from wagtail.contrib.table_block.blocks import TableBlock
+from wagtail.blocks import StreamBlock
 from wagtail.images.blocks import ImageChooserBlock
+
 
 CODE_LANGUAGE_OPTIONS = (
     ("Python", "python"),
@@ -164,3 +167,19 @@ class TextHeadingImageBlock(blocks.StructBlock):
     class Meta:
         label = "Text, Header and Image"
         template = "blocks/text-image-heading.html"
+
+
+class BaseStreamBlock(StreamBlock):
+    heading = HeadingBlock()
+    paragraph = blocks.CharBlock(max_length=255)
+    html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
+    image = ImageChooserBlock()
+    text_with_heading = TextHeadingImageBlock()
+    text_with_heading_and_right_image = TextWithHeadingWithRightImageBlock()
+    text_with_heading_and_left_image = TextWithHeadingWithLeftImageBlock()
+    right_image_left_text = RightImageLeftTextBlock()
+    left_image_right_text = LeftImageRightTextBlock()
+    left_quote_right_image = QuoteLeftImageBlock()
+    video_embed = VideoEmbed()
+    table = TableBlock()
+    code_block = CodeBlock()

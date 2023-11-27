@@ -23,6 +23,7 @@ from home.forms import SignUpPage
 from puput.abstracts import EntryAbstract
 from wagtail.core.fields import StreamField, RichTextField
 from . import blocks as blog_blocks
+from .blocks import BaseStreamBlock
 from wagtail.core import blocks
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.contrib.table_block.blocks import TableBlock
@@ -253,48 +254,19 @@ class SessionMembership(models.Model):
 
 
 class BlogAbstract(EntryAbstract):
-    content = StreamField(
-        [
-            ("heading", blog_blocks.HeadingBlock(class_name="full")),
-            ("subheading", blocks.CharBlock(class_name="full")),
-            ("paragraph", blocks.RichTextBlock()),
-            ("html", blocks.RawHTMLBlock(icon="code", label="Raw HTML")),
-            ("image", ImageChooserBlock()),
-            ("text_with_heading", blog_blocks.TextWithHeadingBlock(class_name="full")),
-            (
-                "text_with_heading_and_right_image",
-                blog_blocks.TextWithHeadingWithRightImageBlock(class_name="full"),
-            ),
-            (
-                "text_with_heading_and_left_image",
-                blog_blocks.TextWithHeadingWithLeftImageBlock(class_name="full"),
-            ),
-            (
-                "right_image_left_text",
-                blog_blocks.RightImageLeftTextBlock(class_name="full"),
-            ),
-            (
-                "left_image_right_text",
-                blog_blocks.LeftImageRightTextBlock(class_name="full"),
-            ),
-            (
-                "left_quote_right_image",
-                blog_blocks.QuoteLeftImageBlock(class_name="full"),
-            ),
-            ("video_embed", blog_blocks.VideoEmbed(class_name="full")),
-            ("table", TableBlock(class_name="full")),
-            ("code_block", blog_blocks.CodeBlock(class_name="full")),
-        ],
+    stream_body = StreamField(
+        BaseStreamBlock(),
+        verbose_name="StreamField Body",
         blank=True,
-        null=True,
+        use_json_field=True,
     )
-    content_panels = [
+
+    content_panels = Page.content_panels + [
         MultiFieldPanel(
             [
                 FieldPanel("title", classname="title"),
                 ImageChooserPanel("header_image"),
-                FieldPanel("body", classname="full"),
-                StreamFieldPanel("content"),
+                FieldPanel("stream_body"),
                 FieldPanel("excerpt", classname="full"),
             ],
             heading=_("Content"),
