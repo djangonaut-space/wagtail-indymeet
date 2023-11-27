@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import datetime
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import models
@@ -15,8 +17,6 @@ from taggit.models import TaggedItemBase
 from wagtail.models import Page
 from wagtail.snippets.models import register_snippet
 
-from .managers import EventQuerySet
-from .managers import SessionMembershipQuerySet
 from home.forms import SignUpPage
 
 # BLOG PUPUT IMPORTS
@@ -35,6 +35,8 @@ from wagtail.admin.edit_handlers import (
     PageChooserPanel,
 )
 from wagtail.images.edit_handlers import ImageChooserPanel
+from .managers import EventQuerySet, SessionMembershipQuerySet
+
 
 
 def sign_up_forms(context):
@@ -213,10 +215,12 @@ class Session(models.Model):
 
     def is_accepting_applications(self):
         """Determine if the current date is within the application window"""
-        return (
-            self.application_start_date
-            <= timezone.now().date()
-            < self.application_end_date
+        aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
+        aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
+        today_early_aoe = datetime.datetime.now(tz=aoe_early_timezone).date()
+        today_late_aoe = datetime.datetime.now(tz=aoe_late_timezone).date()
+        return (self.application_start_date <= today_early_aoe) and (
+            today_late_aoe <= self.application_end_date
         )
 
     def get_absolute_url(self):
