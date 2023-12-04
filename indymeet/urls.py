@@ -17,7 +17,7 @@ urlpatterns = [
     path("search/", search_views.search, name="search"),
     path("accounts/", include("accounts.urls")),
     path("", include("home.urls")),
-    path("content/", include("puput.urls")),
+    path("", include("puput.urls")),
 ]
 
 

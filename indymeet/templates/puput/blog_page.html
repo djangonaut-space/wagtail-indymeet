@@ -70,9 +70,9 @@
                         <div class="article">
                         {% include 'puput/entry_page_header.html' %}
                         {% if entry.excerpt %}
-                            {{ entry.excerpt|richtext }}
+                            {{ entry.excerpt }}
                         {% else %}
-                            {{ entry.body|richtext|truncatewords_html:70 }}
+                            {{ entry.body|truncatewords_html:70 }}
                         {% endif %}
                         <ul class="social-share col-md-6">
                             <li class="social-item">
