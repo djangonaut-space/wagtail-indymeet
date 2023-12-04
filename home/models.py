@@ -38,7 +38,6 @@ from wagtail.images.edit_handlers import ImageChooserPanel
 from .managers import EventQuerySet, SessionMembershipQuerySet
 
 
-
 def sign_up_forms(context):
     return {
         "sign_up_forms": SignUpPage.objects.all(),
@@ -258,36 +257,13 @@ class SessionMembership(models.Model):
 
 
 class BlogAbstract(EntryAbstract):
-    stream_body = StreamField(
+    body = StreamField(
         BaseStreamBlock(),
         verbose_name="StreamField Body",
-        blank=True,
         use_json_field=True,
     )
 
-    content_panels = Page.content_panels + [
-        MultiFieldPanel(
-            [
-                FieldPanel("title", classname="title"),
-                ImageChooserPanel("header_image"),
-                FieldPanel("stream_body"),
-                FieldPanel("excerpt", classname="full"),
-            ],
-            heading=_("Content"),
-        ),
-        MultiFieldPanel(
-            [
-                FieldPanel("tags"),
-                InlinePanel("entry_categories", label=_("Categories")),
-                InlinePanel(
-                    "related_entrypage_from",
-                    label=_("Related Entries"),
-                    panels=[PageChooserPanel("entrypage_to")],
-                ),
-            ],
-            heading=_("Page Metadata"),
-        ),
-    ]
+    content_panels = EntryAbstract.content_panels + []
 
     class Meta:
         abstract = True
