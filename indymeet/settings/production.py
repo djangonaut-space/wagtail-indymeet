@@ -62,8 +62,9 @@ if os.getenv("ENVIRONMENT") == "production":
     AZURE_STORAGE_KEY = "False"
     AZURE_MEDIA_CONTAINER = os.environ.get("AZURE_MEDIA_CONTAINER", "media")
     AZURE_STATIC_CONTAINER = os.environ.get("AZURE_STATIC_CONTAINER", "static")
-    DEFAULT_FILE_STORAGE = "indymeet.settings.storage.AzureMediaStorage"
-    STATICFILES_STORAGE = "indymeet.settings.storage.AzureStaticStorage"
+
+    DEFAULT_FILE_STORAGE = "indymeet.settings.storages.AzureMediaStorage"
+    STATICFILES_STORAGE = "indymeet.settings.storages.AzureStaticStorage"
 
     AZURE_CUSTOM_DOMAIN = f"{AZURE_ACCOUNT_NAME}.azureedge.net"  # CDN URL
     # AZURE_CUSTOM_DOMAIN = f"{AZURE_ACCOUNT_NAME}.blob.core.windows.net"  # Files URL
