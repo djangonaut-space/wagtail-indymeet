@@ -3,6 +3,7 @@
 db.sqlite3
 node_modules/
 venv/
+wsl-venv/
 build/
 __pycache__
 *.pyc
