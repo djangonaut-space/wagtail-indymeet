@@ -2,14 +2,14 @@
 # This file is a duplicate of requirements/requirements.txt used for deploying to Azure.
 
 Django>=4.1,<4.2
-wagtail>=4.1,<4.2
+wagtail==4.1
 django-bootstrap5==22.2
 django-storages
 django-storages[azure]
 psycopg2-binary
 whitenoise
 python-dotenv
-puput
+puput==1.2.0
 django-recaptcha==3.0.*
 django-anymail==9.0
 six==1.16.*
