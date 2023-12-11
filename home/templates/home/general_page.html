@@ -1,0 +1,49 @@
+{% extends "base.html" %}]
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+{% block body_class %}template-generalpage{% endblock %}
+
+{% block extra_css %}
+    <link href="{% static 'css/prism.css' %}" rel="stylesheet" />
+{% endblock extra_css %}
+
+{%  block extra_js %}
+    <script src="{%  static 'js/prism.js' %}"></script>
+    <script src="{%  static 'js/gallery.js' %}"></script>
+{%  endblock extra_js %}
+
+{% block content %}
+<main class="">
+  <!--<div class="figure">
+      <img id="me" class="shadow-2xl" src="{% static 'img/Djangogirls_cph19_small_BartPawlik-35.jpg' %}"/>
+  </div> -->
+  <div class="">
+    <header class="">
+        <div id="">
+            <h1><span class="">{{ page.title }}</span></h1>
+        </div>
+        <div id="">
+            <span id="" class="">{{ page.date }}</span>
+        </div>
+        <div class="">
+            {% for tag in page.tags.all %}
+                <a type="button" href="{{ page.get_parent.url}}search/?query={{ tag }}" class="badge badge-primary">{{ tag }}</a>
+            {% endfor %}
+        </div>
+          <div class="container">
+              {{ page.intro|richtext }}
+          </div>
+    </header>
+        <div class="container">
+            {{ page.content }}
+        </div>
+        <div class="container">
+          {{ page.body|richtext }}
+            <div class="row">
+                <p><a href="{{  page.get_parent.url }}">Return home</a></p>
+            </div>
+      </div>
+
+</main>
+{% endblock %}
+
