@@ -16,3 +16,4 @@ six==1.16.*
 urllib3==1.26.6
 psycopg2-binary
 django-extensions
+django-debug-toolbar
