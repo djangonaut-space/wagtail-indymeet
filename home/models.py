@@ -261,6 +261,7 @@ class BlogAbstract(EntryAbstract):
         BaseStreamBlock(),
         verbose_name="StreamField Body",
         use_json_field=True,
+        null=True,
     )
 
     content_panels = EntryAbstract.content_panels + []
@@ -279,7 +280,7 @@ class GeneralTag(TaggedItemBase):
 
 class GeneralPage(Page):
     intro = RichTextField(blank=True)
-    body = RichTextField(blank=True)
+    body = RichTextField(blank=True, null=True)
     tags = ClusterTaggableManager(through=GeneralTag, blank=True)
     date = models.DateTimeField("Post Date")
     content = StreamField(
