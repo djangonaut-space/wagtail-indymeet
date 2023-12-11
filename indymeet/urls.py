@@ -18,6 +18,7 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("", include("home.urls")),
     path("", include("puput.urls")),
+    path("__debug__/", include("debug_toolbar.urls")),
 ]
 
 

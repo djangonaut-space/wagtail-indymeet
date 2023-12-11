@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # azure storage
     "storages",
+    # other
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -68,6 +70,14 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+]
+
+AZURE_IP = os.environ.get("AZURE_IP", False)
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+    AZURE_IP,
 ]
 
 ROOT_URLCONF = "indymeet.urls"
