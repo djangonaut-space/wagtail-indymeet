@@ -1,5 +1,5 @@
-Django==4.1.5
-wagtail==4.1
+Django==4.1.13
+wagtail==4.1.9
 django-bootstrap5==22.2
 django-storages
 django-storages[azure]
@@ -9,7 +9,7 @@ six==1.16.*
 django-recaptcha==3.0.*
 whitenoise
 python-dotenv
-puput==1.2.0
+puput==2.0.0
 urllib3==1.26.6
 django-extensions
 django-debug-toolbar
