@@ -1,0 +1,8 @@
+{% load wagtailimages_tags %}
+
+<div class="block-image">
+    <div class="row">
+        <div class="">{{ value.text|safe }}</div>
+        <div class="">{% image value.image width-1000 %}</div>
+    </div>
+</div>

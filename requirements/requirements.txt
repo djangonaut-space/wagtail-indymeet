@@ -2,6 +2,7 @@ Django>=4.1,<4.2
 wagtail>=4.1,<4.2
 django-bootstrap5==22.2
 django-storages
+django-storages[azure]
 psycopg2-binary
 django-anymail==9.0
 six==1.16.*
