@@ -264,7 +264,28 @@ class BlogAbstract(EntryAbstract):
         null=True,
     )
 
-    content_panels = EntryAbstract.content_panels + []
+    content_panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel('title', classname="title"),
+                ImageChooserPanel('header_image'),
+                FieldPanel('body', classname="full"),
+                FieldPanel('excerpt', classname="full"),
+            ],
+            heading=_("Content")
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel('tags'),
+                InlinePanel('entry_categories', label=_("Categories")),
+                InlinePanel(
+                    'related_entrypage_from',
+                    label=_("Related Entries"),
+                    panels=[PageChooserPanel('entrypage_to')]
+                ),
+            ],
+            heading=_("Page Metadata")),
+    ]
 
     class Meta:
         abstract = True
