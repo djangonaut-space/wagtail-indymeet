@@ -1,4 +1,4 @@
-{% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags %}
+{% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags tailwind_tags %}
 {# Load the tag library #}
 {% load django_bootstrap5 %}
 
@@ -37,6 +37,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap" rel="stylesheet">
+        {% tailwind_css %}
         <link rel="stylesheet" href="{% static 'puput/css/puput.css' %}"/>
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
         <link rel="stylesheet" href="{% static 'css/styles.css' %}">

@@ -1,0 +1,253 @@
+html {
+    box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+body {
+    max-width: 100vw;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 15px;
+    color: #231f20;
+    line-height: 1.25;
+}
+
+a {
+    background-color: transparent;
+    color: #5c0287;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: #570380b0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+p,
+ul {
+    padding: 0;
+    margin: 0;
+    font-weight: 400;
+}
+
+svg:not(:root) {
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.logo {
+    width: 150px;
+    margin-inline-end: 20px;
+}
+
+.logo a {
+    display: block;
+}
+
+.figure-logo {
+    max-width: 150px;
+    max-height: 55.1px;
+}
+
+.release-notes {
+    font-size: 14px;
+}
+
+.section {
+    padding: 40px 0;
+    margin: 0 auto;
+}
+
+.main-center {
+    text-align: center;
+}
+
+.figure-space {
+    max-width: 265px;
+}
+
+@keyframes pos {
+
+    0%,
+    100% {
+        transform: rotate(-6deg);
+    }
+
+    50% {
+        transform: rotate(6deg);
+    }
+}
+
+.egg {
+    fill: #43b1b0;
+    animation: pos 3s ease infinite;
+    transform: translateY(50px);
+    transform-origin: 50% 80%;
+}
+
+.main-text {
+    max-width: 400px;
+    margin: 5px auto;
+}
+
+.main-text h1 {
+    font-size: 22px;
+}
+
+.main-text p {
+    margin: 15px auto 0;
+}
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    border-top: 1px solid #e6e6e6;
+    padding: 10px;
+    margin: auto !important;
+    text-align: center;
+}
+
+.footer-bottom {
+    padding-top: 5rem;
+    margin: auto;
+    text-align: center;
+}
+
+.footer-ul {
+    list-style-type: none;
+}
+
+.option {
+    display: block;
+    padding: 10px 10px 10px 34px;
+    position: relative;
+    text-decoration: none;
+}
+
+.option svg {
+    width: 24px;
+    height: 24px;
+    fill: gray;
+    border: 1px solid #d9d9d9;
+    padding: 5px;
+    border-radius: 100%;
+    top: 10px;
+    inset-inline-start: 0;
+    position: absolute;
+}
+
+.option h2 {
+    font-size: 19px;
+    text-decoration: underline;
+}
+
+.option p {
+    padding-top: 3px;
+    color: #231f20;
+    font-size: 15px;
+    font-weight: 300;
+}
+
+/* ---------------------------------------------------------------------
+ BOOTSTRAP THEME
+----------------------------------------------------------------------*/
+:root {
+    --blue: #007bff;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #e83e8c;
+    --red: #dc3545;
+    --orange: #fd7e14;
+    --yellow: #ffc107;
+    --green: #28a745;
+    --teal: #20c997;
+    --cyan: #17a2b8;
+    --white: #fff;
+    --gray: #6c757d;
+    --gray-dark: #343a40;
+    --primary: #5c0287;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --breakpoint-xs: 0;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --font-family-sans-serif: "Inter",-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --font-family-monospace: "Frauces", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--primary);
+    --bs-btn-border-color: var(--primary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #8D4EAB;
+    --bs-btn-hover-border-color: #6D1C93;
+    --bs-btn-focus-shadow-rgb: 49,132,253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #6D1C93;
+    --bs-btn-active-border-color: #7D359F;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--primary);
+    --bs-btn-disabled-border-color: var(--primary);
+}
+
+/* ---------------------------------------------------------------------
+ MEDIA QUERIES
+----------------------------------------------------------------------*/
+@media (max-width: 996px) {
+    body {
+        max-width: 780px;
+    }
+}
+
+@media (max-width: 767px) {
+    .option {
+        flex: 0 0 50%;
+    }
+}
+
+@media (max-width: 599px) {
+    .main {
+        padding: 20px 0;
+    }
+
+    .figure-space {
+        max-width: 200px;
+    }
+
+    .footer a {
+        text-align: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .header-link {
+        max-width: 100px;
+    }
+}

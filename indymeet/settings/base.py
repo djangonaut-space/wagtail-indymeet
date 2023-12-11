@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     "storages",
     # other
     "debug_toolbar",
+    "tailwind",
+    "theme"
 ]
 
 MIDDLEWARE = [
@@ -215,3 +217,5 @@ PUPUT_AS_PLUGIN = True
 PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"
 
 MIGRATION_MODULES = {"puput": "home.puput_migrations"}
+
+TAILWIND_APP_NAME = "theme"
