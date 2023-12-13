@@ -1,0 +1,36 @@
+.blog_grid .article .social-share:after {
+    display: none;
+}
+
+.blog_grid .article .social-share li.social-item {
+    background-color: var(--main-color);
+}
+
+.about .title-header {
+    padding-bottom: 1rem;
+}
+
+.about .title-header a {
+    font-size: 2.5rem;
+}
+
+.about .title-header a:hover {
+    color: grey;
+}
+
+.about .title-section h2 {
+    letter-spacing: 0.1rem;
+    font-family: var(--font-family-sans-serif);
+}
+
+.page-content h2.post_title {
+    font-family: var(--font-family-sans-serif);
+}
+
+ul.sidebar h4, ul.sidebar h5 {
+    font-family: var(--font-family-sans-serif);
+}
+
+ul.sidebar h4 {
+    font-weight: 600;
+}
