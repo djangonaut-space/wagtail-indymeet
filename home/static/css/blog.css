@@ -1,8 +1,11 @@
-.blog_grid .article .social-share:after {
+.blog_grid .article .social-share:after,
+.page-content .social-share-all:before 
+{
     display: none;
 }
 
-.blog_grid .article .social-share li.social-item {
+.blog_grid .article .social-share li.social-item,
+.page-content .social-share-all li.social-item {
     background-color: var(--main-color);
 }
 
@@ -33,4 +36,43 @@ ul.sidebar h4, ul.sidebar h5 {
 
 ul.sidebar h4 {
     font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------
+ Blocks
+----------------------------------------------------------------------*/
+
+.block-paragraph {
+    color: var(--dark);
+    margin: 1em 0;
+}
+
+.block-html p {
+    color: var(--dark);
+    margin: 1em 0;
+}
+
+.block-left_quote_right_image blockquote {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.block-left_quote_right_image img {
+    border-radius: 50%;
+    padding-right: 1rem;
+}
+
+
+.block-left_quote_right_image blockquote p {
+    font-size: calc(var(--bs-body-font-size) * 1.5);
+}
+
+@media screen and (min-width: 768px){
+    .block-left_quote_right_image blockquote {
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+    }
 }
