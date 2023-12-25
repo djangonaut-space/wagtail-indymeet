@@ -6,6 +6,7 @@
 
 
 <!-- PROJECT SHIELDS -->
+[![Run tests](https://github.com/djangonaut-space/wagtail-indymeet/actions/workflows/tests.yml/badge.svg)](https://github.com/djangonaut-space/wagtail-indymeet/actions/workflows/tests.yml)
 <!-- [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
