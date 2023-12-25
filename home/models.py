@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from taggit.managers import TaggableManager
@@ -18,6 +19,22 @@ from wagtail.snippets.models import register_snippet
 
 from home.forms import SignUpPage
 
+# BLOG PUPUT IMPORTS
+from puput.abstracts import EntryAbstract
+from wagtail.core.fields import StreamField, RichTextField
+from . import blocks as blog_blocks
+from .blocks import BaseStreamBlock
+from wagtail.core import blocks
+from wagtail.images.blocks import ImageChooserBlock
+from wagtail.contrib.table_block.blocks import TableBlock
+from wagtail.admin.edit_handlers import (
+    FieldPanel,
+    InlinePanel,
+    MultiFieldPanel,
+    StreamFieldPanel,
+    PageChooserPanel,
+)
+from wagtail.images.edit_handlers import ImageChooserPanel
 from .managers import EventQuerySet, SessionMembershipQuerySet
 
 
@@ -237,3 +254,86 @@ class SessionMembership(models.Model):
     )
     role = models.CharField(max_length=64, choices=ROLES, default=DJANGONAUT)
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()
+
+
+class BlogAbstract(EntryAbstract):
+    body = StreamField(
+        BaseStreamBlock(),
+        verbose_name="StreamField Body",
+        use_json_field=True,
+        null=True,
+    )
+
+    content_panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel('title', classname="title"),
+                ImageChooserPanel('header_image'),
+                FieldPanel('body', classname="full"),
+                FieldPanel('excerpt', classname="full"),
+            ],
+            heading=_("Content")
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel('tags'),
+                InlinePanel('entry_categories', label=_("Categories")),
+                InlinePanel(
+                    'related_entrypage_from',
+                    label=_("Related Entries"),
+                    panels=[PageChooserPanel('entrypage_to')]
+                ),
+            ],
+            heading=_("Page Metadata")),
+    ]
+
+    class Meta:
+        abstract = True
+
+
+class GeneralTag(TaggedItemBase):
+    content_object = ParentalKey(
+        "GeneralPage",
+        related_name="tagged_items",
+        on_delete=models.CASCADE,
+    )
+
+
+class GeneralPage(Page):
+    intro = RichTextField(blank=True)
+    body = RichTextField(blank=True, null=True)
+    tags = ClusterTaggableManager(through=GeneralTag, blank=True)
+    date = models.DateTimeField("Post Date")
+    content = StreamField(
+        [
+            ("heading", blog_blocks.HeadingBlock(class_name="full")),
+            ("subheading", blocks.CharBlock(class_name="full")),
+            ("paragraph", blocks.RichTextBlock(class_name="full")),
+            ("HTML", blocks.RawHTMLBlock(class_name="full")),
+            ("image", ImageChooserBlock()),
+            ("text_with_heading", blog_blocks.HeadingBlock(class_name="full")),
+            (
+                "text_heading_image",
+                blog_blocks.TextHeadingImageBlock(class_name="full"),
+            ),
+            ("video_embed", blog_blocks.VideoEmbed(class_name="full")),
+            ("table", TableBlock(class_name="full")),
+            ("code_block", blog_blocks.CodeBlock(class_name="full")),
+            ("quote_block", blog_blocks.QuoteBlock(class_name="full")),
+        ],
+        blank=True,
+        null=True,
+    )
+
+    content_panels = Page.content_panels + [
+        MultiFieldPanel(
+            [
+                FieldPanel("date"),
+                FieldPanel("tags"),
+            ],
+            heading="Page Information",
+        ),
+        FieldPanel("intro"),
+        FieldPanel("body"),
+        StreamFieldPanel("content"),
+    ]

@@ -1,0 +1,13 @@
+
+{% if value.title %}<h3 class="page-heading">{{ value.title }}</h3>{% endif %}
+
+{% if value.embed %}
+  <!-- <lite-youtube videoid="{{ value.embed }}">
+    <button type="button" class="lty-playbtn">
+      <span class="lyt-visually-hidden">Play Video{% if value.title %}: {{ value.title }}{% endif %}</span>
+    </button>
+  </lite-youtube> -->
+  {% with "https://www.youtube.com/embed/"|add:value.embed as video_url %}
+  <iframe width="560" height="315" src="{{ video_url}}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+  {% endwith %}
+{% endif %}

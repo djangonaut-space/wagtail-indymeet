@@ -4,16 +4,29 @@ on:
   pull_request:
     branches:
       - main
+      - develop
   push:
     branches:
       - main
+      - develop
 
 jobs:
   build:
     env:
-      ENVIRONMENT: 'dev'
-      DJANGO_SETTINGS_MODULE: 'indymeet.settings.dev'
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ENVIRONMENT: 'production'
+      DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
+      APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.STAGING_APPINSIGHTS_INSTRUMENTATIONKEY }}
+      APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
+      DEBUG: 'True'
+      HOST: ${{ secrets.HOST_ADDON }}
+      PASSWORD: ${{ secrets.PASSWORD_ADDON }}
+      RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+      RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
+      SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
+      USER: ${{ secrets.USER_ADDON }}
+      WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
+    environment: staging-djangonaut-space
     runs-on: ubuntu-latest
 
     steps:

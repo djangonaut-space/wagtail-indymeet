@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "captcha",
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
+    "wagtail.contrib.table_block",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -53,6 +54,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # azure storage
+    "storages",
+    # other
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -65,6 +70,14 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+]
+
+AZURE_IP = os.environ.get("AZURE_IP", False)
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+    AZURE_IP,
 ]
 
 ROOT_URLCONF = "indymeet.urls"
@@ -193,3 +206,8 @@ LOGOUT_REDIRECT_URL = "/"
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
 SERVER_EMAIL = "contact@djangonaut.space"
 SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
+
+PUPUT_AS_PLUGIN = True
+PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"
+
+MIGRATION_MODULES = {"puput": "home.puput_migrations"}
