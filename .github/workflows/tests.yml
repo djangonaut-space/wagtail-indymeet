@@ -12,7 +12,7 @@ jobs:
   build:
     env:
       ENVIRONMENT: 'dev'
-      DJANGO_SETTINGS_MODULE: 'indymeet.settings.dev'
+      DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
     runs-on: ubuntu-latest
 
