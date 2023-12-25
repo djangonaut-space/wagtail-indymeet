@@ -1,3 +1,4 @@
+
 Django==4.1.*
 wagtail==4.1.*
 django-bootstrap5==22.2.*

@@ -1,6 +1,7 @@
 # TODO: specify location of requirements file for Oryx Azure deploy
 # This file is a duplicate of requirements/requirements.txt used for deploying to Azure.
 
+
 Django==4.1.*
 wagtail==4.1.*
 django-bootstrap5==22.2.*
