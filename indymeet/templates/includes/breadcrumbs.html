@@ -1,8 +1,13 @@
+{% if self.get_ancestors|length > 1 %}
 <nav aria-label="breadcrumb">
-    {# for url in breadcrumb list #}
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="#">Home</a></li>
-      <li class="breadcrumb-item"><a href="#">Library</a></li>
-      <li class="breadcrumb-item active" aria-current="page">Data</li>
-    </ol>
-  </nav>
+  <ol class="breadcrumb">
+      {% for p in self.get_ancestors %}
+          {% if p.is_root == False %}
+              <li class="breadcrumb-item"><a href="{{ p.url }}">{{ p.title }}</a></li>
+          {% endif %}
+      {% endfor %}
+
+      <li class="breadcrumb-item active">{{ self.title }}</li>
+  </ol>
+</nav>
+{% endif %}

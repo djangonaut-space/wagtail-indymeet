@@ -1,0 +1,9 @@
+{% load wagtailimages_tags %}
+
+<div class="block-image">
+    <h2 class="blog-heading">{{ value.heading|safe }}</h2>
+    <div class="row align-items-start">
+        <div class="col-lg-7">{% image value.image width-1000 %}</div>
+        <div class="col-lg-5">{{ value.text|safe }}</div>
+    </div>
+</div>
