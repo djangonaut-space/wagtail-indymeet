@@ -19,6 +19,9 @@ jobs:
       HOST: "localhost"
       USER: "djangonaut"
       PASSWORD: "djangonaut"
+      DEBUG: False
+      RECAPTCHA_PUBLIC_KEY: "dummy_value"
+      RECAPTCHA_PRIVATE_KEY: "dummy_value"
     runs-on: ubuntu-latest
     services:
       pg:
