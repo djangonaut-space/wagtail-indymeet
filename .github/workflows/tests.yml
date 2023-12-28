@@ -15,11 +15,11 @@ jobs:
     env:
       ENVIRONMENT: 'test'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
       HOST: "localhost"
       USER: "djangonaut"
       PASSWORD: "djangonaut"
       DEBUG: False
+      SECRET_KEY: "hunter2"
       RECAPTCHA_PUBLIC_KEY: "dummy_value"
       RECAPTCHA_PRIVATE_KEY: "dummy_value"
     runs-on: ubuntu-latest
