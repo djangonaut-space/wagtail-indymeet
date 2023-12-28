@@ -22,7 +22,6 @@ if os.getenv("ENVIRONMENT") == "production":
     print("PRODUCTION")
     print("----------------------------------")
     print("----------------------------------")
-    SECRET_KEY = os.environ["SECRET_KEY"]
     ALLOWED_HOSTS = [
         "djangonaut-space.azurewebsites.net",
         "djangonaut.space",

@@ -102,6 +102,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "indymeet.wsgi.application"
 
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
