@@ -13,11 +13,22 @@ on:
 jobs:
   build:
     env:
-      ENVIRONMENT: 'dev'
-      DJANGO_SETTINGS_MODULE: 'indymeet.settings.dev'
+      ENVIRONMENT: 'test'
+      DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      HOST: "localhost"
+      USER: "djangonaut"
+      PASSWORD: "djangonaut"
     runs-on: ubuntu-latest
-
+    services:
+      pg:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: "djangonaut"
+          POSTGRES_PASSWORD: "djangonaut"
+          POSTGRES_DB: "djangonaut-space"
     steps:
       - uses: actions/checkout@v2
 

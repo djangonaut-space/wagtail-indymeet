@@ -105,16 +105,14 @@ WSGI_APPLICATION = "indymeet.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-# Dummy local test database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "local_djangonaut_space",  # Or path to database file if using sqlite3.
-        "USER": "postgres",  # Not used with sqlite3.
-        "PASSWORD": 4,  # Not used with sqlite3.
-        "HOST": "localhost",  # Set to empty string for localhost. Not used with sqlite3.
-        "PORT": 5432,  # Set to empty string for default. Not used with sqlite3.
+        "NAME": "djangonaut-space",
+        "USER": os.environ["USER"],
+        "PASSWORD": os.environ["PASSWORD"],
+        "HOST": os.environ["HOST"],
+        "PORT": 5432,
     },
 }
 

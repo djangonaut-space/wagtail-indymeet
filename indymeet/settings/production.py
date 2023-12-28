@@ -34,19 +34,7 @@ if os.getenv("ENVIRONMENT") == "production":
         "https://staging-djangonaut-space.azurewebsites.net",
     ]
 
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "djangonaut-space",  # Or path to database file if using sqlite3.
-            "USER": os.environ["USER"],  # Not used with sqlite3.
-            "PASSWORD": os.environ["PASSWORD"],  # Not used with sqlite3.
-            "HOST": os.environ[
-                "HOST"
-            ],  # Set to empty string for localhost. Not used with sqlite3.
-            "PORT": 5432,  # Set to empty string for default. Not used with sqlite3.
-            "OPTIONS": {"sslmode": "require"},
-        },
-    }
+    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
 
     EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
