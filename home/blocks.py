@@ -206,7 +206,6 @@ class BaseStreamBlock(StreamBlock):
             "bold",
             "italic",
             "link",
-            "blockquote",
             "superscript",
             "subscript",
             "strikethrough",
@@ -225,7 +224,7 @@ class BaseStreamBlock(StreamBlock):
     text_with_heading_and_left_image = TextWithHeadingWithLeftImageBlock()
     right_image_left_text = RightImageLeftTextBlock()
     left_image_right_text = LeftImageRightTextBlock()
-    left_quote_right_image = QuoteLeftImageBlock()
+    left_quote_right_image = QuoteLeftImageBlock(icon="openquote")
     video_embed = VideoEmbed()
     table = TableBlock()
     code_block = CodeBlock()
