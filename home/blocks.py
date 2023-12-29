@@ -31,6 +31,17 @@ CODE_LANGUAGE_OPTIONS = (
 
 
 class HeadingBlock(blocks.StructBlock):
+    size = blocks.ChoiceBlock(
+        choices=[
+            ("text-5xl", "h1"),
+            ("text-4xl", "h2"),
+            ("text-3xl", "h3"),
+            ("text-2xl", "h4"),
+            ("text-xl", "h5"),
+            ("text-lg", "h6"),
+        ],
+        icon="title",
+    )
     heading = blocks.CharBlock(max_length=255, class_name="heading-blog")
 
     def __str__(self):
@@ -170,8 +181,8 @@ class TextHeadingImageBlock(blocks.StructBlock):
 
 
 class BaseStreamBlock(StreamBlock):
-    heading = HeadingBlock()
-    paragraph = blocks.RichTextBlock(max_length=10000)
+    heading = HeadingBlock(label="Heading")
+    paragraph = blocks.TextBlock(max_length=10000)
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
     text_with_heading = TextHeadingImageBlock()
