@@ -1,19 +1,21 @@
 # TODO: specify location of requirements file for Oryx Azure deploy
 # This file is a duplicate of requirements/requirements.txt used for deploying to Azure.
 
-Django==4.1.13
-wagtail==4.1.9
-django-bootstrap5==22.2
-django-storages
+
+Django==4.1.*
+wagtail==4.1.*
+django-bootstrap5==22.2.*
+django-storages==1.13.*
 django-storages[azure]
-psycopg2-binary
-whitenoise
-python-dotenv
-puput==2.0.0
+psycopg2-binary==2.9.*
+whitenoise==6.3.*
+python-dotenv==0.21.*
+puput==2.0.*
 django-recaptcha==3.0.*
-django-anymail==9.0
+django-anymail==9.0.*
 six==1.16.*
-urllib3==1.26.6
-psycopg2-binary
-django-extensions
-django-debug-toolbar
+urllib3==1.26.*
+psycopg2-binary==2.9.*
+django-extensions==3.2.*
+django-debug-toolbar==4.2.*
+typing-extensions==4.6.*

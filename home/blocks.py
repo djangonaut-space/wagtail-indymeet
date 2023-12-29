@@ -1,6 +1,6 @@
 from wagtail.core import blocks
 from wagtail.contrib.table_block.blocks import TableBlock
-from wagtail.blocks import StreamBlock
+from wagtail.blocks import StreamBlock, RichTextBlock
 from wagtail.images.blocks import ImageChooserBlock
 
 
@@ -241,3 +241,4 @@ class BaseStreamBlock(StreamBlock):
     video_embed = VideoEmbed()
     table = CustomTableBlock()
     code_block = CodeBlock()
+    rich_text = RichTextBlock()
