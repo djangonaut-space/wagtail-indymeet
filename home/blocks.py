@@ -59,7 +59,7 @@ class ListBlock(blocks.StructBlock):
             ("none", "unstyled"),
         ]
     )
-    text = blocks.RichTextBlock(features=["ul"])
+    text = blocks.RichTextBlock(features=["ul"], icon="list-ol")
 
     def __str__(self):
         return self.text
@@ -198,12 +198,10 @@ class TextHeadingImageBlock(blocks.StructBlock):
 
 
 class BaseStreamBlock(StreamBlock):
-    heading = HeadingBlock(label="Heading")
+    heading = HeadingBlock(label="Heading", icon="h1")
     richtext = blocks.RichTextBlock(
         max_length=10000,
         features=[
-            "ol",
-            "ul",
             "embed",
             "bold",
             "italic",
@@ -216,8 +214,9 @@ class BaseStreamBlock(StreamBlock):
             "hr",
         ],
         label="Rich Text",
+        icon="title",
     )
-    list = ListBlock(label="List")
+    list = ListBlock(label="List", icon="list-ol")
     paragraph = blocks.TextBlock(max_length=10000)
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
