@@ -171,7 +171,7 @@ class TextHeadingImageBlock(blocks.StructBlock):
 
 class BaseStreamBlock(StreamBlock):
     heading = HeadingBlock()
-    paragraph = blocks.CharBlock(max_length=255)
+    paragraph = blocks.RichTextBlock(max_length=10000)
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
     text_with_heading = TextHeadingImageBlock()
