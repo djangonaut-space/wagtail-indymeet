@@ -1,9 +1,9 @@
 {% load wagtailimages_tags %}
 
 <figure class="block-person-quote">
-    <div class="d-flex flex-md-row">
-        <div class="col col-md-2">{% image value.image fill-600x600-c50 %}</div>
-        <div class="col">
+    <div class="flex flex-row">
+        <div class="basis-1/4">{% image value.image fill-600x600-c50 %}</div>
+        <div class="basis-3/4">
             <blockquote>
                 <p>{{ value.quote|safe }}</p>
                 <figcaption>&mdash;{{ value.byline }}</figcaption>
