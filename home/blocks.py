@@ -31,6 +31,17 @@ CODE_LANGUAGE_OPTIONS = (
 
 
 class HeadingBlock(blocks.StructBlock):
+    size = blocks.ChoiceBlock(
+        choices=[
+            ("text-5xl", "h1"),
+            ("text-4xl", "h2"),
+            ("text-3xl", "h3"),
+            ("text-2xl", "h4"),
+            ("text-xl", "h5"),
+            ("text-lg", "h6"),
+        ],
+        icon="title",
+    )
     heading = blocks.CharBlock(max_length=255, class_name="heading-blog")
 
     def __str__(self):
@@ -38,6 +49,23 @@ class HeadingBlock(blocks.StructBlock):
 
     class Meta:
         template = "blocks/heading.html"
+
+
+class ListBlock(blocks.StructBlock):
+    size = blocks.ChoiceBlock(
+        choices=[
+            ("circle", "unordered list"),
+            ("decimal", "ordered list"),
+            ("none", "unstyled"),
+        ]
+    )
+    text = blocks.RichTextBlock(features=["ul"], icon="list-ol")
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        template = "blocks/list.html"
 
 
 class TextWithHeadingBlock(blocks.StructBlock):
@@ -169,18 +197,48 @@ class TextHeadingImageBlock(blocks.StructBlock):
         template = "blocks/text-image-heading.html"
 
 
+class CustomTableBlock(TableBlock):
+    class Meta:
+        template = "blocks/table.html"
+
+
+class CustomCaption(blocks.StructBlock):
+    text = blocks.TextBlock()
+
+    class Meta:
+        template = "blocks/caption.html"
+
+
 class BaseStreamBlock(StreamBlock):
-    heading = HeadingBlock()
-    paragraph = blocks.CharBlock(max_length=255)
+    heading = HeadingBlock(label="Heading", icon="h1")
+    richtext = blocks.RichTextBlock(
+        max_length=10000,
+        features=[
+            "embed",
+            "bold",
+            "italic",
+            "link",
+            "superscript",
+            "subscript",
+            "strikethrough",
+            "code",
+            "hr",
+        ],
+        label="Rich Text",
+        icon="title",
+    )
+    list = ListBlock(label="List", icon="list-ol")
+    paragraph = blocks.TextBlock(max_length=10000)
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
+    caption = CustomCaption()
     text_with_heading = TextHeadingImageBlock()
     text_with_heading_and_right_image = TextWithHeadingWithRightImageBlock()
     text_with_heading_and_left_image = TextWithHeadingWithLeftImageBlock()
     right_image_left_text = RightImageLeftTextBlock()
     left_image_right_text = LeftImageRightTextBlock()
-    left_quote_right_image = QuoteLeftImageBlock()
+    left_quote_right_image = QuoteLeftImageBlock(icon="openquote")
     video_embed = VideoEmbed()
-    table = TableBlock()
+    table = CustomTableBlock()
     code_block = CodeBlock()
     rich_text = RichTextBlock()

@@ -42,43 +42,51 @@
 {% endblock social_share %}
 
 {% block content %}
-    <article class="box page-content"
-             {% if self.id %}data-entry-page-update-comments-url="{% url 'entry_page_update_comments' self.id %}{% endif %}">
-        {% include 'puput/entry_page_header.html' with entry=self %}
-        <section>
-            {% if self.header_image %}
-                <span class="image featured">
-                    {% image self.header_image fill-800x450 as header_image %}
-                    <img alt="{{ self.header_image.title }}" src="{{ header_image.url }}">
-                </span>
-            {% endif %}
-            {% include 'puput/entry_links.html' with entry=self %}
-        </section>
-        <section>
-            {{ self.body }}
-            <div class="row">
-                <div class="col-md-2">
-                    <a href="{% pageurl blog_page %}" class="blog_btn back">
-                        <i class="fa fa-angle-left"></i> {% trans 'Return' %}
-                    </a>
-                </div>
-                {% entry_url self blog_page as post_url %}
-                <ul class="social-share-all text-right col-md-10">
-                    <li class="social-item">
-                       {% post_to_facebook post_url '<span><i class="fa fa-facebook"></i></span>' %}
-                    </li>
-                    <li class="social-item">
-                        {% post_to_twitter self.title post_url '<span><i class="fa fa-twitter"></i></span>' %}
-                    </li>
-                    <li class="social-item">
-                        {% post_to_linkendin post_url '<span><i class="fa fa-linkedin"></i></span>' %}
-                    </li>
-                </ul>
-            </div>
+    <div class="overflow-hidden">
+        <div class="max-w-8xl mx-auto">
+            <div class="px-4 sm:px-6 md:px-8">
+                <div class="max-w-3xl mx-auto">
+                    <article class="box page-content"
+                            {% if self.id %}data-entry-page-update-comments-url="{% url 'entry_page_update_comments' self.id %}{% endif %}">
+                        {% include 'puput/entry_page_header.html' with entry=self %}
+                        <section>
+                            {% if self.header_image %}
+                                <span class="image featured">
+                                    {% image self.header_image fill-800x450 as header_image %}
+                                    <img alt="{{ self.header_image.title }}" src="{{ header_image.url }}">
+                                </span>
+                            {% endif %}
+                            {% include 'puput/entry_links.html' with entry=self %}
+                        </section>
+                        <section class="leading-6">
+                            {{ self.body }}
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <a href="{% pageurl blog_page %}" class="blog_btn back">
+                                        <i class="fa fa-angle-left"></i> {% trans 'Return' %}
+                                    </a>
+                                </div>
+                                {% entry_url self blog_page as post_url %}
+                                <ul class="social-share-all text-right col-md-10">
+                                    <li class="social-item">
+                                    {% post_to_facebook post_url '<span><i class="fa fa-facebook"></i></span>' %}
+                                    </li>
+                                    <li class="social-item">
+                                        {% post_to_twitter self.title post_url '<span><i class="fa fa-twitter"></i></span>' %}
+                                    </li>
+                                    <li class="social-item">
+                                        {% post_to_linkendin post_url '<span><i class="fa fa-linkedin"></i></span>' %}
+                                    </li>
+                                </ul>
+                            </div>
 
-        </section>
-        {% show_comments %}
-    </article>
+                        </section>
+                        {% show_comments %}
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
 
 {% block extra_content %}
