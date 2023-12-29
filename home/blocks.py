@@ -51,6 +51,23 @@ class HeadingBlock(blocks.StructBlock):
         template = "blocks/heading.html"
 
 
+class ListBlock(blocks.StructBlock):
+    size = blocks.ChoiceBlock(
+        choices=[
+            ("circle", "unordered list"),
+            ("decimal", "ordered list"),
+            ("none", "unstyled"),
+        ]
+    )
+    text = blocks.RichTextBlock(features=["ul"])
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        template = "blocks/list.html"
+
+
 class TextWithHeadingBlock(blocks.StructBlock):
     heading = blocks.CharBlock(max_length=255, class_name="heading-blog")
     text = blocks.TextBlock()
@@ -182,6 +199,25 @@ class TextHeadingImageBlock(blocks.StructBlock):
 
 class BaseStreamBlock(StreamBlock):
     heading = HeadingBlock(label="Heading")
+    richtext = blocks.RichTextBlock(
+        max_length=10000,
+        features=[
+            "ol",
+            "ul",
+            "embed",
+            "bold",
+            "italic",
+            "link",
+            "blockquote",
+            "superscript",
+            "subscript",
+            "strikethrough",
+            "code",
+            "hr",
+        ],
+        label="Rich Text",
+    )
+    list = ListBlock(label="List")
     paragraph = blocks.TextBlock(max_length=10000)
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
