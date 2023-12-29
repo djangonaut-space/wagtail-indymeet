@@ -1,6 +1,9 @@
-from wagtail.core import blocks
+from __future__ import annotations
+
+from wagtail.blocks import RichTextBlock
+from wagtail.blocks import StreamBlock
 from wagtail.contrib.table_block.blocks import TableBlock
-from wagtail.blocks import StreamBlock, RichTextBlock
+from wagtail.core import blocks
 from wagtail.images.blocks import ImageChooserBlock
 
 
@@ -171,10 +174,10 @@ class TextHeadingImageBlock(blocks.StructBlock):
 
 class BaseStreamBlock(StreamBlock):
     heading = HeadingBlock()
-    paragraph = blocks.CharBlock(max_length=255)
+    paragraph = blocks.TextBlock()
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
-    text_with_heading = TextHeadingImageBlock()
+    text_with_heading = TextWithHeadingBlock()
     text_with_heading_and_right_image = TextWithHeadingWithRightImageBlock()
     text_with_heading_and_left_image = TextWithHeadingWithLeftImageBlock()
     right_image_left_text = RightImageLeftTextBlock()
