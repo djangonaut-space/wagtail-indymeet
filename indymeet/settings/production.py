@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from dotenv import load_dotenv
-
 from .base import *
-
-load_dotenv()
 
 DEBUG = os.getenv("DEBUG")
 
