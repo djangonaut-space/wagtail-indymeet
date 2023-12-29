@@ -197,6 +197,18 @@ class TextHeadingImageBlock(blocks.StructBlock):
         template = "blocks/text-image-heading.html"
 
 
+class CustomTableBlock(TableBlock):
+    class Meta:
+        template = "blocks/table.html"
+
+
+class CustomCaption(blocks.StructBlock):
+    text = blocks.TextBlock()
+
+    class Meta:
+        template = "blocks/caption.html"
+
+
 class BaseStreamBlock(StreamBlock):
     heading = HeadingBlock(label="Heading", icon="h1")
     richtext = blocks.RichTextBlock(
@@ -219,6 +231,7 @@ class BaseStreamBlock(StreamBlock):
     paragraph = blocks.TextBlock(max_length=10000)
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
+    caption = CustomCaption()
     text_with_heading = TextHeadingImageBlock()
     text_with_heading_and_right_image = TextWithHeadingWithRightImageBlock()
     text_with_heading_and_left_image = TextWithHeadingWithLeftImageBlock()
@@ -226,5 +239,5 @@ class BaseStreamBlock(StreamBlock):
     left_image_right_text = LeftImageRightTextBlock()
     left_quote_right_image = QuoteLeftImageBlock(icon="openquote")
     video_embed = VideoEmbed()
-    table = TableBlock()
+    table = CustomTableBlock()
     code_block = CodeBlock()
