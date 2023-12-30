@@ -55,17 +55,21 @@ module.exports = {
                     'Inter',
                     ...defaultTheme.fontFamily.sans
                 ],
+                serif: [
+                    'Fraunces',
+                    ...defaultTheme.fontFamily.serif
+                ],
                 mono: [
-                    'Frauces',
+                    'Fraunces',
                     ...defaultTheme.fontFamily.mono
                 ],
                 inter: [
                     'Inter',
                     ...defaultTheme.fontFamily.sans
                 ],
-                frauces:  [
-                    'Frauces',
-                    ...defaultTheme.fontFamily.mono
+                fraunces:  [
+                    'Fraunces',
+                    ...defaultTheme.fontFamily.serif
                 ],
             }
         },
