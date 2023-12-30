@@ -15,6 +15,10 @@
         margin-bottom: 20px;
     }
 
+    .section-container {
+        @apply container mx-2 sm:mx-auto mt-12;
+    }
+
     .social-item {
         @apply text-white bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
     }
