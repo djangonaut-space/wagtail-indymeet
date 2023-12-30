@@ -1,12 +1,5 @@
 {% extends "base.html" %}
-{% load i18n wagtailcore_tags static %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
-{% load tz %}
-
-{# Load CSS and JavaScript #}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
+{% load i18n wagtailcore_tags static tz %}
 
 {% block title %}{{ event.title }} | Djangonaut Space{% endblock %}
 {% block meta_title %}{{ event.title }} | Djangonaut Space{% endblock %}
