@@ -12,6 +12,7 @@ mediafiles/*
 media/*
 .env
 .python-version
+dist/
 
 staticfiles/*
 
@@ -20,6 +21,7 @@ node_modules
 
 # production
 build
+theme/static/css/dist/style.css
 
 # misc
 .DS_Store
