@@ -44,6 +44,12 @@ module.exports = {
     ],
     theme: {
         extend: {
+            colors: {
+                'ds-purple': '#5c0287'
+            },
+            textColor: {
+                'ds-purple': '#5c0287'
+            },
             fontFamily: {
                 sans: [
                     'Inter',

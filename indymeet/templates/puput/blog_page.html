@@ -54,7 +54,7 @@
         <div class="row">
             {% for entry in entries %}
             {% entry_url entry blog_page as post_url %}
-            <article class="row col-12 box page-content blog_grid">
+            <article class="row col-12 box blog-container">
                 <section class="img-section col-sm-12 col-md-4">
                     <a href="{{ post_url }}">
                     {% if entry.header_image %}

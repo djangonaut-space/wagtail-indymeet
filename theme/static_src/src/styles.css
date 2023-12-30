@@ -2,10 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    .bg-primary {
+        background-color: #5c0287;
+    }
+}
+
 @layer components {
     .blog-container {
         background-color: #f8f8f8;
         padding: 20px;
         margin-bottom: 20px;
     }
+
+    .social-item {
+        @apply text-white bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
+    }
+}
+
+/* 
+    Custom styles below because we can't style the templates directly
+*/
+
+ul.links {
+    @apply flex mt-3;
+}
+
+ul.links li {
+    @apply mr-3 text-ds-purple;
 }
