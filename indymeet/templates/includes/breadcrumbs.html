@@ -1,13 +1,13 @@
 {% if self.get_ancestors|length > 1 %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
+<nav aria-label="breadcrumb" class="ml-4 mb-4">
+  <ol class="flex items-center gap-1 text-sm text-gray-700">
       {% for p in self.get_ancestors %}
           {% if p.is_root == False %}
-              <li class="breadcrumb-item"><a href="{{ p.url }}">{{ p.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ p.url }}" class="block transition hover:text-gray-400">{{ p.title }}</a></li>
+            <li><span>/</span></li>
           {% endif %}
       {% endfor %}
-
-      <li class="breadcrumb-item active">{{ self.title }}</li>
+      <li class="breadcrumb-item text-gray-500">{{ self.title }}</li>
   </ol>
 </nav>
 {% endif %}

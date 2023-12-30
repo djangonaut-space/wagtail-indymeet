@@ -1,62 +1,60 @@
 {% load table_block_tags %}
 <div class="relative overflow-auto">
-<div class="overflow-hidden my-8">
-<table class="border-collapse table-fixed w-full text-sm">
-    {% if table_caption %}
-        <caption>{{ table_caption }}</caption>
-    {% endif %}
-    {% if table_header %}
-        <thead>
-            <tr>
-                {% for column in table_header %}
-                    {% with forloop.counter0 as col_index %}
-                        <th scope="col" {% cell_classname 0 col_index %} class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">
-                            {% if column.strip %}
-                                {% if html_renderer %}
-                                    {{ column.strip|safe|linebreaksbr }}
-                                {% else %}
-                                    {{ column.strip|linebreaksbr }}
-                                {% endif %}
-                            {% endif %}
-                        </th>
-                    {% endwith %}
-                {% endfor %}
-            </tr>
-        </thead>
-    {% endif %}
-    <tbody>
-        {% for row in data %}
-            {% with forloop.counter0 as row_index %}
+    <table class="border-collapse table-auto w-full text-sm">
+        {% if table_caption %}
+            <caption class="uppercase tracking-wide my-4">{{ table_caption }}</caption>
+        {% endif %}
+        {% if table_header %}
+            <thead>
                 <tr>
-                    {% for column in row %}
+                    {% for column in table_header %}
                         {% with forloop.counter0 as col_index %}
-                            {% if first_col_is_header and forloop.first %}
-                                <th scope="row" {% cell_classname row_index col_index table_header %}>
-                                    {% if column.strip %}
-                                        {% if html_renderer %}
-                                            {{ column.strip|safe|linebreaksbr }}
-                                        {% else %}
-                                            {{ column.strip|linebreaksbr }}
-                                        {% endif %}
+                            <th scope="col" {% cell_classname 0 col_index %} class="border-b border-slate-600 font-bold p-4 pl-8 pt-0 pb-3 text-slate-800 text-left">
+                                {% if column.strip %}
+                                    {% if html_renderer %}
+                                        {{ column.strip|safe|linebreaksbr }}
+                                    {% else %}
+                                        {{ column.strip|linebreaksbr }}
                                     {% endif %}
-                                </th>
-                            {% else %}
-                                <td {% cell_classname row_index col_index table_header %} class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
-                                    {% if column.strip %}
-                                        {% if html_renderer %}
-                                            {{ column.strip|safe|linebreaksbr }}
-                                        {% else %}
-                                            {{ column.strip|linebreaksbr }}
-                                        {% endif %}
-                                    {% endif %}
-                                </td>
-                            {% endif %}
+                                {% endif %}
+                            </th>
                         {% endwith %}
                     {% endfor %}
                 </tr>
-            {% endwith %}
-        {% endfor %}
-    </tbody>
-</table>
-</div>
+            </thead>
+        {% endif %}
+        <tbody>
+            {% for row in data %}
+                {% with forloop.counter0 as row_index %}
+                    <tr>
+                        {% for column in row %}
+                            {% with forloop.counter0 as col_index %}
+                                {% if first_col_is_header and forloop.first %}
+                                    <th scope="row" {% cell_classname row_index col_index table_header %}>
+                                        {% if column.strip %}
+                                            {% if html_renderer %}
+                                                {{ column.strip|safe|linebreaksbr }}
+                                            {% else %}
+                                                {{ column.strip|linebreaksbr }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </th>
+                                {% else %}
+                                    <td {% cell_classname row_index col_index table_header %} class="border-b border-slate-700 p-4 pl-8 text-slate-600">
+                                        {% if column.strip %}
+                                            {% if html_renderer %}
+                                                {{ column.strip|safe|linebreaksbr }}
+                                            {% else %}
+                                                {{ column.strip|linebreaksbr }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                    </tr>
+                {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
