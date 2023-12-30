@@ -4,7 +4,6 @@
 
 Django==4.1.*
 wagtail==4.1.*
-django-bootstrap5==22.2.*
 django-storages==1.13.*
 django-storages[azure]
 psycopg2-binary==2.9.*
@@ -19,3 +18,4 @@ psycopg2-binary==2.9.*
 django-extensions==3.2.*
 django-debug-toolbar==4.2.*
 typing-extensions==4.6.*
+django-tailwind==3.6.*
