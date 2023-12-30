@@ -4,6 +4,7 @@
  * If you need the full config, get it from here:
  * https://unpkg.com/browse/tailwindcss@latest/stubs/defaultConfig.stub.js
  */
+const defaultTheme = require('tailwindcss/defaultTheme')
 
 module.exports = {
     content: [
@@ -39,10 +40,29 @@ module.exports = {
          * Python: If you use Tailwind CSS classes in Python, uncomment the following line
          * and make sure the pattern below matches your project structure.
          */
-        // '../../**/*.py'
+        '../../**/*.py'
     ],
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                sans: [
+                    'Inter',
+                    ...defaultTheme.fontFamily.sans
+                ],
+                mono: [
+                    'Frauces',
+                    ...defaultTheme.fontFamily.mono
+                ],
+                inter: [
+                    'Inter',
+                    ...defaultTheme.fontFamily.sans
+                ],
+                frauces:  [
+                    'Frauces',
+                    ...defaultTheme.fontFamily.mono
+                ],
+            }
+        },
     },
     plugins: [
         /**
