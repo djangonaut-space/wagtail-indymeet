@@ -1,5 +1,5 @@
 {% if self.get_ancestors|length > 1 %}
-<nav aria-label="breadcrumb" class="ml-4 mb-4">
+<nav aria-label="breadcrumb" class="ml-4 my-5">
   <ol class="flex items-center gap-1 text-sm text-gray-700">
       {% for p in self.get_ancestors %}
           {% if p.is_root == False %}

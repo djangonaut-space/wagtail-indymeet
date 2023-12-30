@@ -54,7 +54,7 @@
     }
 
     .social-item {
-        @apply text-white bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
+        @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
     }
 }
 

@@ -9,9 +9,6 @@
     background-color: var(--main-color);
 }
 
-.about .title-header {
-    padding-bottom: 1rem;
-}
 
 .about .title-header a {
     font-size: 2.5rem;
