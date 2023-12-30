@@ -87,7 +87,8 @@ We thought contributing.today did it well, but it's build on ASP.NET so we're bu
 This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 
 * [![Wagtail][Wagtail]][wagtail.org]
-* [![Bootstrap][Bootstrap.com]][Bootstrap-url]
+* [![Tailwind][tailwindcss.com]][tailwindcss.com]
+* [![Alpine.Js][alpinejs.dev]][alpinejs.dev]
 * [![Django][Djangoproject.com]][Djangoproject.com]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -155,6 +156,10 @@ This is an example of how to list things you need to use the software and how to
 7. Run server locally
    ```sh
    python manage.py runserver
+   ```
+8. Run tailwind in another terminal locally
+   ```sh
+   python manage.py tailwind start
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
