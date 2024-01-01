@@ -14,32 +14,32 @@
 {% endblock social_share %}
 
 {% block content %}
-<div class="container main my-3">
+<div class="container main my-3 mx-3">
   <div class="row my-3">
       <div class="col">
-          <h1 class="my-3">{{ session.title }}</h1>
+          <h1 class="text-5xl my-3">{{ session.title }}</h1>
       </div>
   </div>
   <div class="row">
     <div class="col">
-      <dl class="row">
-        <dt class="col-sm-3">Applications Open:</dt>
-        <dd class="col-sm-9">{{ session.application_start_date|date:"M d, Y" }} AOE</dd>
-        <dt class="col-sm-3">Applications Close:</dt>
-        <dd class="col-sm-9">{{ session.application_end_date|date:"M d, Y" }} AOE</dd>
-        <dt class="col-sm-3">Invitations Sent:</dt>
-        <dd class="col-sm-9">{{ session.invitation_date|date:"M d, Y" }}</dd>
-        <dt class="col-sm-3">Start:</dt>
-        <dd class="col-sm-9">{{ session.start_date|date:"M d, Y" }}</dd>
-        <dt class="col-sm-3">End:</dt>
-        <dd class="col-sm-9">{{ session.end_date|date:"M d, Y" }}</dd>
+      <dl class="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-2 sm:px-0">
+        <dt class="text-sm font-bold leading-6 text-gray-900">Applications Open:</dt>
+        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.application_start_date|date:"M d, Y" }} AOE</dd>
+        <dt class="text-sm font-bold leading-6 text-gray-900">Applications Close:</dt>
+        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.application_end_date|date:"M d, Y" }} AOE</dd>
+        <dt class="text-sm font-bold leading-6 text-gray-900">Invitations Sent:</dt>
+        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.invitation_date|date:"M d, Y" }}</dd>
+        <dt class="text-sm font-bold leading-6 text-gray-900">Start:</dt>
+        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.start_date|date:"M d, Y" }}</dd>
+        <dt class="text-sm font-bold leading-6 text-gray-900">End:</dt>
+        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.end_date|date:"M d, Y" }}</dd>
       </dl>
       <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
       {% if session.is_accepting_applications %}
         <br />
-        <h2>You have {{ session.application_end_anywhere_on_earth|timeuntil}} to submit your application</h2>
+        <h2 class="text-4xl">You have {{ session.application_end_anywhere_on_earth|timeuntil}} to submit your application</h2>
         <br />
-        <a href="{{ session.application_url }}" target="_blank" class="btn btn-success btn-lg">Apply</a>
+        <a href="{{ session.application_url }}" target="_blank" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">Apply</a>
       {% endif %}
     </div>
   </div>
