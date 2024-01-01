@@ -5,7 +5,7 @@
 <div class="row">
     <div class="event-categories">
         {% for tag in event.tags.all %}
-        <span class="badge bg-secondary">{{ tag }}</span>
+        <span class="bg-gray-500 text-white font-bold py-1 px-2 text-xs rounded-full">{{ tag }}</span>
         {% endfor %}
     </div>
 </div>

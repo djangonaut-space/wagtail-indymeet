@@ -1,17 +1,13 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static %}
 
-
-
-
 {% block title %}Events | Djangonaut Space{% endblock %}
 {% block meta_title %}Events | Djangonaut Space{% endblock %}
 
 {% block content %}
-<main class="section">
-
+<main class="section my-3 mx-5">
     <div class="section-container">
-        <h1>Events</h1>
+        <h1 class="text-5xl">Events</h1>
         <div class="row pt-4 pb-4">
           <div class="col">
             <p>These events are open to the public and free to attend. We'd love to meet you, so come say hi!</p>
@@ -24,7 +20,7 @@
             {% endif %}
             </div>
         </div>
-        <h2>Upcoming Events</h2>
+        <h2 class="text-4xl">Upcoming Events</h2>
         <div class="g-2 g-lg-3 row justify-content-evenly pt-4 pb-4">
 
             {% for event in upcoming_events %}
@@ -37,7 +33,7 @@
             {% endfor %}
 
         </div>
-        <h2>Past Events</h2>
+        <h2 class="text-4xl">Past Events</h2>
         <div class="g-2 g-lg-3 row justify-content-evenly pt-4">
 
             {% for event in past_events %}
