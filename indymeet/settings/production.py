@@ -12,12 +12,6 @@ DEBUG = os.getenv("DEBUG")
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-"""
-Staging static settings - only in staging because it shares a BLOB 
-storage account with production and must be rennamed to avoid conflict
-"""
-if os.environ.get("AZURE_MEDIA_CONTAINER") == "staging-static":
-    STATIC_URL = "/staging-static/"
 
 if os.getenv("ENVIRONMENT") == "production":
     print("----------------------------------")
