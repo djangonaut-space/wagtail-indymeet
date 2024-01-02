@@ -72,6 +72,7 @@ jobs:
         uses: actions/setup-node@v4
         with: 
           node-version: ${{ env.NODE_VERSION }}
+          node-version-file: 'theme/static_src/package.json'
 
       - name: Test NodeJS
         run: |
