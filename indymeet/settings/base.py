@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     # other
     "debug_toolbar",
     "tailwind",
-    "theme"
+    "theme",
 ]
 
 MIDDLEWARE = [
@@ -115,9 +115,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "djangonaut-space",
-        "USER": os.environ["USER"],
-        "PASSWORD": os.environ["PASSWORD"],
-        "HOST": os.environ["HOST"],
+        "USER": os.environ.get("USER"),
+        "PASSWORD": os.environ.get("PASSWORD"),
+        "HOST": os.environ.get("HOST"),
         "PORT": 5432,
         "OPTIONS": {},
     },

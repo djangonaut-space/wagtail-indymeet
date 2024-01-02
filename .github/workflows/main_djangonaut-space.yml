@@ -32,8 +32,7 @@ jobs:
       USER: ${{ secrets.USER }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
       AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
-      AZURE_STORAGE_NAME: ${{ secrets.AZURE_STORAGE_NAME }}
-      AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+      AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
       # collectstatic is run in the POST_BUILD_COMMAND now
       DISABLE_COLLECTSTATIC: 'true'
       # Use a custom post build command to compile the tailwind css and collectstatic

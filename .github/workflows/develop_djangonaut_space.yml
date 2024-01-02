@@ -45,9 +45,10 @@ jobs:
       SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
       USER: ${{ secrets.USER_ADDON }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
-      AZURE_ACCOUNT_NAME: ${{ secrets.STAGING_AZURE_ACCOUNT_NAME }}
-      AZURE_STORAGE_NAME: ${{ secrets.STAGING_AZURE_STORAGE_NAME }}
-      AZURE_STORAGE_KEY: ${{ secrets.STAGING_AZURE_STORAGE_KEY }}
+      AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
+      AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
+      AZURE_MEDIA_CONTAINER: "staging-media"
+      AZURE_STATIC_CONTAINER: "staging-static"
       # collectstatic is run in the POST_BUILD_COMMAND now
       DISABLE_COLLECTSTATIC: 'true'
       # Use a custom post build command to compile the tailwind css and collectstatic
