@@ -12,7 +12,7 @@
     body {
         @apply font-inter;
     }
-    
+
     h1 {
         @apply font-fraunces;
     }
@@ -58,7 +58,7 @@
     }
 }
 
-/* 
+/*
     Custom styles below because we can't style the templates directly
     or because it's a nightmare with Tailwind :)
 */

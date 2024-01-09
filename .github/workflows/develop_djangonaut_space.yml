@@ -23,6 +23,7 @@ env:
   AZURE_WEBAPP_NAME: staging-djangonaut-space  # set this to the name of your Azure Web App
   AZURE_WEBAPP_PACKAGE_PATH: '.'
   PYTHON_VERSION: '3.9'              # set this to the Python version to use
+  NODE_VERSION: '17.6.0'
 
 on:
   push:
@@ -45,6 +46,16 @@ jobs:
       SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
       USER: ${{ secrets.USER_ADDON }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
+      AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
+      AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
+      AZURE_MEDIA_CONTAINER: "staging-media"
+      AZURE_STATIC_CONTAINER: "staging-static"
+      # collectstatic is run in the POST_BUILD_COMMAND now
+      DISABLE_COLLECTSTATIC: 'true'
+      # Use a custom post build command to compile the tailwind css and collectstatic
+      POST_BUILD_COMMAND: 'scripts/postbuild.sh'
+      # Allow install node to support tailwind
+      ENABLE_MULTIPLATFORM_BUILD: 'true'
     environment: staging-djangonaut-space
     runs-on: ubuntu-latest
 
@@ -56,6 +67,17 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+
+      - name: Set up Node version
+        uses: actions/setup-node@v4
+        with: 
+          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: 'theme/static_src/package-lock.json'
+
+      - name: Test NodeJS
+        run: |
+          npm ci
+          npm test
 
       - name: Install dependencies
         run: |

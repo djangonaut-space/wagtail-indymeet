@@ -12,6 +12,7 @@ DEBUG = os.getenv("DEBUG")
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+
 if os.getenv("ENVIRONMENT") == "production":
     print("----------------------------------")
     print("----------------------------------")
@@ -40,8 +41,7 @@ if os.getenv("ENVIRONMENT") == "production":
     }
     # Azure Media and Static Storage Settings
     AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", "djangonaut")
-    AZURE_STORAGE_NAME = os.environ.get("AZURE_STORAGE_NAME", False)
-    AZURE_STORAGE_KEY = os.environ.get("AZURE_STORAGE_NAME", False)
+    AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", False)
     AZURE_MEDIA_CONTAINER = os.environ.get("AZURE_MEDIA_CONTAINER", "media")
     AZURE_STATIC_CONTAINER = os.environ.get("AZURE_STATIC_CONTAINER", "static")
 
