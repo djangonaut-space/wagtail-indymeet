@@ -30,7 +30,7 @@
     }
 
     .button-secondary {
-        @apply inline-block rounded-[40px] px-[32px] py-[13px] text-white bg-gray-600 mx-1 hover:bg-gray-700 hover:text-white no-underline;
+        @apply inline-block rounded-[40px] px-[32px] py-[13px] text-center text-white bg-gray-600 m-1 hover:bg-gray-700 hover:text-white no-underline;
     }
 
     .outline-link {
