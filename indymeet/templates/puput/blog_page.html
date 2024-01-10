@@ -54,8 +54,8 @@
         <div class="row">
             {% for entry in entries %}
             {% entry_url entry blog_page as post_url %}
-            <article class="row col-12 box page-content blog_grid">
-                <section class="img-section col-sm-12 col-md-4">
+            <article class="box blog-container">
+                <section class="img-section">
                     <a href="{{ post_url }}">
                     {% if entry.header_image %}
                         <span class="img-responsive">
@@ -65,16 +65,16 @@
                     {% endif %}
                     </a>
                 </section>
-                <section class="article-section col-sm-12 col-md-8">
-                    <div class="row">
-                        <div class="article">
-                        {% include 'puput/entry_page_header.html' %}
-                        {% if entry.excerpt %}
-                            {{ entry.excerpt }}
-                        {% else %}
-                            {{ entry.body|truncatewords_html:70 }}
-                        {% endif %}
-                        <ul class="social-share col-md-6">
+                <section class="article-section">
+                    <div class="article">
+                    {% include 'puput/entry_page_header.html' %}
+                    {% if entry.excerpt %}
+                        {{ entry.excerpt }}
+                    {% else %}
+                        {{ entry.body|truncatewords_html:70 }}
+                    {% endif %}
+                    <div class="flex justify-between">
+                        <ul class="social-share flex flex-row">
                             <li class="social-item">
                                {% post_to_facebook post_url '<span><i class="fa fa-facebook"></i></span>' %}
                             </li>
@@ -85,7 +85,7 @@
                                 {% post_to_linkendin post_url '<span><i class="fa fa-linkedin"></i></span>' %}
                             </li>
                         </ul>
-                        <div class="col-md-12">
+                        <div class="">
                             <a class="blog_btn continue" href="{{ post_url }}">{% trans 'read more' %} &raquo;</a>
                         </div>
                     </div>

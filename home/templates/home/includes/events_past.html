@@ -1,6 +1,5 @@
 {% load static i18n wagtailcore_tags %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
+
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/events.css' %}">
@@ -9,7 +8,7 @@
 {% block content %}
 <main class="section">
 
-    <div class="container-lg">
+    <div class="section-container">
         <h3># Past Events</h3>
         <div class="g-2 g-lg-3 row row-cols-4 justify-content-evenly pt-4">
             {% for event in past_events %}

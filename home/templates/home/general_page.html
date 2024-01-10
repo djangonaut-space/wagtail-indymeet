@@ -27,7 +27,7 @@
         </div>
         <div class="">
             {% for tag in page.tags.all %}
-                <a type="button" href="{{ page.get_parent.url}}search/?query={{ tag }}" class="badge badge-primary">{{ tag }}</a>
+                <a type="button" href="{{ page.get_parent.url}}search/?query={{ tag }}" class="bg-purple-500 text-white font-bold py-1 px-2 text-xs rounded-full">{{ tag }}</a>
             {% endfor %}
         </div>
           <div class="container">
@@ -46,4 +46,3 @@
 
 </main>
 {% endblock %}
-

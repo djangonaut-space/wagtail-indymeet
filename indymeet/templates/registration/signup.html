@@ -1,11 +1,8 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
 
-{# Load CSS and JavaScript #}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
+
+
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
@@ -14,7 +11,7 @@
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section container-lg">
+<main class="section section-container">
         <img src="{% static 'img/temp_logo.png' %}" />
 
   <div class="row">
@@ -34,7 +31,7 @@
       {% csrf_token %}
 
       {% bootstrap_form form layout="horizontal" %}
-      <button type="submit" class="btn btn-primary">Submit</button>
+      <button type="submit" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">Submit</button>
 
     </form>
   </div>

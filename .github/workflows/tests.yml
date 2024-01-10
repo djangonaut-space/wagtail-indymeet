@@ -13,22 +13,25 @@ on:
 jobs:
   build:
     env:
-      ENVIRONMENT: 'production'
+      ENVIRONMENT: 'test'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.production'
-      APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.STAGING_APPINSIGHTS_INSTRUMENTATIONKEY }}
-      APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
-      DEBUG: 'True'
-      HOST: ${{ secrets.HOST_ADDON }}
-      PASSWORD: ${{ secrets.PASSWORD_ADDON }}
-      RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
-      RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
-      SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
-      SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
-      USER: ${{ secrets.USER_ADDON }}
-      WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
-    environment: staging-djangonaut-space
+      HOST: "localhost"
+      USER: "djangonaut"
+      PASSWORD: "djangonaut"
+      DEBUG: False
+      SECRET_KEY: "hunter2"
+      RECAPTCHA_PUBLIC_KEY: "dummy_value"
+      RECAPTCHA_PRIVATE_KEY: "dummy_value"
     runs-on: ubuntu-latest
-
+    services:
+      pg:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: "djangonaut"
+          POSTGRES_PASSWORD: "djangonaut"
+          POSTGRES_DB: "djangonaut-space"
     steps:
       - uses: actions/checkout@v2
 

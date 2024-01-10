@@ -1,10 +1,5 @@
-{% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
+{% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags tailwind_tags %}
 
-{# Load CSS and JavaScript #}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -36,16 +31,19 @@
         {% block css %}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        {# temporary cdn #}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="{% static 'puput/css/puput.css' %}"/>
+        {% comment %} <link rel="stylesheet" href="{% static 'puput/css/puput.css' %}"/> {% endcomment %}
         <link rel="stylesheet" type="text/css" href="{% static 'css/indymeet.css' %}">
-        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-            <link rel="stylesheet" href="{% static 'puput/css/font-awesome.min.css' %}">
-            <style>
-                body {
-                    --main-color: {{blog_page.main_color}};
-                }
-            </style>
+        <link rel="stylesheet" href="{% static 'puput/css/font-awesome.min.css' %}">
+        <style>
+            body {
+                --main-color: {{blog_page.main_color}};
+            }
+        </style>
+        {% tailwind_css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/extra-styles.css' %}">
         {% endblock css %}
         {% block extra_css %}{% endblock extra_css %}
         <meta charset="utf-8"/>
@@ -89,6 +87,7 @@
         {% if 'Home' not in page.title  %}
             {% include 'includes/breadcrumbs.html' %}
         {% endif %}
+        <script src="https://unpkg.com/alpinejs" defer></script>
         <script src="https://unpkg.com/htmx.org@1.8.4"></script>
         {% wagtailuserbar %}
         {% include 'includes/messages.html' %}
@@ -98,4 +97,5 @@
         {# Global javascript #}
         {% include 'includes/footer.html' %}
     </body>
+
 </html>

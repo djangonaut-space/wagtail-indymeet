@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap');
+
+@layer base {
+    :root {
+        --ds-purple: #5c0287;
+    }
+
+    body {
+        @apply font-inter;
+    }
+
+    h1 {
+        @apply font-fraunces;
+    }
+
+    a {
+        text-decoration: underline;
+    }
+
+    a:hover {
+        color: var(--ds-purple);
+    }
+
+    .bg-primary {
+        background-color: var(--ds-purple);
+    }
+
+    .button-secondary {
+        @apply inline-block rounded-[40px] px-[32px] py-[13px] text-white bg-gray-600 mx-1 hover:bg-gray-700 hover:text-white no-underline;
+    }
+
+    .outline-link {
+        @apply no-underline;
+    }
+
+    svg:not(:root) {
+        overflow: hidden;
+    }
+}
+
+@layer components {
+    .blog-container {
+        background-color: #f8f8f8;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .section-container {
+        @apply container mx-2 sm:mx-auto mt-12;
+    }
+
+    .social-item {
+        @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
+    }
+}
+
+/*
+    Custom styles below because we can't style the templates directly
+    or because it's a nightmare with Tailwind :)
+*/
+
+/* ---------------------------------------------------------------------
+ LANDING PAGE
+----------------------------------------------------------------------*/
+
+.landing {
+    max-width: 100vw;
+    min-height: 100vh;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: black;
+    color: white;
+}
+
+.landing-page::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(14, 16, 11, 0.00) 0%, rgba(14, 16, 11, 0.89) 55.29%);
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.landing-page-overlay {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    content: "";
+    width: 100%;
+    height: 45%;
+    background: url(/static/img/background.svg) no-repeat;
+    background-size: cover;
+    z-index: -2;
+}
+
+.landing-page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 0 2em;
+    padding: 10px 0;
+    width: calc(100% - 4em);
+    color: white;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 2;
+}
+
+
+ul.links {
+    @apply flex mt-3;
+}
+
+ul.links li {
+    @apply mr-3 text-ds-purple;
+}

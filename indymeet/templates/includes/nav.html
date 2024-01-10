@@ -1,37 +1,99 @@
 {% load i18n static  %}
-<nav class="navbar navbar-expand-sm navbar-light {% if 'Home' in page.title %}stars{% endif %}">
-    <a class="navbar-brand" href="#">
-      <img alt="Djangonaut Space" class="nav-brand-icon" src="{% static 'img/main-purple-transparent.png' %}"/>
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<nav class="bg-white {% if 'Home' in page.title %}stars{% endif %}">
+    <div class="mx-2 flex h-16 max-w-screen-xl items-center gap-8 px-1 sm:px-4 lg:px-2">
+        <a class="block text-teal-600" href="/">
+            <img alt="Djangonaut Space" class="nav-brand-icon" src="{% static 'img/main-purple-transparent.png' %}"/>
+        </a>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/">Home</a>
-          </li>
-          <li class="nav-item">
-          <a class="nav-link" target="_blank" href="https://github.com/djangonaut-space/pilot-program">
-              {% trans "Program Documentation" %}
-          </a>
-          </li>
-          <li class="nav-item dropdown">
-              <a class="nav-link" target="_blank"  href="https://forms.gle/4vNuqQwEK6o48WqHA">
-                  {% trans "Join us!" %}
-              </a>
-          </li>
-          <li class="nav-item dropdown">
-              <a class="nav-link"  href="{% url 'event_list' %}">
-                  {% trans "Events" %}
-              </a>
-          </li>
-          <li class="nav-item dropdown">
-              <a class="nav-link"  href="{% url 'session_list' %}">
-                  {% trans "Sessions" %}
-              </a>
-          </li>
-      </ul>
+    <div class="flex flex-1 items-center justify-end md:justify-between">
+        <nav aria-label="Global" class="hidden md:block">
+            <ul class="flex items-center gap-6">
+                <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple" target="_blank" href="https://github.com/djangonaut-space/pilot-program">
+                        {% trans "Program Documentation" %}
+                    </a>
+                </li>
+
+                <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple" target="_blank"  href="https://forms.gle/4vNuqQwEK6o48WqHA">
+                        {% trans "Join us!" %}
+                    </a>
+                </li>
+
+                <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple"  href="{% url 'event_list' %}">
+                        {% trans "Events" %}
+                    </a>
+                </li>
+
+                <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple"  href="{% url 'session_list' %}">
+                        {% trans "Sessions" %}
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="flex items-center gap-4">
+        {% comment %} <div class="sm:flex sm:gap-4">
+            <a
+              class="block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-500"
+              href="#"
+            >
+              Login
+            </a>
+
+            <a
+              class="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-ds-purple transition hover:text-black sm:block"
+              href="#"
+            >
+              Register
+            </a>
+          </div> {% endcomment %}
+            <div class="relative block md:hidden" x-data="{ showDropdown: false }">
+                <button
+                    class="block rounded bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden" @click="showDropdown = !showDropdown"
+                >
+                    <span class="sr-only">Toggle menu</span>
+                    <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div x-cloak x-show="showDropdown">
+                    <ul class="absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44">
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple" target="_blank" href="https://github.com/djangonaut-space/pilot-program">
+                                {% trans "Program Documentation" %}
+                            </a>
+                        </li>
+
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple" target="_blank"  href="https://forms.gle/4vNuqQwEK6o48WqHA">
+                                {% trans "Join us!" %}
+                            </a>
+                        </li>
+
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'event_list' %}">
+                                {% trans "Events" %}
+                            </a>
+                        </li>
+
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'session_list' %}">
+                                {% trans "Sessions" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </nav>

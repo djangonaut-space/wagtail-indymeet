@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from dotenv import load_dotenv
-
 from .base import *
-
-load_dotenv()
 
 DEBUG = os.getenv("DEBUG")
 
@@ -16,13 +12,13 @@ DEBUG = os.getenv("DEBUG")
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+
 if os.getenv("ENVIRONMENT") == "production":
     print("----------------------------------")
     print("----------------------------------")
     print("PRODUCTION")
     print("----------------------------------")
     print("----------------------------------")
-    SECRET_KEY = os.environ["SECRET_KEY"]
     ALLOWED_HOSTS = [
         "djangonaut-space.azurewebsites.net",
         "djangonaut.space",
@@ -34,19 +30,7 @@ if os.getenv("ENVIRONMENT") == "production":
         "https://staging-djangonaut-space.azurewebsites.net",
     ]
 
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "djangonaut-space",  # Or path to database file if using sqlite3.
-            "USER": os.environ["USER"],  # Not used with sqlite3.
-            "PASSWORD": os.environ["PASSWORD"],  # Not used with sqlite3.
-            "HOST": os.environ[
-                "HOST"
-            ],  # Set to empty string for localhost. Not used with sqlite3.
-            "PORT": 5432,  # Set to empty string for default. Not used with sqlite3.
-            "OPTIONS": {"sslmode": "require"},
-        },
-    }
+    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
 
     EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
@@ -57,8 +41,7 @@ if os.getenv("ENVIRONMENT") == "production":
     }
     # Azure Media and Static Storage Settings
     AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", "djangonaut")
-    AZURE_STORAGE_NAME = os.environ.get("AZURE_STORAGE_NAME", False)
-    AZURE_STORAGE_KEY = os.environ.get("AZURE_STORAGE_NAME", False)
+    AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", False)
     AZURE_MEDIA_CONTAINER = os.environ.get("AZURE_MEDIA_CONTAINER", "media")
     AZURE_STATIC_CONTAINER = os.environ.get("AZURE_STATIC_CONTAINER", "static")
 

@@ -14,6 +14,10 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
@@ -26,7 +30,6 @@ INSTALLED_APPS = [
     "accounts",
     "home",
     "search",
-    "django_bootstrap5",
     "anymail",
     "captcha",
     "wagtail.contrib.forms",
@@ -58,6 +61,8 @@ INSTALLED_APPS = [
     "storages",
     # other
     "debug_toolbar",
+    "tailwind",
+    "theme",
 ]
 
 MIDDLEWARE = [
@@ -102,19 +107,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "indymeet.wsgi.application"
 
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-# Dummy local test database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "local_djangonaut_space",  # Or path to database file if using sqlite3.
-        "USER": "postgres",  # Not used with sqlite3.
-        "PASSWORD": 4,  # Not used with sqlite3.
-        "HOST": "localhost",  # Set to empty string for localhost. Not used with sqlite3.
-        "PORT": 5432,  # Set to empty string for default. Not used with sqlite3.
+        "NAME": "djangonaut-space",
+        "USER": os.environ.get("USER"),
+        "PASSWORD": os.environ.get("PASSWORD"),
+        "HOST": os.environ.get("HOST"),
+        "PORT": 5432,
+        "OPTIONS": {},
     },
 }
 
@@ -161,6 +166,8 @@ STATICFILES_FINDERS = [
 
 STATICFILES_DIRS = [
     os.path.join(PROJECT_DIR, "static"),
+    os.path.join(BASE_DIR, "theme", "static"),
+    os.path.join(BASE_DIR, "theme", "static_src"),
 ]
 
 # ManifestStaticFilesStorage is recommended in production, to prevent outdated
@@ -211,3 +218,5 @@ PUPUT_AS_PLUGIN = True
 PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"
 
 MIGRATION_MODULES = {"puput": "home.puput_migrations"}
+
+TAILWIND_APP_NAME = "theme"

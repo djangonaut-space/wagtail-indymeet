@@ -1,11 +1,8 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
 
-{# Load CSS and JavaScript #}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
+
+
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
@@ -14,7 +11,7 @@
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section main-center container-lg">
+<main class="section main-center section-container">
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>
 {% endif %}
@@ -44,7 +41,7 @@
 </tr>
 </table>
 
-<input class="btn btn-primary my-3" type="submit" value="login">
+<input class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded my-3" type="submit" value="login">
 <input type="hidden" name="next" value="{{ next }}">
 </form>
 

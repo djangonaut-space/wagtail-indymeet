@@ -1,9 +1,14 @@
 {% load wagtailimages_tags %}
 
 <div class="block-image">
-    <div class="row">
-        <div class="">{% image value.image width-1000 %}</div>
-        <div class="">{{ value.text|safe }}</div>
+    <div class="mt-3 prose prose-slate">
+        <div class="flex flex-row">
+            <div class="basis-1/4">{% image value.image width-1000 %}</div>
+            <div class="basis-3/4">
+                <p class="pl-4">
+                    {{ value.text|safe }}
+                </p>
+            </div>
+        </div>
     </div>
 </div>
-    

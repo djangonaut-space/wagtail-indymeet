@@ -31,6 +31,14 @@ jobs:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       USER: ${{ secrets.USER }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
+      AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
+      AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
+      # collectstatic is run in the POST_BUILD_COMMAND now
+      DISABLE_COLLECTSTATIC: 'true'
+      # Use a custom post build command to compile the tailwind css and collectstatic
+      POST_BUILD_COMMAND: 'scripts/postbuild.sh'
+      # Allow install node to support tailwind
+      ENABLE_MULTIPLATFORM_BUILD: 'true'
     environment: prod-djangonaut-space
     runs-on: ubuntu-latest
 

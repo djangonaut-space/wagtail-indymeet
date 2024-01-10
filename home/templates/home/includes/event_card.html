@@ -1,39 +1,38 @@
 {% load static i18n wagtailcore_tags %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
+
 
 {% block content %}
 <div class="col col-lg-3 col-md-4 col-sm-6 col-12">
-    <div class="card text-align-left h-100">
+    <div class="max-w-sm rounded overflow-hidden shadow-lg card">
         {# TODO: Add default image when no event image is selected #}
         {% if event.cover_image %}
         <img
-        src="{{ event.cover_image.url }}"
-        class="card-img-top event-card-img"
-        alt=""
+          src="{{ event.cover_image.url }}"
+          class="w-full"
+          alt=""
         >
         {% else %}
         <img
-        src="https://images.unsplash.com/photo-1612299273045-362a39972259?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1771&q=80"
-        class="card-img-top event-card-img"
-        alt="person with brown skin and facial hair and locs wearing black tshirt sitting at table smiling at screen of mac with a white mug next to them"
+          src="https://images.unsplash.com/photo-1612299273045-362a39972259?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1771&q=80"
+          class="w-full"
+          alt="person with brown skin and facial hair and locs wearing black tshirt sitting at table smiling at screen of mac with a white mug next to them"
         >
         {% endif %}
-        <div class="card-body">
-          <h5 class="card-title">{{ event.title }}</h5>
-          <h6 class="card-subtitle">{{ event.start_time|date:"M d, Y" }}</h6>
+        <div class="px-6 py-4 card-body">
+          <h5 class="font-bold text-xl mb-1 card-title">{{ event.title }}</h5>
+          <h6 class="text-lg mb-2 card-subtitle">{{ event.start_time|date:"M d, Y" }}</h6>
         {# Photo by Good Faces on Unsplash #}
         {# https://unsplash.com/backgrounds/apps/zoom?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText #}
         {% include 'home/includes/event_categories.html' %}
         {% include 'home/includes/event_team.html' %}
         </div>
-        <div class="card-footer">
-            <a href="{{ event.get_absolute_url }}" class="btn btn-primary">About</a>
+        <div class="px-6 py-3 mb-2 card-footer">
+            <a href="{{ event.get_absolute_url }}" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">About</a>
               {% if show_rsvp and event.accepting_rsvps %}
                 {% if user in event.rsvped_members.all %}
-                <a href="{{ event.get_absolute_url }}?rsvp=false" class="btn btn-secondary">Cancel RSVP</a>
+                <a href="{{ event.get_absolute_url }}?rsvp=false" class="bg-gray-500 hover:bg-gray-400 no-underline text-white font-bold py-2 px-4 rounded">Cancel RSVP</a>
                 {% else %}
-                <a href="{{ event.get_absolute_url }}?rsvp=true" class="btn btn-primary">Register</a>
+                <a href="{{ event.get_absolute_url }}?rsvp=true" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">Register</a>
                 {% endif %}
               {% endif %}
         </div>

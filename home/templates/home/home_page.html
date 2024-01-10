@@ -1,49 +1,43 @@
 {% extends "base_landing.html" %}
 {% load i18n wagtailcore_tags static %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
-
-{# Load CSS and JavaScript #}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
 
 {% block title %}Djangonaut Space - Where contributors launch!{% endblock %}
 {% block body_class %}landing{% endblock %}
 {% block content %}
-<main class="landing-page">
-    <a href="/">
-        <img alt="Djangonaut Space" src="{% static 'img/main-white-transparent.png' %}" />
+<main class="landing-page flex flex-col items-center justify-center z-[2]">
+    <a href="/" class="inline-block text-center">
+        <img class="inline-block w-[100%] max-w-[140px]" alt="Djangonaut Space" src="{% static 'img/main-white-transparent.png' %}" />
     </a>
-    <h1 class="p-0">Where contributors launch</h1>
-    <p class="p-3">Ready for take-off?</p>
-    <div class="d-flex flex-column flex-sm-row links">
-        <a class="btn btn-secondary mt-0 m-2" href="{% url "session_list" %}">Sessions</a>
-        <a class="btn btn-secondary mt-0 m-2" href="{% url "event_list" %}">Events</a>
-        <a class="btn btn-secondary mt-0 m-2" href="https://github.com/djangonaut-space/pilot-program/blob/main/README.md">Program</a>
+    <h1 class="p-0 text-[10vw] leading-[10vw] font-fraunces font-bold text-center">Where contributors launch</h1>
+    <p class="p-3 text-xl">Ready for take-off?</p>
+    <div class="flex flex-column flex-sm-row links mt-0 mb-0">
+        <a class="button-secondary text-black bg-white hover:bg-purple hover:text-white" href="{% url "session_list" %}">Sessions</a>
+        <a class="button-secondary" href="{% url "event_list" %}">Events</a>
+        <a class="button-secondary" href="https://github.com/djangonaut-space/pilot-program/blob/main/README.md">Program</a>
     </div>
 
     {% comment %} <form class="d-flex form-row">
-        <input type="email" name="email" aria-label="email" placeholder="example@email.com">
+        <input type="email" name="email" aria-label="email" class="mr-1" placeholder="example@email.com">
         <button type="submit" class="btn btn-outline-primary">Register</button>
     </form> {% endcomment %}
 </main>
-<footer class="landing-page-footer">
-    <span class="design-credits">Djangonaut Space. Designed by <a class='landing-links' href='https://hope-adoli.netlify.app/'>Hope Adoli</a></span>
-    <a class='landing-links' href="https://github.com/djangonaut-space/pilot-program/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a>
+<footer class="landing-page-footer text-base text-white">
+    <span class="design-credits">Djangonaut Space. Designed by <a class='text-white' href='https://hope-adoli.netlify.app/'>Hope Adoli</a></span>
+    <a class='text-white' href="https://github.com/djangonaut-space/pilot-program/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a>
     <div class="p-3 d-flex social-links">
-        <a class="landing-links twitter" href="https://twitter.com/djangonautspace" target="_blank">
+        <a class="outline-link twitter" href="https://twitter.com/djangonautspace" target="_blank">
             <i class="fa-brands fa-twitter" aria-label="Twitter"></i>
         </a>
-        <a rel="me" class="landing-links mastodon" href="https://indieweb.social/@djangonaut" target="_blank">
+        <a rel="me" class="outline-link mastodon" href="https://indieweb.social/@djangonaut" target="_blank">
             <i class="fa-brands fa-mastodon" aria-label="Mastodon"></i>
         </a>
-        <a class="landing-links github" href="https://github.com/djangonaut-space/" target="_blank">
+        <a class="outline-link github" href="https://github.com/djangonaut-space/" target="_blank">
             <i class="fa-brands fa-github" aria-label="GitHub"></i>
         </a>
-        <a class="landing-links linkedin" href="https://www.linkedin.com/company/djangonaut-space/" target="_blank">
+        <a class="outline-link linkedin" href="https://www.linkedin.com/company/djangonaut-space/" target="_blank">
             <i class="fa-brands fa-linkedin" aria-label="LinkedIn"></i>
         </a>
     </div>
 </footer>
-<div id="particules-js"></div>
+<div id="particules-js" class="absolute w-[100%] h-[100%]"></div>
 {% endblock content %}

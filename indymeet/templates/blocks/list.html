@@ -1,0 +1,7 @@
+{% load wagtailcore_tags %}
+<style>
+    ul.{{value.size}} ul {
+        list-style-type: {{value.size}} !important;
+    }
+</style>
+<ul class="pl-8 pb-4 {{value.size}}">{{ value.text|richtext }}</ul>

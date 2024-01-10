@@ -1,11 +1,8 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static %}
-{# Load the tag library #}
-{% load django_bootstrap5 %}
 
-{# Load CSS and JavaScript #}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
+
+
 
 {% block content %}
 <main class="section main-center">
@@ -23,18 +20,18 @@
             {% if user.is_authenticated %}
                 {% if user.profile.accepted_coc %}
                     {% if user not in event.rsvped_members.all %}
-                        <a href="{{ event.get_absolute_url }}?rsvp=true" class="btn btn-primary">RSVP</a>
+                        <a href="{{ event.get_absolute_url }}?rsvp=true" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">RSVP</a>
                     {% else %}
                         <a href="{{ event.get_absolute_url }}?rsvp=false" class="btn btn-danger">Cancel RSVP</a>
                         <p class="text-muted">You have already RSVPed</p>
 
                     {% endif %}
                 {% else %}
-                    <a class="btn btn-primary disabled" disabled >RSVP</a>
+                    <a class="bg-purple-500 no-underline text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" disabled >RSVP</a>
                     <p class="text-muted">Before RSVPing please accept the CoC on your <a href="{% url 'profile' %}">Account Page</a></p>
                 {% endif %}
             {% else %}
-                <a href="{% url 'signup' %}" class="btn btn-primary">Register</a>
+                <a href="{% url 'signup' %}" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">Register</a>
                 <p class="text-muted">You need to register to RSVP for this event</p>
             {% endif %}
         {% endif %}

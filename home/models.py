@@ -212,14 +212,28 @@ class Session(models.Model):
     def __str__(self):
         return self.title
 
+    def application_start_anywhere_on_earth(self):
+        aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
+        return datetime.datetime.combine(
+            self.application_start_date,
+            datetime.datetime.min.time(),
+            tzinfo=aoe_early_timezone,
+        )
+
+    def application_end_anywhere_on_earth(self):
+        aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
+        return datetime.datetime.combine(
+            self.application_end_date,
+            datetime.datetime.max.time(),
+            tzinfo=aoe_late_timezone,
+        )
+
     def is_accepting_applications(self):
         """Determine if the current date is within the application window"""
-        aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
-        aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
-        today_early_aoe = datetime.datetime.now(tz=aoe_early_timezone).date()
-        today_late_aoe = datetime.datetime.now(tz=aoe_late_timezone).date()
-        return (self.application_start_date <= today_early_aoe) and (
-            today_late_aoe <= self.application_end_date
+        return (
+            self.application_start_anywhere_on_earth()
+            <= timezone.now()
+            <= self.application_end_anywhere_on_earth()
         )
 
     def get_absolute_url(self):
