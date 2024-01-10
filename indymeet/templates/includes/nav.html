@@ -28,11 +28,13 @@
                         {% trans "Sessions" %}
                     </a>
                 </li>
+                {% for item in menu_items %}
                 <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple"  href="{% slugurl "comms" %}">
-                        {% trans "Blog" %}
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple"  href="{{ item.href }}">
+                        {{ item.text }}
                     </a>
                 </li>
+                {% endfor %}
             </ul>
         </nav>
 
@@ -93,11 +95,13 @@
                                 {% trans "Sessions" %}
                             </a>
                         </li>
+                        {% for item in menu_items %}
                         <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% slugurl "comms" %}">
-                                {% trans "Blog" %}
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{{ item.href }}">
+                                {{ item.text }}
                             </a>
                         </li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>
