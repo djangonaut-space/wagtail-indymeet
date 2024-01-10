@@ -1,4 +1,4 @@
-{% load i18n static  %}
+{% load i18n static wagtailcore_tags %}
 <nav class="bg-white {% if 'Home' in page.title %}stars{% endif %}">
     <div class="mx-2 flex h-16 max-w-screen-xl items-center gap-8 px-1 sm:px-4 lg:px-2">
         <a class="block text-teal-600" href="/">
@@ -13,24 +13,28 @@
                         {% trans "Program Documentation" %}
                     </a>
                 </li>
-
                 <li>
                     <a class="outline-link text-gray-700 transition hover:text-ds-purple" target="_blank"  href="https://forms.gle/4vNuqQwEK6o48WqHA">
                         {% trans "Join us!" %}
                     </a>
                 </li>
-
                 <li>
                     <a class="outline-link text-gray-700 transition hover:text-ds-purple"  href="{% url 'event_list' %}">
                         {% trans "Events" %}
                     </a>
                 </li>
-
                 <li>
                     <a class="outline-link text-gray-700 transition hover:text-ds-purple"  href="{% url 'session_list' %}">
                         {% trans "Sessions" %}
                     </a>
                 </li>
+                {% for item in menu_items %}
+                <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple"  href="{{ item.href }}">
+                        {{ item.text }}
+                    </a>
+                </li>
+                {% endfor %}
             </ul>
         </nav>
 
@@ -91,6 +95,13 @@
                                 {% trans "Sessions" %}
                             </a>
                         </li>
+                        {% for item in menu_items %}
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{{ item.href }}">
+                                {{ item.text }}
+                            </a>
+                        </li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>
