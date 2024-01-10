@@ -1,3 +1,4 @@
 -r requirements.txt
 pre-commit
 django-tailwind[reload]
+django-debug-toolbar
