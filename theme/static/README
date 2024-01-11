@@ -1,0 +1,2 @@
+# This directory exists to silence a warning from django
+# about a directory of STATICFILES_DIRS not existing.
