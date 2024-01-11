@@ -107,6 +107,8 @@ WSGI_APPLICATION = "indymeet.wsgi.application"
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 DATABASES = {
