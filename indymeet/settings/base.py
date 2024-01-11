@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     # azure storage
     "storages",
     # other
-    "debug_toolbar",
     "tailwind",
     "theme",
 ]
@@ -75,7 +74,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 AZURE_IP = os.environ.get("AZURE_IP", False)
@@ -220,3 +218,7 @@ PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"
 MIGRATION_MODULES = {"puput": "home.puput_migrations"}
 
 TAILWIND_APP_NAME = "theme"
+
+if os.environ.get("ENABLE_TOOLBAR"):
+    INSTALLED_APPS += ["debug_toolbar"]
+    MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]

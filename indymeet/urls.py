@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include
@@ -18,7 +20,6 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("", include("home.urls")),
     path("", include("puput.urls")),
-    path("__debug__/", include("debug_toolbar.urls")),
 ]
 
 
@@ -29,6 +30,11 @@ if settings.DEBUG:
     # Serve static and media files from development server
     urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    if os.environ.get("ENABLE_TOOLBAR"):
+        urlpatterns += [
+            path("__debug__/", include("debug_toolbar.urls")),
+        ]
 
 urlpatterns = urlpatterns + [
     # For anything not caught by a more specific rule above, hand over to
