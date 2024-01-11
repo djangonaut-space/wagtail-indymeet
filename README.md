@@ -123,7 +123,7 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    venv\Scripts\activate
    ```
-3. Create a posgresql database **if you want to use quick and dirty SQLite db, set your `ENVIRONMENT` variable to `dev` (path not actively supported)**
+3. Create a posgresql database
    ```sh
    psql -u posgres
    ```
