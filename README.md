@@ -56,7 +56,6 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -124,7 +123,7 @@ This is an example of how to list things you need to use the software and how to
    ```
 3. Create a posgresql database
    ```sh
-   psql -u posgres
+   psql -U postgres
    ```
    ```sh
    postgres=# CREATE DATABASE "djangonaut-space";
@@ -136,17 +135,16 @@ This is an example of how to list things you need to use the software and how to
 4. install requirements:
    ```sh
    pip install -r requirements/requirements-dev.txt
-   python manage.py tailwind install
    ```
 
-5. Copy `.env.template` file, rename to `.env` and use variables for your local postgres database.
+5. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
    Copy in Linux:
    ```sh
-   cp .env.template .env
+   cp .env.template.local .env
    ```
    activate in Windows:
    ```sh
-   copy .env.template .env
+   copy .env.template.local .env
    ```
 6. Run migrations and create superuser
    ```sh
@@ -155,17 +153,20 @@ This is an example of how to list things you need to use the software and how to
    # python manage.py loaddata fixtures/data.json
    python manage.py createsuperuser
    ```
-7. Run server locally
+7. Install tailwind. You also need npm installed.
+   ```sh
+   python manage.py tailwind install
+   ```
+8. Run server locally
    ```sh
    python manage.py runserver
    ```
-8. Run tailwind in another terminal locally
+9. Run tailwind in another terminal locally
    ```sh
    python manage.py tailwind start
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 ### Creating fixtures for local testing
 
@@ -198,23 +199,6 @@ top level of the project.
 4. Change your settings or environment variables to point to the new database
 5. ``python manage.py migrate``
 6. ``python manage.py loaddata fixtures/data.json``
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-    - [ ] Chinese
-    - [ ] Spanish
-
-See the [open issues](https://github.com/dawnwages/wagtail-indymeet/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- CONTRIBUTING -->
