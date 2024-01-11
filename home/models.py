@@ -16,16 +16,14 @@ from puput.abstracts import EntryAbstract
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from wagtail.admin.edit_handlers import FieldPanel
-from wagtail.admin.edit_handlers import InlinePanel
 from wagtail.admin.edit_handlers import MultiFieldPanel
-from wagtail.admin.edit_handlers import PageChooserPanel
-from wagtail.admin.edit_handlers import StreamFieldPanel
+from wagtail.admin.panels import InlinePanel
+from wagtail.admin.panels import PageChooserPanel
 from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.core import blocks
 from wagtail.core.fields import RichTextField
 from wagtail.core.fields import StreamField
 from wagtail.images.blocks import ImageChooserBlock
-from wagtail.images.edit_handlers import ImageChooserPanel
 from wagtail.models import Page
 from wagtail.snippets.models import register_snippet
 
@@ -282,7 +280,7 @@ class BlogAbstract(EntryAbstract):
         MultiFieldPanel(
             [
                 FieldPanel("title", classname="title"),
-                ImageChooserPanel("header_image"),
+                FieldPanel("header_image"),
                 FieldPanel("body", classname="full"),
                 FieldPanel("excerpt", classname="full"),
             ],
@@ -350,5 +348,5 @@ class GeneralPage(Page):
         ),
         FieldPanel("intro"),
         FieldPanel("body"),
-        StreamFieldPanel("content"),
+        FieldPanel("content"),
     ]
