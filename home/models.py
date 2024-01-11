@@ -12,30 +12,30 @@ from django.utils.translation import gettext_lazy as _
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
+from puput.abstracts import EntryAbstract
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
+from wagtail.admin.edit_handlers import FieldPanel
+from wagtail.admin.edit_handlers import InlinePanel
+from wagtail.admin.edit_handlers import MultiFieldPanel
+from wagtail.admin.edit_handlers import PageChooserPanel
+from wagtail.admin.edit_handlers import StreamFieldPanel
+from wagtail.contrib.table_block.blocks import TableBlock
+from wagtail.core import blocks
+from wagtail.core.fields import RichTextField
+from wagtail.core.fields import StreamField
+from wagtail.images.blocks import ImageChooserBlock
+from wagtail.images.edit_handlers import ImageChooserPanel
 from wagtail.models import Page
 from wagtail.snippets.models import register_snippet
 
+from . import blocks as blog_blocks
+from .blocks import BaseStreamBlock
+from .managers import EventQuerySet
+from .managers import SessionMembershipQuerySet
 from home.forms import SignUpPage
 
 # BLOG PUPUT IMPORTS
-from puput.abstracts import EntryAbstract
-from wagtail.core.fields import StreamField, RichTextField
-from . import blocks as blog_blocks
-from .blocks import BaseStreamBlock
-from wagtail.core import blocks
-from wagtail.images.blocks import ImageChooserBlock
-from wagtail.contrib.table_block.blocks import TableBlock
-from wagtail.admin.edit_handlers import (
-    FieldPanel,
-    InlinePanel,
-    MultiFieldPanel,
-    StreamFieldPanel,
-    PageChooserPanel,
-)
-from wagtail.images.edit_handlers import ImageChooserPanel
-from .managers import EventQuerySet, SessionMembershipQuerySet
 
 
 def sign_up_forms(context):
@@ -94,15 +94,15 @@ class Event(ClusterableModel):
     status = models.CharField(max_length=50, choices=EVENT_STATUS, default=PENDING)
     tags = TaggableManager(through=EventTag, blank=True)
     speakers = models.ManyToManyField(
-        "accounts.CustomUser", related_name="speaker_events", blank=True, null=True
+        "accounts.CustomUser", related_name="speaker_events", blank=True
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
     capacity = models.IntegerField(blank=True, null=True)
     rsvped_members = models.ManyToManyField(
-        "accounts.CustomUser", related_name="rsvp_events", blank=True, null=True
+        "accounts.CustomUser", related_name="rsvp_events", blank=True
     )
-    organizers = models.ManyToManyField("accounts.CustomUser", blank=True, null=True)
+    organizers = models.ManyToManyField("accounts.CustomUser", blank=True)
     session = models.ForeignKey(
         "Session",
         blank=True,
@@ -281,24 +281,25 @@ class BlogAbstract(EntryAbstract):
     content_panels = [
         MultiFieldPanel(
             [
-                FieldPanel('title', classname="title"),
-                ImageChooserPanel('header_image'),
-                FieldPanel('body', classname="full"),
-                FieldPanel('excerpt', classname="full"),
+                FieldPanel("title", classname="title"),
+                ImageChooserPanel("header_image"),
+                FieldPanel("body", classname="full"),
+                FieldPanel("excerpt", classname="full"),
             ],
-            heading=_("Content")
+            heading=_("Content"),
         ),
         MultiFieldPanel(
             [
-                FieldPanel('tags'),
-                InlinePanel('entry_categories', label=_("Categories")),
+                FieldPanel("tags"),
+                InlinePanel("entry_categories", label=_("Categories")),
                 InlinePanel(
-                    'related_entrypage_from',
+                    "related_entrypage_from",
                     label=_("Related Entries"),
-                    panels=[PageChooserPanel('entrypage_to')]
+                    panels=[PageChooserPanel("entrypage_to")],
                 ),
             ],
-            heading=_("Page Metadata")),
+            heading=_("Page Metadata"),
+        ),
     ]
 
     class Meta:
