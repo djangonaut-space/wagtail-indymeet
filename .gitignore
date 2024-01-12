@@ -23,6 +23,9 @@ node_modules
 build
 theme/static/css/dist/style.css
 
+# Fixtures until we know what we're doing
+fixtures/data.json
+
 # misc
 .DS_Store
 

@@ -114,7 +114,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "djangonaut-space",
+        "NAME": os.environ.get("DATABASE", "djangonaut-space"),
         "USER": os.environ.get("USER"),
         "PASSWORD": os.environ.get("PASSWORD"),
         "HOST": os.environ.get("HOST"),

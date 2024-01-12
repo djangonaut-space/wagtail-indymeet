@@ -151,8 +151,8 @@ This is an example of how to list things you need to use the software and how to
 6. Run migrations and create superuser
    ```sh
    python manage.py migrate
-   ```
-   ```sh
+   # Potentially load data first
+   # python manage.py loaddata fixtures/data.json
    python manage.py createsuperuser
    ```
 7. Run server locally
@@ -167,6 +167,37 @@ This is an example of how to list things you need to use the software and how to
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
+### Creating fixtures for local testing
+
+**Backing up**
+To create a fixture to share content with another person you should do the following:
+
+```shell
+python manage.py dumpdata --natural-foreign --indent 2 \
+   -e contenttypes -e auth.permission \
+   -e wagtailcore.groupcollectionpermission \
+   -e wagtailcore.grouppagepermission \
+   -e wagtailimages.rendition \
+   -e sessions \
+   -e admin \
+   -e wagtailsearch.indexentry \
+   -e accounts.userprofile \
+   -o fixtures/data.json
+```
+Then make an archive/zip of your `media/` and `fixtures/` directories. This is because
+the image files need to be copied alongside the data. If needed, you may want to delete
+some images first before sharing.
+
+**Restoring**
+
+1. Make a backup of your current media directory. This is so you can revert later
+on.
+2. Unpack the archived file, and place the `media/` and `fixtures/` directories at the
+top level of the project.
+3. Create a new database such as ``createdb -U djangonaut -W -O djangonaut djangonaut-space2``
+4. Change your settings or environment variables to point to the new database
+5. ``python manage.py migrate``
+6. ``python manage.py loaddata fixtures/data.json``
 
 
 <!-- ROADMAP -->
