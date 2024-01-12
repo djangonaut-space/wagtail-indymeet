@@ -18,22 +18,21 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/dawnwages/wagtail-indymeet/">
-    <img src="indymeet/static/img/wagtail.png" alt="Wagtail Logo" width="80" height="80">
+  <a href="https://github.com/djangonaut-space/wagtail-indymeet/">
+    <img src="indymeet/static/img/main-white-purple-background.png" alt="Djangonaut Space logo" height="80">
   </a>
 
-  <h3 align="center">Wagtail IndyMeet</h3>
+  <h3 align="center">Djangonaut Space Website</h3>
 
   <p align="center">
     A Wagtail CMS clone of <a href="https://contributing.today">contributing today »</a>
     <br />
     <br />
-    <br />
-    <a href="">Demo - coming soon</a>
+    <a href="https://djangonaut.space">Visit site</a>
     ·
-    <a href="">Report Bug</a>
+    <a href="https://github.com/djangonaut-space/wagtail-indymeet/issues/new">Report Bug</a>
     ·
-    <a href="">Request Feature</a>
+    <a href="https://github.com/djangonaut-space/wagtail-indymeet/issues/new">Request Feature</a>
   </p>
 </div>
 
@@ -228,7 +227,8 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Dawn Wages - [@dawnwagessays](https://twitter.com/dawnwagessays) - [@fly00gemini8712@mastodon.online](https://mastodon.online/@fly00gemini8712)
+- Dawn Wages - [@dawnwagessays](https://twitter.com/dawnwagessays) - [@fly00gemini8712@mastodon.online](https://mastodon.online/@fly00gemini8712)
+- [Djangonaut Space Organizers](mailto:contact@djangonaut.space)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
