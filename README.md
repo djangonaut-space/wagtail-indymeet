@@ -56,7 +56,13 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li>
+      <a href="#contributing">Contributing</a>
+      <ul>
+        <li><a href="#merging-changes">Merging Changes</a></li>
+        <li><a href="#deployments">Deployments</a></li>
+      </ul>
+    </li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -215,8 +221,42 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Running `production` or `staging` locally
+### Merging changes
+Before merging your changes from your branch you should rebase on the latest version
+of `develop`. For example:
+
+```shell
+# Switch to develop and pull latest
+git switch develop
+git pull origin develop
+
+# Rebase your feature branch on develop
+git switch feature/AmazingFeature
+git rebase develop
+# Force push since the commit history will have changed
+git push origin feature/AmazingFeature -f
+
+#
+# Wait for CI tests to pass!
+#
+
+# Merge to develop and push to GitHub
+git switch develop
+git merge feature/AmazingFeature
+git push origin develop
+
+# Clean up local branch
+git branch -d feature/AmazingFeature
+```
+
+### Deployments
 Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space). Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
+
+`main` requires a linear commit history. This means if you make a change directly to `main`,
+the `develop` branch must be rebased on `main`. Committing directly to main should only
+occur in rare cases where a change must be pushed out to production immediately.
+
+## Running `production` or `staging` locally
 
 **Running production or staging locally**
 - Set .env variables `USER`, `PASSWORD` and `HOST` for either `staging` or `production` in order to access staging db. Credentials are in the password manager
