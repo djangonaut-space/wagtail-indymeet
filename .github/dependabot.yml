@@ -1,0 +1,31 @@
+version: 2
+updates:
+  # Maintain dependencies for Python
+  - package-ecosystem: "pip-compile"
+    directory: "requirements/"
+    schedule:
+      interval: "daily"
+      groups:
+        dependencies:
+          patterns:
+            - "*" # Update all dependencies"
+
+  # Maintain dependencies for NPM / tailwind generation
+  - package-ecosystem: "npm"
+    directory: "theme/static_src/"
+    schedule:
+      interval: "weekly"
+      groups:
+        dependencies:
+          patterns:
+            - "*" # Update all dependencies"
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    # Workflow files stored in the default location of `.github/workflows`.
+    # (You don't need to specify `/.github/workflows` for `directory`.
+    # You can use `directory: "/"`.)
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      open-pull-requests-limit: 5
