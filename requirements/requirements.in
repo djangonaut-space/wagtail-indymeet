@@ -1,0 +1,16 @@
+Django==4.1.*
+wagtail==4.1.*
+django-storages
+django-storages[azure]
+psycopg2-binary
+django-anymail
+six
+django-recaptcha
+whitenoise
+python-dotenv
+puput
+urllib3
+django-extensions
+django-debug-toolbar
+typing-extensions
+django-tailwind
