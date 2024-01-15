@@ -5,20 +5,20 @@ updates:
     directory: "requirements/"
     schedule:
       interval: "daily"
-      groups:
-        dependencies:
-          patterns:
-            - "*" # Update all dependencies"
+    groups:
+      dependencies:
+        patterns:
+          - "*" # Update all dependencies"
 
   # Maintain dependencies for NPM / tailwind generation
   - package-ecosystem: "npm"
     directory: "theme/static_src/"
     schedule:
       interval: "weekly"
-      groups:
-        dependencies:
-          patterns:
-            - "*" # Update all dependencies"
+    groups:
+      dependencies:
+        patterns:
+          - "*" # Update all dependencies"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
