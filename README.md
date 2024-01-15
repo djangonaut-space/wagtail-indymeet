@@ -222,6 +222,34 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+
+### Testing
+
+Tests can be written using [Django's TestCase syntax](https://docs.djangoproject.com/en/5.0/topics/testing/overview/)
+or using [`pytest`](https://docs.pytest.org/).
+
+To run the tests:
+
+```shell
+pytest
+```
+
+There are also Playwright tests that can be run explicitly:
+```shell
+# Be sure playwright is properly installed and has a test user for accessing /admin
+playwright install --with-deps
+python manage.py create_playwright_user
+# This is the actual test command
+pytest -m playwright
+# Run the tests in headed mode (so you can see the browser)
+pytest -m playwright --headed
+# Run the test generator to help create new tests
+playwright codegen http://localhost:8000
+# Run the tests against a different base url
+# You will need to change the username and password environment variables as well)
+PYTEST_BASE_URL="https://djangonaut.space" pytest -m playwright --headed
+```
+
 ### Merging changes
 Before merging your changes from your branch you should rebase on the latest version
 of `develop`. For example:
