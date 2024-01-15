@@ -13,22 +13,25 @@ logger = getLogger(__name__)
 pytestmark = pytest.mark.playwright
 
 
-try:
-    PLAYWRIGHT_TEST_USERNAME = os.environ["PLAYWRIGHT_TEST_USERNAME"]
-except KeyError as e:
-    raise KeyError(
-        "Set PLAYWRIGHT_TEST_USERNAME environment variable "
-        "(.env file) to the username for the playwright_test user. You "
-        "may need run `python manage.py create_playwright_user`"
-    ) from e
-try:
-    PLAYWRIGHT_TEST_PASSWORD = os.environ["PLAYWRIGHT_TEST_PASSWORD"]
-except KeyError as e:
-    raise KeyError(
-        "Set PLAYWRIGHT_TEST_PASSWORD environment variable "
-        "(.env file) to the password for the playwright_test user. You "
-        "may need to run `python manage.py create_playwright_user`"
-    ) from e
+@pytest.fixture
+def playwright_credentials():
+    try:
+        username = os.environ["PLAYWRIGHT_TEST_USERNAME"]
+    except KeyError as e:
+        raise KeyError(
+            "Set PLAYWRIGHT_TEST_USERNAME environment variable "
+            "(.env file) to the username for the playwright_test user. You "
+            "may need run `python manage.py create_playwright_user`"
+        ) from e
+    try:
+        password = os.environ["PLAYWRIGHT_TEST_PASSWORD"]
+    except KeyError as e:
+        raise KeyError(
+            "Set PLAYWRIGHT_TEST_PASSWORD environment variable "
+            "(.env file) to the password for the playwright_test user. You "
+            "may need to run `python manage.py create_playwright_user`"
+        ) from e
+    return username, password
 
 
 @pytest.fixture
@@ -53,11 +56,12 @@ def test_smoketest(page: Page):
 
 class TestWagtailAdmin:
     @pytest.fixture
-    def page(self, page: Page):
+    def page(self, page: Page, playwright_credentials):
         """Log in as the staff playwright test user"""
         page.goto("/admin/login/?next=/admin/")
-        page.get_by_placeholder("Enter your username").fill(PLAYWRIGHT_TEST_USERNAME)
-        page.get_by_placeholder("Enter password").fill(PLAYWRIGHT_TEST_PASSWORD)
+        username, password = playwright_credentials
+        page.get_by_placeholder("Enter your username").fill(username)
+        page.get_by_placeholder("Enter password").fill(password)
         page.get_by_role("button", name="Sign in").click()
         yield page
         self.clean_up(page)
