@@ -58,7 +58,7 @@ jobs:
           printenv -0
 
       - name: Building web app
-        uses: azure/appservice-build@v2
+        uses: azure/appservice-build@v3
       - name: Deploy web App using GH Action azure/webapps-deploy
         uses: azure/webapps-deploy@v2
         with:
