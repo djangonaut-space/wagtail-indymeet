@@ -28,12 +28,12 @@
 {% endblock blog_header %}
 {% wagtailuserbar %}
 <div class="container container-blog mx-auto">
-    <div class="flex">
-        <div class="basis-3/4">
+    <div class="grid grid-cols-1 md:grid-cols-4">
+        <div class="col-span-1 md:col-span-3">
             {% block extra_content %}{% endblock extra_content %}
         </div>
 
-        <div class="basis-1/4">
+        <div class="col-span-1 md:col-span-1">
             <div class="blog_sidebar">
                 <div class="rss-sitemap">
                     <a href="{% feeds_url blog_page %}" target="_blank" title="RSS">
