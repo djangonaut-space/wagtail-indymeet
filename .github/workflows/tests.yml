@@ -46,4 +46,4 @@ jobs:
           pip install -r requirements/requirements-test.txt
 
       - name: Run tests
-        run: python manage.py test
+        run: pytest
