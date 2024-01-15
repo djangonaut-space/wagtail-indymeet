@@ -1,0 +1,40 @@
+name: Staging smoke test
+
+# Only trigger, when the build workflow succeeded
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      ENVIRONMENT: 'test'
+      DJANGO_SETTINGS_MODULE: 'indymeet.settings.test'
+      DEBUG: False
+      # We don't need the app's secret key as long as we are only running our
+      # playwright tests
+      SECRET_KEY: "hunter2"
+      RECAPTCHA_PUBLIC_KEY: "dummy_value"
+      RECAPTCHA_PRIVATE_KEY: "dummy_value"
+      PYTEST_BASE_URL: "https://djangonaut.space"
+      PLAYWRIGHT_TEST_USERNAME: vars.PROD_PLAYWRIGHT_TEST_USERNAME
+      PLAYWRIGHT_TEST_PASSWORD: secrets.PROD_PLAYWRIGHT_TEST_PASSWORD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements-test.txt
+
+      - name: Install playwright dependencies
+        run: |
+          playwright install --with-deps
+
+      - name: Run tests
+        run: pytest tests -m playwright
