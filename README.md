@@ -61,6 +61,7 @@
       <ul>
         <li><a href="#merging-changes">Merging Changes</a></li>
         <li><a href="#deployments">Deployments</a></li>
+        <li><a href="#updating-dependencies">Updating Dependencies</a></li>
       </ul>
     </li>
     <li><a href="#license">License</a></li>
@@ -265,6 +266,13 @@ occur in rare cases where a change must be pushed out to production immediately.
 **Migrate production or staging db**
 - Set terminal variables for `USER`, `PASSWORD` and `HOST` for either `staging` or `production` db. Credentials are in the password manager.
 - `python manage.py migrate --settings=indymeet.settings.production`
+
+### Updating dependencies
+This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to manage
+dependencies. Most dependencies should be updated via Dependabot, but if they need
+to be updated manually you would need to run `pip-compile --upgrade ...`. The rest of
+the command can be found in the particular `requirements/*.txt` file you'd like to
+update.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
