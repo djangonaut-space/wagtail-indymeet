@@ -234,7 +234,9 @@ To run the tests:
 pytest
 ```
 
-There are also Playwright tests that can be run explicitly:
+There are also Playwright tests that can be run explicitly. These require the application to
+be running in another terminal. To run the tests:
+
 ```shell
 # Be sure playwright is properly installed and has a test user for accessing /admin
 playwright install --with-deps
