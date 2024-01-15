@@ -1,2 +1,7 @@
 -r requirements.txt
 freezegun
+playwright
+pytest
+pytest-django
+pytest-mock
+pytest-playwright
