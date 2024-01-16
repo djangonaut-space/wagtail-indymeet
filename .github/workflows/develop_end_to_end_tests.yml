@@ -1,4 +1,4 @@
-name: Staging smoke test
+name: Staging smoke tests
 
 # Only trigger, when the build workflow succeeded
 on:

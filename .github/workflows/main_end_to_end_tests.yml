@@ -1,6 +1,6 @@
-name: Staging smoke test
+name: Main smoke tests
 
-# Only trigger, when the build workflow succeeded
+# Manual trigger, when the build workflow succeeded
 on:
   workflow_dispatch:
 
