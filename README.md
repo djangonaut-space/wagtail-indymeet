@@ -173,6 +173,14 @@ This is an example of how to list things you need to use the software and how to
    python manage.py tailwind start
    ```
 
+Alternatively, if you're not using Windows you can run the following instead of steps 8 and 9:
+
+```shell
+./scripts/local.sh
+```
+
+This will run both the Django server and the Tailwind watcher in the same terminal.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Creating fixtures for local testing
