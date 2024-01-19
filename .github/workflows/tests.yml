@@ -33,10 +33,10 @@ jobs:
           POSTGRES_PASSWORD: "djangonaut"
           POSTGRES_DB: "djangonaut-space"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python version
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -46,4 +46,4 @@ jobs:
           pip install -r requirements/requirements-test.txt
 
       - name: Run tests
-        run: python manage.py test
+        run: pytest

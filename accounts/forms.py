@@ -32,7 +32,7 @@ class CustomUserCreationForm(UserCreationForm):
         required=True,
         label="Accept CoC*",
         help_text="Required: please read over and accept "
-        "<a href='https://github.com/djangonaut-space/pilot-program/blob/main/CODE_OF_CONDUCT.md'>"  # noqa B950
+        "<a href='https://github.com/djangonaut-space/program/blob/main/CODE_OF_CONDUCT.md'>"  # noqa B950
         "the CoC"
         "</a>",
     )

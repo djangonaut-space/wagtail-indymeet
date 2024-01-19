@@ -173,6 +173,14 @@ This is an example of how to list things you need to use the software and how to
    python manage.py tailwind start
    ```
 
+Alternatively, if you're not using Windows you can run the following instead of steps 8 and 9:
+
+```shell
+./scripts/local.sh
+```
+
+This will run both the Django server and the Tailwind watcher in the same terminal.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Creating fixtures for local testing
@@ -221,6 +229,36 @@ Don't forget to give the project a star! Thanks again!
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+
+### Testing
+
+Tests can be written using [Django's TestCase syntax](https://docs.djangoproject.com/en/5.0/topics/testing/overview/)
+or using [`pytest`](https://docs.pytest.org/).
+
+To run the tests:
+
+```shell
+pytest
+```
+
+There are also Playwright tests that can be run explicitly. These require the application to
+be running in another terminal. To run the tests:
+
+```shell
+# Be sure playwright is properly installed and has a test user for accessing /admin
+playwright install --with-deps
+python manage.py create_playwright_user
+# This is the actual test command
+pytest -m playwright
+# Run the tests in headed mode (so you can see the browser)
+pytest -m playwright --headed
+# Run the test generator to help create new tests
+playwright codegen http://localhost:8000
+# Run the tests against a different base url
+# You will need to change the username and password environment variables as well)
+PYTEST_BASE_URL="https://djangonaut.space" pytest -m playwright --headed
+```
 
 ### Merging changes
 Before merging your changes from your branch you should rebase on the latest version
