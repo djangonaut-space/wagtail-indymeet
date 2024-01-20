@@ -1,6 +1,9 @@
 {
   "name": "theme",
   "version": "3.6.0",
+  "engines": {
+    "node": "20.11.0"
+  },
   "description": "",
   "scripts": {
     "start": "npm run dev",
