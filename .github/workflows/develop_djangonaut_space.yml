@@ -23,6 +23,7 @@ env:
   AZURE_WEBAPP_NAME: staging-djangonaut-space  # set this to the name of your Azure Web App
   AZURE_WEBAPP_PACKAGE_PATH: '.'
   PYTHON_VERSION: '3.9'              # set this to the Python version to use
+  NODE_VERSION: '20.11.0'
 
 on:
   push:
@@ -70,7 +71,7 @@ jobs:
       - name: Set up Node version
         uses: actions/setup-node@v4
         with:
-          node-version-file: 'theme/static_src/package-lock.json'
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Test NodeJS
         run: |
