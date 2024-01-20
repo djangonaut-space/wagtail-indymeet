@@ -89,7 +89,7 @@ jobs:
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Building web app
-        uses: azure/appservice-build@v3
+        uses: azure/appservice-build@v2
       - name: Deploy web App using GH Action azure/webapps-deploy
         uses: azure/webapps-deploy@v2
         with:
