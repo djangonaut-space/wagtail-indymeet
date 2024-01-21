@@ -49,12 +49,8 @@ jobs:
       AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
       AZURE_MEDIA_CONTAINER: "staging-media"
       AZURE_STATIC_CONTAINER: "staging-static"
-      # collectstatic is run in the POST_BUILD_COMMAND now
+      # collectstatic is run before the build process
       DISABLE_COLLECTSTATIC: 'true'
-      # Use a custom post build command to compile the tailwind css and collectstatic
-      POST_BUILD_COMMAND: 'scripts/postbuild.sh'
-      # Allow install node to support tailwind
-      ENABLE_MULTIPLATFORM_BUILD: 'true'
     environment: staging-djangonaut-space
     runs-on: ubuntu-latest
 
@@ -71,18 +67,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: 'theme/static_src/package-lock.json'
-
-      - name: Test NodeJS
-        run: |
-          npm ci
-          npm test
+          cache: 'npm'
+          cache-dependency-path: theme/static_src/package-lock.json
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          echo ENV
-          printenv -0
+
+      - name: Install tailwind dependencies
+        run: python manage.py tailwind install
+
+      - name: Collect static files
+        run: python manage.py collectstatic --no-input
+
+      - name: Build tailwind app
+        run: python manage.py tailwind build
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
