@@ -49,8 +49,6 @@ jobs:
       AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
       AZURE_MEDIA_CONTAINER: "staging-media"
       AZURE_STATIC_CONTAINER: "staging-static"
-      # collectstatic is run before the build process
-      DISABLE_COLLECTSTATIC: 'true'
     environment: staging-djangonaut-space
     runs-on: ubuntu-latest
 
@@ -77,9 +75,6 @@ jobs:
 
       - name: Install tailwind dependencies
         run: python manage.py tailwind install
-
-      - name: Collect static files
-        run: python manage.py collectstatic --no-input
 
       - name: Build tailwind app
         run: python manage.py tailwind build
