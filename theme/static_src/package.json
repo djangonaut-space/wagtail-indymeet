@@ -3,7 +3,7 @@
   "version": "3.6.0",
   "description": "",
   "engines": {
-    "node": "20.9.0"
+    "node": "17.6.0"
   },
   "scripts": {
     "start": "npm run dev",
