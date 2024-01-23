@@ -289,7 +289,21 @@ git branch -d feature/AmazingFeature
 ```
 
 ### Deployments
-Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space). Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
+
+To start a production deployment [create a PR from `develop` to `main`](https://github.com/djangonaut-space/wagtail-indymeet/compare/main...develop?title=Production%20Release%20-%20&body=PRs:%0A-%20) (bookmark this link for quick creation of PRs). The PR should follow this format:
+
+```
+Title: "Production release - <summary>"
+
+Description:
+PRs:
+- #1
+- #2
+```
+
+This should be merged with a merge commit. Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space).
+
+Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
 
 `main` requires a linear commit history. This means if you make a change directly to `main`,
 the `develop` branch must be rebased on `main`. Committing directly to main should only
