@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .base import *
 
-DEBUG = os.getenv("DEBUG")
+DEBUG = bool(os.getenv("DEBUG"))
 
 # Deploy instructions
 # https://tonybaloney.github.io/posts/django-on-azure-beyond-hello-world.html
