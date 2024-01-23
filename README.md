@@ -301,7 +301,9 @@ PRs:
 - #2
 ```
 
-Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space). Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
+This should be merged with a merge commit. Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space).
+
+Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
 
 `main` requires a linear commit history. This means if you make a change directly to `main`,
 the `develop` branch must be rebased on `main`. Committing directly to main should only
