@@ -163,14 +163,12 @@ This is an example of how to list things you need to use the software and how to
 7. Install tailwind. You also need npm installed.
    ```sh
    python manage.py tailwind install
+   python manage.py tailwind start # to create style.css
    ```
-8. Run server locally
+8. Run collectstatic and start server locally
    ```sh
+   python manage.py collectstatic
    python manage.py runserver
-   ```
-9. Run tailwind in another terminal locally
-   ```sh
-   python manage.py tailwind start
    ```
 
 Alternatively, if you're not using Windows you can run the following instead of steps 8 and 9:

@@ -23,6 +23,7 @@ if os.getenv("ENVIRONMENT") == "production":
         "djangonaut-space.azurewebsites.net",
         "djangonaut.space",
         "staging-djangonaut-space.azurewebsites.net",
+        "localhost",
     ]
     CSRF_TRUSTED_ORIGINS = [
         "https://djangonaut.space",
