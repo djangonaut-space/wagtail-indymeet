@@ -342,7 +342,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-- Dawn Wages - [@dawnwagessays](https://twitter.com/bajoranengineer) - [@bajoranengineer@mastodon.online](https://mastodon.online/@bajoranengineer)
+- Dawn Wages - [@dawnwagessays](https://twitter.com/dawnwagessays) - [@fly00gemini8712@mastodon.online](https://mastodon.online/@fly00gemini8712)
 - [Djangonaut Space Organizers](mailto:contact@djangonaut.space)
 
 
