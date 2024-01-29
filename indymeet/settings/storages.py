@@ -14,7 +14,7 @@ class AzureMediaStorage(AzureStorage):
 
 class AzureStaticStorage(AzureStorage):
     account_name = settings.AZURE_ACCOUNT_NAME
-    account_key = settings.AZURE_ACCOUNT_KEY
+    account_key = settings.AZURE_STORAGE_KEY
     azure_container = settings.AZURE_STATIC_CONTAINER
     expiration_secs = None
     overwrite_files = True
