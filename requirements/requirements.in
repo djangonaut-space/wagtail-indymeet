@@ -15,3 +15,4 @@ django-debug-toolbar
 typing-extensions
 django-tailwind
 django-bootstrap3
+sentry-sdk[django]
