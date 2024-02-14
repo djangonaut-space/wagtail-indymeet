@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     # other
     "tailwind",
     "theme",
+    "bootstrap3",
 ]
 
 MIDDLEWARE = [

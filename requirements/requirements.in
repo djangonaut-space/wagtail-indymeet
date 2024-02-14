@@ -14,3 +14,4 @@ django-extensions
 django-debug-toolbar
 typing-extensions
 django-tailwind
+django-bootstrap3
