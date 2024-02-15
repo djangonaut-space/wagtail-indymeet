@@ -4,6 +4,8 @@ from django.core import mail
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from accounts.models import CustomUser
+
 
 class SignUpViewTests(TestCase):
     def setUp(self):
@@ -28,6 +30,9 @@ class SignUpViewTests(TestCase):
                 "password2": "secretpassword123",
                 "email_consent": True,
                 "accepted_coc": True,
+                "receive_newsletter": True,
+                "receive_program_updates": True,
+                "receive_event_updates": True,
                 "g-recaptcha-response": "dummy-response",
             },
             follow=True,
@@ -43,6 +48,12 @@ class SignUpViewTests(TestCase):
             mail.outbox[0].subject, "Djangonaut Space Registration Confirmation"
         )
         self.assertIn(
-            "To confirm your email address on djangonaut.space please visit the link:",
+            "Thank you for signing up to Djangonaut Space! Click the link to verify your email:",
             mail.outbox[0].body,
         )
+        created_user = CustomUser.objects.get(username="janedoe")
+        self.assertTrue(created_user.is_active)
+        self.assertTrue(created_user.profile.accepted_coc)
+        self.assertTrue(created_user.profile.receiving_newsletter)
+        self.assertTrue(created_user.profile.receiving_program_updates)
+        self.assertTrue(created_user.profile.receiving_event_updates)

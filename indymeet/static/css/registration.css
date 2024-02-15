@@ -1,27 +1,18 @@
 /* ---------------------------------------------------------------------
  REGISTRATION - LOGIN LOG OUT
 ----------------------------------------------------------------------*/
-.registration-form {
-    width: 20rem;
-    margin: auto;
+.help-block {
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    color: #737373;
 }
 
-.registration-logo {
-    width: 100%;
+.control-label {
+    font-weight: 700;
+    margin-bottom: 5px;
 }
 
-.profile-img {
-    width: 100%;
-}
-
-table {
-    border:1px solid black;
-    padding: 10px;
- }
-th, td{
-    border:1px solid black;
-    padding: .5rem;
-}
-td:first-child {
-    width: 20%;
+.form-group {
+    margin-bottom: 5px;
 }
