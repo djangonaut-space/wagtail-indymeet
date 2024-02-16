@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags bootstrap3 static %}
 
-{% block title %}Registration | Djangonaut Space{% endblock %}
-{% block meta_title %}Registration | Djangonaut Space{% endblock %}
+{% block title %}{% translate "Registration | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Registration | Djangonaut Space" %}{% endblock %}
 
 
 {% block extra_css %}
@@ -12,10 +12,10 @@
 {% block content %}
 <main class="section my-3 mx-5">
     <div class="section-container">
-        <h1 class="text-5xl">Registration</h1>
+        <h1 class="text-5xl">{% translate "Registration" %}</h1>
         <div class="row pt-4 pb-4">
           <div class="col">
-            <p>Sign up to keep up with all things Djangonaut Space!</p>
+            <p>{% translate "Sign up to keep up with all things Djangonaut Space!" %}</p>
           </div>
         </div>
         {% if form.errors and not form.non_field_errors %}
@@ -32,7 +32,7 @@
               {% csrf_token %}
 
               {% bootstrap_form form layout="horizontal" %}
-              <button type="submit" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">Submit</button>
+              <button type="submit" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">{% translate "Submit" %}</button>
 
             </form>
           </div>
