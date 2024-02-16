@@ -61,6 +61,7 @@ class UserProfile(models.Model):
     email_confirmed = models.BooleanField(default=False)
     receiving_newsletter = models.BooleanField(default=False)
     receiving_event_updates = models.BooleanField(default=False)
+    receiving_program_updates = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
