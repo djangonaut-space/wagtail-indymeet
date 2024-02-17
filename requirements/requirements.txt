@@ -42,6 +42,7 @@ django==4.1.13
     #   django-el-pagination
     #   django-extensions
     #   django-filter
+    #   django-mailer
     #   django-modelcluster
     #   django-permissionedforms
     #   django-recaptcha
@@ -65,6 +66,8 @@ django-extensions==3.2.3
     # via -r requirements/requirements.in
 django-filter==22.1
     # via wagtail
+django-mailer==2.3.1
+    # via -r requirements/requirements.in
 django-modelcluster==6.2.1
     # via wagtail
 django-permissionedforms==0.1
@@ -107,6 +110,8 @@ isodate==0.6.1
     # via azure-storage-blob
 l18n==2021.3
     # via wagtail
+lockfile==0.12.2
+    # via django-mailer
 markdown==3.5.2
     # via wagtail-markdown
 openpyxl==3.1.2

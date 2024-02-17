@@ -18,3 +18,4 @@ sentry-sdk[django]
 supervisor
 django-widget-tweaks
 dj-database-url
+django-mailer
