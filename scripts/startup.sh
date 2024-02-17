@@ -2,9 +2,6 @@
 # This file is configured to be used within the environment variables
 # in the App Service under Configuration > General Settings > Startup Command
 
-# Install supervisor
-apt update -y
-apt install -y supervisor
 # Start supervisord
 supervisord -c supervisord.conf
 
