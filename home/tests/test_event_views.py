@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
 
-from home.models import Event
+from home.factories import EventFactory
 
 
 @freeze_time("2012-01-14")
@@ -16,24 +16,16 @@ class EventViewTests(TestCase):
 
     @staticmethod
     def create_upcoming_event():
-        return Event.objects.create(
-            title="Testathon 5.0",
-            slug="testathon-5",
+        return EventFactory.create(
             start_time=datetime(2023, 2, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2023, 2, 1, 11, 0, tzinfo=dt_timezone.utc),
-            location="https://zoom.link",
-            status=Event.SCHEDULED,
         )
 
     @staticmethod
     def create_past_event():
-        return Event.objects.create(
-            title="Coffee Chat",
-            slug="coffee-chat",
+        return EventFactory.create(
             start_time=datetime(2010, 2, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2010, 2, 1, 11, 0, tzinfo=dt_timezone.utc),
-            location="zoom",
-            status=Event.SCHEDULED,
         )
 
     def test_list_no_events(self):
