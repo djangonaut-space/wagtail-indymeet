@@ -3,8 +3,8 @@
 # in the App Service under Configuration > General Settings > Startup Command
 
 # Install supervisor
-apt-get update -y
-apt-get install -y supervisor
+apt update -y
+apt install -y supervisor
 # Start supervisord
 supervisord -c supervisord.conf
 
