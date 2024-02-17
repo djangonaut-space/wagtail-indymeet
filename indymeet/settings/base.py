@@ -225,3 +225,21 @@ TAILWIND_APP_NAME = "theme"
 if os.environ.get("ENABLE_TOOLBAR"):
     INSTALLED_APPS += ["debug_toolbar"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "root": {"level": "WARNING", "handlers": ["console"]},
+    "formatters": {"simple": {"format": "%(levelname)s %(message)s"}},
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django.request": {"handlers": [], "level": "ERROR"},
+    },
+}
