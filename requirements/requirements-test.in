@@ -5,3 +5,4 @@ pytest
 pytest-django
 pytest-mock
 pytest-playwright
+factory_boy
