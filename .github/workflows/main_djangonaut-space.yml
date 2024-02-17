@@ -23,13 +23,10 @@ jobs:
       APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.APPINSIGHTS_INSTRUMENTATIONKEY }}
       APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
       DEBUG: False
-      HOST: ${{ secrets.HOST }}
-      PASSWORD: ${{ secrets.PASSWORD }}
       RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
       RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
       SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      USER: ${{ secrets.USER }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
       AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
       AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
@@ -39,6 +36,8 @@ jobs:
       POST_BUILD_COMMAND: 'scripts/postbuild.sh'
       # Allow install node to support tailwind
       ENABLE_MULTIPLATFORM_BUILD: 'true'
+      # Used for running `manage.py migrate` in postbuild.sh
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     environment: prod-djangonaut-space
     runs-on: ubuntu-latest
 

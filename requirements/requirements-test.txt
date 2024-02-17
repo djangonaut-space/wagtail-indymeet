@@ -43,8 +43,6 @@ charset-normalizer==3.3.2
     # via
     #   -r requirements/requirements.txt
     #   requests
-colorama==0.4.6
-    # via pytest
 cryptography==41.0.7
     # via
     #   -r requirements/requirements.txt
@@ -53,9 +51,12 @@ defusedxml==0.7.1
     # via
     #   -r requirements/requirements.txt
     #   willow
+dj-database-url==2.1.0
+    # via -r requirements/requirements.txt
 django==4.1.13
     # via
     #   -r requirements/requirements.txt
+    #   dj-database-url
     #   django-anymail
     #   django-colorful
     #   django-debug-toolbar
@@ -281,12 +282,9 @@ typing-extensions==4.6.3
     #   asgiref
     #   azure-core
     #   azure-storage-blob
+    #   dj-database-url
     #   pyee
     #   unittest-parametrize
-tzdata==2024.1
-    # via
-    #   -r requirements/requirements.txt
-    #   django
 unittest-parametrize==1.4.0
     # via -r requirements/requirements-test.in
 urllib3==1.26.18

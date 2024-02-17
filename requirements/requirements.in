@@ -17,3 +17,4 @@ django-tailwind
 sentry-sdk[django]
 supervisor
 django-widget-tweaks
+dj-database-url

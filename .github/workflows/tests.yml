@@ -15,9 +15,7 @@ jobs:
     env:
       ENVIRONMENT: 'test'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.test'
-      HOST: "localhost"
-      USER: "djangonaut"
-      PASSWORD: "djangonaut"
+      DATABASE_URL: "postgres://djangonaut:djangonaut@localhost:5432/djangonaut-space"
       DEBUG: False
       SECRET_KEY: "hunter2"
       RECAPTCHA_PUBLIC_KEY: "dummy_value"
