@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n wagtailcore_tags bootstrap3 static %}
+{% load i18n wagtailcore_tags static %}
 
 {% block title %}{% translate "Registration | Djangonaut Space" %}{% endblock %}
 {% block meta_title %}{% translate "Registration | Djangonaut Space" %}{% endblock %}
@@ -18,14 +18,13 @@
             <p>{% translate "Sign up to keep up with all things Djangonaut Space!" %}</p>
           </div>
         </div>
-        {% include 'includes/no_field_errors.html' %}
 
         <div class="row">
           <div class="col">
             <form method="post">
               {% csrf_token %}
 
-              {% bootstrap_form form layout="horizontal" %}
+              {{ form }}
               <button type="submit">{% translate "Submit" %}</button>
 
             </form>

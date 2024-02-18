@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n wagtailcore_tags bootstrap3 static %}
+{% load i18n wagtailcore_tags static %}
 
 {% block title %}{% translate "Login | Djangonaut Space" %}{% endblock %}
 {% block meta_title %}{% translate "Login | Djangonaut Space" %}{% endblock %}
@@ -23,14 +23,13 @@
                 </div>
             </div>
         {% endif %}
-        {% include 'includes/no_field_errors.html' %}
 
         <div class="row">
           <div class="col">
             <form method="post">
               {% csrf_token %}
 
-              {% bootstrap_form form layout="horizontal" %}
+              {{ form }}
               <button type="submit">Login</button>
               <input type="hidden" name="next" value="{{ next }}">
             </form>
