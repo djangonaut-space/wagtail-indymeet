@@ -55,10 +55,7 @@ if os.getenv("ENVIRONMENT") == "production":
     STATIC_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{AZURE_STATIC_CONTAINER}/"
     MEDIA_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{AZURE_MEDIA_CONTAINER}/"
 
-    SENTRY_DNS = os.environ.get(
-        "SENTRY_DNS",
-        "https://302dde9a33fabc5af106ccf19ae23680@o4506747118157824.ingest.sentry.io/4506747129626624"  # Staging
-    )
+    SENTRY_DNS = os.environ.get("SENTRY_DNS")
     sentry_sdk.init(
         dsn=SENTRY_DNS,
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.

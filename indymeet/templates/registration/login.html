@@ -23,13 +23,7 @@
                 </div>
             </div>
         {% endif %}
-        {% if form.errors and not form.non_field_errors %}
-          <div class="alert alert-danger">
-          {% for key, error in form.errors.items %}
-          <p> {{ key }}:{{ error }}</p>
-          {% endfor %}
-          </div>
-          {% endif %}
+        {% include 'includes/no_field_errors.html' %}
 
         <div class="row">
           <div class="col">
