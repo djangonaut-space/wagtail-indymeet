@@ -13,7 +13,7 @@
         <form action="{% url 'signup' %}" method="POST">
             {% csrf_token %}
             {% bootstrap_form form %}
-            <input type="submit">
+            <input type="submit" class="block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 cursor-pointer">
             {% bootstrap_form_errors form layout='inline' %}
         </form>
     {% else %}
