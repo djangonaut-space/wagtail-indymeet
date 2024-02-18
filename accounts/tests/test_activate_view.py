@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from accounts.models import CustomUser
+from accounts.factories import UserFactory
 from accounts.tokens import account_activation_token
 
 
@@ -13,9 +13,7 @@ class ActivateViewTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = CustomUser.objects.create_user(
-            username="test", email="example@example.com", password=""
-        )
+        cls.user = UserFactory.create()
 
     def test_user_does_not_exist(self):
         activate_url = reverse(
