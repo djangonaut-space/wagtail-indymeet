@@ -11,6 +11,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
@@ -66,6 +67,9 @@ class SignUpView(CreateView):
         user = self.object
         user.profile.accepted_coc = form.cleaned_data["accepted_coc"]
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
+        user.profile.receiving_program_updates = form.cleaned_data[
+            "receive_program_updates"
+        ]
         user.profile.receiving_event_updates = form.cleaned_data[
             "receive_event_updates"
         ]
@@ -73,6 +77,7 @@ class SignUpView(CreateView):
             update_fields=[
                 "accepted_coc",
                 "receiving_newsletter",
+                "receiving_program_updates",
                 "receiving_event_updates",
             ]
         )
@@ -83,15 +88,18 @@ class SignUpView(CreateView):
                 "token": account_activation_token.make_token(user),
             },
         )
-        message = (
-            "To confirm your email address on djangonaut.space please visit the link: "
-            + self.request.build_absolute_uri(invite_link)
-        )
+        unsubscribe_link = user.profile.create_unsubscribe_link()
+        email_dict = {
+            "cta_link": self.request.build_absolute_uri(invite_link),
+            "name": user.get_full_name(),
+            "unsubscribe_link": unsubscribe_link,
+        }
         send_mail(
             "Djangonaut Space Registration Confirmation",
-            message,
+            render_to_string("emails/email_confirmation.txt", email_dict),
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
+            html_message=render_to_string("emails/email_confirmation.html", email_dict),
             fail_silently=False,
         )
         return super().form_valid(form)
@@ -115,17 +123,12 @@ def unsubscribe(request, user_id, token):
     ) or user.profile.check_token(token):
         # unsubscribe them
         profile = user.profile
-        if request.GET.get("events", None):
-            email_type = "events"
-            profile.receiving_event_updates = False
-        else:
-            email_type = "newsletters"
-            profile.receiving_newsletter = False
+        profile.receiving_event_updates = False
+        profile.receiving_program_updates = False
+        profile.receiving_newsletter = False
         profile.save()
 
-        return render(
-            request, "registration/unsubscribed.html", {"email_type": email_type}
-        )
+        return render(request, "registration/unsubscribed.html")
 
     # Otherwise redirect to login page
     next_url = reverse(

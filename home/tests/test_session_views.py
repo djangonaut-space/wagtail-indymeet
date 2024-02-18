@@ -4,7 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from freezegun import freeze_time
 
-from home.models import Session
+from home.factories import SessionFactory
 
 
 @freeze_time("2023-11-16")
@@ -16,25 +16,14 @@ class SessionViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.session_application_open = Session.objects.create(
-            start_date=datetime(2024, 1, 15).date(),
-            end_date=datetime(2024, 3, 11).date(),
-            title="2024 Session 1",
-            slug="2024-session-1",
-            invitation_date=datetime(2023, 12, 1).date(),
+        cls.session_application_open = SessionFactory.create(
             application_start_date=datetime(2023, 10, 16).date(),
             application_end_date=datetime(2023, 11, 15).date(),
-            application_url="https://apply.session1.com",
         )
-        cls.session_application_closed = Session.objects.create(
-            start_date=datetime(2023, 7, 1).date(),
-            end_date=datetime(2024, 10, 1).date(),
-            title="2023 Pilot",
-            slug="2023-pilot",
+        cls.session_application_closed = SessionFactory.create(
             invitation_date=datetime(2023, 6, 30).date(),
             application_start_date=datetime(2023, 6, 1).date(),
             application_end_date=datetime(2023, 6, 20).date(),
-            application_url="https://apply.pilot.com",
         )
 
     def test_session_list(self):

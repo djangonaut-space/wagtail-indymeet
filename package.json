@@ -1,6 +1,7 @@
 {
-  "name": "djangonaut-space",
-  "version": "1.0.0",
+  "name": "theme",
+  "version": "3.6.0",
+  "description": "",
   "engines": {
     "node": "17.6.0"
   },
@@ -8,3 +9,4 @@
     "test": ""
   }
 }
+  

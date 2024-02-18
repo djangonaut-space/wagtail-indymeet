@@ -3,18 +3,13 @@ from datetime import datetime
 from django.test import TestCase
 from freezegun import freeze_time
 
-from home.models import Session
+from home.factories import SessionFactory
 
 
 class SessionTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.session = Session.objects.create(
-            start_date=datetime(2024, 1, 15).date(),
-            end_date=datetime(2024, 3, 11).date(),
-            title="2024 Session 1",
-            slug="2024-session-1",
-            invitation_date=datetime(2023, 12, 1).date(),
+        cls.session = SessionFactory.create(
             application_start_date=datetime(2023, 10, 16).date(),
             application_end_date=datetime(2023, 11, 15).date(),
         )

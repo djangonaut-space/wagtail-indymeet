@@ -1,0 +1,9 @@
+Hi {{ name }},
+
+Thank you for signing up to Djangonaut Space! Click the link to verify your email: {{ cta_link }}.
+
+Thank you,
+
+Djangonaut Space Organizers
+
+Don't like these emails? Unsubscribe: {{ unsubscribe_link }}
