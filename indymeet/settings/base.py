@@ -16,6 +16,8 @@ import os
 
 from dotenv import load_dotenv
 
+from django.forms.renderers import TemplatesSetting
+
 load_dotenv()
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -57,12 +59,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.forms",
     # azure storage
     "storages",
     # other
     "tailwind",
     "theme",
-    "bootstrap3",
+    "widget_tweaks",
 ]
 
 MIDDLEWARE = [
@@ -243,3 +246,10 @@ LOGGING = {
         "django.request": {"handlers": [], "level": "ERROR"},
     },
 }
+
+
+class FormRenderer(TemplatesSetting):
+    form_template_name = "forms/form.html"
+
+
+FORM_RENDERER = "indymeet.settings.base.FormRenderer"
