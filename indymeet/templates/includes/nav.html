@@ -45,7 +45,28 @@
                 </a>
                 {% endif %}
           </div>
-          {% endif %}
+          {% else %}
+           <div class="relative hidden md:block" x-data="{ showDropdown: false }">
+              <button type="button" class="block bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" @click="showDropdown = !showDropdown">
+                <span class="sr-only">Open user menu</span>
+                <img class="w-8 h-8 rounded-full" src={%  if user.profile.bio_image %}"{{ user.profile.bio_image }}"{% else %}"{% static 'img/favicon.png' %}"{% endif %} alt="Profile photo">
+              </button>
+              <div x-cloak x-show="showDropdown">
+                <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44" aria-labelledby="user-menu-button">
+                  <li class="p-2">
+                    <a href="{% url 'profile' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                        {% trans "Profile" %}
+                    </a>
+                  </li>
+                  <li class="p-2">
+                    <a href="{% url 'logout' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                        {% trans "Logout" %}
+                    </a>
+                  </li>
+                </ul>
+              </div>
+           </div>
+           {% endif %}
             <div class="relative block md:hidden" x-data="{ showDropdown: false }">
                 <button
                     class="block rounded bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden" @click="showDropdown = !showDropdown"
