@@ -17,12 +17,8 @@
         @apply font-fraunces;
     }
 
-    a {
-        text-decoration: underline;
-    }
-
     a:hover {
-        color: var(--ds-purple);
+        @apply cursor-pointer;
     }
 
     .bg-primary {
@@ -39,6 +35,10 @@
 
     svg:not(:root) {
         overflow: hidden;
+    }
+
+    button[type="submit"] {
+       @apply rounded-md bg-primary px-5 py-2.5 font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer;
     }
 }
 
