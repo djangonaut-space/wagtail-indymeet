@@ -264,6 +264,8 @@ sqlparse==0.4.4
     #   -r requirements/requirements.txt
     #   django
     #   django-debug-toolbar
+supervisor==4.2.5
+    # via -r requirements/requirements.txt
 telepath==0.3.1
     # via
     #   -r requirements/requirements.txt
@@ -313,3 +315,6 @@ zipp==3.17.0
     # via
     #   -r requirements/requirements.txt
     #   importlib-metadata
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
