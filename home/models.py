@@ -237,6 +237,9 @@ class Session(models.Model):
     def get_absolute_url(self):
         return reverse("session_detail", kwargs={"slug": self.slug})
 
+    def get_full_url(self):
+        return settings.BASE_URL + self.get_absolute_url()
+
 
 class SessionMembership(models.Model):
     class Meta:
