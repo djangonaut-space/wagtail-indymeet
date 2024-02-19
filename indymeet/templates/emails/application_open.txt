@@ -1,0 +1,13 @@
+Hi {{ name }},
+
+Exciting news! Applications have opened for '{{ title }}'!
+This session runs from {{ start_date }} - {{ end_date }} and applications close {{ application_end_date }}.
+
+You can apply here: {{ cta_link }}
+More details can be found here: {{ detail_url }}
+
+Thank you,
+
+Djangonaut Space Organizers
+
+Don't like these emails? Unsubscribe: {{ unsubscribe_link }}
