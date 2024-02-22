@@ -1,5 +1,7 @@
 import factory
-from home.models import Event, Session
+
+from accounts.factories import UserFactory
+from home.models import Event, Session, Survey, Question, TypeField, UserSurveyResponse, UserQuestionResponse
 
 
 class EventFactory(factory.django.DjangoModelFactory):
@@ -26,3 +28,36 @@ class SessionFactory(factory.django.DjangoModelFactory):
     application_start_date = factory.Faker("date")
     application_end_date = factory.Faker("date")
     application_url = factory.Sequence(lambda n: "https://apply.session%d.com" % n)
+
+
+class SurveyFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Survey
+
+    name = factory.Sequence(lambda n: "Survey %d" % n)
+
+
+class QuestionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Question
+
+    survey = factory.SubFactory(SurveyFactory)
+    label = factory.Sequence(lambda n: "Label %d" % n)
+    type_field = TypeField.TEXT_AREA
+
+
+class UserSurveyResponseFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = UserSurveyResponse
+
+    user = factory.SubFactory(UserFactory)
+    survey = factory.SubFactory(SurveyFactory)
+
+
+class UserQuestionResponseFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = UserQuestionResponse
+
+    question = factory.SubFactory(QuestionFactory)
+    value = factory.Sequence(lambda n: "Answer %d" % n)
+    user_survey_response = factory.SubFactory(UserSurveyResponseFactory)
