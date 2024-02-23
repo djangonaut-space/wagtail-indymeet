@@ -1,7 +1,15 @@
 import factory
 
 from accounts.factories import UserFactory
-from home.models import Event, Session, Survey, Question, TypeField, UserSurveyResponse, UserQuestionResponse
+from home.models import (
+    Event,
+    Question,
+    Session,
+    Survey,
+    TypeField,
+    UserQuestionResponse,
+    UserSurveyResponse,
+)
 
 
 class EventFactory(factory.django.DjangoModelFactory):
@@ -43,7 +51,7 @@ class QuestionFactory(factory.django.DjangoModelFactory):
 
     survey = factory.SubFactory(SurveyFactory)
     label = factory.Sequence(lambda n: "Label %d" % n)
-    type_field = TypeField.TEXT_AREA
+    type_field = TypeField.TEXT
 
 
 class UserSurveyResponseFactory(factory.django.DjangoModelFactory):

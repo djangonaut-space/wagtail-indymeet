@@ -6,12 +6,10 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
-
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
-
 from wagtail.snippets.models import register_snippet
 
 from home.managers import EventQuerySet

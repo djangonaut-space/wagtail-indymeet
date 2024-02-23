@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from django.contrib import admin
 
-from .models import Event
-from .models import Session
-from .models import SessionMembership
+from .models import Event, Question, Session, SessionMembership, Survey
 
 
 @admin.register(Event)
@@ -28,3 +26,14 @@ class SessionMembershipAdmin(admin.ModelAdmin):
 class SessionAdmin(admin.ModelAdmin):
     model = Session
     inlines = [SessionMembershipInline]
+
+
+class QuestionInline(admin.StackedInline):
+    model = Question
+    extra = 0
+
+
+@admin.register(Survey)
+class SurveyAdmin(admin.ModelAdmin):
+    model = Survey
+    inlines = [QuestionInline]

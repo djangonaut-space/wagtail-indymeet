@@ -1,6 +1,6 @@
 from django.db import models
-from django.utils.text import slugify
 from django.utils.safestring import mark_safe
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 
@@ -98,9 +98,9 @@ class Question(BaseModel):
     def save(
         self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
-        self.slug = slugify(self.label)
+        self.key = slugify(self.label)
         if update_fields is not None and "label" in update_fields:
-            update_fields = {"slug"}.union(update_fields)
+            update_fields = {"key"}.union(update_fields)
         super().save(
             force_insert=force_insert,
             force_update=force_update,
