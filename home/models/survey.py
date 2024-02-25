@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.db import models
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
@@ -60,7 +62,8 @@ class Question(BaseModel):
         unique=True,
         blank=True,
         help_text=_(
-            "Unique key for this question, fill in the blank if you want to use for automatic generation."
+            "Unique key for this question, fill in the blank if "
+            "you want to use for automatic generation."
         ),
     )
     survey = models.ForeignKey(
@@ -73,7 +76,9 @@ class Question(BaseModel):
     choices = models.TextField(
         blank=True,
         help_text=_(
-            "If type of field is radio, select, or multi select, fill in the options separated by commas. Ex: Male, Female."
+            "If type field is radio, select, or multi select, fill in the options separated "
+            "by commas. Ex: Male, Female.<br/>"
+            "If type field is rating, use a number such as 5."
         ),
     )
     help_text = models.CharField(
