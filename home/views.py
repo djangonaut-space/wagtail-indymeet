@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from django.shortcuts import render
+from gettext import gettext
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views.generic.detail import DetailView
+from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
-from .models import Event
-from .models import Session
+from .forms import CreateUserSurveyResponseForm
+from .models import Event, Session, Survey, UserSurveyResponse
 
 
 def event_calendar(request):
@@ -86,3 +93,42 @@ class SessionListView(ListView):
     model = Session
     template_name = "home/prerelease/session_list.html"
     context_object_name = "sessions"
+
+
+@method_decorator(login_required, name="dispatch")
+class CreateUserSurveyResponseFormView(FormMixin, DetailView):
+    model = Survey
+    object = None
+    form_class = CreateUserSurveyResponseForm
+    success_url = reverse_lazy("session_list")
+    template_name = "home/surveys/form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        survey = self.get_object()
+        if UserSurveyResponse.objects.filter(survey=survey, user=request.user).exists():
+            messages.warning(request, gettext("You have already submitted."))
+            return redirect("session_list")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["survey"] = self.get_object()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        survey = self.get_object()
+        kwargs["title_page"] = survey.name
+        kwargs["sub_title_page"] = survey.description
+        return super().get_context_data(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        self.object = self.get_object()
+        if form.is_valid():
+            form.save()
+            messages.success(self.request, gettext("Response sent!"))
+            return self.form_valid(form)
+        else:
+            messages.error(self.request, gettext("Something went wrong."))
+            return self.form_invalid(form)
