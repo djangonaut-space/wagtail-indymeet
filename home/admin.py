@@ -31,9 +31,24 @@ class SessionAdmin(admin.ModelAdmin):
 class QuestionInline(admin.StackedInline):
     model = Question
     extra = 0
+    fields = (
+        "label",
+        "type_field",
+        "choices",
+        "help_text",
+        "required",
+        "ordering",
+    )
 
 
 @admin.register(Survey)
 class SurveyAdmin(admin.ModelAdmin):
     model = Survey
     inlines = [QuestionInline]
+    fields = (
+        "name",
+        "description",
+        "editable",
+        "deletable",
+        "session",
+    )

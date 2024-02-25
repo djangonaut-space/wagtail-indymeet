@@ -24,7 +24,7 @@ class Survey(BaseModel):
     deletable = models.BooleanField(
         default=True, help_text=_("If False, user can't delete record.")
     )
-    session = models.ForeignKey("home.Session", on_delete=models.SET_NULL, null=True)
+    session = models.ForeignKey("home.Session", on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -50,7 +50,7 @@ class TypeField(models.TextChoices):
     RADIO = "RADIO", _("Radio")
     SELECT = "SELECT", _("Select")
     MULTI_SELECT = "MULTI_SELECT", _("Multi Select")
-    TEXT_AREA = "TEXT_AREA", _("Text Aria")
+    TEXT_AREA = "TEXT_AREA", _("Text Area")
     URL = "URL", _("URL")
     EMAIL = "EMAIL", _("Email")
     RATING = "RATING", _("Rating")
