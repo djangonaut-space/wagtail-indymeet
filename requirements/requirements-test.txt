@@ -282,10 +282,13 @@ typing-extensions==4.6.3
     #   azure-core
     #   azure-storage-blob
     #   pyee
+    #   unittest-parametrize
 tzdata==2024.1
     # via
     #   -r requirements/requirements.txt
     #   django
+unittest-parametrize==1.4.0
+    # via -r requirements/requirements-test.in
 urllib3==1.26.18
     # via
     #   -r requirements/requirements.txt
