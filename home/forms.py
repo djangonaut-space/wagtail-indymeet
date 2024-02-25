@@ -1,61 +1,28 @@
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 
 from django import forms
-from django.core.validators import MaxLengthValidator, MinLengthValidator
-from django.db import models, transaction
-from django.db.models.fields import CharField, EmailField
+from django.core.validators import MaxLengthValidator
+from django.core.validators import MinLengthValidator
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
-from modelcluster.fields import ParentalKey
-from wagtail.admin.edit_handlers import FieldPanel, InlinePanel
-from wagtail.contrib.forms.models import AbstractForm, AbstractFormField
-from wagtail.core.fields import RichTextField
-from wagtail.snippets.models import register_snippet
 
-from home.constants import DATE_INPUT_FORMAT, SURVEY_FIELD_VALIDATORS
-from home.models import Question, TypeField, UserQuestionResponse, UserSurveyResponse
+from home.constants import DATE_INPUT_FORMAT
+from home.constants import SURVEY_FIELD_VALIDATORS
+from home.models import Question
+from home.models import TypeField
+from home.models import UserQuestionResponse
+from home.models import UserSurveyResponse
 from home.validators import RatingValidator
-from home.widgets import (
-    CheckboxSelectMultipleSurvey,
-    DateSurvey,
-    RadioSelectSurvey,
-    RatingSurvey,
-)
+from home.widgets import CheckboxSelectMultipleSurvey
+from home.widgets import DateSurvey
+from home.widgets import RadioSelectSurvey
+from home.widgets import RatingSurvey
 
 
-class TestForm(forms.Form):
-    test_input = forms.CharField(max_length=255)
-
-
-class SignUpField(AbstractFormField):
-    page = ParentalKey(
-        "SignUpPage", on_delete=models.CASCADE, related_name="form_fields"
-    )
-
-
-@register_snippet
-class SignUpPage(AbstractForm):
-    template_name = "forms/sign_up.html"
-    name = CharField(max_length=255, blank=True)
-    email = EmailField(max_length=255, blank=True)
-    thank_you_text = RichTextField(blank=True)
-
-    content_panels = AbstractForm.content_panels + [
-        FieldPanel("name"),
-        InlinePanel("form_fields", label="Form fields"),
-        FieldPanel("thank_you_text"),
-    ]
-
-    def get_template(self, request):
-        return self.template_name
-
-    def get_context_data(self, request):
-        context = super().get_context(request)
-        return context
-
-
-def make_choices(question: Question) -> List[Tuple[str, str]]:
+def make_choices(question: Question) -> list[tuple[str, str]]:
     choices = []
     for choice in question.choices.split(","):
         choice = choice.strip()
@@ -64,7 +31,6 @@ def make_choices(question: Question) -> List[Tuple[str, str]]:
 
 
 class BaseSurveyForm(forms.Form):
-
     def __init__(self, survey, user, *args, **kwargs):
         self.survey = survey
         self.user = user if user.is_authenticated else None
@@ -172,7 +138,6 @@ class BaseSurveyForm(forms.Form):
 
 
 class CreateUserSurveyResponseForm(BaseSurveyForm):
-
     @transaction.atomic
     def save(self):
         cleaned_data = super().clean()

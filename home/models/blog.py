@@ -6,11 +6,14 @@ from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from puput.abstracts import EntryAbstract
 from taggit.models import TaggedItemBase
-from wagtail.admin.edit_handlers import FieldPanel, MultiFieldPanel
-from wagtail.admin.panels import InlinePanel, PageChooserPanel
+from wagtail.admin.edit_handlers import FieldPanel
+from wagtail.admin.edit_handlers import MultiFieldPanel
+from wagtail.admin.panels import InlinePanel
+from wagtail.admin.panels import PageChooserPanel
 from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.core import blocks
-from wagtail.core.fields import RichTextField, StreamField
+from wagtail.core.fields import RichTextField
+from wagtail.core.fields import StreamField
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.models import Page
 
@@ -19,15 +22,6 @@ from home.blocks import BaseStreamBlock
 from home.models.event import Event
 
 # BLOG PUPUT IMPORTS
-
-
-def sign_up_forms(context):
-    from home.forms import SignUpPage
-
-    return {
-        "sign_up_forms": SignUpPage.objects.all(),
-        "request": context["request"],
-    }
 
 
 class HomePage(Page):
