@@ -35,7 +35,7 @@
         <div class="flex items-center gap-4">
             <div class="sm:flex sm:gap-4">
                 {% if "login" not in request.path %}
-                <a class="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-ds-purple transition hover:bg-gray-300 sm:block cursor-pointer" href="{% url 'login' %}">
+                <a class="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-ds-purple transition hover:bg-gray-300 sm:block cursor-pointer" href="{% url 'login' %}?next_page={{request.path}}">
                   {% trans "Login" %}
                 </a>
                 {% endif %}
@@ -120,7 +120,7 @@
                         </li>
                         {%  else %}
                         <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'login' %}">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'login'%}?next_page={{request.path}}">
                                 {% trans "Login" %}
                             </a>
                         </li>

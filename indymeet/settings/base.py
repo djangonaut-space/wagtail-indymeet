@@ -211,7 +211,7 @@ WAGTAILADMIN_BASE_URL = "http://example.com"
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-LOGIN_REDIRECT_URL = "/"
+#LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
