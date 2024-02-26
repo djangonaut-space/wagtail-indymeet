@@ -35,12 +35,12 @@
         <div class="flex items-center gap-4">
             <div class="sm:flex sm:gap-4">
                 {% if "login" not in request.path %}
-                <a class="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-ds-purple transition hover:bg-gray-300 sm:block cursor-pointer" href="{% url "login" %}">
+                <a class="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-ds-purple transition hover:bg-gray-300 sm:block cursor-pointer" href="{% url 'login' %}">
                   {% trans "Login" %}
                 </a>
                 {% endif %}
                 {% if "signup" not in request.path %}
-                <a class="block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer" href="{% url "signup" %}">
+                <a class="block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer" href="{% url 'signup' %}">
                   {% trans "Sign Up" %}
                 </a>
                 {% endif %}
