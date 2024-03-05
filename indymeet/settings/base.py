@@ -33,7 +33,6 @@ INSTALLED_APPS = [
     "accounts",
     "home",
     "search",
-    "mailer",
     "anymail",
     "captcha",
     "wagtail.contrib.forms",

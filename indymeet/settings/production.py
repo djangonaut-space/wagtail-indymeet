@@ -35,18 +35,13 @@ if os.getenv("ENVIRONMENT") == "production":
     # unless there was a setting that needs it.
     DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = "require"
 
-    # Email settings
-    # Use django-mailer to queue emails
-    EMAIL_BACKEND = "mailer.backend.DbBackend"
-    # Use anymail to send emails via mailjet.
-    MAILER_EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
+    EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
     MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY")
     ANYMAIL = {
         "MAILJET_API_KEY": MAILJET_API_KEY,
         "MAILJET_SECRET_KEY": MAILJET_SECRET_KEY,
     }
-
     # Azure Media and Static Storage Settings
     AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", "djangonaut")
     AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", False)
