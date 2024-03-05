@@ -33,7 +33,7 @@ if os.getenv("ENVIRONMENT") == "production":
     ]
     # dj_database_url doesn't render an OPTIONS dictionary
     # unless there was a setting that needs it.
-    DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = "required"
+    DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = "require"
 
     EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
