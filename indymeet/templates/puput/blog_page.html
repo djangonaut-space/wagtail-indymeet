@@ -51,10 +51,10 @@
             <div class="searchTerm">{% trans 'Entries for' %} {{ search_type }} "{{ search_term }}"</div>
         </div>
         {% endif %}
-        <div class="row flex justify-center">
+        <div class="row">
             {% for entry in entries %}
             {% entry_url entry blog_page as post_url %}
-            <article class="box max-w-3xl blog-container">
+            <article class="box blog-container">
                 <section class="img-section">
                     <a href="{{ post_url }}">
                     {% if entry.header_image %}
