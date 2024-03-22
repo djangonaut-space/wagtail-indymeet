@@ -23,7 +23,7 @@ env:
   AZURE_WEBAPP_NAME: staging-djangonaut-space  # set this to the name of your Azure Web App
   AZURE_WEBAPP_PACKAGE_PATH: '.'
   PYTHON_VERSION: '3.11'              # set this to the Python version to use
-  NODE_VERSION: '17.6.0'
+  NODE_VERSION: '20.11.1'
 
 on:
   push:
