@@ -15,9 +15,7 @@ jobs:
     env:
       ENVIRONMENT: 'test'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.test'
-      HOST: "localhost"
-      USER: "djangonaut"
-      PASSWORD: "djangonaut"
+      DATABASE_URL: "postgres://djangonaut:djangonaut@localhost:5432/djangonaut-space"
       DEBUG: False
       SECRET_KEY: "hunter2"
       RECAPTCHA_PUBLIC_KEY: "dummy_value"
@@ -38,7 +36,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |

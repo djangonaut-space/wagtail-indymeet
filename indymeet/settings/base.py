@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 
+import dj_database_url
 from dotenv import load_dotenv
 
 from django.forms.renderers import TemplatesSetting
@@ -116,15 +117,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DATABASE", "djangonaut-space"),
-        "USER": os.environ.get("USER"),
-        "PASSWORD": os.environ.get("PASSWORD"),
-        "HOST": os.environ.get("HOST"),
-        "PORT": 5432,
-        "OPTIONS": {},
-    },
+    "default": dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
