@@ -6,7 +6,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>{% image value.image fill-900x700 %}</div>
             <div>
-                <p>{{ value.text|safe }}</p>
+                <p>{{ value.text|safe|urlize }}</p>
             </div>
         </div>
     </div>
