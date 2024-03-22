@@ -5,7 +5,7 @@
     <div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <p class="md:text-right">{{ value.text|safe }}</p>
+                <p class="md:text-right">{{ value.text|safe|urlize }}</p>
             </div>
         <div>
             <div class="md:float-right">{% image value.image fill-900x700 %}</div>

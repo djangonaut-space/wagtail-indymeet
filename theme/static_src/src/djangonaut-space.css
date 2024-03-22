@@ -52,6 +52,9 @@
             color: var(--dark);
             margin: 0 0 1em 0;
         }
+        a {
+            color: var(--ds-purple) !important;
+        }
     }
 
     .section-container {
