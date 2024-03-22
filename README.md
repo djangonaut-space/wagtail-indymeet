@@ -183,6 +183,25 @@ This will run both the Django server and the Tailwind watcher in the same termin
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+#### Docker
+
+If you have docker installed, alternatively
+
+1. Have docker running and then run:
+   ```sh
+   docker-compose up
+   ```
+
+2. In a new terminal, run any setup commands you need such as
+   ```sh
+   docker-compose exec web python manage.py createsuperuser
+   ```
+
+3. Go to: http://127.0.0.1:8000/ and enjoy!
+
+
+You will also want to createsuperuser, load/create data in order to use the blog, etc.
+
 ### Creating fixtures for local testing
 
 **Backing up**
