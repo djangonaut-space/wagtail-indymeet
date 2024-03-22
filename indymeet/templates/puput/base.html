@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load static i18n wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags wagtailuserbar puput_tags %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'puput/css/puput.css' %}"/>
+{% endblock extra_css %}
+
 {% block content %}
 {% block blog_header %}
     <div class="about">
