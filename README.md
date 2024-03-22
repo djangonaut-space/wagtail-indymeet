@@ -108,7 +108,7 @@ This section should list any major frameworks/libraries used to bootstrap your p
 ### Prerequisites
 
 This is an example of how to list things you need to use the software and how to install them.
-* Python version 3.10.5
+* Python version 3.11
 
 ### Installation
 
