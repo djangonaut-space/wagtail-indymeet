@@ -33,7 +33,7 @@ COPY --chown=python:python . .
 
 WORKDIR /app
 
-RUN npm install
+RUN npm install ./theme/static_src
 
 RUN python manage.py tailwind install --no-input;
 RUN python manage.py tailwind build --no-input;
