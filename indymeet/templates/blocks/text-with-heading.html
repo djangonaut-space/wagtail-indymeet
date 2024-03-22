@@ -1,10 +1,8 @@
 <div class="text-with-heading">
-    <h2 class="mt-4 text-4xl blog-heading">{{ value.heading }}</h2>
+    <h2 class="mt-4 mb-4 text-4xl blog-heading">{{ value.heading }}</h2>
     <div class="text-container">
-        <div class="">
-            <p>
-            {{ value.text|safe }}
-            </p>
+        <div>
+            <p>{{ value.text|safe|urlize }}</p>
         </div>
     </div>
 </div>

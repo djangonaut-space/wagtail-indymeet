@@ -45,8 +45,16 @@
 @layer components {
     .blog-container {
         background-color: #f8f8f8;
-        padding: 20px;
+        padding: 20px 40px;
         margin-bottom: 20px;
+
+        p {
+            color: var(--dark);
+            margin: 0 0 1em 0;
+        }
+        a {
+            color: var(--ds-purple) !important;
+        }
     }
 
     .section-container {

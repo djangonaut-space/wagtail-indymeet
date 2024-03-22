@@ -1,15 +1,15 @@
 {% load wagtailimages_tags %}
 
 <div class="block-image">
-    <h2 class="mt-4 text-4xl blog-heading">{{ value.heading|safe }}</h2>
-    <div class="">
-        <div class="flex flex-row">
-            <div class="basis-3/4">
-                <p class="pr-4 text-right">
-                {{ value.text|safe }}
-                </p>
+    <h2 class="mt-4 mb-4 text-4xl blog-heading md:text-right">{{ value.heading|safe }}</h2>
+    <div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <p class="md:text-right">{{ value.text|safe|urlize }}</p>
             </div>
-        <div class="basis-1/4">{% image value.image width-1000 %}</div>
+        <div>
+            <div class="md:float-right">{% image value.image fill-900x700 %}</div>
+        </div>
         </div>
     </div>
 </div>
