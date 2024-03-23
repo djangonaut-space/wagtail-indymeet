@@ -54,6 +54,9 @@
         }
         a {
             color: var(--ds-purple) !important;
+            i {
+                color: white !important;
+            }
         }
     }
 
@@ -62,7 +65,7 @@
     }
 
     .social-item {
-        @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full #{!important};
+        @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
     }
 }
 
