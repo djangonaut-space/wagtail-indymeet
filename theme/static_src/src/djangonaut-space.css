@@ -54,6 +54,9 @@
         }
         a {
             color: var(--ds-purple) !important;
+            i {
+                color: white !important;
+            }
         }
     }
 
