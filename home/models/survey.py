@@ -58,7 +58,7 @@ class TypeField(models.TextChoices):
 
 class Question(BaseModel):
     key = models.CharField(
-        max_length=225,
+        max_length=500,
         unique=True,
         blank=True,
         help_text=_(
@@ -81,8 +81,7 @@ class Question(BaseModel):
             "If type field is rating, use a number such as 5."
         ),
     )
-    help_text = models.CharField(
-        max_length=200,
+    help_text = models.TextField(
         blank=True,
         help_text=_("You can add a help text in here."),
     )
