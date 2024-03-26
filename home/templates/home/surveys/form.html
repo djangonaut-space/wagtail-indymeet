@@ -17,8 +17,8 @@
                 {% csrf_token %}
                 {% for field in form %}
                     <div class="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-md border border-gray-200 bg-white">
-                        <label for="{{ field.name }}" class="text-base font-medium">{{ field.label|linebreaks|urlize }}</label>
-                        <p class="text-sm text-gray-400">{{ field.help_text|linebreaks|urlize }}</p>
+                        <label for="{{ field.name }}" class="text-base font-medium">{{ field.label|linebreaksbr|urlize }}</label>
+                        <p class="text-sm text-gray-500">{{ field.help_text|linebreaksbr|urlize }}</p>
                         <div class="mt-1">
                             {% if field.field.widget.input_type == 'radio' or field.field.widget.input_type == 'checkbox' %}
                                 {{ field }}
@@ -26,7 +26,7 @@
                                 {{ field|addclass:'w-full p-4 pr-12 text-sm border-gray-500 rounded-lg shadow-sm' }}
                             {% endif %}
                         </div>
-                        <span class="text-xs text-red-400">{{ field.errors }}</span>
+                        <span class="text-sm text-red-400">{{ field.errors }}</span>
                     </div>
 
                 {% endfor %}
