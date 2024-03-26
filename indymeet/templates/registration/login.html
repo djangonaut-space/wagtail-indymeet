@@ -1,52 +1,46 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static %}
 
-
+{% block title %}{% translate "Login | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Login | Djangonaut Space" %}{% endblock %}
 
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
 <link rel="stylesheet" href="{% static 'css/registration.css' %}">
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section main-center section-container">
-{% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
-{% endif %}
+<main class="section my-3 mx-5">
+    <div class="section-container">
+        {% if next %}
+            <div class="row pt-4 pb-4">
+                <div class="col">
+                {% if user.is_authenticated %}
+                    <p>{% translate "Your account doesn't have access to this page. To proceed, please login with an account that has access." %}</p>
+                {% else %}
+                    <p>{% translate "Please login to see this page." %}</p>
+                {% endif %}
+                </div>
+            </div>
+        {% endif %}
 
-{% if next %}
-    {% if user.is_authenticated %}
-    <p>Your account doesn't have access to this page. To proceed,
-    please login with an account that has access.</p>
-    {% else %}
-    <p>Please login to see this page.</p>
-    {% endif %}
-{% endif %}
+        <div class="row">
+          <div class="col">
+            <form method="post">
+              {% csrf_token %}
 
-<form class="registration-form" method="post" action="{% url 'login' %}">
-{% csrf_token %}
-<a href="/">
-    <img class="registration-logo" src="{% static 'img/temp_logo.png' %}" />
-</a>
-<table>
-<tr>
-    <td>{{ form.username.label_tag }}</td>
-    <td>{{ form.username }}</td>
-</tr>
-<tr>
-    <td>{{ form.password.label_tag }}</td>
-    <td>{{ form.password }}</td>
-</tr>
-</table>
-
-<input class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded my-3" type="submit" value="login">
-<input type="hidden" name="next" value="{{ next }}">
-</form>
-
-{# Assumes you set up the password_reset view in your URLconf #}
-<p><a href="{% url 'password_reset' %}">Lost password?</a></p>
-
+              {{ form }}
+              <button type="submit">Login</button>
+              <input type="hidden" name="next" value="{{ next }}">
+            </form>
+          </div>
+          <div class="row pt-4 pb-4">
+            <div class="col">
+                <p>{% translate "Forgotten your password?" %} <a href="{% url 'password_reset' %}" class="text-ds-purple hover:underline">{% translate "Reset password." %}</a></p>
+            </div>
+          </div>
+          <div class="col"></div>
+        </div>
+    </div>
 </main>
 {% endblock content %}

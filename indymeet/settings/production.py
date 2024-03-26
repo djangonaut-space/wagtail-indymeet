@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sentry_sdk
+
 from .base import *
 
 DEBUG = bool(os.getenv("DEBUG"))
@@ -29,8 +31,9 @@ if os.getenv("ENVIRONMENT") == "production":
         "https://djangonaut-space.azurewebsites.net",
         "https://staging-djangonaut-space.azurewebsites.net",
     ]
-
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+    # dj_database_url doesn't render an OPTIONS dictionary
+    # unless there was a setting that needs it.
+    DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = "require"
 
     EMAIL_BACKEND = "anymail.backends.mailjet.EmailBackend"
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
@@ -53,6 +56,15 @@ if os.getenv("ENVIRONMENT") == "production":
 
     STATIC_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{AZURE_STATIC_CONTAINER}/"
     MEDIA_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{AZURE_MEDIA_CONTAINER}/"
+
+    SENTRY_DNS = os.environ.get("SENTRY_DNS")
+    sentry_sdk.init(
+        dsn=SENTRY_DNS,
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+        traces_sample_rate=0.1,
+        # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
+        profiles_sample_rate=0.1,
+    )
 
 try:
     from .local import *

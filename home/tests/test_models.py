@@ -3,18 +3,21 @@ from datetime import datetime
 from django.test import TestCase
 from freezegun import freeze_time
 
-from home.models import Session
+from accounts.factories import UserFactory
+from home.factories import (
+    QuestionFactory,
+    SessionFactory,
+    SurveyFactory,
+    UserQuestionResponseFactory,
+    UserSurveyResponseFactory,
+)
+from home.models import TypeField
 
 
 class SessionTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.session = Session.objects.create(
-            start_date=datetime(2024, 1, 15).date(),
-            end_date=datetime(2024, 3, 11).date(),
-            title="2024 Session 1",
-            slug="2024-session-1",
-            invitation_date=datetime(2023, 12, 1).date(),
+        cls.session = SessionFactory.create(
             application_start_date=datetime(2023, 10, 16).date(),
             application_end_date=datetime(2023, 11, 15).date(),
         )
@@ -43,3 +46,42 @@ class SessionTests(TestCase):
         with freeze_time("2023-11-16 12:00:00"):
             # No longer 15th AoE
             self.assertFalse(self.session.is_accepting_applications())
+
+
+class UserQuestionResponseTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory.create()
+        cls.survey = SurveyFactory.create()
+        cls.user_survey_response = UserSurveyResponseFactory.create(
+            survey=cls.survey, user=cls.user
+        )
+
+    def test_get_value_rating(self):
+        question = QuestionFactory.create(
+            survey=self.survey,
+            type_field=TypeField.RATING,
+            choices="5",
+        )
+        response = UserQuestionResponseFactory.create(
+            question=question, value="2", user_survey_response=self.user_survey_response
+        )
+        self.assertEqual(
+            response.get_value,
+            f'<div class="flex content-center" id="parent_start_{question.id}"><i class ="rating__star rating_active"> </i><i class ="rating__star rating_active"> </i><i class ="rating__star rating_inactive"> </i><i class ="rating__star rating_inactive"> </i><i class ="rating__star rating_inactive"> </i></div>',
+        )
+
+    def test_get_value_url(self):
+        question = QuestionFactory.create(
+            survey=self.survey,
+            type_field=TypeField.URL,
+        )
+        response = UserQuestionResponseFactory.create(
+            question=question,
+            value="https://example.com",
+            user_survey_response=self.user_survey_response,
+        )
+        self.assertEqual(
+            response.get_value,
+            '<a href="https://example.com" target="_blank">https://example.com</a>',
+        )

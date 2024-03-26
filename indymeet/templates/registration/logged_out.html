@@ -1,20 +1,22 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static %}
 
-
+{% block title %}{% translate "Logged out | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Logged out | Djangonaut Space" %}{% endblock %}
 
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
 <link rel="stylesheet" href="{% static 'css/registration.css' %}">
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section main-center">
-    <h1> You've been logged out.</h1>
-    <a href="/">
-        <img src="{% static 'img/temp_logo.png' %}" />
-    </a>
+<main class="section my-3 mx-5">
+    <div class="section-container">
+        <div class="row pt-4 pb-4">
+            <div class="col">
+                <p>{% translate "You've been logged out." %}</p>
+            </div>
+        </div>
+    </div>
 </main>
 {% endblock content %}

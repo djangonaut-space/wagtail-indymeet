@@ -1,90 +1,74 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static %}
 
-
+{% block title %}{% translate "Profile | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Profile | Djangonaut Space" %}{% endblock %}
 
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/indymeet.css' %}">
 <link rel="stylesheet" href="{% static 'css/registration.css' %}">
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section main-center section-container">
-<div class="row">
-    <h1>ACCOUNT PAGE</h1>
-</div>
-<div class="row">
-    <div class="col-2">
-        <img class="profile-img"
-        {% if user.profile.bio_image %}
-            src="{{user.profile.bio_image.url}}"
-        {% else %}
-            src="https://images.unsplash.com/photo-1608190003443-86b2636f2fe3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80"
-        {% endif %}
-        >
-    </div>
-    <div class="col-8">
-        <div class="row">
+<main class="section my-3 mx-5">
+    <div class="section-container">
+        <h1 class="text-5xl">{% translate "Welcome," %} {{ user.first_name }} 👋</h1>
+        <div class="row pt-4 pb-4">
+          <div class="col">
+              <p>{% translate "We're so happy to have you here!" %}</p>
+          </div>
+        </div>
+        <div class="row pt-4 pb-4">
+            <div class="col">
+               <h2 class="text-3xl">{% translate "Profile Info" %}</h2>
+          </div>
+        </div>
+        <div class="row pb-4">
+          <div class="col">
             <table>
-                <thead>Account Details</th>
                 <tbody>
-                    <tr>
-                        <td>Name:</td>
-                        <td>{{ user }}</td>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Name" %}</td>
+                        <td class="pt-4 pb-1 pr-6">{{ user.get_full_name }}</td>
                     </tr>
-                    <tr>
-                        <td>Bio</td>
-                        <td>{{ user.profile.bio }}</td>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Username" %}</td>
+                        <td class="pt-4 pb-1 pr-6">{{ user.username }}</td>
                     </tr>
-                    <tr>
-                        <td>Pronouns</td>
-                        <td>{{ user.profile.pronouns }}</td>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Receiving Program updates?" %}</td>
+                        <td class="pt-4 pb-1 pr-6">
+                            {%  if user.profile.receiving_program_updates %}
+                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            {%  else %}
+                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            {% endif %}
+                        </td>
                     </tr>
-                   <tr>
-                        <td>Session Participations</td>
-                        <td>{% for session in user.sessions.all %}
-                                {{ session }}{% if forloop.last %}{% else %}, {% endif %}
-                            {% endfor %}</td>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Receiving event updates?" %}</td>
+                        <td class="pt-4 pb-1 pr-6">
+                            {%  if user.profile.receiving_event_updates %}
+                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            {%  else %}
+                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            {% endif %}
+                        </td>
                     </tr>
-                    <tr>
-                        <td>Interested in Recruitment?</td>
-                        <td>{{ user.profile.recruitment_interest }}</td>
-                    </tr>
-                    <tr>
-                        <td>Recieving Newsletter?</td>
-                        <td>{{ user.profile.receiving_newsletter }}</td>
-                    </tr>
-                    <tr>
-                        <td>Reviewed CoC</td>
-                        <td>{{ user.profile.accepted_coc }}</td>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Receiving Newsletter?" %}</td>
+                        <td class="pt-4 pb-1 pr-6">
+                        {%  if user.profile.receiving_newsletter %}
+                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            {%  else %}
+                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            {% endif %}
+                        </td>
                     </tr>
                 </tbody>
             </table>
+          </div>
         </div>
     </div>
-    <div class="col-2">
-        <div class="row">
-            <table>
-                <thead>Socials</th>
-                <tbody>
-                    {% for link in user.profile.links.all %}
-                    <tr>
-                        <td>{{ link.name }}</td>
-                        <td>{{ link.url }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<div class="upcoming-events">
-    <h1>UPCOMING REGISTERED EVENTS</h1>
-    {% with user.rsvp_events.upcoming as future_events %}
-        {% include 'home/includes/events_upcoming.html' %}
-    {% endwith %}
-</div>
 </main>
 {% endblock content %}

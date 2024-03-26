@@ -5,7 +5,6 @@ from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.core import blocks
 from wagtail.images.blocks import ImageChooserBlock
 
-
 CODE_LANGUAGE_OPTIONS = (
     ("Python", "python"),
     ("Markup", "html"),

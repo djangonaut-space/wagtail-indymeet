@@ -14,3 +14,7 @@ django-extensions
 django-debug-toolbar
 typing-extensions
 django-tailwind
+sentry-sdk[django]
+supervisor
+django-widget-tweaks
+dj-database-url

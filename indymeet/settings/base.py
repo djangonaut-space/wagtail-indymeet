@@ -14,7 +14,10 @@ from __future__ import annotations
 
 import os
 
+import dj_database_url
 from dotenv import load_dotenv
+
+from django.forms.renderers import TemplatesSetting
 
 load_dotenv()
 
@@ -57,11 +60,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.forms",
     # azure storage
     "storages",
     # other
     "tailwind",
     "theme",
+    "widget_tweaks",
 ]
 
 MIDDLEWARE = [
@@ -112,15 +117,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DATABASE", "djangonaut-space"),
-        "USER": os.environ.get("USER"),
-        "PASSWORD": os.environ.get("PASSWORD"),
-        "HOST": os.environ.get("HOST"),
-        "PORT": 5432,
-        "OPTIONS": {},
-    },
+    "default": dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
@@ -224,3 +224,28 @@ TAILWIND_APP_NAME = "theme"
 if os.environ.get("ENABLE_TOOLBAR"):
     INSTALLED_APPS += ["debug_toolbar"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "root": {"level": "WARNING", "handlers": ["console"]},
+    "formatters": {"simple": {"format": "%(levelname)s %(message)s"}},
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django.request": {"handlers": [], "level": "ERROR"},
+    },
+}
+
+
+class FormRenderer(TemplatesSetting):
+    form_template_name = "forms/form.html"
+
+
+FORM_RENDERER = "indymeet.settings.base.FormRenderer"

@@ -19,13 +19,20 @@ class CustomUserCreationForm(UserCreationForm):
     receive_newsletter = forms.BooleanField(
         required=False,
         help_text="Optional: Please check this to opt-in for receiving "
-        "general updates about community and events. You can "
-        "opt-out on your profile page at anytime.",
+        "a newsletter containing general updates about Djangonaut Space. "
+        "This newsletter does not yet exist. You can opt-out on your profile "
+        "page at anytime.",
     )
     receive_event_updates = forms.BooleanField(
         required=False,
         help_text="Optional: Please check this to opt-in for receiving "
-        "emails to events you register to. You can opt-out on "
+        "emails about upcoming community events. You can opt-out on "
+        "your profile page at anytime.",
+    )
+    receive_program_updates = forms.BooleanField(
+        required=False,
+        help_text="Optional: Please check this to opt-in for receiving "
+        "emails about upcoming program sessions. You can opt-out on "
         "your profile page at anytime.",
     )
     accepted_coc = forms.BooleanField(
@@ -48,8 +55,9 @@ class CustomUserCreationForm(UserCreationForm):
             "password2",
             "email_consent",
             "accepted_coc",
-            "receive_newsletter",
+            "receive_program_updates",
             "receive_event_updates",
+            "receive_newsletter",
         )
 
     def __init__(self, *args, **kwargs):
