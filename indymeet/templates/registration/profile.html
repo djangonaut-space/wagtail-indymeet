@@ -25,6 +25,7 @@
         </div>
         <div class="row pb-4">
           <div class="col">
+            <a href="{% url 'update_user' %}" class="text-ds-purple hover:underline">{% translate "Update" %}</a>
             <table>
                 <tbody>
                     <tr class="border-b-2">
@@ -34,6 +35,20 @@
                     <tr class="border-b-2">
                         <td class="pt-4 pb-1 pr-6">{% translate "Username" %}</td>
                         <td class="pt-4 pb-1 pr-6">{{ user.username }}</td>
+                    </tr>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Email" %}</td>
+                        <td class="pt-4 pb-1 pr-6">{{ user.email }}</td>
+                    </tr>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Email confirmed" %}</td>
+                        <td class="pt-4 pb-1 pr-6">
+                            {%  if user.profile.email_confirmed %}
+                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            {%  else %}
+                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr class="border-b-2">
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving Program updates?" %}</td>

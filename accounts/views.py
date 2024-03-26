@@ -18,9 +18,9 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.utils.http import urlsafe_base64_encode
 from django.views import View
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .tokens import account_activation_token
 
 
@@ -45,6 +45,30 @@ class ActivateAccountView(View):
                 request, messages.ERROR, "Your confirmation link is invalid."
             )
             return redirect("signup")
+
+
+def send_user_confirmation_email(request, user):
+    invite_link = reverse(
+        "activate_account",
+        kwargs={
+            "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
+            "token": account_activation_token.make_token(user),
+        },
+    )
+    unsubscribe_link = user.profile.create_unsubscribe_link()
+    email_dict = {
+        "cta_link": request.build_absolute_uri(invite_link),
+        "name": user.get_full_name(),
+        "unsubscribe_link": unsubscribe_link,
+    }
+    send_mail(
+        "Djangonaut Space Registration Confirmation",
+        render_to_string("emails/email_confirmation.txt", email_dict),
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=render_to_string("emails/email_confirmation.html", email_dict),
+        fail_silently=False,
+    )
 
 
 class SignUpView(CreateView):
@@ -81,33 +105,67 @@ class SignUpView(CreateView):
                 "receiving_event_updates",
             ]
         )
-        invite_link = reverse(
-            "activate_account",
-            kwargs={
-                "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
-                "token": account_activation_token.make_token(user),
-            },
-        )
-        unsubscribe_link = user.profile.create_unsubscribe_link()
-        email_dict = {
-            "cta_link": self.request.build_absolute_uri(invite_link),
-            "name": user.get_full_name(),
-            "unsubscribe_link": unsubscribe_link,
-        }
-        send_mail(
-            "Djangonaut Space Registration Confirmation",
-            render_to_string("emails/email_confirmation.txt", email_dict),
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=render_to_string("emails/email_confirmation.html", email_dict),
-            fail_silently=False,
-        )
+        send_user_confirmation_email(self.request, user)
         return super().form_valid(form)
 
 
-@login_required(login_url="/accounts/login")  # redirect when user is not logged in
+@login_required(login_url="/accounts/login")
 def profile(request):
     return render(request, "registration/profile.html")
+
+
+class UpdateUserView(UpdateView):
+    form_class = CustomUserChangeForm
+    template_name = "registration/update_user.html"
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def get_initial(self):
+        """
+        Returns the initial data to use for forms on this view.
+        """
+        initial = super().get_initial()
+        initial["receive_program_updates"] = (
+            self.request.user.profile.receiving_program_updates
+        )
+        initial["receive_event_updates"] = (
+            self.request.user.profile.receiving_event_updates
+        )
+        initial["receiving_newsletter"] = self.request.user.profile.receiving_newsletter
+        return initial
+
+    def get_success_url(self):
+        messages.add_message(
+            self.request,
+            messages.INFO,
+            "Your profile information has been updated successfully.",
+        )
+        return reverse("profile")
+
+    def form_valid(self, form):
+        self.object = form.save()
+        user = self.object
+        user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
+        user.profile.receiving_program_updates = form.cleaned_data[
+            "receive_program_updates"
+        ]
+        user.profile.receiving_event_updates = form.cleaned_data[
+            "receive_event_updates"
+        ]
+        user.profile.save(
+            update_fields=[
+                "receiving_newsletter",
+                "receiving_program_updates",
+                "receiving_event_updates",
+            ]
+        )
+        """sends a link for a user to activate their account after changing their email"""
+        if "email" in form.changed_data:
+            user.profile.email_confirmed = False
+            user.profile.save()
+            send_user_confirmation_email(self.request, user)
+        return super().form_valid(form)
 
 
 def unsubscribe(request, user_id, token):
