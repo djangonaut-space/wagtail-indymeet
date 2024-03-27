@@ -8,7 +8,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from home.managers import SessionMembershipQuerySet, SessionQuerySet
+from home.managers import SessionMembershipQuerySet
+from home.managers import SessionQuerySet
 
 
 class Session(models.Model):

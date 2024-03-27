@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from unittest.mock import patch
 
 from django.core import mail
-from django.test import Client, TestCase
+from django.test import Client
+from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import CustomUser

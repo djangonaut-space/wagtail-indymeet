@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 import factory
 
 from accounts.factories import UserFactory
-from home.models import (
-    Event,
-    Question,
-    Session,
-    Survey,
-    TypeField,
-    UserQuestionResponse,
-    UserSurveyResponse,
-)
+from home.models import Event
+from home.models import Question
+from home.models import Session
+from home.models import Survey
+from home.models import TypeField
+from home.models import UserQuestionResponse
+from home.models import UserSurveyResponse
 
 
 class EventFactory(factory.django.DjangoModelFactory):

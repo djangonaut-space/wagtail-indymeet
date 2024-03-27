@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists
+from django.db.models import OuterRef
 from django.db.models.query import QuerySet
 from django.utils import timezone
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django import template
 
 from home.utils import create_star as utils_create_star

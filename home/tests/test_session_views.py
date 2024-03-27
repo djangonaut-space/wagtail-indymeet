@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from datetime import datetime
 
-from django.test import Client, TestCase
+from django.test import Client
+from django.test import TestCase
 from django.urls import reverse
 from freezegun import freeze_time
 

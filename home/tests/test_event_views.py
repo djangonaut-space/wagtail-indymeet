@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
-from django.test import Client, TestCase
+from django.test import Client
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time

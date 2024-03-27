@@ -3,8 +3,10 @@ from __future__ import annotations
 from gettext import gettext
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import redirect, render
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import redirect
+from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic.detail import DetailView
@@ -12,7 +14,10 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from .forms import CreateUserSurveyResponseForm
-from .models import Event, Session, Survey, UserSurveyResponse
+from .models import Event
+from .models import Session
+from .models import Survey
+from .models import UserSurveyResponse
 
 
 def event_calendar(request):
