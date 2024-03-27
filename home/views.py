@@ -3,7 +3,7 @@ from __future__ import annotations
 from gettext import gettext
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -94,8 +94,14 @@ class SessionListView(ListView):
     template_name = "home/prerelease/session_list.html"
     context_object_name = "sessions"
 
+    def get_queryset(self):
+        return Session.objects.with_applications(user=self.request.user)
+
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(
+    user_passes_test(lambda u: u.profile.email_confirmed), name="dispatch"
+)
 class CreateUserSurveyResponseFormView(FormMixin, DetailView):
     model = Survey
     object = None

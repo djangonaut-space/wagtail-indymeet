@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from home.managers import SessionMembershipQuerySet
+from home.managers import SessionMembershipQuerySet, SessionQuerySet
 
 
 class Session(models.Model):
@@ -39,9 +39,20 @@ class Session(models.Model):
     application_end_date = models.DateField(
         help_text="This is the end date for Djangonaut applications."
     )
-    application_url = models.URLField(
-        help_text="This is a URL to the Djangonaut application form. Likely Google Forms."
+    application_survey = models.ForeignKey(
+        "home.Survey",
+        related_name="application_sessions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
+    application_url = models.URLField(
+        help_text="This is a URL to the Djangonaut application form. Likely Google Forms.",
+        null=True,
+        blank=True,
+    )
+
+    objects = models.Manager.from_queryset(SessionQuerySet)()
 
     def __str__(self):
         return self.title
@@ -69,6 +80,11 @@ class Session(models.Model):
             <= timezone.now()
             <= self.application_end_anywhere_on_earth()
         )
+
+    def get_application_url(self):
+        if self.application_survey:
+            return self.application_survey.get_survey_response_url()
+        return reverse("session_detail", kwargs={"slug": self.slug})
 
     def get_absolute_url(self):
         return reverse("session_detail", kwargs={"slug": self.slug})

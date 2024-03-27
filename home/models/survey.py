@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.db import models
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -24,10 +25,15 @@ class Survey(BaseModel):
     deletable = models.BooleanField(
         default=True, help_text=_("If False, user can't delete record.")
     )
-    session = models.ForeignKey("home.Session", on_delete=models.SET_NULL, null=True, blank=True)
+    session = models.ForeignKey(
+        "home.Session", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
     def __str__(self):
         return self.name
+
+    def get_survey_response_url(self):
+        return reverse("survey_response_create", kwargs={"slug": self.slug})
 
     def save(
         self, force_insert=False, force_update=False, using=None, update_fields=None
