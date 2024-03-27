@@ -22,8 +22,8 @@ name: Staging build and deploy Python app to Azure Web App - djangonaut-space
 env:
   AZURE_WEBAPP_NAME: staging-djangonaut-space  # set this to the name of your Azure Web App
   AZURE_WEBAPP_PACKAGE_PATH: '.'
-  PYTHON_VERSION: '3.9'              # set this to the Python version to use
-  NODE_VERSION: '17.6.0'
+  PYTHON_VERSION: '3.11'              # set this to the Python version to use
+  NODE_VERSION: '20.11.1'
 
 on:
   push:
@@ -38,13 +38,10 @@ jobs:
       APPINSIGHTS_INSTRUMENTATIONKEY: ${{ secrets.STAGING_APPINSIGHTS_INSTRUMENTATIONKEY }}
       APPLICATIONINSIGHTSAGENT_EXTENSION_ENABLED: 'true'
       DEBUG: 'True'
-      HOST: ${{ secrets.HOST_ADDON }}
-      PASSWORD: ${{ secrets.PASSWORD_ADDON }}
       RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
       RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
       SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
       SECRET_KEY: ${{ secrets.STAGING_SECRET_KEY }}
-      USER: ${{ secrets.USER_ADDON }}
       WEBSITE_HTTPLOGGING_RETENTION_DAYS: '7'
       AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
       AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
@@ -56,6 +53,8 @@ jobs:
       POST_BUILD_COMMAND: 'scripts/postbuild.sh'
       # Allow install node to support tailwind
       ENABLE_MULTIPLATFORM_BUILD: 'true'
+      # Used for running `manage.py migrate` in postbuild.sh
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
     environment: staging-djangonaut-space
     runs-on: ubuntu-latest
 
@@ -70,7 +69,7 @@ jobs:
 
       - name: Set up Node version
         uses: actions/setup-node@v4
-        with: 
+        with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Test NodeJS
@@ -88,7 +87,7 @@ jobs:
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Building web app
-        uses: azure/appservice-build@v2
+        uses: azure/appservice-build@v3
       - name: Deploy web App using GH Action azure/webapps-deploy
         uses: azure/webapps-deploy@v3
         with:

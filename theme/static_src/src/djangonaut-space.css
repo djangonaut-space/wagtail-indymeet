@@ -45,8 +45,19 @@
 @layer components {
     .blog-container {
         background-color: #f8f8f8;
-        padding: 20px;
+        padding: 20px 40px;
         margin-bottom: 20px;
+
+        p {
+            color: var(--dark);
+            margin: 0 0 1em 0;
+        }
+        a {
+            color: var(--ds-purple) !important;
+            i {
+                color: white !important;
+            }
+        }
     }
 
     .section-container {
@@ -54,7 +65,7 @@
     }
 
     .social-item {
-        @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
+        @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full #{!important};
     }
 }
 

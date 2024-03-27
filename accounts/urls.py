@@ -7,6 +7,7 @@ from django.urls import path
 from .views import ActivateAccountView
 from .views import profile
 from .views import SignUpView
+from .views import UpdateUserView
 from .views import unsubscribe
 
 urlpatterns = [
@@ -17,6 +18,7 @@ urlpatterns = [
     ),
     path("", include("django.contrib.auth.urls")),
     path("profile/", profile, name="profile"),
+    path("profile/update/", UpdateUserView.as_view(), name="update_user"),
     path("signup/", SignUpView.as_view(), name="signup"),
     path(
         "activate/<uidb64>/<token>",
