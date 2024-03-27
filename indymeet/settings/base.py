@@ -14,10 +14,11 @@ from __future__ import annotations
 
 import os
 
+
 import dj_database_url
-from dotenv import load_dotenv
 
 from django.forms.renderers import TemplatesSetting
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -207,7 +208,6 @@ WAGTAILADMIN_BASE_URL = "http://example.com"
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
