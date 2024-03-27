@@ -57,3 +57,5 @@ class ProfileViewTests(TestCase):
         self.assertContains(response, "Profile Info")
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.receiving_newsletter, True)
+        self.assertEqual(self.user.profile.receiving_event_updates, True)
+        self.assertEqual(self.user.profile.receiving_program_updates, True)

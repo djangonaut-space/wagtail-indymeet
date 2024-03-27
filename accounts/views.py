@@ -132,7 +132,7 @@ class UpdateUserView(UpdateView):
         initial["receive_event_updates"] = (
             self.request.user.profile.receiving_event_updates
         )
-        initial["receiving_newsletter"] = self.request.user.profile.receiving_newsletter
+        initial["receive_newsletter"] = self.request.user.profile.receiving_newsletter
         return initial
 
     def get_success_url(self):
