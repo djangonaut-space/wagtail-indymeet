@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+
+{% block title %}{% translate "Update Profile | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Update Profile | Djangonaut Space" %}{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container">
+        <h1 class="text-5xl mb-6">{% translate "Update Profile Info" %}</h1>
+
+        <div class="row ">
+          <div class="col">
+            <form method="post">
+              {% csrf_token %}
+
+              {{ form }}
+              <button type="submit" class="mt-4">{% translate "Save" %}</button>
+              <a class="px-4 text-ds-purple hover:underline cursor-pointer" href="{% url "profile" %}"> {% trans "Cancel" %}</a>
+            </form>
+          </div>
+          <div class="col"></div>
+        </div>
+    </div>
+</main>
+{% endblock content %}
