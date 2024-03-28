@@ -33,6 +33,7 @@ class EventQuerySet(QuerySet):
 class SessionQuerySet(QuerySet):
     def with_applications(self, user):
         from home.models import UserSurveyResponse
+
         if user.is_anonymous:
             return self.annotate(completed_application=Value(False))
         return self.annotate(
