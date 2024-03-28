@@ -44,7 +44,10 @@ class SignUpViewTests(TestCase):
         self.assertContains(response, "Registration")
         self.assertContains(
             response,
-            "Your registration was successful. Please check your email provided for a confirmation link.",
+            (
+                "Your registration was successful."
+                " Please check your email provided for a confirmation link."
+            ),
         )
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(
