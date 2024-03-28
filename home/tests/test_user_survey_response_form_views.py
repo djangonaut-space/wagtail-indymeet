@@ -29,17 +29,17 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
         self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
 
     def test_email_confirmed_required(self):
-        self.user.profile.email_required = False
+        self.user.profile.email_confirmed = False
         self.user.profile.save()
+        self.client.force_login(self.user)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)
 
     def test_only_one_per_user(self):
         self.client.force_login(self.user)
         UserSurveyResponseFactory(survey=self.survey, user=self.user)
-        response = self.client.get(self.url, follow=True)
-        self.assertContains(response, "You have already submitted.")
-        self.assertRedirects(response, reverse("session_list"))
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
 
     def test_success_get(self):
         self.client.force_login(self.user)

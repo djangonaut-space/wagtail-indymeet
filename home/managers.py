@@ -38,7 +38,9 @@ class SessionQuerySet(QuerySet):
             return self.annotate(completed_application=Value(False))
         return self.annotate(
             completed_application=Exists(
-                UserSurveyResponse.objects.filter(survey=OuterRef("survey"), user=user)
+                UserSurveyResponse.objects.filter(
+                    survey_id=OuterRef("application_survey_id"), user_id=user.id
+                )
             )
         )
 
