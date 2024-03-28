@@ -108,8 +108,11 @@ class UserSurveyResponseFormTests(TestCase):
                 f"field_survey_{self.question_ids['EMAIL']}": "hello@world.com",
                 f"field_survey_{self.question_ids['NUMBER']}": "1992",
                 f"field_survey_{self.question_ids['TEXT']}": "Hello I am some text.",
-                f"field_survey_{self.question_ids['TEXT_AREA']}": """Hello I am some text.
-I also must be at least 100 characters. How crazy!! So I am padding this out as much as possible""",
+                f"field_survey_{self.question_ids['TEXT_AREA']}": (
+                    "Hello I am some text."
+                    " I also must be at least 100 characters."
+                    " How crazy!! So I am padding this out as much as possible"
+                ),
                 f"field_survey_{self.question_ids['DATE']}": "2023-01-02",
             },
         )
@@ -155,8 +158,11 @@ I also must be at least 100 characters. How crazy!! So I am padding this out as 
         )
         self.assertEqual(
             question_responses.get(question=self.question_ids["TEXT_AREA"]).value,
-            """Hello I am some text.
-I also must be at least 100 characters. How crazy!! So I am padding this out as much as possible""",
+            (
+                "Hello I am some text."
+                " I also must be at least 100 characters. How crazy!!"
+                " So I am padding this out as much as possible"
+            ),
         )
         self.assertEqual(
             question_responses.get(question=self.question_ids["DATE"]).value,

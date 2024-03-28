@@ -61,7 +61,10 @@ class ApplicationOpenTests(TestCase):
     def test_emails_sent_when_application_open_date(self):
         out = self.call_command()
         self.assertIn(
-            "Application open notification sent to 2 prospective Djangonauts for session 'Test Session'!",
+            (
+                "Application open notification sent to "
+                "2 prospective Djangonauts for session 'Test Session'!"
+            ),
             out,
         )
         self.assertEqual(len(mail.outbox), 2)
@@ -87,6 +90,9 @@ class ApplicationOpenTests(TestCase):
             mail.outbox[0].body,
         )
         self.assertIn(
-            "This session runs from Dec 15, 2023 - Dec 30, 2023 and applications close Nov 15, 2023.",
+            (
+                "This session runs from Dec 15, 2023 - Dec 30, 2023"
+                " and applications close Nov 15, 2023."
+            ),
             mail.outbox[0].body,
         )
