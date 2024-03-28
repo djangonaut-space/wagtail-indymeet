@@ -85,10 +85,11 @@ class CustomUserChangeForm(BaseCustomUserForm):
         self.fields["email"].required = True
         user = kwargs["instance"]
         if user.profile.email_confirmed:
-            self.fields[
-                "email"
-            ].help_text = "<p class='text-amber-600'>If you update your email you will need to reconfirm your email address.</p>"
+            help_text = (
+                "<p class='text-amber-600'>If you update your email"
+                " you will need to reconfirm your email address.</p>"
+            )
+            self.fields["email"].help_text = help_text
         else:
-            self.fields[
-                "email"
-            ].help_text = "<p class='text-amber-600'>You have not confirmed your email address.</p>"
+            help_text = "<p class='text-amber-600'>You have not confirmed your email address.</p>"
+            self.fields["email"].help_text = help_text
