@@ -1,5 +1,5 @@
 Django==4.1.*
-wagtail==4.1.*
+wagtail==5.0.*
 django-storages
 django-storages[azure]
 psycopg2-binary
