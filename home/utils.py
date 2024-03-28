@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.utils.safestring import mark_safe
 
 

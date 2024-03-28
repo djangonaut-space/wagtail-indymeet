@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import factory
 from django.db.models.signals import post_save
-from accounts.models import CustomUser, UserProfile
+
+from accounts.models import CustomUser
+from accounts.models import UserProfile
 
 
 @factory.django.mute_signals(post_save)

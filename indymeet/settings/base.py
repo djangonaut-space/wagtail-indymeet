@@ -14,9 +14,7 @@ from __future__ import annotations
 
 import os
 
-
 import dj_database_url
-
 from django.forms.renderers import TemplatesSetting
 from dotenv import load_dotenv
 

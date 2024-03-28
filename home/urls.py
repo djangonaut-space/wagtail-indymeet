@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from django.urls import path
 
-from .views import (
-    CreateUserSurveyResponseFormView,
-    EventDetailView,
-    EventListView,
-    SessionDetailView,
-    SessionListView,
-    event_calendar,
-)
+from .views import CreateUserSurveyResponseFormView
+from .views import event_calendar
+from .views import EventDetailView
+from .views import EventListView
+from .views import SessionDetailView
+from .views import SessionListView
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),

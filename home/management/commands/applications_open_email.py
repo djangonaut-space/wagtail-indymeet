@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
@@ -10,7 +12,7 @@ from home.models import Session
 
 class Command(BaseCommand):
     help = """
-    Checks if applications are open for a program session 
+    Checks if applications are open for a program session
     and notify interested folk via email.
     To be ran once a day.
     """
