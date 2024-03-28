@@ -20,7 +20,7 @@ class SignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Registration")
 
-    @patch("captcha.fields.ReCaptchaField.validate", return_value=True)
+    @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)
     def test_signup_template_post_success(self, mock_captcha):
         response = self.client.post(
             self.url,
