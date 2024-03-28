@@ -18,7 +18,7 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
             name="Test Survey", description="This is a description of the survey!"
         )
         cls.url = reverse("survey_response_create", kwargs={"slug": cls.survey.slug})
-        cls.user = UserFactory.create()
+        cls.user = UserFactory.create(profile__email_confirmed=True)
         cls.question = QuestionFactory.create(
             survey=cls.survey,
             label="How are you?",
@@ -27,6 +27,12 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
     def test_login_required(self):
         response = self.client.get(self.url, follow=True)
         self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
+
+    def test_email_confirmed_required(self):
+        self.user.profile.email_required = False
+        self.user.profile.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
 
     def test_only_one_per_user(self):
         self.client.force_login(self.user)

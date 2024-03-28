@@ -85,7 +85,7 @@ class Session(models.Model):
     def get_application_url(self):
         if self.application_survey:
             return self.application_survey.get_survey_response_url()
-        return reverse("session_detail", kwargs={"slug": self.slug})
+        return self.application_url
 
     def get_absolute_url(self):
         return reverse("session_detail", kwargs={"slug": self.slug})
