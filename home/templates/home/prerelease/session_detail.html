@@ -14,6 +14,7 @@
 {% endblock social_share %}
 
 {% block content %}
+{% include 'home/includes/email_confirmed_warning.html' %}
 <div class="container main my-3 mx-3">
   <div class="row my-3">
       <div class="col">
@@ -35,12 +36,12 @@
         <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.end_date|date:"M d, Y" }}</dd>
       </dl>
       <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
-      {% if session.is_accepting_applications %}
+      {% if session.is_accepting_applications and not session.completed_application %}
         <br />
         <h2 class="text-4xl">You have {{ session.application_end_anywhere_on_earth|timeuntil}} to submit your application</h2>
         <br />
-        <a href="{{ session.application_url }}" target="_blank" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">Apply</a>
       {% endif %}
+      {% include 'home/includes/session_apply_btn.html' %}
     </div>
   </div>
 </div>

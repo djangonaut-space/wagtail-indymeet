@@ -17,9 +17,7 @@
         <p>{{ session.start_date|date:"M d, Y" }}</p>
       </div>
       <div class="px-6 py-3 mb-2 card-footer">
-        {% if session.is_accepting_applications %}
-          <a href="{{ session.application_url }}" target="_blank" class="bg-purple-500 hover:bg-purple-400 no-underline text-white font-bold py-2 px-4 rounded">Apply</a>
-        {% endif %}
+        {% include 'home/includes/session_apply_btn.html' %}
         <a href="{{ session.get_absolute_url }}" class="card-link">Details</a>
       </div>
     </div>

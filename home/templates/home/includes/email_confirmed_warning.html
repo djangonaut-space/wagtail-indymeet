@@ -1,0 +1,6 @@
+{% if request.user.is_authenticated and not request.user.profile.email_confirmed %}
+<div class="my-2 mx-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
+  <strong class="font-bold">Your email is not confirmed!</strong>
+  <span class="block sm:inline">You may not be able to apply for sessions without <a href="{% url 'profile' %}" class="underline">confirming your email address.</a></span>
+</div>
+{% endif %}

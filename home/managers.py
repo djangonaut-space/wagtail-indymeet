@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from django.db.models import Exists
+from django.db.models import OuterRef
+from django.db.models import Value
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
@@ -25,6 +28,21 @@ class EventQuerySet(QuerySet):
 
     def past(self):
         return self.filter(start_time__lte=timezone.now())
+
+
+class SessionQuerySet(QuerySet):
+    def with_applications(self, user):
+        from home.models import UserSurveyResponse
+
+        if user.is_anonymous:
+            return self.annotate(completed_application=Value(False))
+        return self.annotate(
+            completed_application=Exists(
+                UserSurveyResponse.objects.filter(
+                    survey_id=OuterRef("application_survey_id"), user_id=user.id
+                )
+            )
+        )
 
 
 class SessionMembershipQuerySet(QuerySet):
