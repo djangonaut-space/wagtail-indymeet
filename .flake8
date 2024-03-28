@@ -7,4 +7,6 @@ select = B950
 extend-ignore = E203, E501
 per-file-ignores =
     */__init__.py:F401
+    */migrations/*:B950,
+    */puput_migrations/*:B950,
     indymeet/settings/*.py:F403,F405
