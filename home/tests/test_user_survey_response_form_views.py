@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from django.test import TestCase
 from django.urls import reverse
 
 from accounts.factories import UserFactory
-from home.factories import QuestionFactory, SurveyFactory, UserSurveyResponseFactory
-from home.models import UserQuestionResponse, UserSurveyResponse
+from home.factories import QuestionFactory
+from home.factories import SurveyFactory
+from home.factories import UserSurveyResponseFactory
+from home.models import UserQuestionResponse
+from home.models import UserSurveyResponse
 
 
 class CreateUserSurveyResponseFormViewTests(TestCase):

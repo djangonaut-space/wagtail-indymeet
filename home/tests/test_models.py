@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 from datetime import datetime
 
 from django.test import TestCase
 from freezegun import freeze_time
 
 from accounts.factories import UserFactory
-from home.factories import (
-    QuestionFactory,
-    SessionFactory,
-    SurveyFactory,
-    UserQuestionResponseFactory,
-    UserSurveyResponseFactory,
-)
+from home.factories import QuestionFactory
+from home.factories import SessionFactory
+from home.factories import SurveyFactory
+from home.factories import UserQuestionResponseFactory
+from home.factories import UserSurveyResponseFactory
 from home.models import TypeField
 
 

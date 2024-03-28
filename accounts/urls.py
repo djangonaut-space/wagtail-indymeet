@@ -7,8 +7,8 @@ from django.urls import path
 from .views import ActivateAccountView
 from .views import profile
 from .views import SignUpView
-from .views import UpdateUserView
 from .views import unsubscribe
+from .views import UpdateUserView
 
 urlpatterns = [
     path(

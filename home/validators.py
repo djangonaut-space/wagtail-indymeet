@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 
-class RatingValidator(object):
+class RatingValidator:
     def __init__(self, max):
         self.max = max
 

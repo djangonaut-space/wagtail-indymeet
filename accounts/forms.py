@@ -68,7 +68,6 @@ class CustomUserCreationForm(BaseCustomUserForm, UserCreationForm):
 
 
 class CustomUserChangeForm(BaseCustomUserForm):
-
     class Meta(BaseCustomUserForm):
         model = CustomUser
         fields = (
@@ -86,10 +85,10 @@ class CustomUserChangeForm(BaseCustomUserForm):
         self.fields["email"].required = True
         user = kwargs["instance"]
         if user.profile.email_confirmed:
-            self.fields["email"].help_text = (
-                "<p class='text-amber-600'>If you update your email you will need to reconfirm your email address.</p>"
-            )
+            self.fields[
+                "email"
+            ].help_text = "<p class='text-amber-600'>If you update your email you will need to reconfirm your email address.</p>"
         else:
-            self.fields["email"].help_text = (
-                "<p class='text-amber-600'>You have not confirmed your email address.</p>"
-            )
+            self.fields[
+                "email"
+            ].help_text = "<p class='text-amber-600'>You have not confirmed your email address.</p>"

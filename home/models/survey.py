@@ -24,7 +24,9 @@ class Survey(BaseModel):
     deletable = models.BooleanField(
         default=True, help_text=_("If False, user can't delete record.")
     )
-    session = models.ForeignKey("home.Session", on_delete=models.SET_NULL, null=True, blank=True)
+    session = models.ForeignKey(
+        "home.Session", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
     def __str__(self):
         return self.name
