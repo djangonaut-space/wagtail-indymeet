@@ -17,8 +17,12 @@
         <p>{{ session.start_date|date:"M d, Y" }}</p>
       </div>
       <div class="px-6 py-3 mb-2 card-footer">
-        {% if request.user.is_authenticated and session.is_accepting_applications and not survey.completed_application and request.user.profile.email_confirmed %}
+        {% if session.is_accepting_applications %}
+          {% if session.application_url %}
+          <a href="{{ session.application_url }}" target="_blank" class="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer">Apply</a>
+          {% elif request.user.is_authenticated and not survey.completed_application and request.user.profile.email_confirmed %}
           <a href="{{ session.get_application_url }}" target="_blank" class="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer">Apply</a>
+          {% endif %}
         {% endif %}
         <a href="{{ session.get_absolute_url }}" class="card-link">Details</a>
       </div>
