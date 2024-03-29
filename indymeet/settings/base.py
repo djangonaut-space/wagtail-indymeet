@@ -122,6 +122,16 @@ DATABASES = {
     )
 }
 
+# Cache
+# Wagtail can benefit greatly from some caching to improve
+# performance.
+# https://docs.wagtail.org/en/stable/advanced_topics/performance.html#cache
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
