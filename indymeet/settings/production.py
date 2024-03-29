@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 from .base import *
 
@@ -61,9 +62,17 @@ if os.getenv("ENVIRONMENT") == "production":
     sentry_sdk.init(
         dsn=SENTRY_DNS,
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-        traces_sample_rate=0.1,
+        traces_sample_rate=0.25,
         # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
         profiles_sample_rate=0.1,
+        integrations=[
+            DjangoIntegration(
+                transaction_style="url",
+                middleware_spans=True,
+                signals_spans=False,
+                cache_spans=False,
+            ),
+        ],
     )
 
 try:
