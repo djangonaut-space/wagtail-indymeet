@@ -1,13 +1,15 @@
 from django.contrib import admin
 from django.urls import reverse
-from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from .models import Event, ResourceLink
+from .models import Event
+from .models import ResourceLink
 from .models import Question
 from .models import Session
 from .models import SessionMembership
 from .models import Survey
+from .models import UserQuestionResponse
+from .models import UserSurveyResponse
 
 
 @admin.register(Event)
@@ -76,3 +78,13 @@ class SurveyAdmin(admin.ModelAdmin):
         "deletable",
         "session",
     )
+
+
+@admin.register(UserQuestionResponse)
+class UserQuestionResponseAdmin(admin.ModelAdmin):
+    model = UserQuestionResponse
+
+
+@admin.register(UserSurveyResponse)
+class UserSurveyResponse(admin.ModelAdmin):
+    model = UserSurveyResponse
