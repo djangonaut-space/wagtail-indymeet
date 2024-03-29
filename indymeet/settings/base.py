@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "tailwind",
     "theme",
     "widget_tweaks",
+    "post_office",
 ]
 
 MIDDLEWARE = [
@@ -221,6 +222,14 @@ LOGOUT_REDIRECT_URL = "/"
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
 SERVER_EMAIL = "contact@djangonaut.space"
 SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
+
+EMAIL_BACKEND = "post_office.EmailBackend"
+
+POST_OFFICE = {
+    "BACKENDS": {
+        "default": "django.core.mail.backends.console.EmailBackend",
+    }
+}
 
 PUPUT_AS_PLUGIN = True
 PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"
