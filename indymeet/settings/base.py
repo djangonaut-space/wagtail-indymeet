@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "wagtail.users",
     "wagtail.snippets",
     "wagtail.documents",
-    "wagtail.images",
+    "home.apps.CustomImagesAppConfig",
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
