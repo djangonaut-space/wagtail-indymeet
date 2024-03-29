@@ -118,6 +118,11 @@ class Question(BaseModel):
 class UserSurveyResponse(BaseModel):
     survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
     user = models.ForeignKey("accounts.CustomUser", on_delete=models.CASCADE)
+    # Wagtail has a post_save handler that runs anytime a model is saved
+    # that wagtail cares about to create a reference index. It doesn't matter
+    # in this context so let's ignore it.
+    survey.wagtail_reference_index_ignore = True
+    user.wagtail_reference_index_ignore = True
 
     class Meta:
         ordering = ["-updated_at"]

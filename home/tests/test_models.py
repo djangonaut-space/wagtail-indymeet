@@ -93,3 +93,10 @@ class UserQuestionResponseTests(TestCase):
             response.get_value,
             '<a href="https://example.com" target="_blank">https://example.com</a>',
         )
+
+    def test_ignore_wagtail_reference_index(self):
+        """Verify the number of queries on save/create are limited."""
+        user = UserFactory.create()
+        survey = SurveyFactory.create()
+        with self.assertNumQueries(1):
+            UserSurveyResponseFactory.create(survey=survey, user=user)
