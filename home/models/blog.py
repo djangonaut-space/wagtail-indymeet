@@ -91,22 +91,8 @@ class GeneralPage(Page):
     tags = ClusterTaggableManager(through=GeneralTag, blank=True)
     date = models.DateTimeField("Post Date")
     content = StreamField(
-        [
-            ("heading", blog_blocks.HeadingBlock(class_name="full")),
-            ("subheading", blocks.CharBlock(class_name="full")),
-            ("paragraph", blocks.RichTextBlock(class_name="full")),
-            ("HTML", blocks.RawHTMLBlock(class_name="full")),
-            ("image", ImageChooserBlock()),
-            ("text_with_heading", blog_blocks.HeadingBlock(class_name="full")),
-            (
-                "text_heading_image",
-                blog_blocks.TextHeadingImageBlock(class_name="full"),
-            ),
-            ("video_embed", blog_blocks.VideoEmbed(class_name="full")),
-            ("table", TableBlock(class_name="full")),
-            ("code_block", blog_blocks.CodeBlock(class_name="full")),
-            ("quote_block", blog_blocks.QuoteBlock(class_name="full")),
-        ],
+        BaseStreamBlock(),
+        verbose_name="StreamField Body",
         blank=True,
         null=True,
         use_json_field=True,

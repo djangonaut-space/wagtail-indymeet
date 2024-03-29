@@ -1,3 +1,9 @@
 # .git-blame-ignore-revs
 # Apply pre-commit to the project
 b9f6c18a38a38728e27889762300d6a30821bfaa
+# Run pre-commit on all files
+# + 3x subsequent, manual flake8 B950 fixes
+a945aa754469fff23731ad58b27ca6644d5dfe22
+144cfa12ad8947fe1c2de75a3cd06bb9cca325f0
+5af48fc6cf958c416400b51fc03f331f21ee192c
+d8db7d19915ca88b8b427fab8b928af29229fd07

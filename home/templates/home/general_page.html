@@ -3,46 +3,41 @@
 
 {% block body_class %}template-generalpage{% endblock %}
 
-{% block extra_css %}
-    <link href="{% static 'css/prism.css' %}" rel="stylesheet" />
-{% endblock extra_css %}
-
-{%  block extra_js %}
-    <script src="{%  static 'js/prism.js' %}"></script>
-    <script src="{%  static 'js/gallery.js' %}"></script>
-{%  endblock extra_js %}
-
 {% block content %}
-<main class="">
-  <!--<div class="figure">
-      <img id="me" class="shadow-2xl" src="{% static 'img/Djangogirls_cph19_small_BartPawlik-35.jpg' %}"/>
-  </div> -->
-  <div class="">
-    <header class="">
-        <div id="">
-            <h1><span class="">{{ page.title }}</span></h1>
-        </div>
-        <div id="">
-            <span id="" class="">{{ page.date }}</span>
-        </div>
-        <div class="">
-            {% for tag in page.tags.all %}
-                <a type="button" href="{{ page.get_parent.url}}search/?query={{ tag }}" class="bg-purple-500 text-white font-bold py-1 px-2 text-xs rounded-full">{{ tag }}</a>
-            {% endfor %}
-        </div>
-          <div class="container">
-              {{ page.intro|richtext }}
-          </div>
-    </header>
-        <div class="container">
-            {{ page.content }}
-        </div>
-        <div class="container">
+  <main>
+    <div class="container mx-auto flex justify-center">
+      <article class="box max-w-3xl blog-container">
+        <header>
+          <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-700 md:text-3xl">
+            <a href="{% pageurl page %}">{{ page.title }}</a>
+          </h2>
+          <ul class="links">
+            <li>
+              <i class="fa fa-user"></i>
+              {{ page.owner }}
+            </li>
+            <li>
+              <i class="fa fa-calendar"></i>
+              {{ page.date|date:"DATE_FORMAT" }}
+            </li>
+            <li>
+              {% for tag in page.tags.all %}
+                <a type="button" href="{{ page.get_parent.url }}search/?query={{ tag }}"
+                   class="bg-purple-500 text-white font-bold py-1 px-2 text-xs rounded-full">{{ tag }}</a>
+              {% endfor %}
+            </li>
+          </ul>
+          <section class="leading-6 mt-5">
+            {{ page.intro|richtext }}
+          </section>
+        </header>
+        <section class="leading-6 mt-3">
+          {{ page.content }}
+        </section>
+        <section class="leading-6 mt-3">
           {{ page.body|richtext }}
-            <div class="row">
-                <p><a href="{{  page.get_parent.url }}">Return home</a></p>
-            </div>
-      </div>
-
-</main>
+        </section>
+      </article>
+    </div>
+  </main>
 {% endblock %}

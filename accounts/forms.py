@@ -1,21 +1,14 @@
 from __future__ import annotations
 
-from captcha.fields import ReCaptchaField
-from captcha.widgets import ReCaptchaV2Checkbox
 from django import forms
-from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.forms import UserCreationForm
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV2Checkbox
 
 from .models import CustomUser
 
 
-class CustomUserCreationForm(UserCreationForm):
-    captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox())
-    email_consent = forms.BooleanField(
-        help_text="Required: Please check this to consent to receiving "
-        "administrative emails like: email verification, password reset etc.",
-        label="Email Consent*",
-    )
+class BaseCustomUserForm(forms.ModelForm):
     receive_newsletter = forms.BooleanField(
         required=False,
         help_text="Optional: Please check this to opt-in for receiving "
@@ -34,6 +27,15 @@ class CustomUserCreationForm(UserCreationForm):
         help_text="Optional: Please check this to opt-in for receiving "
         "emails about upcoming program sessions. You can opt-out on "
         "your profile page at anytime.",
+    )
+
+
+class CustomUserCreationForm(BaseCustomUserForm, UserCreationForm):
+    captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox())
+    email_consent = forms.BooleanField(
+        help_text="Required: Please check this to consent to receiving "
+        "administrative emails like: email verification, password reset etc.",
+        label="Email Consent*",
     )
     accepted_coc = forms.BooleanField(
         required=True,
@@ -65,12 +67,29 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields["email"].required = True
 
 
-class CustomUserChangeForm(UserChangeForm):
-    class Meta:
+class CustomUserChangeForm(BaseCustomUserForm):
+    class Meta(BaseCustomUserForm):
         model = CustomUser
         fields = (
             "username",
             "email",
             "first_name",
             "last_name",
+            "receive_program_updates",
+            "receive_event_updates",
+            "receive_newsletter",
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
+        user = kwargs["instance"]
+        if user.profile.email_confirmed:
+            help_text = (
+                "<p class='text-amber-600'>If you update your email"
+                " you will need to reconfirm your email address.</p>"
+            )
+            self.fields["email"].help_text = help_text
+        else:
+            help_text = "<p class='text-amber-600'>You have not confirmed your email address.</p>"
+            self.fields["email"].help_text = help_text

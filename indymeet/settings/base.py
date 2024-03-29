@@ -15,9 +15,8 @@ from __future__ import annotations
 import os
 
 import dj_database_url
-from dotenv import load_dotenv
-
 from django.forms.renderers import TemplatesSetting
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -34,7 +33,7 @@ INSTALLED_APPS = [
     "home",
     "search",
     "anymail",
-    "captcha",
+    "django_recaptcha",
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.contrib.table_block",
@@ -123,6 +122,16 @@ DATABASES = {
     )
 }
 
+# Cache
+# Wagtail can benefit greatly from some caching to improve
+# performance.
+# https://docs.wagtail.org/en/stable/advanced_topics/performance.html#cache
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -207,12 +216,11 @@ WAGTAILADMIN_BASE_URL = "http://example.com"
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
 SERVER_EMAIL = "contact@djangonaut.space"
-SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
+SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 PUPUT_AS_PLUGIN = True
 PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"

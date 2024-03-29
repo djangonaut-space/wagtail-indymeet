@@ -3,16 +3,19 @@ from __future__ import annotations
 from gettext import gettext
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from .forms import CreateUserSurveyResponseForm
-from .models import Event, Session, Survey, UserSurveyResponse
+from .models import Event
+from .models import Session
+from .models import Survey
+from .models import UserSurveyResponse
 
 
 def event_calendar(request):
@@ -88,27 +91,35 @@ class SessionDetailView(DetailView):
     model = Session
     template_name = "home/prerelease/session_detail.html"
 
+    def get_queryset(self):
+        return Session.objects.with_applications(user=self.request.user)
+
 
 class SessionListView(ListView):
     model = Session
     template_name = "home/prerelease/session_list.html"
     context_object_name = "sessions"
 
+    def get_queryset(self):
+        return Session.objects.with_applications(user=self.request.user)
 
-@method_decorator(login_required, name="dispatch")
-class CreateUserSurveyResponseFormView(FormMixin, DetailView):
+
+class CreateUserSurveyResponseFormView(
+    LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView
+):
     model = Survey
     object = None
     form_class = CreateUserSurveyResponseForm
     success_url = reverse_lazy("session_list")
     template_name = "home/surveys/form.html"
 
-    def dispatch(self, request, *args, **kwargs):
+    def test_func(self):
         survey = self.get_object()
-        if UserSurveyResponse.objects.filter(survey=survey, user=request.user).exists():
-            messages.warning(request, gettext("You have already submitted."))
-            return redirect("session_list")
-        return super().dispatch(request, *args, **kwargs)
+        user = self.request.user
+        return (
+            user.profile.email_confirmed
+            and not UserSurveyResponse.objects.filter(survey=survey, user=user).exists()
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

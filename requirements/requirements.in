@@ -5,7 +5,7 @@ django-storages[azure]
 psycopg2-binary
 django-anymail
 six
-django-recaptcha
+django-recaptcha>=4
 whitenoise
 python-dotenv
 puput

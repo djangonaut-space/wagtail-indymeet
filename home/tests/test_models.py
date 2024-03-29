@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 from datetime import datetime
 
 from django.test import TestCase
 from freezegun import freeze_time
 
 from accounts.factories import UserFactory
-from home.factories import (
-    QuestionFactory,
-    SessionFactory,
-    SurveyFactory,
-    UserQuestionResponseFactory,
-    UserSurveyResponseFactory,
-)
+from home.factories import QuestionFactory
+from home.factories import SessionFactory
+from home.factories import SurveyFactory
+from home.factories import UserQuestionResponseFactory
+from home.factories import UserSurveyResponseFactory
 from home.models import TypeField
 
 
@@ -23,7 +23,8 @@ class SessionTests(TestCase):
         )
 
     def test_is_accepting_applications(self):
-        # Ensure that the types of fields are from django, not from when I created the object in memory
+        # Ensure that the types of fields are from django, not from when
+        # I created the object in memory
         self.session.refresh_from_db()
 
         with freeze_time("2023-10-15"):
@@ -68,7 +69,14 @@ class UserQuestionResponseTests(TestCase):
         )
         self.assertEqual(
             response.get_value,
-            f'<div class="flex content-center" id="parent_start_{question.id}"><i class ="rating__star rating_active"> </i><i class ="rating__star rating_active"> </i><i class ="rating__star rating_inactive"> </i><i class ="rating__star rating_inactive"> </i><i class ="rating__star rating_inactive"> </i></div>',
+            (
+                f'<div class="flex content-center" id="parent_start_{question.id}">'
+                '<i class ="rating__star rating_active"> </i>'
+                '<i class ="rating__star rating_active"> </i>'
+                '<i class ="rating__star rating_inactive"> </i>'
+                '<i class ="rating__star rating_inactive"> </i>'
+                '<i class ="rating__star rating_inactive"> </i></div>'
+            ),
         )
 
     def test_get_value_url(self):

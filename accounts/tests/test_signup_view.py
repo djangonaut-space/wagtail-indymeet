@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from unittest.mock import patch
 
 from django.core import mail
-from django.test import Client, TestCase
+from django.test import Client
+from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import CustomUser
@@ -17,7 +20,7 @@ class SignUpViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Registration")
 
-    @patch("captcha.fields.ReCaptchaField.validate", return_value=True)
+    @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)
     def test_signup_template_post_success(self, mock_captcha):
         response = self.client.post(
             self.url,
@@ -41,7 +44,10 @@ class SignUpViewTests(TestCase):
         self.assertContains(response, "Registration")
         self.assertContains(
             response,
-            "Your registration was successful. Please check your email provided for a confirmation link.",
+            (
+                "Your registration was successful."
+                " Please check your email provided for a confirmation link."
+            ),
         )
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(

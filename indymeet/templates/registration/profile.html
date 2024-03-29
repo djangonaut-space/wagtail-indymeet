@@ -25,7 +25,7 @@
         </div>
         <div class="row pb-4">
           <div class="col">
-            <table>
+            <table class="mb-6">
                 <tbody>
                     <tr class="border-b-2">
                         <td class="pt-4 pb-1 pr-6">{% translate "Name" %}</td>
@@ -34,6 +34,20 @@
                     <tr class="border-b-2">
                         <td class="pt-4 pb-1 pr-6">{% translate "Username" %}</td>
                         <td class="pt-4 pb-1 pr-6">{{ user.username }}</td>
+                    </tr>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Email" %}</td>
+                        <td class="pt-4 pb-1 pr-6">{{ user.email }}</td>
+                    </tr>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Email confirmed" %}</td>
+                        <td class="pt-4 pb-1 pr-6">
+                            {%  if user.profile.email_confirmed %}
+                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            {%  else %}
+                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr class="border-b-2">
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving Program updates?" %}</td>
@@ -67,6 +81,7 @@
                     </tr>
                 </tbody>
             </table>
+            <a class="mt-6 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer" href="{% url 'update_user' %}">{% translate "Update" %}</a>
           </div>
         </div>
     </div>

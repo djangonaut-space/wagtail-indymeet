@@ -134,7 +134,8 @@ This is an example of how to list things you need to use the software and how to
    ```
    ```sh
    postgres=# CREATE DATABASE "djangonaut-space";
-   CREATE DATABASE
+   postgres=# CREATE USER djangonaut WITH SUPERUSER PASSWORD 'djangonaut';
+   postgres=# GRANT ALL PRIVILEGES ON DATABASE 'djangonaut-space' TO djangonaut;
    ```
    ```sh
    postgres=# exit

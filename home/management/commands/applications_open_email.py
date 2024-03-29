@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
@@ -10,14 +12,14 @@ from home.models import Session
 
 class Command(BaseCommand):
     help = """
-    Checks if applications are open for a program session 
+    Checks if applications are open for a program session
     and notify interested folk via email.
     To be ran once a day.
     """
 
     def handle(self, *args, **options):
         try:
-            session_applications_starting_today = Session.objects.get(
+            applications_starting_today = Session.objects.get(
                 application_start_date=timezone.now().date()
             )
         except Session.DoesNotExist:
@@ -37,18 +39,16 @@ class Command(BaseCommand):
             .iterator()
         ):
             email_data = {
-                "title": session_applications_starting_today.title,
-                "detail_url": session_applications_starting_today.get_full_url(),
-                "start_date": session_applications_starting_today.start_date.strftime(
+                "title": applications_starting_today.title,
+                "detail_url": applications_starting_today.get_full_url(),
+                "start_date": applications_starting_today.start_date.strftime(
                     "%b %d, %Y"
                 ),
-                "end_date": session_applications_starting_today.end_date.strftime(
+                "end_date": applications_starting_today.end_date.strftime("%b %d, %Y"),
+                "application_end_date": applications_starting_today.application_end_date.strftime(
                     "%b %d, %Y"
                 ),
-                "application_end_date": session_applications_starting_today.application_end_date.strftime(
-                    "%b %d, %Y"
-                ),
-                "cta_link": session_applications_starting_today.application_url,
+                "cta_link": applications_starting_today.get_application_url(),
                 "name": user.get_full_name(),
                 "unsubscribe_link": user.profile.create_unsubscribe_link(),
             }
@@ -66,6 +66,6 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Application open notification sent to {emails_sent} prospective Djangonauts "
-                f"for session '{session_applications_starting_today.title}'!"
+                f"for session '{applications_starting_today.title}'!"
             )
         )
