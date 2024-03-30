@@ -7,7 +7,7 @@ from django.urls import path
 from .views import ActivateAccountView
 from .views import profile
 from .views import SignUpView
-from .views import unsubscribe
+from .views import UpdateEmailSubscriptionView
 from .views import UpdateUserView
 
 urlpatterns = [
@@ -25,5 +25,9 @@ urlpatterns = [
         ActivateAccountView.as_view(),
         name="activate_account",
     ),
-    path("unsubscribe/<user_id>/<token>", unsubscribe, name="unsubscribe"),
+    path(
+        "email_subscriptions/",
+        UpdateEmailSubscriptionView.as_view(),
+        name="email_subscriptions",
+    ),
 ]

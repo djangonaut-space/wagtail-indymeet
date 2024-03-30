@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
@@ -8,7 +7,6 @@ from django.core.signing import TimestampSigner
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.urls import reverse
 from wagtail.models import Orderable
 
 from accounts.fields import DefaultOneToOneField
@@ -65,16 +63,6 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
-
-    def create_unsubscribe_link(self):
-        user_id, token = self.make_token().split(":", 1)
-        return settings.BASE_URL + reverse(
-            "unsubscribe",
-            kwargs={
-                "user_id": user_id,
-                "token": token,
-            },
-        )
 
     def make_token(self):
         return TimestampSigner().sign(self.user.id)
