@@ -6,9 +6,8 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -23,6 +22,7 @@ from django.views.generic.edit import UpdateView
 
 from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
+from .forms import EmailSubscriptionsChangeForm
 from .tokens import account_activation_token
 
 
@@ -57,11 +57,11 @@ def send_user_confirmation_email(request, user):
             "token": account_activation_token.make_token(user),
         },
     )
-    unsubscribe_link = user.profile.create_unsubscribe_link()
+    unsubscribe_link = reverse("email_subscriptions")
     email_dict = {
         "cta_link": request.build_absolute_uri(invite_link),
         "name": user.get_full_name(),
-        "unsubscribe_link": unsubscribe_link,
+        "unsubscribe_link": request.build_absolute_uri(unsubscribe_link),
     }
     send_mail(
         "Djangonaut Space Registration Confirmation",
@@ -116,7 +116,7 @@ def profile(request):
     return render(request, "registration/profile.html")
 
 
-class UpdateUserView(UpdateView):
+class UpdateUserView(LoginRequiredMixin, UpdateView):
     form_class = CustomUserChangeForm
     template_name = "registration/update_user.html"
 
@@ -170,32 +170,17 @@ class UpdateUserView(UpdateView):
         return super().form_valid(form)
 
 
-def unsubscribe(request, user_id, token):
-    """
-    User is immediately unsubscribed if user is found. Otherwise, they are
-    redirected to the login page and unsubscribed as soon as they log in.
-    """
+class UpdateEmailSubscriptionView(LoginRequiredMixin, UpdateView):
+    form_class = EmailSubscriptionsChangeForm
+    template_name = "registration/update_email_subscriptions.html"
 
-    user = get_object_or_404(User, id=user_id, is_active=True)
+    def get_object(self, queryset=None):
+        return self.request.user.profile
 
-    if (
-        request.user.is_authenticated and request.user == user
-    ) or user.profile.check_token(token):
-        # unsubscribe them
-        profile = user.profile
-        profile.receiving_event_updates = False
-        profile.receiving_program_updates = False
-        profile.receiving_newsletter = False
-        profile.save()
-
-        return render(request, "registration/unsubscribed.html")
-
-    # Otherwise redirect to login page
-    next_url = reverse(
-        "unsubscribe",
-        kwargs={
-            "user_id": user_id,
-            "token": token,
-        },
-    )
-    return HttpResponseRedirect(f"{reverse('login')}?next={next_url}")
+    def get_success_url(self):
+        messages.add_message(
+            self.request,
+            messages.INFO,
+            "Your profile information has been updated successfully.",
+        )
+        return reverse("profile")
