@@ -18,8 +18,8 @@ urlpatterns = [
         name="login",
     ),
     path(
-        "password_reset/", 
-        CustomPasswordResetView.as_view(), 
+        "password_reset/",
+        CustomPasswordResetView.as_view(),
         name="password_reset",
     ),
     path("", include("django.contrib.auth.urls")),
