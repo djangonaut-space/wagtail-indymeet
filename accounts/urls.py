@@ -5,6 +5,7 @@ from django.urls import include
 from django.urls import path
 
 from .views import ActivateAccountView
+from .views import CustomPasswordResetView
 from .views import profile
 from .views import SignUpView
 from .views import UpdateEmailSubscriptionView
@@ -29,5 +30,10 @@ urlpatterns = [
         "email_subscriptions/",
         UpdateEmailSubscriptionView.as_view(),
         name="email_subscriptions",
+    ),
+    path(
+        "password_reset/", 
+        CustomPasswordResetView.as_view(), 
+        name="password_reset",
     ),
 ]
