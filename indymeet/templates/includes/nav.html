@@ -59,6 +59,11 @@
                     </a>
                   </li>
                   <li class="p-2">
+                    <a href="{% url 'password_change' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                        {% trans "Update password" %}
+                    </a>
+                  </li>
+                  <li class="p-2">
                     <a href="{% url 'logout' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
                         {% trans "Logout" %}
                     </a>
@@ -111,6 +116,11 @@
                         <li class="p-2">
                             <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'profile' %}">
                                 {% trans "Profile" %}
+                            </a>
+                        </li>
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'password_change' %}">
+                                {% trans "Update password" %}
                             </a>
                         </li>
                         <li class="p-2">
