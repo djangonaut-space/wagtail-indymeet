@@ -9,7 +9,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from wagtail.core.models import Orderable
+from wagtail.models import Orderable
 
 from accounts.fields import DefaultOneToOneField
 

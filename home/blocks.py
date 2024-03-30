@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from wagtail.blocks import StreamBlock
 from wagtail.contrib.table_block.blocks import TableBlock
-from wagtail.core import blocks
+from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
 
 CODE_LANGUAGE_OPTIONS = (
@@ -232,7 +231,7 @@ class RichTextBlock(blocks.StructBlock):
         template = "blocks/rich_text.html"
 
 
-class BaseStreamBlock(StreamBlock):
+class BaseStreamBlock(blocks.StreamBlock):
     heading = HeadingBlock(label="Heading", icon="h1")
     rich_text = RichTextBlock()
     list = ListBlock(label="List", icon="list-ol")

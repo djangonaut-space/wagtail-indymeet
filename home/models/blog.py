@@ -6,14 +6,14 @@ from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from puput.abstracts import EntryAbstract
 from taggit.models import TaggedItemBase
-from wagtail.admin.edit_handlers import FieldPanel
-from wagtail.admin.edit_handlers import MultiFieldPanel
+from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import MultiFieldPanel
 from wagtail.admin.panels import InlinePanel
 from wagtail.admin.panels import PageChooserPanel
 from wagtail.contrib.table_block.blocks import TableBlock
-from wagtail.core import blocks
-from wagtail.core.fields import RichTextField
-from wagtail.core.fields import StreamField
+from wagtail import blocks
+from wagtail.fields import RichTextField
+from wagtail.fields import StreamField
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.models import Page
 
