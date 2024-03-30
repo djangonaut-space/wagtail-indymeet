@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail import blocks
+from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.images.blocks import ImageChooserBlock
 
 CODE_LANGUAGE_OPTIONS = (
