@@ -31,7 +31,7 @@ User = get_user_model()
 
 
 class CustomPasswordResetView(PasswordResetView):
-    html_email_template_name = "registration/password_reset_email.html"
+    html_email_template_name = "registration/html_password_reset_email.html"
 
 
 class ActivateAccountView(View):
