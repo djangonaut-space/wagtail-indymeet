@@ -17,6 +17,11 @@ urlpatterns = [
         auth_views.LoginView.as_view(redirect_field_name="next_page"),
         name="login",
     ),
+    path(
+        "password_reset/", 
+        CustomPasswordResetView.as_view(), 
+        name="password_reset",
+    ),
     path("", include("django.contrib.auth.urls")),
     path("profile/", profile, name="profile"),
     path("profile/update/", UpdateUserView.as_view(), name="update_user"),
@@ -30,10 +35,5 @@ urlpatterns = [
         "email_subscriptions/",
         UpdateEmailSubscriptionView.as_view(),
         name="email_subscriptions",
-    ),
-    path(
-        "password_reset/", 
-        CustomPasswordResetView.as_view(), 
-        name="password_reset",
     ),
 ]
