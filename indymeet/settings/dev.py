@@ -21,6 +21,10 @@ SECRET_KEY = "django-insecure-b$)hky-=v&f&48g-dtnehezmj$w4%e+in*oe*!r=kh4n4+k0sg
 # SECURITY WARNING: define the correct hosts in production!
 ALLOWED_HOSTS = ["*"]
 
+POST_OFFICE["BACKENDS"] = {
+    "default": "django.core.mail.backends.console.EmailBackend"
+}
+
 INSTALLED_APPS += ["django_extensions"]  # noqa F405
 
 try:
