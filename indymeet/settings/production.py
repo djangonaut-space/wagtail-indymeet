@@ -36,8 +36,6 @@ if os.getenv("ENVIRONMENT") == "production":
     # unless there was a setting that needs it.
     DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = "require"
 
-    POST_OFFICE["BACKENDS"] = {"default": "anymail.backends.mailjet.EmailBackend"}
-
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
     MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY")
     ANYMAIL = {
