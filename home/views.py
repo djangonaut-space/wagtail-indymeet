@@ -12,6 +12,7 @@ from django.views.generic.edit import FormMixin
 from django.views.generic.list import ListView
 
 from .forms import CreateUserSurveyResponseForm
+from .forms import UserSurveyResponseForm
 from .models import Event
 from .models import Session
 from .models import Survey
@@ -143,3 +144,30 @@ class CreateUserSurveyResponseFormView(
         else:
             messages.error(self.request, gettext("Something went wrong."))
             return self.form_invalid(form)
+
+
+class UserSurveyResponseView(
+    LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView
+):
+    model = UserSurveyResponse
+    form_class = UserSurveyResponseForm
+    success_url = reverse_lazy("session_list")
+    template_name = "home/surveys/form.html"
+
+    def test_func(self):
+        survey_response = self.get_object()
+        user = self.request.user
+        return user == survey_response.user
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user_survey_response"] = self.get_object()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        survey = self.get_object().survey
+        kwargs["title_page"] = survey.name
+        kwargs["sub_title_page"] = survey.description
+        kwargs["read_only"] = True
+        context_data = super().get_context_data(**kwargs)
+        return context_data

@@ -8,6 +8,7 @@ from .views import EventDetailView
 from .views import EventListView
 from .views import SessionDetailView
 from .views import SessionListView
+from .views import UserSurveyResponseView
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),
@@ -23,5 +24,10 @@ urlpatterns = [
         "survey_response/create/<str:slug>/",
         CreateUserSurveyResponseFormView.as_view(),
         name="survey_response_create",
+    ),
+    path(
+        "survey_response/<int:pk>/",
+        UserSurveyResponseView.as_view(),
+        name="user_survey_response",
     ),
 ]

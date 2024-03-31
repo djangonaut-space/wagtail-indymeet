@@ -9,9 +9,9 @@
   <label class="block">
     <span>{{ field.label }}</span>
     <!-- Checkbox -->
-    {% if field|field_type == 'booleanfield' %} {{ field|add_class:"rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50" }}
+    {% if field|field_type == 'booleanfield' %} {{ field|add_class:"rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50 read-only:text-slate-700" }}
     {% else %}
-    {{ field|add_class:"mt-1 block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"|attr:"placeholder:" }}
+    {{ field|add_class:"mt-1 block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 disabled:bg-slate-50 disabled:text-slate-700 disabled:border-slate-200"|attr:"placeholder:" }}
     {% endif %}
     {% if field.help_text %}<div class="text-gray-500"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</div>{% endif %}
     {% if field.errors %}<ul class="text-red-700">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}

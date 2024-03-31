@@ -84,7 +84,7 @@ class SessionViewTests(TestCase):
 
     def test_session_list_email_confirmed_already_applied(self):
         user = UserFactory.create(profile__email_confirmed=True)
-        UserSurveyResponseFactory(survey=self.survey, user=user)
+        survey_response = UserSurveyResponseFactory(survey=self.survey, user=user)
         self.client.force_login(user)
         response = self.client.get(reverse("session_list"))
         self.assertEqual(response.status_code, 200)
@@ -96,6 +96,11 @@ class SessionViewTests(TestCase):
         )
         self.assertNotContains(response, "Your email is not confirmed!")
         self.assertNotContains(response, "You may not be able to apply for sessions")
+        self.assertContains(response, "View Application")
+        survey_detail_url = reverse(
+            "user_survey_response", kwargs={"pk": survey_response.id}
+        )
+        self.assertContains(response, survey_detail_url)
 
     def test_session_detail_open_application(self):
         url = reverse(

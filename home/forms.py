@@ -158,3 +158,24 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
                 value=value,
                 user_survey_response=user_survey_response,
             )
+
+
+class UserSurveyResponseForm(BaseSurveyForm):
+    def __init__(self, user_survey_response, *args, **kwargs):
+        self.survey = user_survey_response.survey
+        self.user_survey_response = user_survey_response
+        super().__init__(
+            survey=self.survey, user=user_survey_response.user, *args, **kwargs
+        )
+        self._set_initial_data()
+
+    def _set_initial_data(self):
+        question_responses = self.user_survey_response.userquestionresponse_set.all()
+
+        for question_response in question_responses:
+            field_name = f"field_survey_{question_response.question.id}"
+            if question_response.question.type_field == TypeField.MULTI_SELECT:
+                self.fields[field_name].initial = question_response.value.split(",")
+            else:
+                self.fields[field_name].initial = question_response.value
+            self.fields[field_name].disabled = True

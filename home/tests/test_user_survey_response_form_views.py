@@ -6,6 +6,7 @@ from django.urls import reverse
 from accounts.factories import UserFactory
 from home.factories import QuestionFactory
 from home.factories import SurveyFactory
+from home.factories import UserQuestionResponseFactory
 from home.factories import UserSurveyResponseFactory
 from home.models import UserQuestionResponse
 from home.models import UserSurveyResponse
@@ -72,3 +73,41 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
             ).value,
             "Amazing",
         )
+
+
+class UserSurveyResponseViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.survey = SurveyFactory.create(
+            name="Test Survey", description="This is a description of the survey!"
+        )
+        cls.user = UserFactory.create()
+        cls.question = QuestionFactory.create(
+            survey=cls.survey,
+            label="How are you?",
+        )
+        cls.survey_response = UserSurveyResponseFactory(
+            survey=cls.survey, user=cls.user
+        )
+        UserQuestionResponseFactory(
+            user_survey_response=cls.survey_response,
+            question=cls.question,
+            value="Very good",
+        )
+        cls.url = reverse("user_survey_response", kwargs={"pk": cls.survey_response.id})
+
+    def test_success_get(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test Survey")
+        self.assertContains(response, "This is a description of the survey!")
+        self.assertContains(response, "How are you?")
+        self.assertContains(response, "Very good")
+        self.assertNotContains(response, "Submit")
+
+    def test_cannot_view_others_survey_response(self):
+        different_user = UserFactory.create()
+        self.client.force_login(different_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
