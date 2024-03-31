@@ -5,9 +5,10 @@ from django.urls import include
 from django.urls import path
 
 from .views import ActivateAccountView
+from .views import CustomPasswordResetView
 from .views import profile
 from .views import SignUpView
-from .views import unsubscribe
+from .views import UpdateEmailSubscriptionView
 from .views import UpdateUserView
 
 urlpatterns = [
@@ -15,6 +16,11 @@ urlpatterns = [
         "login/",
         auth_views.LoginView.as_view(redirect_field_name="next_page"),
         name="login",
+    ),
+    path(
+        "password_reset/",
+        CustomPasswordResetView.as_view(),
+        name="password_reset",
     ),
     path("", include("django.contrib.auth.urls")),
     path("profile/", profile, name="profile"),
@@ -25,5 +31,9 @@ urlpatterns = [
         ActivateAccountView.as_view(),
         name="activate_account",
     ),
-    path("unsubscribe/<user_id>/<token>", unsubscribe, name="unsubscribe"),
+    path(
+        "email_subscriptions/",
+        UpdateEmailSubscriptionView.as_view(),
+        name="email_subscriptions",
+    ),
 ]
