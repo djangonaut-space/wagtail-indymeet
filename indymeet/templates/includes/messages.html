@@ -1,20 +1,12 @@
 {% if messages %}
     {% for message in messages %}
-        <div class="messages alert-dismisible alert  fade show text-center
-            {% if 'error' in message.tags %}
-            alert-danger
-            {% elif 'warning' in message.tags %}
-            alert-warning
-            {% elif 'success' in message.tags %}
-            alert-success
-            {% else %}
-            alert-info
-            {% endif %}
-            ">
+        <div class="my-2 mx-2 px-4 py-3 rounded relative border
+            {% if 'error' in message.tags %}bg-red-100 border-red-400 text-red-700
+            {% elif 'warning' in message.tags %}bg-orange-100 border-orange-400 text-orange-700
+            {% elif 'success' in message.tags %}bg-green-100 border-green-500 text-green-700
+            {% else %}bg-blue-100 border-blue-500 text-blue-700{% endif %}"
+            role="alert">
             <div class="{{ message.tags }}">{{ message}}</div>
-            <!-- <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button> -->
         </div>
     {% endfor %}
 {% endif %}

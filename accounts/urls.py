@@ -7,6 +7,7 @@ from django.urls import path
 from .views import ActivateAccountView
 from .views import CustomPasswordResetView
 from .views import profile
+from .views import ResendConfirmationEmailView
 from .views import SignUpView
 from .views import UpdateEmailSubscriptionView
 from .views import UpdateUserView
@@ -30,6 +31,11 @@ urlpatterns = [
         "activate/<uidb64>/<token>",
         ActivateAccountView.as_view(),
         name="activate_account",
+    ),
+    path(
+        "resend_email_confirmation/",
+        ResendConfirmationEmailView.as_view(),
+        name="resend_email_confirmation",
     ),
     path(
         "email_subscriptions/",
