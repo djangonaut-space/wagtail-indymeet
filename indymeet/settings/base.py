@@ -227,7 +227,7 @@ EMAIL_BACKEND = "post_office.EmailBackend"
 
 POST_OFFICE = {
     "BACKENDS": {
-        "default": "django.core.mail.backends.console.EmailBackend",
+        "default": "anymail.backends.mailjet.EmailBackend",
     }
 }
 
