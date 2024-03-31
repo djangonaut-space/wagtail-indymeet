@@ -69,7 +69,7 @@ def send_user_confirmation_email(request, user):
         "unsubscribe_link": request.build_absolute_uri(unsubscribe_link),
     }
     send_mail(
-        "Djangonaut Space Registration Confirmation",
+        "Djangonaut Space Email Confirmation",
         render_to_string("emails/email_confirmation.txt", email_dict),
         settings.DEFAULT_FROM_EMAIL,
         [user.email],
@@ -119,6 +119,18 @@ class SignUpView(CreateView):
 @login_required(login_url="/accounts/login")
 def profile(request):
     return render(request, "registration/profile.html")
+
+
+class ResendConfirmationEmailView(LoginRequiredMixin, View):
+    def post(self, request):
+        user = request.user
+        send_user_confirmation_email(request, user)
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            f"A verification email has been sent to {user.email}",
+        )
+        return redirect("profile")
 
 
 class UpdateUserView(LoginRequiredMixin, UpdateView):
