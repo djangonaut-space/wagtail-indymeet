@@ -31,7 +31,7 @@ def make_choices(question: Question) -> list[tuple[str, str]]:
 
 
 class BaseSurveyForm(forms.Form):
-    def __init__(self, survey, user, *args, **kwargs):
+    def __init__(self, *args, survey, user, **kwargs):
         self.survey = survey
         self.user = user if user.is_authenticated else None
         self.field_names = []
@@ -161,12 +161,10 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
 
 
 class UserSurveyResponseForm(BaseSurveyForm):
-    def __init__(self, user_survey_response, *args, **kwargs):
-        self.survey = user_survey_response.survey
-        self.user_survey_response = user_survey_response
-        super().__init__(
-            survey=self.survey, user=user_survey_response.user, *args, **kwargs
-        )
+    def __init__(self, *args, instance, **kwargs):
+        self.survey = instance.survey
+        self.user_survey_response = instance
+        super().__init__(*args, survey=self.survey, user=instance.user, *args, **kwargs)
         self._set_initial_data()
 
     def _set_initial_data(self):

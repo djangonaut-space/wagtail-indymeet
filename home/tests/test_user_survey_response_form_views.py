@@ -82,17 +82,26 @@ class UserSurveyResponseViewTests(TestCase):
             name="Test Survey", description="This is a description of the survey!"
         )
         cls.user = UserFactory.create()
-        cls.question = QuestionFactory.create(
+        cls.question_1 = QuestionFactory.create(
             survey=cls.survey,
             label="How are you?",
+        )
+        cls.question_2 = QuestionFactory.create(
+            survey=cls.survey,
+            label="What is your favourite food?",
         )
         cls.survey_response = UserSurveyResponseFactory(
             survey=cls.survey, user=cls.user
         )
         UserQuestionResponseFactory(
             user_survey_response=cls.survey_response,
-            question=cls.question,
+            question=cls.question_1,
             value="Very good",
+        )
+        UserQuestionResponseFactory(
+            user_survey_response=cls.survey_response,
+            question=cls.question_2,
+            value="Pizza",
         )
         cls.url = reverse("user_survey_response", kwargs={"pk": cls.survey_response.id})
 
@@ -104,6 +113,8 @@ class UserSurveyResponseViewTests(TestCase):
         self.assertContains(response, "This is a description of the survey!")
         self.assertContains(response, "How are you?")
         self.assertContains(response, "Very good")
+        self.assertContains(response, "What is your favourite food?")
+        self.assertContains(response, "Pizza")
         self.assertNotContains(response, "Submit")
 
     def test_cannot_view_others_survey_response(self):
