@@ -31,7 +31,7 @@ def make_choices(question: Question) -> list[tuple[str, str]]:
 
 
 class BaseSurveyForm(forms.Form):
-    def __init__(self, survey, user, *args, **kwargs):
+    def __init__(self, *args, survey, user, **kwargs):
         self.survey = survey
         self.user = user if user.is_authenticated else None
         self.field_names = []
@@ -158,3 +158,22 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
                 value=value,
                 user_survey_response=user_survey_response,
             )
+
+
+class UserSurveyResponseForm(BaseSurveyForm):
+    def __init__(self, *args, instance, **kwargs):
+        self.survey = instance.survey
+        self.user_survey_response = instance
+        super().__init__(*args, survey=self.survey, user=instance.user, *args, **kwargs)
+        self._set_initial_data()
+
+    def _set_initial_data(self):
+        question_responses = self.user_survey_response.userquestionresponse_set.all()
+
+        for question_response in question_responses:
+            field_name = f"field_survey_{question_response.question.id}"
+            if question_response.question.type_field == TypeField.MULTI_SELECT:
+                self.fields[field_name].initial = question_response.value.split(",")
+            else:
+                self.fields[field_name].initial = question_response.value
+            self.fields[field_name].disabled = True
