@@ -43,7 +43,7 @@
 
 {% block content %}
         <div class="container mx-auto flex justify-center">
-            <article class="box max-w-3xl blog-container"
+            <article class="box max-w-4xl blog-container"
                     {% if self.id %}data-entry-page-update-comments-url="{% url 'entry_page_update_comments' self.id %}{% endif %}">
                 {% include 'puput/entry_page_header.html' with entry=self %}
                 <section>

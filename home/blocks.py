@@ -186,6 +186,25 @@ class CustomCaption(blocks.StructBlock):
         template = "blocks/caption.html"
 
 
+class VerticalImageCardBlock(blocks.StreamBlock):
+    images = blocks.StructBlock(
+        [
+            ("image", ImageChooserBlock(required=True, help_text="size: 800X450px")),
+            ("caption", CustomCaption()),
+            (
+                "description",
+                blocks.CharBlock(
+                    max_length=300, required=False, help_text="300 characters limit"
+                ),
+            ),
+            ("link", blocks.URLBlock(required=False)),
+        ]
+    )
+
+    class Meta:
+        template = "blocks/vertical_image_cards_block.html"
+
+
 class RichTextBlock(blocks.StructBlock):
     text = blocks.RichTextBlock(
         max_length=10000,
@@ -224,3 +243,4 @@ class BaseStreamBlock(blocks.StreamBlock):
     video_embed = VideoEmbed()
     table = CustomTableBlock()
     code_block = CodeBlock()
+    vertical_image_cards = VerticalImageCardBlock()
