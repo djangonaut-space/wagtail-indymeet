@@ -43,14 +43,14 @@
 
 {% block content %}
         <div class="container mx-auto flex justify-center">
-            <article class="box max-w-4xl blog-container"
+            <article class="box max-w-5xl blog-container"
                     {% if self.id %}data-entry-page-update-comments-url="{% url 'entry_page_update_comments' self.id %}{% endif %}">
                 {% include 'puput/entry_page_header.html' with entry=self %}
                 <section>
                     {% if self.header_image %}
                         <div class="image featured">
                             {% image self.header_image fill-800x450 as header_image %}
-                            <img alt="{{ self.header_image.title }}" src="{{ header_image.url }}">
+                            <img alt="{{ self.header_image.title }}" class="mx-auto" src="{{ header_image.url }}">
                         </div>
                     {% endif %}
                     {% include 'puput/entry_links.html' with entry=self %}
