@@ -81,7 +81,9 @@ class TextWithHeadingBlock(blocks.StructBlock):
 
 
 class TextWithHeadingWithRightImageBlock(blocks.StructBlock):
-    heading = blocks.CharBlock(max_length=255, class_name="heading-blog")
+    heading = blocks.CharBlock(
+        max_length=255, class_name="heading-blog", required=False
+    )
     text = blocks.TextBlock()
     image = ImageChooserBlock()
 
@@ -94,7 +96,7 @@ class TextWithHeadingWithRightImageBlock(blocks.StructBlock):
 
 
 class TextWithHeadingWithLeftImageBlock(blocks.StructBlock):
-    heading = blocks.CharBlock(max_length=255, class_name="blog")
+    heading = blocks.CharBlock(max_length=255, class_name="blog", required=False)
     text = blocks.TextBlock()
     image = ImageChooserBlock()
 
@@ -104,30 +106,6 @@ class TextWithHeadingWithLeftImageBlock(blocks.StructBlock):
     class Meta:
         label = "Text Block with Header: Left Image"
         template = "blocks/text-with-heading-left-image.html"
-
-
-class RightImageLeftTextBlock(blocks.StructBlock):
-    image = ImageChooserBlock()
-    text = blocks.TextBlock()
-
-    def __str__(self):
-        return self.text
-
-    class Meta:
-        label = "Text Block: Right Image"
-        template = "blocks/right-image-left-text.html"
-
-
-class LeftImageRightTextBlock(blocks.StructBlock):
-    image = ImageChooserBlock()
-    text = blocks.TextBlock()
-
-    def __str__(self):
-        return self.text
-
-    class Meta:
-        label = "Text Block: Left Image"
-        template = "blocks/left-image-right-text.html"
 
 
 class QuoteBlock(blocks.StructBlock):
@@ -184,10 +162,9 @@ class CodeBlock(blocks.StructBlock):
 
 
 class TextHeadingImageBlock(blocks.StructBlock):
-    heading = blocks.CharBlock(max_length=255)
-    text = blocks.TextBlock()
+    heading = blocks.CharBlock(max_length=255, required=False)
+    text = blocks.TextBlock(required=False)
     image = ImageChooserBlock()
-    # TODO: Add left or right side
 
     def __str__(self):
         return self.heading
@@ -243,8 +220,6 @@ class BaseStreamBlock(blocks.StreamBlock):
     text_with_heading_and_image = TextHeadingImageBlock()
     text_with_heading_and_right_image = TextWithHeadingWithRightImageBlock()
     text_with_heading_and_left_image = TextWithHeadingWithLeftImageBlock()
-    right_image_left_text = RightImageLeftTextBlock()
-    left_image_right_text = LeftImageRightTextBlock()
     left_quote_right_image = QuoteLeftImageBlock(icon="openquote")
     video_embed = VideoEmbed()
     table = CustomTableBlock()
