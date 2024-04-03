@@ -51,15 +51,28 @@ class HeadingBlock(blocks.StructBlock):
         template = "blocks/heading.html"
 
 
+class ListItemBlock(blocks.StructBlock):
+    text = blocks.CharBlock()
+    link = blocks.URLBlock(required=False)
+    icon = blocks.CharBlock(
+        max_length=50,
+        required=False,
+        help_text="Use font awesome class names ex: 'fa-solid fa-xs fa-tv'",
+    )
+    icon_color = blocks.CharBlock(
+        max_length=50, required=False, help_text="Names, hex etc ex: 'grey', '#999999'"
+    )
+
+
 class ListBlock(blocks.StructBlock):
-    size = blocks.ChoiceBlock(
+    style = blocks.ChoiceBlock(
         choices=[
             ("circle", "unordered list"),
             ("decimal", "ordered list"),
             ("none", "unstyled"),
         ]
     )
-    text = blocks.RichTextBlock(features=["ul"], icon="list-ol")
+    list_items = blocks.ListBlock(ListItemBlock())
 
     def __str__(self):
         return self.text
