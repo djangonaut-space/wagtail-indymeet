@@ -11,22 +11,20 @@
 {% endblock social_share %}
 
 {% block content %}
-<div class="container main my-3 mx-3">
-  <div class="row my-3">
+<main class="section my-3 mx-5">
+  <div class="section-container">
+  <h1 class="text-5xl my-3">{{ event.title }}</h1>
+    <div class="row">
       <div class="col">
-          <h1 class="text-5xl my-3">{{ event.title }}</h1>
+          {% localtime on %}
+          <p><strong>Start:</strong> {{ event.start_time|date:"M d, Y H:i e" }}</p>
+          <p><strong>End:</strong> {{ event.end_time|date:"M d, Y H:i e" }}</p>
+          {% endlocaltime %}
+          <p><strong>Location:</strong> {{ event.location|urlizetrunc:25 }}</p>
+          <br>
+          <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>
       </div>
-  </div>
-  <div class="row">
-    <div class="col">
-        {% localtime on %}
-        <p><strong>Start:</strong> {{ event.start_time|date:"M d, Y H:i e" }}</p>
-        <p><strong>End:</strong> {{ event.end_time|date:"M d, Y H:i e" }}</p>
-        {% endlocaltime %}
-        <p><strong>Location:</strong> {{ event.location|urlizetrunc:25 }}</p>
-        <br>
-        <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>
     </div>
   </div>
-</div>
+</main>
 {% endblock content %}
