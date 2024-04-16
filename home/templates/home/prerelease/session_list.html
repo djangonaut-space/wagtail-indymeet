@@ -25,7 +25,17 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-4">
             {% for session in sessions %}
+                {% if session.is_accepting_applications %}
                 {% include 'home/includes/session_card.html' %}
+                {% endif %}
+                {% if forloop.last and not session.is_accepting_applications %}
+                     <div class="col col-lg-3 col-md-4 col-sm-6 col-12">
+                        <div class="max-w-sm rounded overflow-hidden shadow-lg card">
+                          <div class="px-6 py-4 card-body">
+                              <h5 class="font-bold text-xl mb-1 card-title">No active session</h5>
+                                <p class="text-gray-700 text-base card-text">While we're busy checking our on-board instrumental code for the next cosmic journey, you can prepare by exploring our Program Documentation <a href="https://github.com/djangonaut-space/program">(https://github.com/djang…)</a>.</p>
+
+                {% endif%}
             {% endfor %}
         </div>
     </div>
