@@ -128,15 +128,7 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    venv\Scripts\activate
    ```
-3. Install pre-commit
-   ```sh
-   pip install pre-commit
-   ```
-   Install git hook scripts:
-   ```sh
-   pre-commit install
-   ```
-4. Create a posgresql database
+3. Create a posgresql database
    ```sh
    psql -U postgres
    ```
@@ -148,12 +140,15 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    postgres=# exit
    ```
-5. install requirements:
+4. install requirements:
    ```sh
    pip install -r requirements/requirements-dev.txt
    ```
-
-6. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
+   set up the git hook scripts
+   ```sh
+   pre-commit install
+   ```
+5. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
    Copy in Linux:
    ```sh
    cp .env.template.local .env
@@ -162,22 +157,22 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    copy .env.template.local .env
    ```
-7. Run migrations and create superuser
+6. Run migrations and create superuser
    ```sh
    python manage.py migrate
    # Potentially load data first
    # python manage.py loaddata fixtures/data.json
    python manage.py createsuperuser
    ```
-8. Install tailwind. You also need npm installed.
+7. Install tailwind. You also need npm installed.
    ```sh
    python manage.py tailwind install
    ```
-9. Run server locally
+8. Run server locally
    ```sh
    python manage.py runserver
    ```
-10. Run tailwind in another terminal locally
+9. Run tailwind in another terminal locally
    ```sh
    python manage.py tailwind start
    ```
