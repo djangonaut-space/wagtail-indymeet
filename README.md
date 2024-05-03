@@ -144,7 +144,10 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    pip install -r requirements/requirements-dev.txt
    ```
-
+   set up the git hook scripts
+   ```sh
+   pre-commit install
+   ```
 5. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
    Copy in Linux:
    ```sh
