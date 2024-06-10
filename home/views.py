@@ -105,7 +105,9 @@ class SessionListView(ListView):
     context_object_name = "sessions"
 
     def get_queryset(self):
-        return Session.objects.with_applications(user=self.request.user)
+        return Session.objects.with_applications(user=self.request.user).order_by(
+            "-end_date"
+        )
 
 
 class CreateUserSurveyResponseFormView(
