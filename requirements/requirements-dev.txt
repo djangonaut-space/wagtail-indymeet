@@ -6,82 +6,82 @@
 #
 anyascii==0.3.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 anyio==4.2.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   azure-core
 asgiref==3.7.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   django
     #   django-browser-reload
 azure-core==1.29.6
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   azure-storage-blob
 azure-storage-blob==12.19.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 beautifulsoup4==4.11.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 bleach==4.1.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   django-post-office
     #   wagtail-markdown
 build==1.0.3
     # via pip-tools
 certifi==2023.11.17
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   requests
     #   sentry-sdk
 cffi==1.16.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   cryptography
 cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.3.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   requests
 click==8.1.7
     # via pip-tools
 cryptography==41.0.7
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   azure-storage-blob
 defusedxml==0.7.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   willow
 distlib==0.3.8
     # via virtualenv
-dj-database-url==2.1.0
+dj-database-url==2.2.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
-django==4.1.13
+    #   -r requirements-test.txt
+    #   -r requirements.txt
+django==4.2.13
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   dj-database-url
     #   django-anymail
     #   django-browser-reload
@@ -103,196 +103,196 @@ django==4.1.13
     #   wagtail
 django-anymail==10.3
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 django-browser-reload==1.12.1
     # via django-tailwind
 django-colorful==1.3
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   puput
-django-debug-toolbar==4.3.0
+django-debug-toolbar==4.4.2
     # via
-    #   -r requirements/requirements-dev.in
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-dev.in
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 django-el-pagination==4.0.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   puput
 django-extensions==3.2.3
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 django-filter==22.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 django-modelcluster==6.2.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 django-permissionedforms==0.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
-django-post-office==3.8.0
-    # via -r requirements/requirements.txt
+django-post-office==3.9.0
+    # via
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 django-recaptcha==4.0.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 django-social-share==2.3.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   puput
 django-storages==1.13.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 django-taggit==3.1.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   puput
     #   wagtail
 django-tailwind==3.8.0
     # via
-    #   -r requirements/requirements-dev.in
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-dev.in
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 django-treebeard==4.7
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 django-widget-tweaks==1.5.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 djangorestframework==3.14.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 draftjs-exporter==2.1.7
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 et-xmlfile==1.1.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   openpyxl
-exceptiongroup==1.2.0
-    # via -r requirements/requirements-test.txt
 factory-boy==3.3.0
-    # via -r requirements/requirements-test.txt
+    # via -r requirements-test.txt
 faker==23.2.1
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   factory-boy
 filelock==3.13.1
     # via virtualenv
 filetype==1.2.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   willow
-freezegun==1.4.0
-    # via -r requirements/requirements-test.txt
+freezegun==1.5.1
+    # via -r requirements-test.txt
 greenlet==3.0.3
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   playwright
 html5lib==1.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 identify==2.5.33
     # via pre-commit
 idna==3.6
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   anyio
     #   requests
 iniconfig==2.0.0
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   pytest
 isodate==0.6.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   azure-storage-blob
 l18n==2021.3
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 markdown==3.5.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail-markdown
 nodeenv==1.8.0
     # via pre-commit
 openpyxl==3.1.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 packaging==23.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   bleach
     #   build
     #   pytest
 pillow==10.2.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 pip-tools==7.4.1
-    # via -r requirements/requirements-dev.in
+    # via -r requirements-dev.in
 platformdirs==4.1.0
     # via virtualenv
-playwright==1.42.0
+playwright==1.44.0
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   pytest-playwright
 pluggy==1.3.0
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   pytest
-pre-commit==3.7.0
-    # via -r requirements/requirements-dev.in
+pre-commit==3.7.1
+    # via -r requirements-dev.in
 psycopg2-binary==2.9.9
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 puput==2.0.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 pycparser==2.21
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   cffi
-pyee==11.0.1
+pyee==11.1.0
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   playwright
 pyproject-hooks==1.0.0
     # via
@@ -300,60 +300,59 @@ pyproject-hooks==1.0.0
     #   pip-tools
 pytest==7.4.4
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   pytest-base-url
     #   pytest-django
     #   pytest-mock
     #   pytest-playwright
 pytest-base-url==2.0.0
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   pytest-playwright
 pytest-django==4.8.0
-    # via -r requirements/requirements-test.txt
+    # via -r requirements-test.txt
 pytest-mock==3.14.0
-    # via -r requirements/requirements-test.txt
-pytest-playwright==0.4.4
-    # via -r requirements/requirements-test.txt
+    # via -r requirements-test.txt
+pytest-playwright==0.5.0
+    # via -r requirements-test.txt
 python-dateutil==2.8.2
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   faker
     #   freezegun
 python-dotenv==1.0.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 python-slugify==8.0.1
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   pytest-playwright
 pytz==2023.3.post1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   django-modelcluster
-    #   django-post-office
     #   djangorestframework
     #   l18n
 pyyaml==6.0.1
     # via pre-commit
 requests==2.31.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   azure-core
     #   django-anymail
     #   pytest-base-url
     #   wagtail
 sentry-sdk==1.40.4
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 six==1.16.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   azure-core
     #   bleach
     #   html5lib
@@ -362,47 +361,47 @@ six==1.16.0
     #   python-dateutil
 sniffio==1.3.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   anyio
 soupsieve==2.5
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   beautifulsoup4
 sqlparse==0.4.4
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   django
     #   django-debug-toolbar
 supervisor==4.2.5
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 telepath==0.3.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 text-unidecode==1.3
     # via
-    #   -r requirements/requirements-test.txt
+    #   -r requirements-test.txt
     #   python-slugify
-typing-extensions==4.10.0
+typing-extensions==4.12.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   azure-core
     #   azure-storage-blob
     #   dj-database-url
     #   pyee
 unittest-parametrize==1.4.0
-    # via -r requirements/requirements-test.txt
-urllib3==2.2.1
+    # via -r requirements-test.txt
+urllib3==2.2.2
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   django-anymail
     #   requests
     #   sentry-sdk
@@ -410,31 +409,31 @@ virtualenv==20.25.0
     # via pre-commit
 wagtail==5.0.5
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   puput
     #   wagtail-markdown
 wagtail-markdown==0.11.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   puput
 webencodings==0.5.1
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   bleach
     #   html5lib
 wheel==0.42.0
     # via pip-tools
-whitenoise==6.6.0
+whitenoise==6.7.0
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
 willow==1.6.3
     # via
-    #   -r requirements/requirements-test.txt
-    #   -r requirements/requirements.txt
+    #   -r requirements-test.txt
+    #   -r requirements.txt
     #   wagtail
 
 # The following packages are considered to be unsafe in a requirements file:
