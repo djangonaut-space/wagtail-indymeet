@@ -91,9 +91,13 @@
         <script src="https://unpkg.com/htmx.org@1.8.4"></script>
         {% wagtailuserbar %}
         {% include 'includes/messages.html' %}
-        {% block content %}
-            {# other page stuff goes here #}
-        {% endblock %}
+        <div class="{% if not blog_page %}container flex justify-center mx-auto max-w-screen-xl {% endif %}">
+            <div class="{% if not blog_page %}w-3/4{% endif %}">
+            {% block content %}
+                {# other page stuff goes here #}
+            {% endblock %}
+            </div>
+        </div>
         {# Global javascript #}
         {% include 'includes/footer.html' %}
     </body>

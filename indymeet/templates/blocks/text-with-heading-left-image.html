@@ -1,12 +1,14 @@
 {% load wagtailimages_tags %}
 
 <div class="block-image">
+    {% if value.heading %}
     <h2 class="mt-4 mb-4 text-4xl blog-heading">{{ value.heading|safe }}</h2>
+    {% endif %}
     <div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>{% image value.image fill-900x700 %}</div>
             <div>
-                <p>{{ value.text|safe|urlize }}</p>
+                <p>{{ value.text|safe|urlize|linebreaks }}</p>
             </div>
         </div>
     </div>

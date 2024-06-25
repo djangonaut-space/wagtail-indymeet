@@ -15,34 +15,32 @@
 
 {% block content %}
 {% include 'home/includes/email_confirmed_warning.html' %}
-<div class="container main my-3 mx-3">
-  <div class="row my-3">
+<main class="section my-3 mx-5">
+  <div class="section-container">
+    <h1 class="text-5xl">{{ session.title }}</h1>
+    <div class="row pt-4 pb-4">
       <div class="col">
-          <h1 class="text-5xl my-3">{{ session.title }}</h1>
+        <dl class="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-2 sm:px-0">
+          <dt class="text-sm font-bold leading-6 text-gray-900">Applications Open:</dt>
+          <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.application_start_date|date:"M d, Y" }} AOE</dd>
+          <dt class="text-sm font-bold leading-6 text-gray-900">Applications Close:</dt>
+          <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.application_end_date|date:"M d, Y" }} AOE</dd>
+          <dt class="text-sm font-bold leading-6 text-gray-900">Invitations Sent:</dt>
+          <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.invitation_date|date:"M d, Y" }}</dd>
+          <dt class="text-sm font-bold leading-6 text-gray-900">Start:</dt>
+          <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.start_date|date:"M d, Y" }}</dd>
+          <dt class="text-sm font-bold leading-6 text-gray-900">End:</dt>
+          <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.end_date|date:"M d, Y" }}</dd>
+        </dl>
+        <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
+        {% if session.is_accepting_applications and not session.completed_application %}
+          <br />
+          <h2 class="text-4xl">You have {{ session.application_end_anywhere_on_earth|timeuntil}} to submit your application</h2>
+          <br />
+        {% endif %}
+        {% include 'home/includes/session_apply_btn.html' %}
       </div>
-  </div>
-  <div class="row">
-    <div class="col">
-      <dl class="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-2 sm:px-0">
-        <dt class="text-sm font-bold leading-6 text-gray-900">Applications Open:</dt>
-        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.application_start_date|date:"M d, Y" }} AOE</dd>
-        <dt class="text-sm font-bold leading-6 text-gray-900">Applications Close:</dt>
-        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.application_end_date|date:"M d, Y" }} AOE</dd>
-        <dt class="text-sm font-bold leading-6 text-gray-900">Invitations Sent:</dt>
-        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.invitation_date|date:"M d, Y" }}</dd>
-        <dt class="text-sm font-bold leading-6 text-gray-900">Start:</dt>
-        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.start_date|date:"M d, Y" }}</dd>
-        <dt class="text-sm font-bold leading-6 text-gray-900">End:</dt>
-        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.end_date|date:"M d, Y" }}</dd>
-      </dl>
-      <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
-      {% if session.is_accepting_applications and not session.completed_application %}
-        <br />
-        <h2 class="text-4xl">You have {{ session.application_end_anywhere_on_earth|timeuntil}} to submit your application</h2>
-        <br />
-      {% endif %}
-      {% include 'home/includes/session_apply_btn.html' %}
     </div>
   </div>
-</div>
+</main>
 {% endblock content %}
