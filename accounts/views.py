@@ -145,12 +145,12 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         Returns the initial data to use for forms on this view.
         """
         initial = super().get_initial()
-        initial[
-            "receive_program_updates"
-        ] = self.request.user.profile.receiving_program_updates
-        initial[
-            "receive_event_updates"
-        ] = self.request.user.profile.receiving_event_updates
+        initial["receive_program_updates"] = (
+            self.request.user.profile.receiving_program_updates
+        )
+        initial["receive_event_updates"] = (
+            self.request.user.profile.receiving_event_updates
+        )
         initial["receive_newsletter"] = self.request.user.profile.receiving_newsletter
         return initial
 
