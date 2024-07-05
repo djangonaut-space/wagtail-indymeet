@@ -73,11 +73,11 @@ defusedxml==0.7.1
     #   willow
 distlib==0.3.8
     # via virtualenv
-dj-database-url==2.1.0
+dj-database-url==2.2.0
     # via
     #   -r requirements-test.txt
     #   -r requirements.txt
-django==4.1.13
+django==4.2.13
     # via
     #   -r requirements-test.txt
     #   -r requirements.txt
@@ -99,7 +99,7 @@ django==4.1.13
     #   djangorestframework
     #   puput
     #   wagtail
-django-anymail==10.3
+django-anymail==11.0
     # via
     #   -r requirements-test.txt
     #   -r requirements.txt
@@ -110,7 +110,7 @@ django-colorful==1.3
     #   -r requirements-test.txt
     #   -r requirements.txt
     #   puput
-django-debug-toolbar==4.3.0
+django-debug-toolbar==4.4.3
     # via
     #   -r requirements-dev.in
     #   -r requirements-test.txt
@@ -200,7 +200,7 @@ filetype==1.2.0
     #   -r requirements-test.txt
     #   -r requirements.txt
     #   willow
-freezegun==1.4.0
+freezegun==1.5.1
     # via -r requirements-test.txt
 greenlet==3.0.3
     # via
@@ -261,7 +261,7 @@ pip-tools==7.4.1
     # via -r requirements-dev.in
 platformdirs==4.1.0
     # via virtualenv
-playwright==1.42.0
+playwright==1.45.0
     # via
     #   -r requirements-test.txt
     #   pytest-playwright
@@ -269,7 +269,7 @@ pluggy==1.3.0
     # via
     #   -r requirements-test.txt
     #   pytest
-pre-commit==3.7.0
+pre-commit==3.7.1
     # via -r requirements-dev.in
 psycopg2-binary==2.9.9
     # via
@@ -284,7 +284,7 @@ pycparser==2.21
     #   -r requirements-test.txt
     #   -r requirements.txt
     #   cffi
-pyee==11.0.1
+pyee==11.1.0
     # via
     #   -r requirements-test.txt
     #   playwright
@@ -307,7 +307,7 @@ pytest-django==4.8.0
     # via -r requirements-test.txt
 pytest-mock==3.14.0
     # via -r requirements-test.txt
-pytest-playwright==0.4.4
+pytest-playwright==0.5.1
     # via -r requirements-test.txt
 python-dateutil==2.8.2
     # via
@@ -382,7 +382,7 @@ text-unidecode==1.3
     # via
     #   -r requirements-test.txt
     #   python-slugify
-typing-extensions==4.10.0
+typing-extensions==4.12.2
     # via
     #   -r requirements-test.txt
     #   -r requirements.txt
@@ -392,7 +392,7 @@ typing-extensions==4.10.0
     #   pyee
 unittest-parametrize==1.4.0
     # via -r requirements-test.txt
-urllib3==2.2.1
+urllib3==2.2.2
     # via
     #   -r requirements-test.txt
     #   -r requirements.txt
@@ -420,7 +420,7 @@ webencodings==0.5.1
     #   html5lib
 wheel==0.42.0
     # via pip-tools
-whitenoise==6.6.0
+whitenoise==6.7.0
     # via
     #   -r requirements-test.txt
     #   -r requirements.txt
