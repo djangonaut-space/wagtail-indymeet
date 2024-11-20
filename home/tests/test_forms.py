@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from django.test import TestCase
 
 from accounts.factories import UserFactory

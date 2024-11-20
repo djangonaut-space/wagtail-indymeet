@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from wagtail import blocks
 from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.images.blocks import ImageChooserBlock

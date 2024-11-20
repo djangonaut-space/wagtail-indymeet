@@ -1,7 +1,6 @@
 """
 Management utility to create playwright test user.
 """
-from __future__ import annotations
 
 import os
 

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 
