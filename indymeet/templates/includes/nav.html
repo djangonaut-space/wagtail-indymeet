@@ -28,21 +28,6 @@
                         {% trans "Blog" %}
                     </a>
                 </li>
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% slugurl "media-talks" %}">
-                        {% trans "Media" %}
-                    </a>
-                </li>
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% slugurl "partnerships-sponsors" %}">
-                        {% trans "Sponsors" %}
-                    </a>
-                </li>
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% slugurl "uniform-supply-office" %}">
-                        {% trans "Store" %}
-                    </a>
-                </li>
             </ul>
         </nav>
 
@@ -125,21 +110,6 @@
                         <li class="p-2">
                             <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% slugurl "comms" %}">
                                 {% trans "Blog" %}
-                            </a>
-                        </li>
-                        <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% slugurl "media-talks" %}">
-                                {% trans "Media" %}
-                            </a>
-                        </li>
-                        <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% slugurl "partnerships-sponsors" %}">
-                                {% trans "Sponsors" %}
-                            </a>
-                        </li>
-                        <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% slugurl "uniform-supply-office" %}">
-                                {% trans "Store" %}
                             </a>
                         </li>
                         {% if user.is_authenticated %}

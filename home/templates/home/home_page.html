@@ -10,41 +10,15 @@
     </a>
     <h1 class="p-0 text-[10vw] leading-[10vw] font-fraunces font-bold text-center">Where contributors launch</h1>
     <p class="p-3 text-xl">Ready for take-off?</p>
-    <div class="flex flex-col md:flex-row links mt-0 mb-5">
+    <div class="grid grid-flow-row-dense grid-cols-3 md:grid-cols-1 links mt-0 mb-5">
         <a class="button-secondary text-black bg-white hover:bg-ds-purple hover:text-white" href="{% url "session_list" %}">Sessions</a>
         <a class="button-secondary" href="{% url "event_list" %}">Events</a>
         <a class="button-secondary" href="https://github.com/djangonaut-space/program/blob/main/README.md">Program</a>
-        <div class="relative inline-block text-left">
-          <div>
-            <button type="button" class="button-secondary" id="menu-button" aria-expanded="true" aria-haspopup="true">
-              Blog & more
-              <svg class="-mr-1 size-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-slot="icon">
-                <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        
-          <!--
-            Dropdown menu, show/hide based on menu state.
-        
-            Entering: "transition ease-out duration-100"
-              From: "transform opacity-0 scale-95"
-              To: "transform opacity-100 scale-100"
-            Leaving: "transition ease-in duration-75"
-              From: "transform opacity-100 scale-100"
-              To: "transform opacity-0 scale-95"
-          -->
-          <div class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
-            <div class="py-1" role="none">
-                <a class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1"  href="{% slugurl "comms" %}">Blog</a>
-                <a class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1"  href="{% slugurl "media-talks" %}">Media</a>
-                <a class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1"  href="{% slugurl "partnerships-sponsors" %}">Sponsors</a>
-                <a class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1"  href="{% slugurl "uniform-supply-office" %}">Store</a>
-            </div>
-          </div>
-        </div>
+        <a class="button-secondary" href="{% slugurl "comms" %}">Blog</a>
+        <a class="button-secondary" href="{% slugurl "media-talks" %}">Media</a>
+        <a class="button-secondary" href="{% slugurl "partnerships-sponsors" %}">Sponsors</a>
+        <a class="button-secondary" href="{% slugurl "uniform-supply-office" %}">Store</a>
     </div>
-
     {% comment %} <form class="d-flex form-row">
         <input type="email" name="email" aria-label="email" class="mr-1" placeholder="example@email.com">
         <button type="submit" class="btn btn-outline-primary">Register</button>
