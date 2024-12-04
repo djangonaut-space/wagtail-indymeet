@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from django.db.models import OuterRef
 from django.db.models import Subquery
 from django.db.models import Value

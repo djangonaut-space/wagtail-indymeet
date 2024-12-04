@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .production import *
 
 #    Get rid of whitenoise "No directory at" warning, as it's not helpful when running tests.

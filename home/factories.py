@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import factory
 
 from accounts.factories import UserFactory

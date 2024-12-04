@@ -16,6 +16,11 @@
         <a class="button-secondary" href="https://github.com/djangonaut-space/program/blob/main/README.md">Program</a>
         <a class="button-secondary" href="{% slugurl "comms" %}">Blog</a>
     </div>
+    <div class="flex flex-col md:flex-row links mt-2 md:mt-0 mb-5">
+        <a class="button-secondary" href="{% slugurl "media-talks" %}">Media</a>
+        <a class="button-secondary" href="{% slugurl "partnerships-sponsors" %}">Sponsors</a>
+        <a class="button-secondary" href="{% slugurl "uniform-supply-office" %}">Store</a>
+    </div>
     {% comment %} <form class="d-flex form-row">
         <input type="email" name="email" aria-label="email" class="mr-1" placeholder="example@email.com">
         <button type="submit" class="btn btn-outline-primary">Register</button>
@@ -36,6 +41,9 @@
         </a>
         <a class="outline-link linkedin" href="https://www.linkedin.com/company/djangonaut-space/" target="_blank" aria-label="LinkedIn">
             <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+        </a>
+        <a class="outline-link youtube" href="https://www.youtube.com/@djangonautspace" target="_blank" aria-label="LinkedIn">
+            <i class="fa-brands fa-youtube" aria-hidden="true"></i>
         </a>
     </div>
 </footer>

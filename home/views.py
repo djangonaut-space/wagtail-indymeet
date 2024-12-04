@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from gettext import gettext
 
 from django.contrib import messages

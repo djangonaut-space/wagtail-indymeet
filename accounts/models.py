@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from django.contrib.auth.models import AbstractUser
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
