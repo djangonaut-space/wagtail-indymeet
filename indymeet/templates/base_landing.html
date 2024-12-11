@@ -42,7 +42,7 @@
         {% endblock css %}
     </head>
 
-    <body class="{% block body_class %}{% endblock %}">
+    <body class=" justify-evenly md:justify-center {% block body_class %}{% endblock %}">
         {% if 'Home' not in page.title  %}
             {% include 'includes/breadcrumbs.html' %}
         {% endif %}
