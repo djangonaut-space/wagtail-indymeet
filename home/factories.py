@@ -1,7 +1,7 @@
 import factory
 
 from accounts.factories import UserFactory
-from home.models import Event
+from home.models import Event, ResourceLink
 from home.models import Question
 from home.models import Session
 from home.models import Survey
@@ -20,6 +20,14 @@ class EventFactory(factory.django.DjangoModelFactory):
     end_time = factory.Faker("datetime")
     location = "https://zoom.link"
     status = Event.SCHEDULED
+
+
+class ResourceLinkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ResourceLink
+
+    path = factory.Sequence(lambda n: "path/resource-%d" % n)
+    url = factory.Sequence(lambda n: "https://testserver/%d/resource" % n)
 
 
 class SessionFactory(factory.django.DjangoModelFactory):

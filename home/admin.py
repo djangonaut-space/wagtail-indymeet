@@ -1,6 +1,9 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
-from .models import Event
+from .models import Event, ResourceLink
 from .models import Question
 from .models import Session
 from .models import SessionMembership
@@ -11,6 +14,25 @@ from .models import Survey
 class EventAdmin(admin.ModelAdmin):
     model = Event
     filter_horizontal = ("speakers", "rsvped_members", "organizers")
+
+
+@admin.register(ResourceLink)
+class ResourceLinkAdmin(admin.ModelAdmin):
+    list_display = (
+        "path",
+        "link",
+        "url",
+        "permanent",
+        "updated",
+        "created",
+    )
+    ordering = ("path",)
+    search_fields = ("path", "url")
+
+    @admin.display(description="Link", ordering="path")
+    def link(self, obj):
+        href = reverse("resource_link", kwargs={"path": obj.path})
+        return mark_safe(f'<a href="{href}">Copy to share</a>')
 
 
 class SessionMembershipInline(admin.TabularInline):
