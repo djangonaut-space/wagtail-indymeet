@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Prefetch
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormMixin
@@ -18,6 +18,7 @@ from .models import Session
 from .models import Survey
 from .models import UserQuestionResponse
 from .models import UserSurveyResponse
+from .models import ResourceLink
 
 
 def event_calendar(request):
@@ -178,3 +179,7 @@ class UserSurveyResponseView(
         kwargs["read_only"] = True
         context_data = super().get_context_data(**kwargs)
         return context_data
+
+
+def resource_link(request, path):
+    return redirect(get_object_or_404(ResourceLink, path=path).url)

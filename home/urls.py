@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import CreateUserSurveyResponseFormView
+from .views import resource_link
 from .views import event_calendar
 from .views import EventDetailView
 from .views import EventListView
@@ -28,4 +29,5 @@ urlpatterns = [
         UserSurveyResponseView.as_view(),
         name="user_survey_response",
     ),
+    path("resource/<path:path>", resource_link, name="resource_link"),
 ]
