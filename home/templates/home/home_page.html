@@ -4,19 +4,17 @@
 {% block title %}Djangonaut Space - Where contributors launch!{% endblock %}
 {% block body_class %}landing{% endblock %}
 {% block content %}
-<main class="landing-page flex flex-col items-center justify-center z-[2]">
+<main class="landing-page flex grow flex-col items-center justify-center z-[2]">
     <a href="/" class="inline-block text-center">
-        <img class="inline-block w-[100%] max-w-[140px]" alt="Djangonaut Space" src="{% static 'img/main-white-transparent.png' %}" />
+        <img class="inline-block w-full max-w-[140px]" alt="Djangonaut Space" src="{% static 'img/main-white-transparent.png' %}" />
     </a>
     <h1 class="p-0 text-[10vw] leading-[10vw] font-fraunces font-bold text-center">Where contributors launch</h1>
     <p class="p-3 text-xl">Ready for take-off?</p>
-    <div class="flex flex-col md:flex-row links mt-0 mb-0">
+    <div class="flex flex-wrap flex-row links justify-center w-full md:w-1/3 gap-2">
         <a class="button-secondary text-black bg-white hover:bg-ds-purple hover:text-white" href="{% url "session_list" %}">Sessions</a>
         <a class="button-secondary" href="{% url "event_list" %}">Events</a>
         <a class="button-secondary" href="https://github.com/djangonaut-space/program/blob/main/README.md">Program</a>
         <a class="button-secondary" href="{% slugurl "comms" %}">Blog</a>
-    </div>
-    <div class="flex flex-col md:flex-row links mt-2 md:mt-0 mb-5">
         <a class="button-secondary" href="{% slugurl "media-talks" %}">Media</a>
         <a class="button-secondary" href="{% slugurl "partnerships-sponsors" %}">Sponsors</a>
         <a class="button-secondary" href="{% slugurl "uniform-supply-office" %}">Store</a>
@@ -29,7 +27,7 @@
 <footer class="landing-page-footer text-base text-white">
     <span class="design-credits">Djangonaut Space. Designed by <a class='text-white' href='https://hope-adoli.netlify.app/'>Hope Adoli</a></span>
     <a class='text-white' href="https://github.com/djangonaut-space/program/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a>
-    <div class="p-3 d-flex social-links">
+    <div class="p-3 flex gap-2 social-links">
         <a class="outline-link twitter" href="https://twitter.com/djangonautspace" target="_blank" aria-label="Twitter">
             <i class="fa-brands fa-twitter" aria-hidden="true"></i>
         </a>
@@ -42,8 +40,11 @@
         <a class="outline-link linkedin" href="https://www.linkedin.com/company/djangonaut-space/" target="_blank" aria-label="LinkedIn">
             <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
         </a>
-        <a class="outline-link youtube" href="https://www.youtube.com/@djangonautspace" target="_blank" aria-label="LinkedIn">
+        <a class="outline-link youtube" href="https://www.youtube.com/@djangonautspace" target="_blank" aria-label="YouTube">
             <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+        </a>
+        <a class="outline-link bluesky" href="https://bsky.app/profile/djangonaut.space" target="_blank" aria-label="Bluesky">
+            <i class="fa-brands fa-bluesky" aria-hidden="true"></i>
         </a>
     </div>
 </footer>
