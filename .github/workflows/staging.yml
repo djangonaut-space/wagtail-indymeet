@@ -1,0 +1,32 @@
+---
+name: 'Deploy Staging'
+
+on:
+  push:
+    branches:
+      - develop
+
+# Only allow one deployment at a time. Cancel the others
+# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cloning repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to dokku
+        uses: dokku/github-action@v1.6.1
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_DOKKU_SSH_PRIVATE_KEY }}
+        with:
+          branch: develop
+          git_push_flags: '--force'
+          git_remote_url: 'ssh://dokku@staging.djangonaut.space:22/staging'
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
