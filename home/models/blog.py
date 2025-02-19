@@ -2,7 +2,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
-from puput.abstracts import EntryAbstract
 from taggit.models import TaggedItemBase
 from wagtail import blocks
 from wagtail.admin.panels import FieldPanel
@@ -18,6 +17,7 @@ from wagtail.models import Page
 from home import blocks as blog_blocks
 from home.blocks import BaseStreamBlock
 from home.models.event import Event
+
 
 # BLOG PUPUT IMPORTS
 
@@ -37,42 +37,6 @@ class HomePage(Page):
         context["future_events"] = future_events[:6]
         context["show_rsvp"] = show_rsvp
         return context
-
-
-class BlogAbstract(EntryAbstract):
-    body = StreamField(
-        BaseStreamBlock(),
-        verbose_name="StreamField Body",
-        use_json_field=True,
-        null=True,
-    )
-
-    content_panels = [
-        MultiFieldPanel(
-            [
-                FieldPanel("title", classname="title"),
-                FieldPanel("header_image"),
-                FieldPanel("body", classname="full"),
-                FieldPanel("excerpt", classname="full"),
-            ],
-            heading=_("Content"),
-        ),
-        MultiFieldPanel(
-            [
-                FieldPanel("tags"),
-                InlinePanel("entry_categories", label=_("Categories")),
-                InlinePanel(
-                    "related_entrypage_from",
-                    label=_("Related Entries"),
-                    panels=[PageChooserPanel("entrypage_to")],
-                ),
-            ],
-            heading=_("Page Metadata"),
-        ),
-    ]
-
-    class Meta:
-        abstract = True
 
 
 class GeneralTag(TaggedItemBase):

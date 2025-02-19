@@ -222,7 +222,8 @@ SERVER_EMAIL = "contact@djangonaut.space"
 SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 PUPUT_AS_PLUGIN = True
-PUPUT_ENTRY_MODEL = "home.models.BlogAbstract"
+PUPUT_BLOG_MODEL = "home.models.puput_abstracts.BlogAbstract"
+PUPUT_ENTRY_MODEL = "home.models.puput_abstracts.EntryAbstract"
 
 MIGRATION_MODULES = {"puput": "home.puput_migrations"}
 
