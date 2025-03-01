@@ -1,3 +1,2 @@
-# TODO: specify location of requirements file for Oryx Azure deploy
-# This file is a duplicate of requirements/requirements.txt used for deploying to Azure.
+# This links to the base requirements to support Dokku - herokuish builds.
 -r requirements/requirements.txt

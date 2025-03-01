@@ -1,12 +1,10 @@
 Django==4.1.*
 wagtail==5.0.*
 django-storages
-django-storages[azure]
 psycopg2-binary
 django-anymail
 six
 django-recaptcha>=4
-whitenoise
 python-dotenv
 puput
 urllib3
@@ -18,3 +16,4 @@ sentry-sdk[django]
 supervisor
 django-widget-tweaks
 dj-database-url
+gunicorn
