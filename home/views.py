@@ -1,22 +1,24 @@
-from __future__ import annotations
-
 from gettext import gettext
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models import Prefetch
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormMixin
+from django.views.generic.edit import ModelFormMixin
 from django.views.generic.list import ListView
 
 from .forms import CreateUserSurveyResponseForm
+from .forms import UserSurveyResponseForm
 from .models import Event
 from .models import Session
 from .models import Survey
+from .models import UserQuestionResponse
 from .models import UserSurveyResponse
+from .models import ResourceLink
 
 
 def event_calendar(request):
@@ -92,27 +94,38 @@ class SessionDetailView(DetailView):
     model = Session
     template_name = "home/prerelease/session_detail.html"
 
+    def get_queryset(self):
+        return Session.objects.with_applications(user=self.request.user)
+
 
 class SessionListView(ListView):
     model = Session
     template_name = "home/prerelease/session_list.html"
     context_object_name = "sessions"
 
+    def get_queryset(self):
+        return Session.objects.with_applications(user=self.request.user).order_by(
+            "-end_date"
+        )
 
-@method_decorator(login_required, name="dispatch")
-class CreateUserSurveyResponseFormView(FormMixin, DetailView):
+
+class CreateUserSurveyResponseFormView(
+    LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView
+):
     model = Survey
     object = None
     form_class = CreateUserSurveyResponseForm
     success_url = reverse_lazy("session_list")
     template_name = "home/surveys/form.html"
 
-    def dispatch(self, request, *args, **kwargs):
-        survey = self.get_object()
-        if UserSurveyResponse.objects.filter(survey=survey, user=request.user).exists():
-            messages.warning(request, gettext("You have already submitted."))
-            return redirect("session_list")
-        return super().dispatch(request, *args, **kwargs)
+    def test_func(self):
+        user = self.request.user
+        return (
+            user.profile.email_confirmed
+            and not UserSurveyResponse.objects.filter(
+                survey__slug=self.kwargs.get(self.slug_url_kwarg), user=user
+            ).exists()
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -136,3 +149,37 @@ class CreateUserSurveyResponseFormView(FormMixin, DetailView):
         else:
             messages.error(self.request, gettext("Something went wrong."))
             return self.form_invalid(form)
+
+
+class UserSurveyResponseView(
+    LoginRequiredMixin, UserPassesTestMixin, ModelFormMixin, DetailView
+):
+    model = UserSurveyResponse
+    form_class = UserSurveyResponseForm
+    success_url = reverse_lazy("session_list")
+    template_name = "home/surveys/form.html"
+
+    def get_queryset(self):
+        return UserSurveyResponse.objects.select_related("survey").prefetch_related(
+            Prefetch(
+                "userquestionresponse_set",
+                queryset=UserQuestionResponse.objects.select_related("question"),
+            )
+        )
+
+    def test_func(self):
+        return UserSurveyResponse.objects.filter(
+            user=self.request.user, id=self.kwargs.get(self.pk_url_kwarg)
+        ).exists()
+
+    def get_context_data(self, **kwargs):
+        survey = self.object.survey
+        kwargs["title_page"] = survey.name
+        kwargs["sub_title_page"] = survey.description
+        kwargs["read_only"] = True
+        context_data = super().get_context_data(**kwargs)
+        return context_data
+
+
+def resource_link(request, path):
+    return redirect(get_object_or_404(ResourceLink, path=path).url)

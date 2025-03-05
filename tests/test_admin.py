@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from http import HTTPStatus
 
 from django.contrib.admin.sites import AdminSite

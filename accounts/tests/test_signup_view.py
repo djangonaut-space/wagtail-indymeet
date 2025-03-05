@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from unittest.mock import patch
 
 from django.core import mail
@@ -50,9 +48,7 @@ class SignUpViewTests(TestCase):
             ),
         )
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(
-            mail.outbox[0].subject, "Djangonaut Space Registration Confirmation"
-        )
+        self.assertEqual(mail.outbox[0].subject, "Djangonaut Space Email Confirmation")
         self.assertIn(
             "Thank you for signing up to Djangonaut Space! Click the link to verify your email:",
             mail.outbox[0].body,

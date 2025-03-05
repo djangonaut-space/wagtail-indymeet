@@ -37,12 +37,12 @@
             <div class="blog_sidebar">
                 <div class="rss-sitemap">
                     <a href="{% feeds_url blog_page %}" target="_blank" title="RSS">
-                         <i class="fa fa-rss-square"></i> <span>{% trans 'Feed RSS' %}</span>
+                         <i class="fa-solid fa-square-rss"></i> <span>{% trans 'Feed RSS' %}</span>
                     </a>
                 </div>
                 <form name="search_form" class="flex search_form" method="get" action="{% routablepageurl blog_page 'entries_search' %}">
                     <input class="form-control me-2" type="search" name="q" aria-label="{% trans 'Search' %}" placeholder="{% trans 'Search' %}">
-                    <button class="btn btn-outline-success" type="submit"><i class="fa fa-search"></i></button>
+                    <button class="btn btn-outline-success" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
                 </form>
 
                 {% if blog_page.display_last_entries %}

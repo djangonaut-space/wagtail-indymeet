@@ -46,6 +46,7 @@
                             <i class="fa-solid fa-check"></i> {% translate "Yes" %}
                             {%  else %}
                             <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            {% include 'includes/resend_confirmation_email_button.html' %}
                             {% endif %}
                         </td>
                     </tr>

@@ -1,7 +1,19 @@
 {% load wagtailcore_tags %}
 <style>
-    ul.{{value.size}} ul {
-        list-style-type: {{value.size}} !important;
+    ul.{{value.style}} ul {
+        list-style-type: {{value.style}} !important;
     }
 </style>
-<ul class="pl-8 pb-4 {{value.size}}">{{ value.text|richtext }}</ul>
+
+<ul class="pl-8 pb-4 {{value.style}}">
+    {% for item in value.list_items %}
+    <li>
+        {% if item.icon %}<i class="{{ item.icon }}" style="color:{{item.color}};"></i>{% endif %}
+        {% if item.link %}
+            <a href="{{item.link}}">
+        {% endif %}
+            {{ item.text }}
+        {% if item.link %}</a>{% endif %}
+    </li>
+    {% endfor %}
+</ul>

@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import CustomUser
@@ -48,9 +47,9 @@ class Command(BaseCommand):
                 "application_end_date": applications_starting_today.application_end_date.strftime(
                     "%b %d, %Y"
                 ),
-                "cta_link": applications_starting_today.application_url,
+                "cta_link": applications_starting_today.get_application_url(),
                 "name": user.get_full_name(),
-                "unsubscribe_link": user.profile.create_unsubscribe_link(),
+                "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
             }
             send_mail(
                 "Djangonaut Space Program Applications Open",

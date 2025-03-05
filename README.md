@@ -144,7 +144,10 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    pip install -r requirements/requirements-dev.txt
    ```
-
+   set up the git hook scripts
+   ```sh
+   pre-commit install
+   ```
 5. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
    Copy in Linux:
    ```sh
@@ -245,10 +248,11 @@ If you have a suggestion that would make this better, please fork the repo and c
 Don't forget to give the project a star! Thanks again!
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. [Install pre-commit](https://pre-commit.com/#install) `pre-commit install`
+3. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+4. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+5. Push to the Branch (`git push origin feature/AmazingFeature`)
+6. Open a Pull Request
 
 
 ### Testing
@@ -323,7 +327,7 @@ PRs:
 
 This should be merged with a merge commit. Merging to `main` branch deploys to [https://djangonaut.space](https://djangonaut.space).
 
-Merging `feature/AmazingFeature` to `develop` deploys to [https://staging-djangonaut-space.azurewebsites.net/](https://staging-djangonaut-space.azurewebsites.net/)
+Merging `feature/AmazingFeature` to `develop` deploys to [https://staging.djangonaut.space/](https://staging.djangonaut.space/)
 
 `main` requires a linear commit history. This means if you make a change directly to `main`,
 the `develop` branch must be rebased on `main`. Committing directly to main should only

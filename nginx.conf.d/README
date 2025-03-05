@@ -1,0 +1,3 @@
+These files should exist on the server within:
+- /home/dokku/staging/nginx.conf.d/
+- /home/dokku/djangonaut-space/nginx.conf.d/

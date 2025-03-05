@@ -9,9 +9,8 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-from __future__ import annotations
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
 import dj_database_url
@@ -42,7 +41,7 @@ INSTALLED_APPS = [
     "wagtail.users",
     "wagtail.snippets",
     "wagtail.documents",
-    "wagtail.images",
+    "home.apps.CustomImagesAppConfig",
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
@@ -60,9 +59,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.forms",
-    # azure storage
-    "storages",
     # other
+    "storages",
     "tailwind",
     "theme",
     "widget_tweaks",
@@ -76,15 +74,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
-AZURE_IP = os.environ.get("AZURE_IP", False)
 
 INTERNAL_IPS = [
     "127.0.0.1",
-    AZURE_IP,
 ]
 
 ROOT_URLCONF = "indymeet.urls"
@@ -120,6 +115,16 @@ DATABASES = {
         conn_max_age=600,
         conn_health_checks=True,
     )
+}
+
+# Cache
+# Wagtail can benefit greatly from some caching to improve
+# performance.
+# https://docs.wagtail.org/en/stable/advanced_topics/performance.html#cache
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
 }
 
 
@@ -166,7 +171,6 @@ STATICFILES_FINDERS = [
 STATICFILES_DIRS = [
     os.path.join(PROJECT_DIR, "static"),
     os.path.join(BASE_DIR, "theme", "static"),
-    os.path.join(BASE_DIR, "theme", "static_src"),
 ]
 
 # ManifestStaticFilesStorage is recommended in production, to prevent outdated
@@ -177,14 +181,14 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
     },
 }
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "/static/"
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 MEDIA_URL = "/media/"
 
 
@@ -202,7 +206,7 @@ WAGTAILSEARCH_BACKENDS = {
 
 # Base URL to use when referring to full URLs within the Wagtail admin backend -
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-WAGTAILADMIN_BASE_URL = "http://example.com"
+WAGTAILADMIN_BASE_URL = "https://djangonaut.space"
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 

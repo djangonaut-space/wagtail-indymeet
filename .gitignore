@@ -11,10 +11,10 @@ __pycache__
 mediafiles/*
 media/*
 .env
-.python-version
 dist/
 
 staticfiles/*
+mediafiles/*
 
 # dependencies
 node_modules

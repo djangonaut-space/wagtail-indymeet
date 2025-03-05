@@ -1,0 +1,26 @@
+{% load wagtailcore_tags wagtailimages_tags %}
+<div class="flex md:flex-wrap place-content-center">
+{% for child in self %}
+<div class="max-w-sm flex-initial w-80 rounded overflow-hidden shadow-lg my-3 mx-3 ">
+    {% if child.value.link %}
+        <a class="text-black" href="{{ child.value.link }}">
+    {% endif %}
+    {% image child.value.image fill-800x450-c100 as image %}
+    <figure class="overlay">
+        <img class="w-full" src="{{ image.url }}" alt="{{ child.value.image.title }}"/>
+    </figure>
+    {% if child.value.link %}
+        </a>
+    {% endif %}
+    <div class="px-6 py-4">
+      <div class="font-bold mb-2">{{ child.value.caption.text }}</div>
+      <p class="text-gray-700 text-base">
+        {{ child.value.description }}
+      </p>
+    </div>
+    <div class="px-6 pt-4 pb-2">
+    </div>
+  </div>
+{% endfor %}
+
+</div>

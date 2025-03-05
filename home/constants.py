@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 DATE_INPUT_FORMAT = ["%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y", "%d/%m/%y", "%d/%m/%Y"]
 
 SURVEY_FIELD_VALIDATORS = {
