@@ -25,17 +25,17 @@ repos:
   hooks:
   - id: sphinx-lint
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.0
+  rev: v3.19.1
   hooks:
   - id: pyupgrade
     args: [--py311-plus]
 - repo: https://github.com/adamchainz/django-upgrade
-  rev: 1.22.1
+  rev: 1.24.0
   hooks:
   - id: django-upgrade
     args: [--target-version, '4.2']
 - repo: https://github.com/psf/black
-  rev: 24.10.0
+  rev: 25.1.0
   hooks:
   - id: black
 - repo: https://github.com/adamchainz/blacken-docs
@@ -45,7 +45,7 @@ repos:
     additional_dependencies:
     - black==24.10.0
 - repo: https://github.com/PyCQA/flake8
-  rev: 7.1.1
+  rev: 7.2.0
   hooks:
   - id: flake8
     additional_dependencies:
