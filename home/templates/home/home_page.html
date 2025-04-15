@@ -24,10 +24,14 @@
         <button type="submit" class="btn btn-outline-primary">Register</button>
     </form> {% endcomment %}
 </main>
-<footer class="landing-page-footer text-base text-white">
+<footer class="landing-page-footer text-base text-white items-center mt-2 md:mt-0 flex flex-col md:flex-row justify-evenly space-y-3 md:space-y-0">
     <span class="design-credits">Djangonaut Space. Designed by <a class='text-white' href='https://hope-adoli.netlify.app/'>Hope Adoli</a></span>
     <a class='text-white' href="https://github.com/djangonaut-space/program/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a>
-    <div class="p-3 flex gap-2 social-links">
+     <div class="scale-75 md:scale-50 -my-4 -mx-10">
+        <webring-css site="https://djangonaut.space"></webring-css>
+        <script src="https://djangowebring.com/static/webring.js"></script>
+    </div>
+    <div class="flex gap-2 social-links">
         <a class="outline-link twitter" href="https://twitter.com/djangonautspace" target="_blank" aria-label="Twitter">
             <i class="fa-brands fa-twitter" aria-hidden="true"></i>
         </a>
@@ -48,9 +52,6 @@
         </a>
     </div>
 </footer>
-<div class="z-10">
-    <webring-css site="https://djangonaut.space"></webring-css>
-    <script src="https://djangowebring.com/static/webring.js"></script>
-</div>
-<div id="particules-js" class="absolute w-[100%] h-[100%]"></div>
+
+<div id="particules-js" class="absolute w-[100%] h-[100%] "></div>
 {% endblock content %}

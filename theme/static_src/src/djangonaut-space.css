@@ -115,11 +115,11 @@
 }
 
 .landing-page-footer {
-    display: flex;
+
     align-items: center;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin: 0 2em;
+
+
+
     padding: 10px 0;
     width: calc(100% - 4em);
     color: white;
