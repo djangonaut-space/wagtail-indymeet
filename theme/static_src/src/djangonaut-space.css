@@ -89,14 +89,14 @@
     color: white;
 }
 
-.landing-page::after {
+.landing-page-overlay::after {
     content: "";
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
     right: 0;
-    background: linear-gradient(180deg, rgba(14, 16, 11, 0.00) 0%, rgba(14, 16, 11, 0.89) 55.29%);
+    background: linear-gradient(180deg, rgba(14, 16, 11, 0.00) 0%, rgba(14, 16, 11, 0.89) 50%);
     width: 100%;
     height: 100%;
     z-index: -1;
