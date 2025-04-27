@@ -1,13 +1,16 @@
 from django.contrib import admin
+from django.db.models import F
 from django.urls import reverse
-from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from .models import Event, ResourceLink
+from .models import Event
+from .models import ResourceLink
 from .models import Question
 from .models import Session
 from .models import SessionMembership
 from .models import Survey
+from .models import UserQuestionResponse
+from .models import UserSurveyResponse
 
 
 @admin.register(Event)
@@ -76,3 +79,81 @@ class SurveyAdmin(admin.ModelAdmin):
         "deletable",
         "session",
     )
+
+
+@admin.register(UserQuestionResponse)
+class UserQuestionResponseAdmin(admin.ModelAdmin):
+    model = UserQuestionResponse
+    list_filter = ["user_survey_response__survey__name"]
+    list_display = [
+        "survey_name",
+        "question_label",
+        "user_email",
+        "created_at",
+    ]
+    raw_id_fields = [
+        "question",
+        "user_survey_response",
+    ]
+    search_fields = [
+        "question__label",
+        "user_survey_response__user__email",
+        "user_survey_response__user__first_name",
+        "user_survey_response__user__last_name",
+    ]
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                annotated_survey_name=F("user_survey_response__survey__name"),
+                annotated_question_label=F("question__label"),
+                annotated_user_email=F("user_survey_response__user__email"),
+            )
+        )
+
+    def survey_name(self, obj):
+        return obj.annotated_survey_name
+
+    def question_label(self, obj):
+        return obj.annotated_question_label
+
+    def user_email(self, obj):
+        return obj.annotated_user_email
+
+
+@admin.register(UserSurveyResponse)
+class UserSurveyResponse(admin.ModelAdmin):
+    model = UserSurveyResponse
+    raw_id_fields = [
+        "user",
+        "survey",
+    ]
+    list_display = [
+        "survey_name",
+        "user_email",
+        "created_at",
+    ]
+    list_filter = ["survey__name"]
+    search_fields = [
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+    ]
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                annotated_survey_name=F("survey__name"),
+                annotated_user_email=F("user__email"),
+            )
+        )
+
+    def survey_name(self, obj):
+        return obj.annotated_survey_name
+
+    def user_email(self, obj):
+        return obj.annotated_user_email
