@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db.models import F
+from django.db.models import F, Max, Count
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
@@ -79,6 +79,40 @@ class SurveyAdmin(admin.ModelAdmin):
         "deletable",
         "session",
     )
+    readonly_fields = (
+        "slug",
+        "created_at",
+        "updated_at",
+    )
+    list_display = [
+        "name",
+        "slug",
+        "link",
+        "responses",
+        "latest_response",
+    ]
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                annotated_responses_count=Count(
+                    "usersurveyresponse__user_id", distinct=True
+                ),
+                annotated_latest_response=Max("usersurveyresponse__created_at"),
+            )
+        )
+
+    def link(self, obj):
+        url = obj.get_survey_response_url()
+        return mark_safe(f'<a href="{url}">Copy to share</a>')
+
+    def responses(self, obj):
+        return getattr(obj, "annotated_responses_count", None)
+
+    def latest_response(self, obj):
+        return getattr(obj, "annotated_latest_response", None)
 
 
 @admin.register(UserQuestionResponse)
