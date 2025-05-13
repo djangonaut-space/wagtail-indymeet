@@ -21,6 +21,9 @@
           <p><strong>End:</strong> {{ event.end_time|date:"M d, Y H:i e" }}</p>
           {% endlocaltime %}
           <p><strong>Location:</strong> {{ event.location|urlizetrunc:25 }}</p>
+          {% if event.video_link %}
+            <p><strong>Video:</strong> <a href="{{ event.video_link }}" target="_blank">Watch on YouTube</a></p>
+          {% endif %}
           <br>
           <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>
       </div>

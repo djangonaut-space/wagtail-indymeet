@@ -61,7 +61,7 @@ class Event(ClusterableModel):
         related_name="events",
         on_delete=models.SET_NULL,
     )
-
+    video_link = models.URLField(blank=True, default="")
     objects = EventQuerySet.as_manager()
 
     def __str__(self):
