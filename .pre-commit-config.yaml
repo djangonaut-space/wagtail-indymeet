@@ -14,7 +14,7 @@ repos:
   - id: end-of-file-fixer
   - id: trailing-whitespace
 - repo: https://github.com/rstcheck/rstcheck
-  rev: v6.2.4
+  rev: v6.2.5
   hooks:
   - id: rstcheck
     additional_dependencies:
@@ -25,12 +25,12 @@ repos:
   hooks:
   - id: sphinx-lint
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.1
+  rev: v3.20.0
   hooks:
   - id: pyupgrade
     args: [--py311-plus]
 - repo: https://github.com/adamchainz/django-upgrade
-  rev: 1.24.0
+  rev: 1.25.0
   hooks:
   - id: django-upgrade
     args: [--target-version, '4.2']
@@ -45,7 +45,7 @@ repos:
     additional_dependencies:
     - black==24.10.0
 - repo: https://github.com/PyCQA/flake8
-  rev: 7.2.0
+  rev: 7.3.0
   hooks:
   - id: flake8
     additional_dependencies:
