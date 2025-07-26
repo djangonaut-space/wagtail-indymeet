@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from .views import CreateUserSurveyResponseFormView
 from .views import resource_link
@@ -30,4 +31,11 @@ urlpatterns = [
         name="user_survey_response",
     ),
     path("resource/<path:path>", resource_link, name="resource_link"),
+    path(
+        "contribute/opportunities/",
+        TemplateView.as_view(
+            template_name="home/opportunities.html", extra_context={"blog_page": True}
+        ),
+        name="opportunities",
+    ),
 ]

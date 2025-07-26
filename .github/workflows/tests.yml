@@ -45,3 +45,6 @@ jobs:
 
       - name: Run tests
         run: pytest
+
+      - name: Run playwright tests
+        run: pytest -m playwright
