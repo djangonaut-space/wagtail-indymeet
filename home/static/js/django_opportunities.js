@@ -1,38 +1,39 @@
 const django_contribution_opportunities = [
   {
     "name": "Google Summer of Code - Mentee",
-    "type": "mentorship",
-    "tags": ["mentorship", "gsoc", "django/django", "paid"],
+    "type": "code",
+    "tags": ["mentorship", "gsoc", "paid"],
     "requirements": [
-      "Student status or equivalent",
       "Some Django experience",
       "Completed Django tutorial",
+      "Available for 175+ hour project over 12+ weeks",
       "Some open source contribution experience preferred"
     ],
     "outcomes": [
       "technical knowledge",
       "django domain knowledge",
       "mentorship experience",
-      "paid summer internship ($3000-6000 USD)",
+      "paid internship",
       "community engagement",
       "career development"
     ],
     "links": [
-      "https://code.djangoproject.com/wiki/SummerOfCode2025",
+      "https://code.djangoproject.com/search?q=google+summer+of+code&noquickjump=1&wiki=on",
       "https://summerofcode.withgoogle.com/",
-      "https://forum.djangoproject.com/t/call-for-project-ideas-and-prospective-mentors-for-gsoc-2025/38017"
+      "https://developers.google.com/open-source/gsoc/help/student-advice",
+      "https://developers.google.com/open-source/gsoc/resources/guide#student_guide"
     ],
-    "description": "Django is a mentor organization for the 2025 Google Summer of Code. Students work on 175hr or 350hr projects over 12+ weeks under mentor guidance. Student application period runs until April 8, 2025. Projects can include Django core improvements, new features, or related tools that benefit the Django ecosystem."
+    "description": "Contribute to the Django ecosystem with a mentor. Students typically work on 175hr or 350hr projects over 12+ weeks under mentor guidance. Applications for the year typically close in April. Projects can include Django core improvements, new features, or related tools that benefit the Django ecosystem."
   },
   {
     "name": "Google Summer of Code - Mentor",
-    "type": "mentorship",
-    "tags": ["mentorship", "gsoc", "django/django", "volunteer"],
+    "type": "code",
+    "tags": ["mentorship", "gsoc"],
     "requirements": [
-      "Significant Django experience",
+      "Regular Django contributor",
       "Some experience with Django core or ecosystem",
       "Available for regular mentoring sessions over 12+ weeks",
-      "Good communication skills"
+      "Communication skills"
     ],
     "outcomes": [
       "mentorship skills",
@@ -42,18 +43,17 @@ const django_contribution_opportunities = [
       "leadership experience"
     ],
     "links": [
-      "https://code.djangoproject.com/wiki/SummerOfCode2025",
-      "https://forum.djangoproject.com/t/call-for-project-ideas-and-prospective-mentors-for-gsoc-2025/38017"
+      "https://code.djangoproject.com/search?q=google+summer+of+code&noquickjump=1&wiki=on",
+      "https://developers.google.com/open-source/gsoc/resources/mentors",
     ],
-    "description": "Django's GSoC program is being coordinated by Bhuvnesh Sharma. Mentors guide students through their 12+ week projects, providing technical guidance and support. Contact the forum thread if interested in mentoring."
+    "description": "Mentors guide students through their 12+ week projects, providing technical guidance and support. If you're interested in mentoring a project, start a Forum thread today to get involved the upcoming GSoC."
   },
   {
     "name": "Google Summer of Code - Admin",
-    "type": "administration",
-    "tags": ["mentorship", "gsoc", "administration", "volunteer"],
+    "type": "community",
+    "tags": ["community organizing", "gsoc"],
     "requirements": [
-      "Significant Django community experience",
-      "Strong organizational skills",
+      "Organizational skills",
       "Available for program coordination",
       "Previous GSoC experience preferred"
     ],
@@ -61,68 +61,70 @@ const django_contribution_opportunities = [
       "leadership experience",
       "program management skills",
       "community engagement",
-      "supporting new contributors"
+      "supporting new contributors",
+      "community organizing skills"
     ],
     "links": [
-      "https://code.djangoproject.com/wiki/SummerOfCode2025"
+      "https://code.djangoproject.com/search?q=google+summer+of+code&noquickjump=1&wiki=on",
+      "https://developers.google.com/open-source/gsoc/resources",
     ],
-    "description": "Admins coordinate Django's participation in GSoC, managing the application process, mentor coordination, and student selection. This is a key organizational role within the Django community."
+    "description": "Admins coordinate Django's participation in GSoC, managing the application process, mentor coordination, and student selection. This is a key organizational role within the Django community. The role involves a lot of tracking people down and getting answers. If you're interested, start a Forum thread today to get involved the upcoming GSoC."
   },
   {
-    "name": "Djangonaut Space - Mentee (Djangonaut)",
-    "type": "mentorship",
-    "tags": ["mentorship", "djangonaut-space", "django/django", "free"],
+    "name": "Djangonaut Space - Djangonaut (Mentee)",
+    "type": "code",
+    "tags": ["mentorship", "djangonaut-space"],
     "requirements": [
-      "Some Django experience",
+      "Completed contributing to Django tutorial",
       "Completed Django tutorial recommended",
       "Available for 5+ hours per week for 8 weeks",
-      "Willingness to engage in group learning"
     ],
     "outcomes": [
       "technical knowledge",
       "django domain knowledge",
       "community engagement",
       "improved programming skills",
-      "feedback on your code",
-      "peer learning experience"
+      "communication skills",
     ],
     "links": [
-      "https://djangonaut.space/",
-      "https://djangonaut.space/sessions/2025-session-4/",
-      "https://djangonaut.space/comms/2025-opening-session-4/"
+      "https://djangonaut.space/sessions/",
+      "https://github.com/djangonaut-space/program/blob/main/README.md",
+      "https://github.com/djangonaut-space/program/blob/main/djangonauts.md",
+      "https://djangonaut.space/comms/2024/06/25/djangonaut-selection-process/",
     ],
-    "description": "Djangonaut Space is a free, 8-week group mentoring program where individuals work self-paced in a semi-structured learning environment. This session will start on February 17th, 2025. Participants work in teams of 3-4 with mentors on Django core or third-party packages."
+    "description": "Contribute to the Django ecosystem with a mentor. Djangonaut Space is a free, 8-week group mentoring program where individuals work self-paced in a semi-structured learning environment. There are multiple sessions each year."
   },
   {
-    "name": "Djangonaut Space - Navigator (Mentor)",
-    "type": "mentorship",
-    "tags": ["mentorship", "djangonaut-space", "volunteer"],
+    "name": "Djangonaut Space - Navigator (technical mentor)",
+    "type": "code",
+    "tags": ["mentorship", "djangonaut-space"],
     "requirements": [
-      "Significant Django experience",
-      "Some Django contribution experience",
+      "Regular contributor to Django or a Django package",
       "Available for weekly mentoring sessions for 8 weeks",
-      "Patience and teaching ability"
+      "Communication skills"
     ],
     "outcomes": [
       "mentorship skills",
       "community engagement",
       "supporting new contributors",
+      "django domain knowledge",
       "leadership experience"
     ],
     "links": [
-      "https://djangonaut.space/",
-      "https://github.com/djangonaut-space/program"
+      "https://buttondown.com/djangonaut-space",
+      "https://djangonaut.space/sessions/",
+      "https://github.com/djangonaut-space/program/blob/main/README.md",
+      "https://github.com/djangonaut-space/program/blob/main/navigators.md",
     ],
-    "description": "Navigators guide them on their contributing journey. A Navigator coaches a small group of 3-4 Djangonauts and attends weekly check-ins. Contact contact@djangonaut.space to express interest in mentoring."
+    "description": "Navigators guide Djangonauts (mentees) on their contributing journey. A Navigator coaches a small group Djangonauts and attends weekly check-ins. Contact contact@djangonaut.space to express interest in mentoring."
   },
   {
-    "name": "Djangonaut Space - Captain",
-    "type": "mentorship",
-    "tags": ["mentorship", "djangonaut-space", "pastoral-care", "volunteer"],
+    "name": "Djangonaut Space - Captain (community mentor)",
+    "type": "community",
+    "tags": ["mentorship", "djangonaut-space"],
     "requirements": [
       "Django community experience",
-      "Strong interpersonal skills",
-      "Available for one-on-one sessions",
+      "Available for weekly mentoring sessions for 8 weeks",
       "Empathy and supportiveness"
     ],
     "outcomes": [
@@ -132,16 +134,40 @@ const django_contribution_opportunities = [
       "pastoral care experience"
     ],
     "links": [
-      "https://djangonaut.space/"
+      "https://djangonaut.space/",
+      "https://github.com/djangonaut-space/program/blob/main/README.md",
+      "https://github.com/djangonaut-space/program/blob/main/captains.md",
     ],
-    "description": "Captains organize one to one sessions with Djangonauts to provide extra pastoral support and encouragement. They bring the warmth of the Django community to the program."
+    "description": "Captains organize one to one sessions with Djangonauts to provide extra pastoral support and encouragement. They bring the warmth of the Django community to the program. This role is typically filled by previous Djangonauts."
   },
   {
-    "name": "Djangonaut Space - Organizer/Admin",
-    "type": "administration",
-    "tags": ["mentorship", "djangonaut-space", "administration", "volunteer"],
+    "name": "Djangonaut Space - Session Organizer",
+    "type": "community",
+    "tags": ["mentorship", "djangonaut-space", "administration"],
     "requirements": [
-      "Significant Django community experience",
+      "Django community experience",
+      "Available for organizing a session for 16 weeks",
+      "Empathy and supportiveness",
+      "Outgoing for the duration of the session"
+    ],
+    "outcomes": [
+      "leadership experience",
+      "program management skills",
+      "community building",
+      "organizational skills"
+    ],
+    "links": [
+      "https://djangonaut.space/",
+      "https://buttondown.com/djangonaut-space",
+    ],
+    "description": "Session Organizers conduct and manage a single session of Djangonaut Space. They are responsible for coordinating and supporting Navigators, Captains, and Djangonauts. Contact contact@djangonaut.space to express interest in organizing."
+  },
+  {
+    "name": "Djangonaut Space - Advisor",
+    "type": "community",
+    "tags": ["mentorship", "djangonaut-space", "administration"],
+    "requirements": [
+      "Django community experience",
       "Strong organizational skills",
       "Program management experience preferred",
       "Commitment to diversity and inclusion"
@@ -154,14 +180,38 @@ const django_contribution_opportunities = [
     ],
     "links": [
       "https://djangonaut.space/",
-      "https://opencollective.com/djangonaut-space"
+      "https://github.com/djangonaut-space/program/blob/main/docs/governance.md",
+      "https://buttondown.com/djangonaut-space",
     ],
-    "description": "Organizers coordinate the overall Djangonaut Space program, manage applications, match mentors with mentees, and ensure the program runs smoothly."
+    "description": "Advisors provide support to the overall Djangonaut Space program. They help facilitate the community and vibe. Contact contact@djangonaut.space to express interest in being an administrator."
+  },
+  {
+    "name": "Djangonaut Space - Admin",
+    "type": "community",
+    "tags": ["mentorship", "djangonaut-space", "administration"],
+    "requirements": [
+      "Django community experience",
+      "Strong organizational skills",
+      "Program management experience preferred",
+      "Commitment to diversity and inclusion"
+    ],
+    "outcomes": [
+      "leadership experience",
+      "program management skills",
+      "community building",
+      "organizational skills"
+    ],
+    "links": [
+      "https://djangonaut.space/",
+      "https://github.com/djangonaut-space/program/blob/main/docs/governance.md",
+      "https://buttondown.com/djangonaut-space",
+    ],
+    "description": "Admins coordinate the overall Djangonaut Space program, kickstart sessions, support Organizers, Navigators, Captains, and Djangonauts. Contact contact@djangonaut.space to express interest in being an administrator."
   },
   {
     "name": "Django code contributions",
     "type": "code",
-    "tags": ["code", "django/django"],
+    "tags": ["code", "django core"],
     "requirements": [
       "Completed Django tutorial",
       "Completed Contributing to Django tutorial"
@@ -185,7 +235,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django code triaging",
     "type": "code",
-    "tags": ["code", "django/django"],
+    "tags": ["code", "django core"],
     "requirements": [
       "Completed Django tutorial",
       "Completed Contributing to Django tutorial",
@@ -207,7 +257,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django code reviews",
     "type": "code",
-    "tags": ["code", "django/django"],
+    "tags": ["code", "django core"],
     "requirements": [
       "Some understanding of Django",
       "Some experience writing software"
@@ -229,7 +279,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django translations",
     "type": "code",
-    "tags": ["code", "django/django"],
+    "tags": ["code", "django core"],
     "requirements": [
       "Some understanding of Django",
       "Some experience writing software"
@@ -249,7 +299,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django new features",
     "type": "code",
-    "tags": ["code", "django/django"],
+    "tags": ["code", "django core"],
     "requirements": [
       "Some understanding of Django",
       "Some experience building Django applications"
@@ -267,128 +317,123 @@ const django_contribution_opportunities = [
     "description": "Help determine Django's roadmap by contributing new ideas and providing feedback on others."
   },
   {
-    "name": "Django Packages - Contributor",
-    "type": "documentation",
-    "tags": ["documentation", "third-party", "django-packages"],
+    "name": "Django Packages",
+    "type": "code",
+    "tags": ["code", "third-party", "django-packages"],
     "requirements": [
       "Some Django experience",
-      "Familiarity with Django ecosystem"
     ],
     "outcomes": [
-      "community engagement",
-      "documentation skills",
-      "django ecosystem knowledge"
+      "technical knowledge",
+      "improved programming skills",
+      "feedback on your code",
+      "community engagement"
     ],
     "links": [
-      "https://djangopackages.org/"
+      "https://djangopackages.org/",
+      "https://github.com/djangopackages/djangopackages/",
     ],
-    "description": "Help maintain the comprehensive directory of Django packages by adding new packages, updating descriptions, and improving package information."
+    "description": "Help maintain the project that provides a comprehensive directory of Django packages."
   },
   {
     "name": "Jazzband - Member",
     "type": "code",
-    "tags": ["code", "third-party", "jazzband", "collaborative"],
-    "requirements": [
-      "Python/Django development experience",
-      "Open source contribution experience",
-      "Collaborative mindset"
-    ],
+    "tags": ["code", "third-party", "jazzband"],
+    "requirements": [],
     "outcomes": [
       "technical knowledge",
-      "collaborative development skills",
+      "community engagement",
+      "improved technical communication",
       "package maintenance experience",
-      "community engagement"
     ],
     "links": [
       "https://jazzband.co/"
     ],
-    "description": "Jazzband is a collaborative community that maintains Django and Python packages. Members collectively maintain popular packages that would otherwise become unmaintained."
+    "description": "Jazzband is a collaborative community that maintains Django and Python packages. Members collectively maintain popular packages that would otherwise become unmaintained. It's free to join and open to everyone."
   },
   {
     "name": "Django Commons - Member",
     "type": "code",
-    "tags": ["code", "third-party", "django-commons", "collaborative"],
+    "tags": ["code", "third-party", "django-commons",],
     "requirements": [
-      "Python/Django development experience",
-      "Package maintenance interest",
-      "Collaborative approach"
+        "GitHub account with some history or social media account"
     ],
     "outcomes": [
       "technical knowledge",
-      "package maintenance experience",
       "community engagement",
-      "collaborative development skills"
+      "improved technical communication",
+      "package maintenance experience",
     ],
     "links": [
-      "https://django-commons.github.io/"
+      "https://django-commons.org/",
+      "https://github.com/django-commons/membership/issues/new/choose",
+      "https://github.com/django-commons/membership/",
     ],
-    "description": "Django Commons provides a collaborative space for maintaining Django packages, similar to Jazzband but with different governance structure."
+    "description": "Django Commons provides a collaborative space for maintaining Django packages. It's free to join and open to everyone."
   },
   {
-    "name": "Code of Conduct Working Group - Member",
-    "type": "governance",
-    "tags": ["governance", "code-of-conduct", "sensitive"],
+    "name": "Django Commons - Admin",
+    "type": "community",
+    "tags": ["third-party", "django-commons", "administration"],
     "requirements": [
-      "Significant Django community experience",
-      "Understanding of community dynamics",
-      "Discretion and professionalism",
-      "Board approval required"
+        "Django Software Foundation individual member",
+        "Contributed to discussions positively benefiting Django Commons",
     ],
     "outcomes": [
-      "community safety",
-      "governance experience",
+      "leadership experience",
+      "program management skills",
+      "community building",
+      "organizational skills"
+    ],
+    "links": [
+      "https://django-commons.org/governance/#admin-team",
+      "https://django-commons.org/",
+      "https://github.com/django-commons/membership/issues/new/choose",
+    ],
+    "description": "Admins coordinate and support the Django Commons organization. They retain permissions to manage all teams across platforms. People interested in being an admin are able to open an issue to volunteer, but admins are selected by the existing admin team."
+  },
+  {
+    "name": "Code of Conduct Working Group",
+    "type": "community",
+    "tags": ["governance", "code-of-conduct", "working group"],
+    "requirements": [
+    ],
+    "outcomes": [
       "conflict resolution skills",
       "community building"
     ],
     "links": [
-      "https://github.com/django/dsf-working-groups/blob/main/active/code-of-conduct.md"
+      "https://github.com/django/dsf-working-groups/blob/main/active/code-of-conduct.md",
+      "https://github.com/django/code-of-conduct",
     ],
-    "description": "Handles reports of violations to the Django Code of Conduct. This is a sensitive role requiring board approval for membership."
+    "description": "Handles reports of violations to the Django Code of Conduct. To volunteer to join the working group, email conduct@djangoproject.com and express your interest."
   },
   {
-    "name": "DjangoCon Europe Support Working Group - Member",
-    "type": "events",
-    "tags": ["events", "djangocon-europe", "support"],
-    "requirements": [
-      "Event organization experience preferred",
-      "Available for supporting conference organizers",
-      "European timezone preferred but not required"
-    ],
-    "outcomes": [
-      "event management skills",
-      "community support",
-      "conference organization experience"
-    ],
+    "name": "DjangoCon Europe Support Working Group",
+    "type": "community",
+    "tags": ["events", "djangocon", "support", "working group"],
+    "requirements": [],
+    "outcomes": [],
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/dceu.md"
     ],
-    "description": "Supports the organizers of DjangoCon Europe. Provides assistance and resources to help ensure successful European Django conferences."
+    "description": "Supports organizers of DjangoCon Europe. Provides assistance and resources to help ensure successful European Django conferences. Questions about membership can be directed to european-organizers-support@djangoproject.com. Contact the board to express interest at https://www.djangoproject.com/contact/foundation/."
   },
   {
-    "name": "Fellowship Working Group - Member",
+    "name": "Fellowship Working Group",
     "type": "governance",
-    "tags": ["governance", "fellowship", "hiring"],
-    "requirements": [
-      "Engineering management experience preferred",
-      "Django community experience",
-      "Board approval required",
-      "Available for hiring processes"
-    ],
-    "outcomes": [
-      "management experience",
-      "hiring skills",
-      "governance experience",
-      "community leadership"
-    ],
+    "tags": ["governance", "fellowship", "hiring", "working group"],
+    "requirements": [],
+    "outcomes": [],
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/fellowship.md"
     ],
-    "description": "Manages the Django Fellowship program, including evaluating candidates for Fellow positions and maintaining the fellowship program documentation."
+    "description": "Manages the Django Fellowship program, including evaluating candidates for Fellow positions and maintaining the fellowship program documentation. Contact the board to express interest at https://www.djangoproject.com/contact/foundation/."
   },
   {
     "name": "Django Fellow",
     "type": "fellowship",
-    "tags": ["fellowship", "django/django", "paid", "full-time"],
+    "tags": ["fellowship", "django core", "paid"],
     "requirements": [
       "Significant Django core development experience",
       "Strong technical judgment and communication skills",
@@ -411,9 +456,9 @@ const django_contribution_opportunities = [
     "description": "Django Fellows are paid full-time contributors who work on Django core development, triage, releases, and community support. Currently includes Sarah Boyce and others. Fellows receive competitive compensation and travel budget for conferences."
   },
   {
-    "name": "Django Security Team - Member",
-    "type": "security",
-    "tags": ["security", "django/django", "invitation-only", "sensitive"],
+    "name": "Django Security Team",
+    "type": "code",
+    "tags": ["security", "django core", "code"],
     "requirements": [
       "Significant Django core development experience",
       "Security expertise and background",
@@ -435,9 +480,9 @@ const django_contribution_opportunities = [
     "description": "The Django Security Team handles security reports, coordinates security patches, and manages the responsible disclosure process. This is a high-trust, invitation-only role that protects the Django ecosystem from security vulnerabilities."
   },
   {
-    "name": "Fundraising Working Group - Member",
+    "name": "Fundraising Working Group",
     "type": "fundraising",
-    "tags": ["fundraising", "corporate-relations", "sustainability"],
+    "tags": ["fundraising", "corporate-relations", "sustainability", "working group"],
     "requirements": [
       "Fundraising experience preferred",
       "Corporate relations experience helpful",
@@ -455,9 +500,9 @@ const django_contribution_opportunities = [
     "description": "Coordinates fundraising efforts, particularly around corporate and major donations. The Social Media and Fundraising Working Groups are real bright spots with exciting energy and new contributors."
   },
   {
-    "name": "Online Community Working Group - Member",
+    "name": "Online Community Working Group",
     "type": "community",
-    "tags": ["community", "moderation", "platforms"],
+    "tags": ["community", "moderation", "working group"],
     "requirements": [
       "Community management experience",
       "Understanding of online platform dynamics",
@@ -475,9 +520,9 @@ const django_contribution_opportunities = [
     "description": "Support the official community platforms and those in elevated roles on those platforms. Manages Discord, Forum, and other community spaces."
   },
   {
-    "name": "Social Media Working Group - Member",
-    "type": "communication",
-    "tags": ["social-media", "communication", "marketing"],
+    "name": "Social Media Working Group",
+    "type": "community",
+    "tags": ["social-media", "communication", "marketing", "working group"],
     "requirements": [
       "Social media experience",
       "Understanding of Django community",
@@ -496,9 +541,9 @@ const django_contribution_opportunities = [
     "description": "Manages Django's official social media profiles. The creation of the social media working group is a good example of our commitment to treat our communication efforts more seriously."
   },
   {
-    "name": "Website Working Group - Member",
-    "type": "website",
-    "tags": ["website", "django/djangoproject.com", "code"],
+    "name": "Website Working Group",
+    "type": "code",
+    "tags": ["website", "code", "working group"],
     "requirements": [
       "Web development experience",
       "Django experience preferred",
@@ -680,7 +725,7 @@ const django_contribution_opportunities = [
   {
     "name": "Steering Council - Member",
     "type": "governance",
-    "tags": ["governance", "technical-leadership", "django/django", "elected"],
+    "tags": ["governance", "technical-leadership", "django core", "elected"],
     "requirements": [
       "Significant Django core development experience",
       "Strong technical judgment",
@@ -701,7 +746,7 @@ const django_contribution_opportunities = [
   {
     "name": "Accessibility Team - Member",
     "type": "accessibility",
-    "tags": ["accessibility", "inclusion", "django/django"],
+    "tags": ["accessibility", "inclusion", "django core"],
     "requirements": [
       "Accessibility knowledge and experience",
       "Understanding of web accessibility standards",
@@ -723,7 +768,7 @@ const django_contribution_opportunities = [
   {
     "name": "Merger Team - Member",
     "type": "code",
-    "tags": ["code", "django/django", "git", "invitation-only"],
+    "tags": ["code", "django core", "git", "invitation-only"],
     "requirements": [
       "Significant Django core contribution experience",
       "Strong understanding of Django codebase",
@@ -763,7 +808,7 @@ const django_contribution_opportunities = [
   {
     "name": "Releaser Team - Member",
     "type": "releases",
-    "tags": ["releases", "django/django", "invitation-only"],
+    "tags": ["releases", "django core", "invitation-only"],
     "requirements": [
       "Deep Django core knowledge",
       "Understanding of release processes",
@@ -784,7 +829,7 @@ const django_contribution_opportunities = [
   {
     "name": "Triage & Review Team - Member",
     "type": "code",
-    "tags": ["code", "django/django", "triage", "review"],
+    "tags": ["code", "django core", "triage", "review"],
     "requirements": [
       "Django development experience",
       "Understanding of Django codebase",
@@ -805,7 +850,7 @@ const django_contribution_opportunities = [
   {
     "name": "DjangoCon US - Organizer",
     "type": "events",
-    "tags": ["events", "djangocon-us", "conference", "volunteer"],
+    "tags": ["events", "djangocon-us", "conference"],
     "requirements": [
       "Event organization experience",
       "Available for year-long planning",
@@ -847,7 +892,7 @@ const django_contribution_opportunities = [
   {
     "name": "DjangoCon Europe - Organizer",
     "type": "events",
-    "tags": ["events", "djangocon-europe", "conference", "volunteer"],
+    "tags": ["events", "djangocon", "conference"],
     "requirements": [
       "Event organization experience",
       "European location helpful",
@@ -867,7 +912,7 @@ const django_contribution_opportunities = [
   {
     "name": "Regional DjangoCon - Organizer",
     "type": "events",
-    "tags": ["events", "regional-conference", "volunteer"],
+    "tags": ["events", "regional-conference"],
     "requirements": [
       "Local event organization experience",
       "Regional Django community knowledge",
