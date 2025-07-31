@@ -68,7 +68,7 @@ class TestDjangoOpportunities:
         page.wait_for_timeout(300)
 
         # Look for autocomplete suggestions
-        autocomplete_items = page.locator(".autocomplete-item")
+        autocomplete_items = page.locator(".suggestion-item")
         assert autocomplete_items.count()
         first_suggestion = autocomplete_items.first
         suggestion_text = first_suggestion.inner_text()

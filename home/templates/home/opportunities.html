@@ -62,7 +62,7 @@
                          class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-lg max-h-48 overflow-y-auto z-10 autocomplete-dropdown"
                          x-transition>
                         <template x-for="suggestion in suggestions" :key="suggestion">
-                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
+                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0 suggestion-item"
                                  @mousedown.prevent="selectSuggestion(suggestion)"
                                  x-text="suggestion"></div>
                         </template>
@@ -88,7 +88,7 @@
                          class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-lg max-h-48 overflow-y-auto z-10 autocomplete-dropdown"
                          x-transition>
                         <template x-for="suggestion in suggestions" :key="suggestion">
-                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
+                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0 suggestion-item"
                                  @mousedown.prevent="selectSuggestion(suggestion)"
                                  x-text="suggestion"></div>
                         </template>
@@ -114,7 +114,7 @@
                          class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-lg max-h-48 overflow-y-auto z-10 autocomplete-dropdown"
                          x-transition>
                         <template x-for="suggestion in suggestions" :key="suggestion">
-                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
+                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0 suggestion-item"
                                  @mousedown.prevent="selectSuggestion(suggestion)"
                                  x-text="suggestion"></div>
                         </template>
@@ -140,7 +140,7 @@
                          class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-lg max-h-48 overflow-y-auto z-10 autocomplete-dropdown"
                          x-transition>
                         <template x-for="suggestion in suggestions" :key="suggestion">
-                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
+                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0 suggestion-item"
                                  @mousedown.prevent="selectSuggestion(suggestion)"
                                  x-text="suggestion"></div>
                         </template>
