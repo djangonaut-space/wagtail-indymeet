@@ -432,195 +432,167 @@ const django_contribution_opportunities = [
   },
   {
     "name": "Django Fellow",
-    "type": "fellowship",
-    "tags": ["fellowship", "django core", "paid"],
+    "type": "code",
+    "tags": ["fellowship", "django core", "paid", "code"],
     "requirements": [
-      "Significant Django core development experience",
-      "Strong technical judgment and communication skills",
-      "Ability to work independently",
-      "Available for full-time commitment",
-      "Selection through Fellowship Working Group process"
+        "Extensive experience in Python and Django",
+        "Conflict resolution",
+        "Time management and prioritization expertise",
+        "Relationship-building and coordination",
+        "Tenacity",
+        "Patience",
+        "Compassion",
+        "Empathy",
     ],
     "outcomes": [
-      "paid full-time Django work",
       "technical leadership",
-      "django core expertise",
-      "community impact",
-      "career development",
-      "travel opportunities"
+      "community engagement",
+      "community building",
+      "django domain knowledge",
     ],
     "links": [
-      "https://www.djangoproject.com/foundation/teams/",
-      "https://github.com/django/dsf-working-groups/blob/main/active/fellowship.md"
+      "https://www.djangoproject.com/weblog/2025/jun/09/django-fellow-applicants-2025/",
     ],
-    "description": "Django Fellows are paid full-time contributors who work on Django core development, triage, releases, and community support. Currently includes Sarah Boyce and others. Fellows receive competitive compensation and travel budget for conferences."
+    "description": " Django Fellow is a contractor, paid by the Django Software Foundation, who dedicates time to maintain the Django framework. These positions infrequently become available. It's best to follow the Django blog for announcements."
   },
   {
     "name": "Django Security Team",
     "type": "code",
     "tags": ["security", "django core", "code"],
-    "requirements": [
-      "Significant Django core development experience",
-      "Security expertise and background",
-      "High community trust and discretion",
-      "Invitation only",
-      "Ability to handle sensitive security reports"
-    ],
-    "outcomes": [
-      "security expertise",
-      "django core security knowledge",
-      "community responsibility",
-      "technical leadership",
-      "critical infrastructure protection"
-    ],
+    "requirements": [],
+    "outcomes": [],
     "links": [
-      "https://docs.djangoproject.com/en/stable/internals/security/",
-      "https://www.djangoproject.com/foundation/teams/"
+      "https://www.djangoproject.com/foundation/teams/#security-team",
     ],
-    "description": "The Django Security Team handles security reports, coordinates security patches, and manages the responsible disclosure process. This is a high-trust, invitation-only role that protects the Django ecosystem from security vulnerabilities."
+    "description": "The security team is responsible for Django’s security policies. It handles private reports of security issues. Membership is by invitation."
   },
   {
     "name": "Fundraising Working Group",
-    "type": "fundraising",
-    "tags": ["fundraising", "corporate-relations", "sustainability", "working group"],
-    "requirements": [
-      "Fundraising experience preferred",
-      "Corporate relations experience helpful",
-      "Available for donor outreach"
-    ],
+    "type": "community",
+    "tags": ["fundraising", "corporate-relations", "working group"],
+    "requirements": [],
     "outcomes": [
       "fundraising skills",
       "corporate relations experience",
-      "sustainability efforts",
-      "community building"
+      "community building",
+      "community engagement",
     ],
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/fundraising.md"
     ],
-    "description": "Coordinates fundraising efforts, particularly around corporate and major donations. The Social Media and Fundraising Working Groups are real bright spots with exciting energy and new contributors."
+    "description": "This working group coordinates fundraising efforts, particularly around corporate and major donations. You can self-nominate yourself to join by opening a PR against the fundraising.md file."
   },
   {
     "name": "Online Community Working Group",
     "type": "community",
     "tags": ["community", "moderation", "working group"],
-    "requirements": [
-      "Community management experience",
-      "Understanding of online platform dynamics",
-      "Available for regular community support"
-    ],
+    "requirements": [],
     "outcomes": [
       "community management skills",
-      "moderation experience",
       "platform management",
-      "community building"
+      "community building",
+      "community engagement",
     ],
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/online-community.md"
     ],
-    "description": "Support the official community platforms and those in elevated roles on those platforms. Manages Discord, Forum, and other community spaces."
+    "description": "Support the official community platforms and those in elevated roles in Discord and the Forum."
   },
   {
     "name": "Social Media Working Group",
     "type": "community",
     "tags": ["social-media", "communication", "marketing", "working group"],
     "requirements": [
-      "Social media experience",
-      "Understanding of Django community",
-      "Content creation skills",
-      "Available for regular posting"
+      "Django Software Foundation individual member",
+      "Experience with at least one social media platforms",
     ],
     "outcomes": [
       "social media skills",
       "content creation experience",
       "community engagement",
+      "community building",
       "marketing skills"
     ],
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/social-media.md"
     ],
-    "description": "Manages Django's official social media profiles. The creation of the social media working group is a good example of our commitment to treat our communication efforts more seriously."
+    "description": "Manage Django's official social media profiles on behalf of the Django Software Foundation. Start a Forum thread to express interest to join."
   },
   {
     "name": "Website Working Group",
     "type": "code",
     "tags": ["website", "code", "working group"],
     "requirements": [
-      "Web development experience",
-      "Django experience preferred",
-      "Available for website maintenance"
+      "Django experience",
+      "Contribution to djangoproject.com"
     ],
     "outcomes": [
       "web development skills",
-      "django website experience",
       "community contribution",
       "technical knowledge"
     ],
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/website.md"
     ],
-    "description": "Maintains and manages the djangoproject.com website. In 2025, our Website Working Group works towards addressing those issues with the Django website."
+    "description": "Maintains and manages the djangoproject.com website. You can self-nominate yourself to join by opening a PR against the website.md file."
   },
   {
     "name": "Django Girls+ - Workshop Organizer",
-    "type": "education",
-    "tags": ["education", "diversity", "workshops", "django-girls"],
-    "requirements": [
-      "Event organization skills",
-      "Commitment to diversity and inclusion",
-      "Some Django knowledge",
-      "Local community connections"
-    ],
+    "type": "community",
+    "tags": ["education", "diversity", "workshops", "django girls+"],
+    "requirements": [],
     "outcomes": [
       "event management skills",
       "community building",
       "diversity and inclusion impact",
-      "teaching experience"
+      "community engagement",
     ],
     "links": [
-      "https://djangogirls.org/"
+      "https://organize.djangogirls.org",
+      "https://djangogirls.org",
     ],
-    "description": "Organize local Django Girls+ workshops to introduce underrepresented groups to Django development through hands-on workshops."
+    "description": "Organize local Django Girls+ workshops to bring more women into the tech field by making technology more approachable, simpler and friendlier. Django Girls is an initiative that is aimed at introducing women who have never coded before to the world of technology and increasing the diversity within the industry."
   },
   {
     "name": "Django Girls+ - Workshop Coach",
     "type": "education",
-    "tags": ["education", "diversity", "coaching", "django-girls"],
+    "tags": ["education", "diversity", "coaching", "django girls+"],
     "requirements": [
-      "Python/Django experience",
-      "Teaching or mentoring experience",
-      "Patience and supportiveness",
-      "Commitment to inclusive education"
+      "Lots of patience, smiles and a friendly attitude",
+      "Ability to answer all sorts of questions in a beginner-friendly way",
+      "Reviewed the Django Girls+ Tutorial",
+      "Free time on the weekend",
+      "Curiosity",
     ],
     "outcomes": [
       "teaching skills",
       "mentorship experience",
       "diversity and inclusion impact",
-      "community engagement"
+      "community engagement",
+      "community building",
     ],
     "links": [
-      "https://djangogirls.org/"
+      "https://coach.djangogirls.org",
+      "https://djangogirls.org",
     ],
-    "description": "Volunteer as a coach at Django Girls+ workshops to help participants learn Django in a supportive, inclusive environment."
+    "description": "Volunteer as a coach at Django Girls+ workshops to help participants learn Django in a supportive, inclusive environment. Review the available events on djangogirls.org to find opportunities."
   },
   {
     "name": "Local Django Meetup - Organizer",
-    "type": "events",
-    "tags": ["events", "local", "meetups", "community-building"],
+    "type": "community",
+    "tags": ["events", "meetups", "community-building"],
     "requirements": [
       "Event organization skills",
-      "Local Django community knowledge",
-      "Available for regular event planning",
-      "Venue and speaker coordination"
     ],
     "outcomes": [
       "event management skills",
       "community building",
+      "community engagement",
       "local leadership",
       "networking skills"
     ],
     "links": [
-      "https://www.meetup.com/topics/django/",
-      "Local Django meetup groups"
+      "https://www.djangoproject.com/community/local/",
     ],
     "description": "Start or help organize Django meetups in your local area to build regional Django communities and provide networking opportunities."
   },
@@ -640,18 +612,17 @@ const django_contribution_opportunities = [
       "professional development"
     ],
     "links": [
-      "Local Django meetup groups"
+      "https://www.djangoproject.com/community/local/",
     ],
-    "description": "Present talks at local Django meetups on topics you're passionate about or have expertise in."
+    "description": "Present talks at local Django meetups on topics you're passionate about or have expertise in. Reach out to organizers of meetups to ask if they are looking for speakers."
   },
   {
-    "name": "djangoproject.com - Contributor",
-    "type": "website",
+    "name": "djangoproject.com",
+    "type": "code",
     "tags": ["website", "django/djangoproject.com", "code"],
     "requirements": [
       "Web development experience",
       "Django experience",
-      "Git/GitHub knowledge"
     ],
     "outcomes": [
       "web development skills",
@@ -659,89 +630,109 @@ const django_contribution_opportunities = [
       "open source contribution"
     ],
     "links": [
-      "https://github.com/django/djangoproject.com"
+      "https://github.com/django/djangoproject.com",
+      "https://djangoproject.com",
     ],
-    "description": "Contribute to the main Django website by fixing bugs, adding features, or improving documentation."
+    "description": "Contribute to the djangoproject.com website by fixing bugs, adding features, or improving documentation."
   },
   {
-    "name": "Django Snippets - Contributor",
+    "name": "djangosnippets.org",
     "type": "code",
-    "tags": ["code", "snippets", "education"],
+    "tags": ["code"],
     "requirements": [
-      "Django development experience",
-      "Code sharing mindset"
+      "Django experience",
     ],
     "outcomes": [
-      "community contribution",
-      "knowledge sharing",
-      "code examples creation"
+      "web development skills",
+      "django website experience",
+      "open source contribution"
     ],
     "links": [
-      "https://djangosnippets.org/"
+      "https://github.com/django/djangosnippets.org",
+        "https://djangosnippets.org",
     ],
-    "description": "Share useful Django code snippets and examples to help other developers solve common problems."
+    "description": "Contribute to the djangosnippets.org website by fixing bugs, adding features, or improving documentation."
   },
   {
-    "name": "CCBV/CDRF - Contributor",
-    "type": "documentation",
-    "tags": ["documentation", "class-based-views", "reference"],
+    "name": "CCBV/CDRF",
+    "type": "code",
+    "tags": ["code"],
     "requirements": [
-      "Django class-based views knowledge",
-      "Documentation skills"
+      "Django experience",
     ],
     "outcomes": [
-      "documentation skills",
-      "django expertise sharing",
-      "community contribution"
+      "web development skills",
+      "django website experience",
+      "open source contribution"
     ],
     "links": [
+      "https://github.com/classy-python/ccbv",
       "https://ccbv.co.uk/",
+    ],
+    "description": "Contribute to Classy Class-Based Views reference site."
+  },
+  {
+    "name": "CDRF",
+    "type": "code",
+    "tags": ["code"],
+    "requirements": [
+      "Django experience",
+    ],
+    "outcomes": [
+      "web development skills",
+      "django website experience",
+      "open source contribution"
+    ],
+    "links": [
+      "https://github.com/vintasoftware/classy-django-rest-framework",
       "https://www.cdrf.co/"
     ],
-    "description": "Contribute to Classy Class-Based Views or Classy Django REST Framework reference sites."
+    "description": "Classy Django REST Framework reference site."
   },
   {
-    "name": "DSF Board - Member",
+    "name": "DSF Board",
     "type": "governance",
-    "tags": ["governance", "dsf", "leadership", "elected"],
+    "tags": ["governance", "community", "leadership", "elected"],
     "requirements": [
-      "Significant Django community experience",
-      "Leadership and governance experience",
+      "Django community experience",
       "Available for monthly meetings and decisions",
-      "Community vote required"
+      "Elected by the community"
     ],
     "outcomes": [
       "governance experience",
       "organizational leadership",
       "community direction setting",
-      "nonprofit management"
+      "community engagement",
+      "community building",
+      "nonprofit management",
     ],
     "links": [
       "https://www.djangoproject.com/foundation/",
-      "Board election information (usually announced annually)"
+      "https://www.djangoproject.com/weblog/2024/sep/25/2025-dsf-board-nominations/",
     ],
-    "description": "Applications are open for the 2025 Django Software Foundation Board of Directors. Board members guide the strategic direction of the Django Software Foundation."
+    "description": "The Board guides the direction of the marketing, governance and outreach activities of the Django community. There are elections each year and anyone is eligible to stand for election."
   },
   {
-    "name": "Steering Council - Member",
+    "name": "Steering Council",
     "type": "governance",
-    "tags": ["governance", "technical-leadership", "django core", "elected"],
+    "tags": ["governance", "technical-leadership", "community", "elected"],
     "requirements": [
-      "Significant Django core development experience",
-      "Strong technical judgment",
-      "Available for technical decision making",
-      "Community respect and recognition"
+      "Django contribution experience",
+      "Available for monthly meetings and decisions",
+      "Elected by the community"
     ],
     "outcomes": [
       "technical leadership",
       "django direction setting",
       "governance experience",
-      "community leadership"
+      "community engagement",
+      "community building",
     ],
     "links": [
-      "https://www.djangoproject.com/foundation/teams/#steering-council-team"
+      "https://www.djangoproject.com/foundation/teams/#steering-council-team",
+      "https://www.djangoproject.com/weblog/2024/nov/21/announcing-the-6x-steering-council-elections/",
     ],
-    "description": "The Steering Council is a group of experienced contributors, whose goal is twofold - to safeguard big decisions that affect Django projects at a fundamental level, and to help shepherd the project's future direction."
+    "description": "The Steering Council is a group whose goal is to safeguard big decisions that affect Django projects at a fundamental level and help shepherd the project’s future direction."
   },
   {
     "name": "Accessibility Team - Member",
