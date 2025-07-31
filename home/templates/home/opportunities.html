@@ -412,7 +412,7 @@
                       }
 
                       // Outcomes filter
-                      if (this.filters.outcomes) {
+                      if (this.filters.outcomes && opportunity.outcomes !== null) {
                           const hasOutcome = opportunity.outcomes.some(outcome =>
                               outcome.toLowerCase().includes(this.filters.outcomes.toLowerCase())
                           );
@@ -420,7 +420,7 @@
                       }
 
                       // Requirements filter
-                      if (this.filters.requirements) {
+                      if (this.filters.requirements && opportunity.requirements !== null) {
                           const hasRequirement = opportunity.requirements.some(requirement =>
                               requirement.toLowerCase().includes(this.filters.requirements.toLowerCase())
                           );

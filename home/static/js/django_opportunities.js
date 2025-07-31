@@ -411,9 +411,9 @@ const django_contribution_opportunities = [
   {
     "name": "DjangoCon Europe Support Working Group",
     "type": "community",
-    "tags": ["events", "djangocon", "support", "working group"],
+    "tags": ["events", "DjangoCon Europe", "support", "working group"],
     "requirements": [],
-    "outcomes": [],
+    "outcomes": null,
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/dceu.md"
     ],
@@ -423,8 +423,8 @@ const django_contribution_opportunities = [
     "name": "Fellowship Working Group",
     "type": "governance",
     "tags": ["governance", "fellowship", "hiring", "working group"],
-    "requirements": [],
-    "outcomes": [],
+    "requirements": null,
+    "outcomes": null,
     "links": [
       "https://github.com/django/dsf-working-groups/blob/main/active/fellowship.md"
     ],
@@ -459,8 +459,8 @@ const django_contribution_opportunities = [
     "name": "Django Security Team",
     "type": "code",
     "tags": ["security", "django core", "code"],
-    "requirements": [],
-    "outcomes": [],
+    "requirements": null,
+    "outcomes": null,
     "links": [
       "https://www.djangoproject.com/foundation/teams/#security-team",
     ],
@@ -540,7 +540,7 @@ const django_contribution_opportunities = [
     "name": "Django Girls+ - Workshop Organizer",
     "type": "community",
     "tags": ["education", "diversity", "workshops", "django girls+"],
-    "requirements": [],
+    "requirements": null,
     "outcomes": [
       "event management skills",
       "community building",
@@ -735,113 +735,75 @@ const django_contribution_opportunities = [
     "description": "The Steering Council is a group whose goal is to safeguard big decisions that affect Django projects at a fundamental level and help shepherd the project’s future direction."
   },
   {
-    "name": "Accessibility Team - Member",
-    "type": "accessibility",
-    "tags": ["accessibility", "inclusion", "django core"],
+    "name": "Accessibility Team",
+    "type": "code",
+    "tags": ["code", "accessibility", "django core", "invitation-only"],
     "requirements": [
-      "Accessibility knowledge and experience",
-      "Understanding of web accessibility standards",
-      "Django development experience"
+      "Prefer volunteers who have disabilities that make using the web or web development more difficult",
+      "Prefer expertise in accessibility",
+      "Prefer Django contribution experience"
     ],
     "outcomes": [
       "accessibility expertise",
       "inclusive development skills",
       "community impact",
-      "technical knowledge"
+      "technical knowledge",
     ],
     "links": [
       "https://www.djangoproject.com/foundation/teams/#accessibility-team",
-      "Forum accessibility section",
-      "#accessibility on Discord"
+      "https://github.com/django/dsf-working-groups/blob/main/active/accessibility.md",
+      "https://forum.djangoproject.com/c/internals/accessibility/26",
     ],
     "description": "The Accessibility Team encourages projects maintained by the Django Software Foundation to be accessible to as many people as possible, particularly those with disabilities."
   },
   {
-    "name": "Merger Team - Member",
+    "name": "Merger Team",
     "type": "code",
-    "tags": ["code", "django core", "git", "invitation-only"],
-    "requirements": [
-      "Significant Django core contribution experience",
-      "Strong understanding of Django codebase",
-      "Good judgment on code quality",
-      "Invitation only"
-    ],
-    "outcomes": [
-      "technical leadership",
-      "code review expertise",
-      "django core development",
-      "community trust"
-    ],
+    "tags": ["code", "django core", "invitation-only"],
+    "requirements": null,
+    "outcomes": null,
     "links": [
-      "https://www.djangoproject.com/foundation/teams/"
+      "https://www.djangoproject.com/foundation/teams/#mergers-team"
     ],
     "description": "Mergers take care of merging pull requests to the Django Git repository. Membership is by invitation only."
   },
   {
-    "name": "Ops Team - Member",
-    "type": "infrastructure",
-    "tags": ["infrastructure", "devops", "invitation-only"],
-    "requirements": [
-      "System administration experience",
-      "DevOps and infrastructure knowledge",
-      "Invitation only"
-    ],
-    "outcomes": [
-      "infrastructure management skills",
-      "devops experience",
-      "community infrastructure support"
-    ],
+    "name": "Ops Team",
+    "type": "code",
+    "tags": ["code", "devops", "invitation-only"],
+    "requirements": null,
+    "outcomes": null,
     "links": [
-      "https://www.djangoproject.com/foundation/teams/"
+      "https://www.djangoproject.com/foundation/teams/#ops-team"
     ],
-    "description": "The ops team maintains Django's infrastructure like the Django Project server, Trac instance, and continuous integration infrastructure. Currently sufficiently staffed, membership by invitation."
+    "description": "The ops team maintains Django's infrastructure like the Django Project server, Trac instance, and continuous integration infrastructure. Membership is by invitation only."
   },
   {
-    "name": "Releaser Team - Member",
-    "type": "releases",
-    "tags": ["releases", "django core", "invitation-only"],
-    "requirements": [
-      "Deep Django core knowledge",
-      "Understanding of release processes",
-      "High community trust",
-      "Invitation only"
-    ],
-    "outcomes": [
-      "release management skills",
-      "django core expertise",
-      "community responsibility",
-      "technical leadership"
-    ],
+    "name": "Releaser Team",
+    "type": "code",
+    "tags": ["code", "devops", "django core", "invitation-only"],
+    "requirements": null,
+    "outcomes": null,
     "links": [
-      "https://www.djangoproject.com/foundation/teams/"
+      "https://www.djangoproject.com/foundation/teams/#releasers-team"
     ],
-    "description": "Releasers take care of building Django releases. This is a high-trust role with significant responsibility."
+    "description": "Releasers take care of building Django releases. Membership is by invitation only."
   },
   {
-    "name": "Triage & Review Team - Member",
+    "name": "Triage & Review Team",
     "type": "code",
     "tags": ["code", "django core", "triage", "review"],
-    "requirements": [
-      "Django development experience",
-      "Understanding of Django codebase",
-      "Code review skills",
-      "Available for regular triage work"
-    ],
-    "outcomes": [
-      "code review skills",
-      "django expertise",
-      "community contribution",
-      "technical communication"
-    ],
+    "requirements": null,
+    "outcomes": null,
     "links": [
-      "https://www.djangoproject.com/foundation/teams/"
+      "https://www.djangoproject.com/foundation/teams/#triage-review-team"
     ],
-    "description": "The triage & review team assists with the processing of pull requests. This team helps maintain the quality of Django core contributions."
+    "description": "The triage & review team assists with the processing of pull requests. This team helps maintain the quality of Django core contributions. Membership is by invitation only."
   },
   {
-    "name": "DjangoCon US - Organizer",
-    "type": "events",
-    "tags": ["events", "djangocon-us", "conference"],
+    "name": "DjangoCon Africa - Organizer",
+    "type": "community",
+    "tags": ["events", "DjangoCon Africa", "conference"],
     "requirements": [
       "Event organization experience",
       "Available for year-long planning",
@@ -850,23 +812,22 @@ const django_contribution_opportunities = [
     "outcomes": [
       "conference management skills",
       "community building",
+      "community engagement",
       "event planning expertise",
-      "networking opportunities"
+      "networking opportunities",
     ],
     "links": [
-      "https://2025.djangocon.us/",
-      "DEFNA (Django Events Foundation North America)"
+      "https://djangocon.africa/",
+      "https://2025.djangocon.africa",
     ],
-    "description": "DjangoCon US 2025 is a Python and Django focused web development conference in Chicago, Illinois. Help organize this major annual Django conference."
+    "description": "DjangoCon Africa is a Django and Python focused web development conference. Express interest in joining by emailing hello@djangocon.eu"
   },
   {
-    "name": "DjangoCon US - Speaker",
+    "name": "DjangoCon Africa - Speaker",
     "type": "education",
-    "tags": ["speaking", "djangocon-us", "conference", "education"],
+    "tags": ["speaking", "DjangoCon Africa", "conference", "education"],
     "requirements": [
-      "Django expertise in specific area",
-      "Public speaking ability",
-      "Talk preparation time"
+      "Talk preparation time",
     ],
     "outcomes": [
       "public speaking skills",
@@ -875,157 +836,208 @@ const django_contribution_opportunities = [
       "community engagement"
     ],
     "links": [
-      "https://2025.djangocon.us/",
-      "Call for Proposals (usually opens early in year)"
+      "https://djangocon.africa/",
+      "https://2025.djangocon.africa",
     ],
-    "description": "Present your Django knowledge and experience to the broader Django community at the premier North American Django conference."
+    "description": "Present your Django knowledge and experience to the broader Django community. Sign up to the newsletter or follow their social media accounts for announcements."
+  },
+  {
+    "name": "DjangoCon US - Organizer",
+    "type": "community",
+    "tags": ["events", "DjangoCon US", "conference"],
+    "requirements": [
+      "Event organization experience",
+      "Available for year-long planning",
+      "Team collaboration skills"
+    ],
+    "outcomes": [
+      "conference management skills",
+      "community building",
+      "community engagement",
+      "event planning expertise",
+      "networking opportunities",
+    ],
+    "links": [
+      "https://djangocon.us/",
+      "https://2025.djangocon.us",
+      "https://2024.djangocon.us/news/call-for-2025-volunteers/",
+    ],
+    "description": "DjangoCon US is a Django and Python focused web development conference. Organizing typically begins in December or January. Express interest in joining by emailing hello@djangocon.us"
+  },
+  {
+    "name": "DjangoCon US - Speaker",
+    "type": "education",
+    "tags": ["speaking", "DjangoCon US", "conference", "education"],
+    "requirements": [
+      "Talk preparation time",
+    ],
+    "outcomes": [
+      "public speaking skills",
+      "professional recognition",
+      "knowledge sharing",
+      "community engagement"
+    ],
+    "links": [
+      "https://djangocon.us/",
+      "https://2025.djangocon.us",
+    ],
+    "description": "Present your Django knowledge and experience to the broader Django community. Calls for Proposals usually open in February or March. Sign up to the newsletter or follow their social media accounts for announcements."
   },
   {
     "name": "DjangoCon Europe - Organizer",
-    "type": "events",
-    "tags": ["events", "djangocon", "conference"],
+    "type": "community",
+    "tags": ["events", "DjangoCon Europe", "conference"],
     "requirements": [
       "Event organization experience",
-      "European location helpful",
-      "Available for extensive planning"
+      "Available for year-long planning",
+      "Team collaboration skills"
     ],
     "outcomes": [
       "conference management skills",
-      "international event experience",
       "community building",
-      "cultural exchange"
+      "community engagement",
+      "event planning expertise",
+      "networking opportunities",
     ],
     "links": [
-      "DjangoCon Europe (location varies annually)"
+      "https://djangocon.eu/",
+      "https://2025.djangocon.eu",
     ],
-    "description": "Organize the annual European Django conference, rotating between different European cities."
+    "description": "DjangoCon Europe is a Django and Python focused web development conference. Express interest in joining by emailing hello@djangocon.eu"
   },
   {
-    "name": "Regional DjangoCon - Organizer",
-    "type": "events",
-    "tags": ["events", "regional-conference"],
+    "name": "DjangoCon Europe - Speaker",
+    "type": "education",
+    "tags": ["speaking", "DjangoCon Europe", "conference", "education"],
     "requirements": [
-      "Local event organization experience",
-      "Regional Django community knowledge",
-      "Sponsorship and venue coordination"
+      "Talk preparation time",
     ],
     "outcomes": [
-      "conference management skills",
-      "regional community building",
-      "event planning expertise"
+      "public speaking skills",
+      "professional recognition",
+      "knowledge sharing",
+      "community engagement"
     ],
     "links": [
-      "DjangoCon Africa, Australia, etc."
+      "https://djangocon.eu/",
+      "https://2025.djangocon.eu",
     ],
-    "description": "Help organize regional Django conferences like DjangoCon Africa, Australia, or other regional events."
+    "description": "Present your Django knowledge and experience to the broader Django community. Sign up to the newsletter or follow their social media accounts for announcements."
   },
   {
     "name": "Django Forum - Moderator",
-    "type": "moderation",
+    "type": "community",
     "tags": ["moderation", "forum", "community"],
     "requirements": [
       "Strong Django community knowledge",
       "Good judgment and communication",
-      "Available for regular moderation",
-      "Understanding of Django Code of Conduct"
+      "Understanding of Django Code of Conduct",
+      "Monitoring the Forum",
     ],
     "outcomes": [
       "community management skills",
       "moderation experience",
       "conflict resolution",
-      "community building"
+      "community building",
+      "community engagement",
     ],
     "links": [
       "https://forum.djangoproject.com/"
     ],
-    "description": "Help moderate the official Django Forum to maintain a welcoming, helpful environment for Django discussions."
+    "description": "Help moderate the official Django Forum to maintain a welcoming, helpful environment for Django discussions. Membership is by invitation only."
   },
   {
     "name": "Django Discord - Moderator",
-    "type": "moderation",
-    "tags": ["moderation", "discord", "real-time-community"],
+    "type": "community",
+    "tags": ["moderation", "discord", "community"],
     "requirements": [
-      "Discord experience",
-      "Real-time moderation availability",
-      "Good judgment and quick responses",
-      "Django community knowledge"
+      "Strong Django community knowledge",
+      "Good judgment and communication",
+      "Understanding of Django Code of Conduct",
+      "Monitoring the Discord server"
     ],
     "outcomes": [
-      "real-time moderation skills",
-      "community management",
-      "quick problem resolution",
-      "community support"
+      "community management skills",
+      "moderation experience",
+      "conflict resolution",
+      "community building",
+      "community engagement",
     ],
     "links": [
-      "https://discord.gg/xcRH6mN4fa"
+      "https://chat.djangoproject.com"
     ],
-    "description": "Moderate the official Django Discord server to ensure constructive, helpful real-time discussions."
+    "description": "Moderate the official Django Discord server to maintain a welcoming, helpful environment for Django discussions. Membership is by invitation only."
   },
   {
     "name": "Django Reddit - Moderator",
-    "type": "moderation",
+    "type": "community",
     "tags": ["moderation", "reddit", "community"],
     "requirements": [
-      "Reddit moderation experience",
-      "Django community knowledge",
-      "Available for regular moderation"
+      "Strong Django community knowledge",
+      "Good judgment and communication",
+      "Understanding of Django Code of Conduct",
+      "Monitoring r/django"
     ],
     "outcomes": [
-      "platform-specific moderation skills",
-      "community management",
-      "broader reach community support"
+      "community management skills",
+      "moderation experience",
+      "conflict resolution",
+      "community building",
+      "community engagement",
     ],
     "links": [
-      "r/django"
+      "https://reddit.com/r/django"
     ],
     "description": "Help moderate the Django subreddit to maintain quality discussions and help newcomers."
   },
   {
     "name": "Django Forum - Helper",
-    "type": "support",
-    "tags": ["support", "forum", "education", "helping"],
+    "type": "community",
+    "tags": ["support", "forum", "education", "community"],
     "requirements": [
-      "Solid Django knowledge",
-      "Good explanatory skills",
       "Patience with beginners",
-      "Regular availability"
+      "Empathy",
+      "A desire to help",
     ],
     "outcomes": [
       "teaching skills",
-      "django expertise reinforcement",
+      "django knowledge",
+      "communication skills",
+      "technical knowledge",
       "community support",
-      "problem-solving skills"
+      "problem-solving skills",
     ],
     "links": [
       "https://forum.djangoproject.com/"
     ],
-    "description": "Answer questions and help newcomers on the official Django Forum. This is one of the most valuable ways to contribute to the community."
+    "description": "This is not an official role. Answer questions and help newcomers on the official Django Forum. This is one of the most valuable ways to contribute to the community."
   },
   {
     "name": "Django Discord - Helper",
-    "type": "support",
-    "tags": ["support", "discord", "real-time-help"],
+    "type": "community",
+    "tags": ["support", "discord", "education", "community"],
     "requirements": [
-      "Good Django knowledge",
-      "Quick response ability",
       "Patience with beginners",
-      "Discord familiarity"
+      "Empathy",
+      "A desire to help",
     ],
     "outcomes": [
-      "real-time teaching skills",
+      "teaching skills",
+      "django knowledge",
+      "communication skills",
+      "technical knowledge",
       "community support",
-      "rapid problem-solving",
-      "community engagement"
+      "problem-solving skills",
     ],
     "links": [
-      "https://discord.gg/xcRH6mN4fa"
+      "https://chat.djangoproject.com/"
     ],
-    "description": "Provide real-time help and support in the Django Discord server's help channels."
+    "description": "There is a role that identifies regular helpers, anyone can help. Provide real-time help and support in the Django Discord server's help channels. The role of Helper is by invitation only, however any can help others."
   },
   {
     "name": "Social Media - Django Advocate",
-    "type": "communication",
-    "tags": ["social-media", "advocacy", "content-creation"],
+    "type": "outreach",
+    "tags": ["social-media", "advocacy", "content-creation", "marketing"],
     "requirements": [
       "Social media presence",
       "Django knowledge and enthusiasm",
@@ -1037,154 +1049,59 @@ const django_contribution_opportunities = [
       "broader reach impact",
       "django promotion"
     ],
-    "links": [
-      "Twitter/X, Mastodon, Bluesky, etc."
-    ],
+    "links": [],
     "description": "Share Django knowledge, advocate for Django adoption, and engage in Django discussions across social media platforms."
   },
   {
     "name": "Django Content Creator - Blogger",
-    "type": "content-creation",
+    "type": "outreach",
     "tags": ["content-creation", "blogging", "education"],
     "requirements": [
-      "Django expertise",
-      "Writing skills",
-      "Content creation consistency"
+      "A desire to write",
     ],
     "outcomes": [
-      "writing skills",
+      "communication skills",
       "django expertise sharing",
       "personal branding",
       "community education"
     ],
-    "links": [
-      "Personal blogs, dev.to, Medium, etc."
-    ],
-    "description": "Create blog posts, tutorials, and educational content about Django development."
+    "links": [],
+    "description": "Create blog posts, newsletters, tutorials, and educational content about Django development."
   },
   {
     "name": "Django Content Creator - Video",
-    "type": "content-creation",
+    "type": "outreach",
     "tags": ["content-creation", "video", "education", "youtube"],
     "requirements": [
-      "Django expertise",
-      "Video production skills",
+      "A desire to create videos",
       "Screen recording/presentation ability"
     ],
     "outcomes": [
+      "communication skills",
       "video production skills",
       "django education impact",
       "personal branding",
-      "wider community reach"
+      "wider community reach",
     ],
-    "links": [
-      "YouTube, Twitch, etc."
-    ],
+    "links": [],
     "description": "Create video tutorials, courses, and educational content about Django development."
   },
   {
-    "name": "Django Podcast - Host/Guest",
-    "type": "content-creation",
+    "name": "Django Content Creator - Podcast",
+    "type": "outreach",
     "tags": ["content-creation", "podcast", "audio", "education"],
     "requirements": [
-      "Django expertise",
-      "Good speaking ability",
+      "A desire to create podcasts",
       "Audio equipment/setup",
-      "Regular commitment for hosting"
     ],
     "outcomes": [
       "audio content skills",
       "django expertise sharing",
       "professional networking",
-      "community engagement"
+      "community engagement",
+      "personal branding",
     ],
-    "links": [
-      "Django Chat, Talk Python, Real Python Podcast, etc."
-    ],
-    "description": "Host or appear as a guest on Django-related podcasts to share knowledge and experiences."
+    "links": [],
+    "description": "Host Django-related podcasts to share knowledge and experiences."
   },
-  {
-    "name": "Django Book - Author",
-    "type": "content-creation",
-    "tags": ["content-creation", "book", "education", "long-form"],
-    "requirements": [
-      "Deep Django expertise",
-      "Strong writing skills",
-      "Long-term commitment",
-      "Technical writing experience preferred"
-    ],
-    "outcomes": [
-      "technical writing skills",
-      "deep expertise development",
-      "professional recognition",
-      "lasting community impact"
-    ],
-    "links": [
-      "Django for Beginners, Two Scoops of Django, etc."
-    ],
-    "description": "Write books about Django development, from beginner guides to advanced technical references."
-  },
-  {
-    "name": "Conference Talk - Speaker",
-    "type": "education",
-    "tags": ["speaking", "conferences", "education", "knowledge-sharing"],
-    "requirements": [
-      "Django expertise in specific area",
-      "Public speaking ability",
-      "Talk preparation time",
-      "Conference proposal skills"
-    ],
-    "outcomes": [
-      "public speaking skills",
-      "professional recognition",
-      "knowledge sharing",
-      "networking opportunities"
-    ],
-    "links": [
-      "DjangoCon US, Europe, PyCon, local conferences"
-    ],
-    "description": "Present talks at Django conferences and Python conferences about Django-related topics."
-  },
-  {
-    "name": "Tutorial Creator - Written",
-    "type": "content-creation",
-    "tags": ["content-creation", "tutorials", "education", "documentation"],
-    "requirements": [
-      "Django development experience",
-      "Clear writing ability",
-      "Step-by-step thinking",
-      "Example project creation"
-    ],
-    "outcomes": [
-      "technical writing skills",
-      "django expertise reinforcement",
-      "community education",
-      "documentation skills"
-    ],
-    "links": [
-      "Personal blogs, Real Python, Django documentation, etc."
-    ],
-    "description": "Create detailed written tutorials that guide developers through Django concepts and projects."
-  },
-  {
-    "name": "Tutorial Creator - Video",
-    "type": "content-creation",
-    "tags": ["content-creation", "tutorials", "video", "education"],
-    "requirements": [
-      "Django development experience",
-      "Video creation skills",
-      "Screen recording ability",
-      "Clear verbal explanation skills"
-    ],
-    "outcomes": [
-      "video production skills",
-      "django expertise sharing",
-      "visual learning support",
-      "broader audience reach"
-    ],
-    "links": [
-      "YouTube, Udemy, Pluralsight, etc."
-    ],
-    "description": "Create video tutorials that demonstrate Django development through visual, step-by-step instruction."
-  }
 ]
