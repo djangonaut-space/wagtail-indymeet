@@ -353,7 +353,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django code triaging",
     "type": "code",
-    "tags": ["code", "django core"],
+    "tags": ["code", "django core", "triage"],
     "requirements": [
       "Completed Django tutorial",
       "Completed Contributing to Django tutorial",
@@ -371,6 +371,25 @@ const django_contribution_opportunities = [
       "https://code.djangoproject.com/query?stage=Unreviewed&status=!closed&order=priority"
     ],
     "description": "The triage process is primarily driven by community members. Really, **ANYONE** can help."
+  },
+  {
+    "name": "Django release tester",
+    "type": "code",
+    "tags": ["code", "django core", "triage", "test"],
+    "requirements": [
+      "Awareness of what's in the new release",
+      "A release candidate of Django must be available",
+    ],
+    "outcomes": [
+      "technical knowledge",
+      "django domain knowledge",
+      "django robustness",
+    ],
+    "links": [
+      "https://docs.djangoproject.com/en/stable/internals/contributing/bugs-and-features/",
+      "https://www.djangoproject.com/weblog/",
+    ],
+    "description": "Before major releases of Django, such as 6.1, there are release candidates for the public to test against. A valuable contribution to the Django community is testing your project(s) against the new version of Django. Anyone can do this! Follow Django's blog and social media accounts to find out about new releases."
   },
   {
     "name": "Django code reviews",
