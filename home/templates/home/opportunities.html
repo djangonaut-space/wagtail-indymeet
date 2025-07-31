@@ -229,25 +229,35 @@
                     <!-- Requirements Section -->
                     <div class="mb-4">
                         <div class="text-sm font-semibold text-gray-700 mb-2">Requirements</div>
-                        <div class="text-sm text-gray-600">
-                            <span x-text="opportunity.requirements[0]"></span>
-                            <span x-show="opportunity.requirements.length > 1"
-                                  class="text-purple-500 font-medium"
-                                  x-text="` and ${opportunity.requirements.length - 1} more`">
-                            </span>
-                        </div>
+                        <template x-if="opportunity.requirements !== null">
+                            <div class="text-sm text-gray-600">
+                                <span x-text="opportunity.requirements[0]"></span>
+                                <span x-show="opportunity.requirements.length > 1"
+                                      class="text-purple-500 font-medium"
+                                      x-text="` and ${opportunity.requirements.length - 1} more`">
+                                </span>
+                            </div>
+                        </template>
+                        <template x-if="opportunity.requirements === null">
+                          <div class="text-sm text-gray-600">Unknown</div>
+                        </template>
                     </div>
 
                     <!-- Outcomes Section -->
                     <div class="mb-6">
                         <div class="text-sm font-semibold text-gray-700 mb-2">Outcomes</div>
-                        <div class="text-sm text-gray-600">
-                            <span x-text="opportunity.outcomes[0]"></span>
-                            <span x-show="opportunity.outcomes.length > 1"
-                                  class="text-purple-500 font-medium"
-                                  x-text="` and ${opportunity.outcomes.length - 1} more`">
-                            </span>
-                        </div>
+                        <template x-if="opportunity.outcomes !== null">
+                            <div class="text-sm text-gray-600">
+                                <span x-text="opportunity.outcomes[0]"></span>
+                                <span x-show="opportunity.outcomes.length > 1"
+                                      class="text-purple-500 font-medium"
+                                      x-text="` and ${opportunity.outcomes.length - 1} more`">
+                                </span>
+                            </div>
+                        </template>
+                        <template x-if="opportunity.outcomes === null">
+                          <div class="text-sm text-gray-600">Unknown</div>
+                        </template>
                     </div>
 
                     <!-- Learn More Link -->
@@ -335,15 +345,18 @@
                     <!-- Links -->
                     <div x-show="selectedOpportunity?.links?.length > 0">
                         <h3 class="text-lg font-semibold text-gray-700 mb-3">Links</h3>
-                        <div class="space-y-2">
+                        <ul class="space-y-2">
                             <template x-for="link in selectedOpportunity?.links || []" :key="link">
-                                <a :href="link"
+                                <li class="flex items-start">
+                                  <span class="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                  <a :href="link"
                                    class="block text-purple-500 hover:text-purple-600 hover:underline break-all"
                                    target="_blank"
                                    rel="noopener noreferrer"
                                    x-text="link"></a>
+                              </li>
                             </template>
-                        </div>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -399,8 +412,33 @@
                   return Array.from(types).sort();
               },
 
+              sortOpportunities(opportunities) {
+                if (
+                    this.filters.name === ""
+                    && this.filters.outcomes === ""
+                    && this.filters.requirements === ""
+                    && this.filters.tags === ""
+                    && this.filters.description === ""
+                    && this.filters.types.length === 0
+                ) {
+                  return opportunities
+                }
+                return opportunities.sort((a, b) => {
+                    const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+                    const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+                    if (nameA < nameB) {
+                      return -1;
+                    }
+                    if (nameA > nameB) {
+                      return 1;
+                    }
+                    // names must be equal
+                    return 0;
+                })
+              },
+
               get filteredOpportunities() {
-                  return this.opportunities.filter(opportunity => {
+                  const filtered = this.opportunities.filter(opportunity => {
                       // Name filter
                       if (this.filters.name && !opportunity.name.toLowerCase().includes(this.filters.name.toLowerCase())) {
                           return false;
@@ -442,6 +480,7 @@
 
                       return true;
                   });
+                  return this.sortOpportunities(filtered);
               },
 
               openModal(opportunity) {

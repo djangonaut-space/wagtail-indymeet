@@ -1,5 +1,147 @@
 const django_contribution_opportunities = [
   {
+    "name": "Django code contributions",
+    "type": "code",
+    "tags": ["code", "django core"],
+    "requirements": [
+      "Completed Django tutorial",
+      "Completed Contributing to Django tutorial"
+    ],
+    "outcomes": [
+      "technical knowledge",
+      "improved programming skills",
+      "feedback on your code",
+      "django domain knowledge",
+      "community engagement"
+    ],
+    "links": [
+      "https://djangotv.com/videos/djangonaut-space/2025/your-first-django-contribution-with-sarah-boyce-djangonaut-space-1/",
+      "https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/",
+      "https://code.djangoproject.com/query?easy=1&stage=Accepted&status=!closed&order=priority",
+      "https://code.djangoproject.com/query?component=Documentation&has_patch=0&stage=Accepted&status=!closed&order=priority",
+      "https://code.djangoproject.com/wiki/Reports#Experiencedcontributors"
+    ],
+    "description": "Any person can contribute code to Django. It's open to all individuals and is one of the most impactful types of contributions to the community. However, it can take months before your changes are committed to main, so please be patient."
+  },
+  {
+    "name": "Fundraising Working Group",
+    "type": "community",
+    "tags": ["fundraising", "corporate-relations", "working group"],
+    "requirements": [],
+    "outcomes": [
+      "fundraising skills",
+      "corporate relations experience",
+      "community building",
+      "community engagement",
+    ],
+    "links": [
+      "https://github.com/django/dsf-working-groups/blob/main/active/fundraising.md"
+    ],
+    "description": "This working group coordinates fundraising efforts, particularly around corporate and major donations. You can self-nominate yourself to join by opening a PR against the fundraising.md file."
+  },
+  {
+    "name": "Local Django Meetup - Organizer",
+    "type": "community",
+    "tags": ["events", "meetups", "community-building"],
+    "requirements": [
+      "Event organization skills",
+    ],
+    "outcomes": [
+      "event management skills",
+      "community building",
+      "community engagement",
+      "local leadership",
+      "networking skills"
+    ],
+    "links": [
+      "https://www.djangoproject.com/community/local/",
+    ],
+    "description": "Start or help organize Django meetups in your local area to build regional Django communities and provide networking opportunities."
+  },
+  {
+    "name": "DjangoCon Africa - Organizer",
+    "type": "community",
+    "tags": ["events", "DjangoCon Africa", "conference"],
+    "requirements": [
+      "Event organization experience",
+      "Available for year-long planning",
+      "Team collaboration skills"
+    ],
+    "outcomes": [
+      "conference management skills",
+      "community building",
+      "community engagement",
+      "event planning expertise",
+      "networking opportunities",
+    ],
+    "links": [
+      "https://djangocon.africa/",
+      "https://2025.djangocon.africa",
+    ],
+    "description": "DjangoCon Africa is a Django and Python focused web development conference. Express interest in joining by emailing hello@djangocon.eu"
+  },
+  {
+    "name": "DjangoCon US - Organizer",
+    "type": "community",
+    "tags": ["events", "DjangoCon US", "conference"],
+    "requirements": [
+      "Event organization experience",
+      "Available for year-long planning",
+      "Team collaboration skills"
+    ],
+    "outcomes": [
+      "conference management skills",
+      "community building",
+      "community engagement",
+      "event planning expertise",
+      "networking opportunities",
+    ],
+    "links": [
+      "https://djangocon.us/",
+      "https://2025.djangocon.us",
+      "https://2024.djangocon.us/news/call-for-2025-volunteers/",
+    ],
+    "description": "DjangoCon US is a Django and Python focused web development conference. Organizing typically begins in December or January. Express interest in joining by emailing hello@djangocon.us"
+  },
+  {
+    "name": "DjangoCon Europe - Organizer",
+    "type": "community",
+    "tags": ["events", "DjangoCon Europe", "conference"],
+    "requirements": [
+      "Event organization experience",
+      "Available for year-long planning",
+      "Team collaboration skills"
+    ],
+    "outcomes": [
+      "conference management skills",
+      "community building",
+      "community engagement",
+      "event planning expertise",
+      "networking opportunities",
+    ],
+    "links": [
+      "https://djangocon.eu/",
+      "https://2025.djangocon.eu",
+    ],
+    "description": "DjangoCon Europe is a Django and Python focused web development conference. Express interest in joining by emailing hello@djangocon.eu"
+  },
+  {
+    "name": "Online Community Working Group",
+    "type": "community",
+    "tags": ["community", "moderation", "working group"],
+    "requirements": [],
+    "outcomes": [
+      "community management skills",
+      "platform management",
+      "community building",
+      "community engagement",
+    ],
+    "links": [
+      "https://github.com/django/dsf-working-groups/blob/main/active/online-community.md"
+    ],
+    "description": "Support the official community platforms and those in elevated roles in Discord and the Forum."
+  },
+  {
     "name": "Google Summer of Code - Mentee",
     "type": "code",
     "tags": ["mentorship", "gsoc", "paid"],
@@ -207,30 +349,6 @@ const django_contribution_opportunities = [
       "https://buttondown.com/djangonaut-space",
     ],
     "description": "Admins coordinate the overall Djangonaut Space program, kickstart sessions, support Organizers, Navigators, Captains, and Djangonauts. Contact contact@djangonaut.space to express interest in being an administrator."
-  },
-  {
-    "name": "Django code contributions",
-    "type": "code",
-    "tags": ["code", "django core"],
-    "requirements": [
-      "Completed Django tutorial",
-      "Completed Contributing to Django tutorial"
-    ],
-    "outcomes": [
-      "technical knowledge",
-      "improved programming skills",
-      "feedback on your code",
-      "django domain knowledge",
-      "community engagement"
-    ],
-    "links": [
-      "https://djangotv.com/videos/djangonaut-space/2025/your-first-django-contribution-with-sarah-boyce-djangonaut-space-1/",
-      "https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/",
-      "https://code.djangoproject.com/query?easy=1&stage=Accepted&status=!closed&order=priority",
-      "https://code.djangoproject.com/query?component=Documentation&has_patch=0&stage=Accepted&status=!closed&order=priority",
-      "https://code.djangoproject.com/wiki/Reports#Experiencedcontributors"
-    ],
-    "description": "Any person can contribute code to Django. It's open to all individuals and is one of the most impactful types of contributions to the community. However, it can take months before your changes are committed to main, so please be patient."
   },
   {
     "name": "Django code triaging",
@@ -467,38 +585,6 @@ const django_contribution_opportunities = [
     "description": "The security team is responsible for Django’s security policies. It handles private reports of security issues. Membership is by invitation."
   },
   {
-    "name": "Fundraising Working Group",
-    "type": "community",
-    "tags": ["fundraising", "corporate-relations", "working group"],
-    "requirements": [],
-    "outcomes": [
-      "fundraising skills",
-      "corporate relations experience",
-      "community building",
-      "community engagement",
-    ],
-    "links": [
-      "https://github.com/django/dsf-working-groups/blob/main/active/fundraising.md"
-    ],
-    "description": "This working group coordinates fundraising efforts, particularly around corporate and major donations. You can self-nominate yourself to join by opening a PR against the fundraising.md file."
-  },
-  {
-    "name": "Online Community Working Group",
-    "type": "community",
-    "tags": ["community", "moderation", "working group"],
-    "requirements": [],
-    "outcomes": [
-      "community management skills",
-      "platform management",
-      "community building",
-      "community engagement",
-    ],
-    "links": [
-      "https://github.com/django/dsf-working-groups/blob/main/active/online-community.md"
-    ],
-    "description": "Support the official community platforms and those in elevated roles in Discord and the Forum."
-  },
-  {
     "name": "Social Media Working Group",
     "type": "community",
     "tags": ["social-media", "communication", "marketing", "working group"],
@@ -576,25 +662,6 @@ const django_contribution_opportunities = [
       "https://djangogirls.org",
     ],
     "description": "Volunteer as a coach at Django Girls+ workshops to help participants learn Django in a supportive, inclusive environment. Review the available events on djangogirls.org to find opportunities."
-  },
-  {
-    "name": "Local Django Meetup - Organizer",
-    "type": "community",
-    "tags": ["events", "meetups", "community-building"],
-    "requirements": [
-      "Event organization skills",
-    ],
-    "outcomes": [
-      "event management skills",
-      "community building",
-      "community engagement",
-      "local leadership",
-      "networking skills"
-    ],
-    "links": [
-      "https://www.djangoproject.com/community/local/",
-    ],
-    "description": "Start or help organize Django meetups in your local area to build regional Django communities and provide networking opportunities."
   },
   {
     "name": "Local Django Meetup - Speaker",
@@ -801,28 +868,6 @@ const django_contribution_opportunities = [
     "description": "The triage & review team assists with the processing of pull requests. This team helps maintain the quality of Django core contributions. Membership is by invitation only."
   },
   {
-    "name": "DjangoCon Africa - Organizer",
-    "type": "community",
-    "tags": ["events", "DjangoCon Africa", "conference"],
-    "requirements": [
-      "Event organization experience",
-      "Available for year-long planning",
-      "Team collaboration skills"
-    ],
-    "outcomes": [
-      "conference management skills",
-      "community building",
-      "community engagement",
-      "event planning expertise",
-      "networking opportunities",
-    ],
-    "links": [
-      "https://djangocon.africa/",
-      "https://2025.djangocon.africa",
-    ],
-    "description": "DjangoCon Africa is a Django and Python focused web development conference. Express interest in joining by emailing hello@djangocon.eu"
-  },
-  {
     "name": "DjangoCon Africa - Speaker",
     "type": "education",
     "tags": ["speaking", "DjangoCon Africa", "conference", "education"],
@@ -842,29 +887,6 @@ const django_contribution_opportunities = [
     "description": "Present your Django knowledge and experience to the broader Django community. Sign up to the newsletter or follow their social media accounts for announcements."
   },
   {
-    "name": "DjangoCon US - Organizer",
-    "type": "community",
-    "tags": ["events", "DjangoCon US", "conference"],
-    "requirements": [
-      "Event organization experience",
-      "Available for year-long planning",
-      "Team collaboration skills"
-    ],
-    "outcomes": [
-      "conference management skills",
-      "community building",
-      "community engagement",
-      "event planning expertise",
-      "networking opportunities",
-    ],
-    "links": [
-      "https://djangocon.us/",
-      "https://2025.djangocon.us",
-      "https://2024.djangocon.us/news/call-for-2025-volunteers/",
-    ],
-    "description": "DjangoCon US is a Django and Python focused web development conference. Organizing typically begins in December or January. Express interest in joining by emailing hello@djangocon.us"
-  },
-  {
     "name": "DjangoCon US - Speaker",
     "type": "education",
     "tags": ["speaking", "DjangoCon US", "conference", "education"],
@@ -882,28 +904,6 @@ const django_contribution_opportunities = [
       "https://2025.djangocon.us",
     ],
     "description": "Present your Django knowledge and experience to the broader Django community. Calls for Proposals usually open in February or March. Sign up to the newsletter or follow their social media accounts for announcements."
-  },
-  {
-    "name": "DjangoCon Europe - Organizer",
-    "type": "community",
-    "tags": ["events", "DjangoCon Europe", "conference"],
-    "requirements": [
-      "Event organization experience",
-      "Available for year-long planning",
-      "Team collaboration skills"
-    ],
-    "outcomes": [
-      "conference management skills",
-      "community building",
-      "community engagement",
-      "event planning expertise",
-      "networking opportunities",
-    ],
-    "links": [
-      "https://djangocon.eu/",
-      "https://2025.djangocon.eu",
-    ],
-    "description": "DjangoCon Europe is a Django and Python focused web development conference. Express interest in joining by emailing hello@djangocon.eu"
   },
   {
     "name": "DjangoCon Europe - Speaker",
