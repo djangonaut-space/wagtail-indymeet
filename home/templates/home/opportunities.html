@@ -49,7 +49,7 @@
                     <input
                         type="text"
                         id="name-search"
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-colors"
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-ds-purple focus:ring-4 focus:ring-purple-100 transition-colors"
                         placeholder="Start typing..."
                         x-model="query"
                         @input="updateSuggestions"
@@ -75,7 +75,7 @@
                     <input
                         type="text"
                         id="outcomes-search"
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-colors"
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-ds-purple focus:ring-4 focus:ring-purple-100 transition-colors"
                         placeholder="e.g., technical knowledge"
                         x-model="query"
                         @input="updateSuggestions"
@@ -101,7 +101,7 @@
                     <input
                         type="text"
                         id="requirements-search"
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-colors"
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-ds-purple focus:ring-4 focus:ring-purple-100 transition-colors"
                         placeholder="e.g., Django experience"
                         x-model="query"
                         @input="updateSuggestions"
@@ -127,7 +127,7 @@
                     <input
                         type="text"
                         id="tags-search"
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-colors"
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-ds-purple focus:ring-4 focus:ring-purple-100 transition-colors"
                         placeholder="e.g., mentorship, paid"
                         x-model="query"
                         @input="updateSuggestions"
@@ -153,7 +153,7 @@
                     <input
                         type="text"
                         id="description-search"
-                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-colors"
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-ds-purple focus:ring-4 focus:ring-purple-100 transition-colors"
                         placeholder="Search descriptions..."
                         x-model="filters.description"
                         aria-describedby="description-search-desc"
@@ -172,7 +172,7 @@
                                 type="checkbox"
                                 :value="type"
                                 x-model="filters.types"
-                                class="w-5 h-5 text-purple-500 border-gray-300 rounded focus:ring-purple-400 focus:ring-2"
+                                class="w-5 h-5 text-ds-purple border-gray-300 rounded focus:ring-purple-400 focus:ring-2"
                                 :aria-describedby="`type-${type}-desc`"
                             >
                             <span x-text="type" :id="`type-${type}-desc`" class="text-gray-700 capitalize"></span>
@@ -222,7 +222,7 @@
                     <!-- Tags -->
                     <div class="flex flex-wrap gap-2 mb-4">
                         <template x-for="tag in opportunity.tags" :key="tag">
-                            <span class="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium" x-text="tag"></span>
+                            <span class="bg-ds-purple text-white px-3 py-1 rounded-full text-xs font-medium" x-text="tag"></span>
                         </template>
                     </div>
 
@@ -233,7 +233,7 @@
                             <div class="text-sm text-gray-600">
                                 <span x-text="opportunity.requirements[0]"></span>
                                 <span x-show="opportunity.requirements.length > 1"
-                                      class="text-purple-500 font-medium"
+                                      class="text-ds-purple font-medium"
                                       x-text="` and ${opportunity.requirements.length - 1} more`">
                                 </span>
                             </div>
@@ -250,7 +250,7 @@
                             <div class="text-sm text-gray-600">
                                 <span x-text="opportunity.outcomes[0]"></span>
                                 <span x-show="opportunity.outcomes.length > 1"
-                                      class="text-purple-500 font-medium"
+                                      class="text-ds-purple font-medium"
                                       x-text="` and ${opportunity.outcomes.length - 1} more`">
                                 </span>
                             </div>
@@ -263,7 +263,7 @@
                     <!-- Learn More Link -->
                     <div x-show="opportunity.links && opportunity.links.length > 0">
                         <a :href="opportunity.links[0]"
-                           class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                           class="inline-block bg-ds-purple hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                            @click.stop
                            target="_blank"
                            rel="noopener noreferrer">
@@ -305,7 +305,7 @@
 
                         <div class="flex flex-wrap gap-2">
                             <template x-for="tag in selectedOpportunity?.tags || []" :key="tag">
-                                <span class="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium" x-text="tag"></span>
+                                <span class="bg-ds-purple text-white px-3 py-1 rounded-full text-sm font-medium" x-text="tag"></span>
                             </template>
                         </div>
                     </div>
@@ -322,7 +322,7 @@
                         <ul class="space-y-2">
                             <template x-for="requirement in selectedOpportunity?.requirements || []" :key="requirement">
                                 <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                    <span class="w-2 h-2 bg-ds-purple rounded-full mt-2 mr-3 flex-shrink-0"></span>
                                     <span class="text-gray-600" x-text="requirement"></span>
                                 </li>
                             </template>
@@ -335,7 +335,7 @@
                         <ul class="space-y-2">
                             <template x-for="outcome in selectedOpportunity?.outcomes || []" :key="outcome">
                                 <li class="flex items-start">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                    <span class="w-2 h-2 bg-ds-purple rounded-full mt-2 mr-3 flex-shrink-0"></span>
                                     <span class="text-gray-600" x-text="outcome"></span>
                                 </li>
                             </template>
@@ -348,9 +348,9 @@
                         <ul class="space-y-2">
                             <template x-for="link in selectedOpportunity?.links || []" :key="link">
                                 <li class="flex items-start">
-                                  <span class="w-2 h-2 bg-purple-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                  <span class="w-2 h-2 bg-ds-purple rounded-full mt-2 mr-3 flex-shrink-0"></span>
                                   <a :href="link"
-                                   class="block text-purple-500 hover:text-purple-600 hover:underline break-all"
+                                   class="block text-ds-purple hover:text-purple-500  hover:underline break-all"
                                    target="_blank"
                                    rel="noopener noreferrer"
                                    x-text="link"></a>
@@ -372,7 +372,7 @@
       <a href="https://github.com/djangonaut-space/wagtail-indymeet/blob/develop/home/static/js/django_opportunties.js"
          target="_blank"
          rel="noopener noreferrer"
-         class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+         class="inline-flex items-center gap-2 bg-ds-purple  hover:bg-purple-500  text-white px-6 py-3 rounded-lg font-medium transition-colors">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
           </svg>

@@ -91,8 +91,8 @@
         {% if 'Home' not in page.title  %}
             {% include 'includes/breadcrumbs.html' %}
         {% endif %}
-        <script src="https://unpkg.com/alpinejs" defer></script>
-        <script src="https://unpkg.com/htmx.org@1.8.4"></script>
+        <script src="{% static "js/alpine.min.js" %}" defer></script>
+        <script src="{% static "js/htmx.min.js" %}"></script>
         {% wagtailuserbar %}
         {% include 'includes/messages.html' %}
         <div class="{% if not blog_page %}container flex justify-center mb-auto mx-auto max-w-screen-xl {% endif %}">
