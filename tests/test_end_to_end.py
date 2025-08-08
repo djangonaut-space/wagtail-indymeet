@@ -77,21 +77,6 @@ class TestDjangoOpportunities:
         # Verify the input value was updated
         expect(name_input).to_have_value(suggestion_text)
 
-    def test_tag_search_functionality(self, page: Page):
-        """Test the tag search filter."""
-        tag_input = page.get_by_label("Search by Tags")
-        tag_input.fill("mentorship")
-        page.wait_for_timeout(300)
-
-        # Check that results counter is updated
-        results_text = page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
-
-        # Look for cards that contain mentorship tags
-        mentorship_cards = page.get_by_role("button").filter(has_text="mentorship")
-        assert mentorship_cards.count()
-        expect(mentorship_cards.first).to_be_visible()
-
     def test_outcomes_search_functionality(self, page: Page):
         """Test the outcomes search filter."""
         outcomes_input = page.get_by_label("Search by Outcomes")
@@ -122,16 +107,27 @@ class TestDjangoOpportunities:
         results_text = page.get_by_text(RESULTS_PATTERN)
         expect(results_text).to_be_visible()
 
+    def test_tag_filter_functionality(self, page: Page):
+        """Test the tag checkbox filters."""
+        tag_checkbox = page.get_by_label("Fellowship")
+        tag_checkbox.check()
+        page.wait_for_timeout(300)
+
+        # Check that results counter is updated
+        results_text = page.get_by_text(RESULTS_PATTERN)
+        expect(results_text).to_be_visible()
+
+        # Look for cards that contain mentorship tags
+        fellowship_cards = page.get_by_role("button").filter(has_text="fellow")
+        assert fellowship_cards.count()
+        expect(fellowship_cards.first).to_be_visible()
+
     def test_type_filter_functionality(self, page: Page):
         """Test the type checkbox filters."""
         # Get available type checkboxes by their labels
-        type_checkboxes = page.get_by_role("checkbox")
-
-        assert type_checkboxes.count()
-        first_checkbox = type_checkboxes.first
+        education_checkbox = page.get_by_label("Education")
         # Get the checkbox label text to verify filtering
-        checkbox_label = first_checkbox.locator("..").inner_text()
-        first_checkbox.check()
+        education_checkbox.check()
         page.wait_for_timeout(300)
 
         # Verify results counter updates

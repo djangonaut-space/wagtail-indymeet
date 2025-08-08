@@ -2,7 +2,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django code contributions",
     "type": "code",
-    "tags": ["code", "django core"],
+    "tags": ["django core"],
     "requirements": [
       "Completed Django tutorial",
       "Completed Contributing to Django tutorial"
@@ -128,7 +128,7 @@ const django_contribution_opportunities = [
   {
     "name": "Online Community Working Group",
     "type": "community",
-    "tags": ["community", "moderation", "working group"],
+    "tags": ["moderation", "working group"],
     "requirements": [],
     "outcomes": [
       "community management skills",
@@ -353,7 +353,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django code triaging",
     "type": "code",
-    "tags": ["code", "django core", "triage"],
+    "tags": ["django core", "triage"],
     "requirements": [
       "Completed Django tutorial",
       "Completed Contributing to Django tutorial",
@@ -375,7 +375,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django release tester",
     "type": "code",
-    "tags": ["code", "django core", "triage", "test"],
+    "tags": ["django core", "triage", "test"],
     "requirements": [
       "Awareness of what's in the new release",
       "A release candidate of Django must be available",
@@ -394,7 +394,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django code reviews",
     "type": "code",
-    "tags": ["code", "django core"],
+    "tags": ["django core"],
     "requirements": [
       "Some understanding of Django",
       "Some experience writing software"
@@ -416,7 +416,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django translations",
     "type": "code",
-    "tags": ["code", "django core"],
+    "tags": ["django core"],
     "requirements": [
       "Some understanding of Django",
       "Some experience writing software"
@@ -436,7 +436,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django new features",
     "type": "code",
-    "tags": ["code", "django core"],
+    "tags": ["django core"],
     "requirements": [
       "Some understanding of Django",
       "Some experience building Django applications"
@@ -456,7 +456,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Packages",
     "type": "code",
-    "tags": ["code", "third-party", "django-packages"],
+    "tags": ["third-party", "django-packages"],
     "requirements": [
       "Some Django experience",
     ],
@@ -475,7 +475,7 @@ const django_contribution_opportunities = [
   {
     "name": "Jazzband - Member",
     "type": "code",
-    "tags": ["code", "third-party", "jazzband"],
+    "tags": ["third-party", "jazzband"],
     "requirements": [],
     "outcomes": [
       "technical knowledge",
@@ -491,7 +491,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Commons - Member",
     "type": "code",
-    "tags": ["code", "third-party", "django-commons",],
+    "tags": ["third-party", "django-commons",],
     "requirements": [
         "GitHub account with some history or social media account"
     ],
@@ -532,7 +532,7 @@ const django_contribution_opportunities = [
   {
     "name": "Code of Conduct Working Group",
     "type": "community",
-    "tags": ["governance", "code-of-conduct", "working group"],
+    "tags": ["code-of-conduct", "working group"],
     "requirements": [
     ],
     "outcomes": [
@@ -559,7 +559,7 @@ const django_contribution_opportunities = [
   {
     "name": "Fellowship Working Group",
     "type": "governance",
-    "tags": ["governance", "fellowship", "hiring", "working group"],
+    "tags": ["fellowship", "hiring", "working group"],
     "requirements": null,
     "outcomes": null,
     "links": [
@@ -570,7 +570,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Fellow",
     "type": "code",
-    "tags": ["fellowship", "django core", "paid", "code"],
+    "tags": ["fellowship", "django core", "paid"],
     "requirements": [
         "Extensive experience in Python and Django",
         "Conflict resolution",
@@ -595,7 +595,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Security Team",
     "type": "code",
-    "tags": ["security", "django core", "code"],
+    "tags": ["security", "django core"],
     "requirements": null,
     "outcomes": null,
     "links": [
@@ -626,7 +626,7 @@ const django_contribution_opportunities = [
   {
     "name": "Website Working Group",
     "type": "code",
-    "tags": ["website", "code", "working group"],
+    "tags": ["website", "working group"],
     "requirements": [
       "Django experience",
       "Contribution to djangoproject.com"
@@ -644,7 +644,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Girls+ - Workshop Organizer",
     "type": "community",
-    "tags": ["education", "diversity", "workshops", "django girls+"],
+    "tags": ["diversity", "workshops", "django girls+"],
     "requirements": null,
     "outcomes": [
       "event management skills",
@@ -661,7 +661,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Girls+ - Workshop Coach",
     "type": "education",
-    "tags": ["education", "diversity", "coaching", "django girls+"],
+    "tags": ["diversity", "coaching", "django girls+"],
     "requirements": [
       "Lots of patience, smiles and a friendly attitude",
       "Ability to answer all sorts of questions in a beginner-friendly way",
@@ -685,7 +685,7 @@ const django_contribution_opportunities = [
   {
     "name": "Local Django Meetup - Speaker",
     "type": "education",
-    "tags": ["speaking", "local", "education", "knowledge-sharing"],
+    "tags": ["speaking", "local", "knowledge-sharing"],
     "requirements": [
       "Django experience in specific area",
       "Willingness to present publicly",
@@ -705,7 +705,7 @@ const django_contribution_opportunities = [
   {
     "name": "djangoproject.com",
     "type": "code",
-    "tags": ["website", "django/djangoproject.com", "code"],
+    "tags": ["website", "django/djangoproject.com"],
     "requirements": [
       "Web development experience",
       "Django experience",
@@ -724,7 +724,7 @@ const django_contribution_opportunities = [
   {
     "name": "djangosnippets.org",
     "type": "code",
-    "tags": ["code"],
+    "tags": ["website"],
     "requirements": [
       "Django experience",
     ],
@@ -740,9 +740,9 @@ const django_contribution_opportunities = [
     "description": "Contribute to the djangosnippets.org website by fixing bugs, adding features, or improving documentation."
   },
   {
-    "name": "CCBV/CDRF",
+    "name": "CCBV",
     "type": "code",
-    "tags": ["code"],
+    "tags": ["website"],
     "requirements": [
       "Django experience",
     ],
@@ -760,7 +760,7 @@ const django_contribution_opportunities = [
   {
     "name": "CDRF",
     "type": "code",
-    "tags": ["code"],
+    "tags": ["website"],
     "requirements": [
       "Django experience",
     ],
@@ -778,7 +778,7 @@ const django_contribution_opportunities = [
   {
     "name": "DSF Board",
     "type": "governance",
-    "tags": ["governance", "community", "leadership", "elected"],
+    "tags": ["leadership", "elected"],
     "requirements": [
       "Django community experience",
       "Available for monthly meetings and decisions",
@@ -801,7 +801,7 @@ const django_contribution_opportunities = [
   {
     "name": "Steering Council",
     "type": "governance",
-    "tags": ["governance", "technical-leadership", "community", "elected"],
+    "tags": ["technical-leadership", "elected"],
     "requirements": [
       "Django contribution experience",
       "Available for monthly meetings and decisions",
@@ -823,7 +823,7 @@ const django_contribution_opportunities = [
   {
     "name": "Accessibility Team",
     "type": "code",
-    "tags": ["code", "accessibility", "django core", "invitation-only"],
+    "tags": ["accessibility", "django core", "invitation-only"],
     "requirements": [
       "Prefer volunteers who have disabilities that make using the web or web development more difficult",
       "Prefer expertise in accessibility",
@@ -845,7 +845,7 @@ const django_contribution_opportunities = [
   {
     "name": "Merger Team",
     "type": "code",
-    "tags": ["code", "django core", "invitation-only"],
+    "tags": ["django core", "invitation-only"],
     "requirements": null,
     "outcomes": null,
     "links": [
@@ -856,7 +856,7 @@ const django_contribution_opportunities = [
   {
     "name": "Ops Team",
     "type": "code",
-    "tags": ["code", "devops", "invitation-only"],
+    "tags": ["devops", "invitation-only"],
     "requirements": null,
     "outcomes": null,
     "links": [
@@ -867,7 +867,7 @@ const django_contribution_opportunities = [
   {
     "name": "Releaser Team",
     "type": "code",
-    "tags": ["code", "devops", "django core", "invitation-only"],
+    "tags": ["devops", "django core", "invitation-only"],
     "requirements": null,
     "outcomes": null,
     "links": [
@@ -878,7 +878,7 @@ const django_contribution_opportunities = [
   {
     "name": "Triage & Review Team",
     "type": "code",
-    "tags": ["code", "django core", "triage", "review"],
+    "tags": ["django core", "triage", "code review"],
     "requirements": null,
     "outcomes": null,
     "links": [
@@ -889,7 +889,7 @@ const django_contribution_opportunities = [
   {
     "name": "DjangoCon Africa - Speaker",
     "type": "education",
-    "tags": ["speaking", "DjangoCon Africa", "conference", "education"],
+    "tags": ["speaking", "DjangoCon Africa", "conference"],
     "requirements": [
       "Talk preparation time",
     ],
@@ -908,7 +908,7 @@ const django_contribution_opportunities = [
   {
     "name": "DjangoCon US - Speaker",
     "type": "education",
-    "tags": ["speaking", "DjangoCon US", "conference", "education"],
+    "tags": ["speaking", "DjangoCon US", "conference"],
     "requirements": [
       "Talk preparation time",
     ],
@@ -927,7 +927,7 @@ const django_contribution_opportunities = [
   {
     "name": "DjangoCon Europe - Speaker",
     "type": "education",
-    "tags": ["speaking", "DjangoCon Europe", "conference", "education"],
+    "tags": ["speaking", "DjangoCon Europe", "conference"],
     "requirements": [
       "Talk preparation time",
     ],
@@ -946,7 +946,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Forum - Moderator",
     "type": "community",
-    "tags": ["moderation", "forum", "community"],
+    "tags": ["moderation", "forum"],
     "requirements": [
       "Strong Django community knowledge",
       "Good judgment and communication",
@@ -968,7 +968,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Discord - Moderator",
     "type": "community",
-    "tags": ["moderation", "discord", "community"],
+    "tags": ["moderation", "discord"],
     "requirements": [
       "Strong Django community knowledge",
       "Good judgment and communication",
@@ -990,7 +990,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Reddit - Moderator",
     "type": "community",
-    "tags": ["moderation", "reddit", "community"],
+    "tags": ["moderation", "reddit"],
     "requirements": [
       "Strong Django community knowledge",
       "Good judgment and communication",
@@ -1012,7 +1012,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Forum - Helper",
     "type": "community",
-    "tags": ["support", "forum", "education", "community"],
+    "tags": ["support", "forum"],
     "requirements": [
       "Patience with beginners",
       "Empathy",
@@ -1034,7 +1034,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Discord - Helper",
     "type": "community",
-    "tags": ["support", "discord", "education", "community"],
+    "tags": ["support", "discord"],
     "requirements": [
       "Patience with beginners",
       "Empathy",
@@ -1074,7 +1074,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Content Creator - Blogger",
     "type": "outreach",
-    "tags": ["content-creation", "blogging", "education"],
+    "tags": ["content-creation", "blogging"],
     "requirements": [
       "A desire to write",
     ],
@@ -1090,7 +1090,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Content Creator - Video",
     "type": "outreach",
-    "tags": ["content-creation", "video", "education", "youtube"],
+    "tags": ["content-creation", "video", "youtube"],
     "requirements": [
       "A desire to create videos",
       "Screen recording/presentation ability"
@@ -1108,7 +1108,7 @@ const django_contribution_opportunities = [
   {
     "name": "Django Content Creator - Podcast",
     "type": "outreach",
-    "tags": ["content-creation", "podcast", "audio", "education"],
+    "tags": ["content-creation", "podcast", "audio"],
     "requirements": [
       "A desire to create podcasts",
       "Audio equipment/setup",
