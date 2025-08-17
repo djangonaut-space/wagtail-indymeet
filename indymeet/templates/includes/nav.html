@@ -24,6 +24,11 @@
                     </a>
                 </li>
                 <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% url "opportunities" %}">
+                        {% trans "Contribute" %}
+                    </a>
+                </li>
+                <li>
                     <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% slugurl "comms" %}">
                         {% trans "Blog" %}
                     </a>
@@ -115,6 +120,11 @@
                         <li class="p-2">
                             <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'session_list' %}">
                                 {% trans "Sessions" %}
+                            </a>
+                        </li>
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url "opportunities" %}">
+                                {% trans "Contribute" %}
                             </a>
                         </li>
                         <li class="p-2">

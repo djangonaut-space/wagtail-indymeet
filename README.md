@@ -135,7 +135,7 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    postgres=# CREATE DATABASE "djangonaut-space";
    postgres=# CREATE USER djangonaut WITH SUPERUSER PASSWORD 'djangonaut';
-   postgres=# GRANT ALL PRIVILEGES ON DATABASE 'djangonaut-space' TO djangonaut;
+   postgres=# GRANT ALL PRIVILEGES ON DATABASE "djangonaut-space" TO djangonaut;
    ```
    ```sh
    postgres=# exit
@@ -266,22 +266,15 @@ To run the tests:
 pytest
 ```
 
-There are also Playwright tests that can be run explicitly. These require the application to
-be running in another terminal. To run the tests:
+There are also Playwright tests that can be run. To run these tests:
 
 ```shell
 # Be sure playwright is properly installed and has a test user for accessing /admin
 playwright install --with-deps
-python manage.py create_playwright_user
 # This is the actual test command
 pytest -m playwright
 # Run the tests in headed mode (so you can see the browser)
 pytest -m playwright --headed
-# Run the test generator to help create new tests
-playwright codegen http://localhost:8000
-# Run the tests against a different base url
-# You will need to change the username and password environment variables as well)
-PYTEST_BASE_URL="https://djangonaut.space" pytest -m playwright --headed
 ```
 
 ### Merging changes
