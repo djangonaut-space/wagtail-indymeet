@@ -107,16 +107,15 @@ class TestDjangoOpportunities:
         results_text = page.get_by_text(RESULTS_PATTERN)
         expect(results_text).to_be_visible()
 
-    def test_tag_filter_functionality(self, page: Page):
-        """Test the tag checkbox filters."""
-        tag_checkbox = page.get_by_label("Fellowship")
-        tag_checkbox.check()
+    def test_tag_search_functionality(self, page: Page):
+        """Test the tag search filter."""
+        description_input = page.get_by_label("Search by Tags")
+        description_input.fill("Fellowship")
         page.wait_for_timeout(300)
 
-        # Check that results counter is updated
+        # Verify filtering occurred
         results_text = page.get_by_text(RESULTS_PATTERN)
         expect(results_text).to_be_visible()
-
         # Look for cards that contain mentorship tags
         fellowship_cards = page.get_by_role("button").filter(has_text="fellow")
         assert fellowship_cards.count()

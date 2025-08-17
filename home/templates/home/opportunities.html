@@ -96,17 +96,29 @@
                 </div>
 
                 <!-- Tags Search -->
-                <div>
+                <div class="relative" x-data="autocomplete('tags')">
                     <label for="tags-search" class="block text-sm font-semibold text-gray-700 mb-2">Search by Tags</label>
                     <input
                         type="text"
                         id="tags-search"
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-ds-purple focus:ring-4 focus:ring-purple-100 transition-colors"
                         placeholder="e.g., Mentorship"
-                        x-model="filters.tags"
+                        x-model="query"
+                        @input="updateSuggestions"
+                        @focus="showDropdown = true"
+                        @blur="hideDropdown"
                         aria-describedby="tags-search-desc"
                     >
                     <div id="tags-search-desc" class="sr-only">Type to search by tags</div>
+                    <div x-show="showDropdown && suggestions.length > 0"
+                         class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-lg max-h-48 overflow-y-auto z-10 autocomplete-dropdown"
+                         x-transition>
+                        <template x-for="suggestion in suggestions" :key="suggestion">
+                            <div class="px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 last:border-b-0 suggestion-item"
+                                 @mousedown.prevent="selectSuggestion(suggestion)"
+                                 x-text="suggestion"></div>
+                        </template>
+                    </div>
                 </div>
 
                 <!-- Requirements Search -->
@@ -568,6 +580,9 @@
                               break;
                           case 'outcomes':
                               values = opportunity.outcomes || [];
+                              break;
+                          case 'tags':
+                              values = opportunity.tags || [];
                               break;
                           case 'requirements':
                               values = opportunity.requirements || [];
