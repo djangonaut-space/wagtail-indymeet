@@ -740,24 +740,6 @@ const django_contribution_opportunities = [
     "description": "Contribute to the djangosnippets.org website by fixing bugs, adding features, or improving documentation."
   },
   {
-    "name": "CCBV",
-    "type": "code",
-    "tags": ["website"],
-    "requirements": [
-      "Django experience",
-    ],
-    "outcomes": [
-      "web development skills",
-      "django website experience",
-      "open source contribution"
-    ],
-    "links": [
-      "https://github.com/classy-python/ccbv",
-      "https://ccbv.co.uk/",
-    ],
-    "description": "Contribute to Classy Class-Based Views reference site."
-  },
-  {
     "name": "CDRF",
     "type": "code",
     "tags": ["website"],
