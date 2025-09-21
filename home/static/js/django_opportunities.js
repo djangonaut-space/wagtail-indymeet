@@ -59,6 +59,24 @@ const django_contribution_opportunities = [
     "description": "Start or help organize Django meetups in your local area to build regional Django communities and provide networking opportunities."
   },
   {
+    "name": "Employer Donation Advocate",
+    "type": "community",
+    "tags": ["fundraising", "corporate-relations"],
+    "requirements": [
+        "Employed at a company that uses Django"
+    ],
+    "outcomes": [
+      "fundraising",
+      "corporate relations experience",
+      "community building",
+      "community engagement",
+    ],
+    "links": [
+      "form-link-here"
+    ],
+    "description": "Connect your company with the Django community. Help us connect with your employer to explore corporate sponsorships, set up donation matching, or enable volunteer contribution programs. Get involved by filling out the form!"
+  },
+  {
     "name": "DjangoCon Africa - Organizer",
     "type": "community",
     "tags": ["events", "DjangoCon Africa", "conference"],
