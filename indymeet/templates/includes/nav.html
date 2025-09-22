@@ -7,7 +7,7 @@
 
     <div class="flex flex-1 items-center justify-end md:justify-between">
         <nav aria-label="Global" class="hidden md:block">
-            <ul class="flex items-center gap-6">
+            <ul class="flex items-center gap-8">
                 <li>
                     <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" target="_blank" href="https://github.com/djangonaut-space/program/blob/main/README.md">
                         {% trans "Program Documentation" %}
@@ -31,6 +31,11 @@
                 <li>
                     <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% slugurl 'comms' %}">
                         {% trans "Blog" %}
+                    </a>
+                </li>
+                 <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="https://opencollective.com/djangonaut-space">
+                       <i class="fa-regular fa-heart text-ds-purple"></i> {% trans "Donate" %}
                     </a>
                 </li>
             </ul>
@@ -130,6 +135,11 @@
                         <li class="p-2">
                             <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% slugurl "comms" %}">
                                 {% trans "Blog" %}
+                            </a>
+                        </li>
+                        <li class="p-2">
+                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="https://opencollective.com/djangonaut-space">
+                                 {% trans "Donate" %} <i class="fa-regular fa-heart text-ds-purple"></i>
                             </a>
                         </li>
                         {% if user.is_authenticated %}
