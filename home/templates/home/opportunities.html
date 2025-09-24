@@ -172,7 +172,7 @@
                                 type="checkbox"
                                 :value="type"
                                 x-model="filters.types"
-                                class="w-5 h-5 text-ds-purple border-gray-300 rounded focus:ring-purple-400 focus:ring-2"
+                                class="w-5 h-5 border border-gray-300 checked:border-none rounded checked:bg-ds-purple focus:ring-purple-400 focus:ring-2"
                                 :aria-describedby="`type-${type}-desc`"
                             >
                             <span x-text="type" :id="`type-${type}-desc`" class="text-gray-700 capitalize"></span>

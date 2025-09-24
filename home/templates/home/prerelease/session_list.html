@@ -23,10 +23,10 @@
             </p>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-3 pt-4">
             {% for session in sessions %}
                 {% if forloop.first and not session.is_accepting_applications %}
-                     <div class="col col-lg-3 col-md-4 col-sm-6 col-12">
+                     <div class="col">
                         <div class="max-w-sm rounded overflow-hidden shadow-lg card">
                           <div class="px-6 py-4 card-body">
                               <h5 class="font-bold text-xl mb-1 card-title">No active session</h5>

@@ -1,13 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Inter&display=swap');
-
+:root {
+    --ds-purple: #5c0287;
+}
 @layer base {
-    :root {
-        --ds-purple: #5c0287;
-    }
 
     body {
         @apply font-inter;
@@ -19,10 +17,6 @@
 
     a:hover {
         @apply cursor-pointer;
-    }
-
-    .bg-primary {
-        background-color: var(--ds-purple);
     }
 
     .button-secondary {
@@ -39,33 +33,6 @@
 
     button[type="submit"] {
        @apply rounded-md bg-primary px-5 py-2.5 font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer;
-    }
-}
-
-@layer components {
-    .blog-container {
-        background-color: #f8f8f8;
-        padding: 20px 40px;
-        margin-bottom: 20px;
-
-        p {
-            color: var(--dark);
-            margin: 0 0 1em 0;
-        }
-        a {
-            color: var(--ds-purple) !important;
-            i {
-                color: white !important;
-            }
-        }
-    }
-
-    .section-container {
-        @apply container mx-2 sm:mx-auto mt-12;
-    }
-
-    .social-item {
-        @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
     }
 }
 
@@ -134,4 +101,34 @@ ul.links {
 
 ul.links li {
     @apply mr-3 text-ds-purple;
+}
+
+
+/* ---------------------------------------------------------------------
+ BLOG / WAGTAIL PAGES
+----------------------------------------------------------------------*/
+
+.blog-container {
+    background-color: #f8f8f8;
+    padding: 20px 40px;
+    margin-bottom: 20px;
+
+    p {
+        color: var(--dark);
+        margin: 0 0 1em 0;
+    }
+    a {
+        color: var(--ds-purple) !important;
+        i {
+            color: white !important;
+        }
+    }
+}
+
+.section-container {
+    @apply container mx-2 sm:mx-auto mt-12;
+}
+
+.social-item {
+    @apply text-white text-center bg-primary w-[25px] h-[25px] mt-[5px] mr-[3px] rounded-full;
 }
