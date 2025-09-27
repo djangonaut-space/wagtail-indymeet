@@ -72,7 +72,10 @@ const django_contribution_opportunities = [
       "community engagement",
     ],
     "links": [
-      "form-link-here"
+      "form-link-here",
+      "https://djangotv.com/videos/djangocon-us/2024/if-we-had-1000000-what-could-the-dsf-do-with-4x-its-budget-with-jacob-kaplan-moss/",
+      "https://www.djangoproject.com/foundation/corporate-membership/",
+      "https://www.djangoproject.com/foundation/donate/"
     ],
     "description": "Connect your company with the Django community. Help us connect with your employer to explore corporate sponsorships, set up donation matching, or enable volunteer contribution programs. Get involved by filling out the form!"
   },
