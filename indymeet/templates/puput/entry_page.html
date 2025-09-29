@@ -1,5 +1,5 @@
 {% extends "puput/base.html" %}
-{% load i18n wagtailcore_tags wagtailimages_tags tailwind_tags puput_tags social_share %}
+{% load i18n wagtailcore_tags wagtailimages_tags tailwind_tags puput_tags %}
 
 {% block title %}
     {{ self.title }} | {{ blog_page.title }}
@@ -64,17 +64,6 @@
                             </a>
                         </div>
                         {% entry_url self blog_page as post_url %}
-                        <ul class="social-share-all text-center flex flex-row-reverse">
-                            <li class="social-item">
-                            {% post_to_facebook post_url '<span><i class="fa-brands fa-facebook"></i></span>' %}
-                            </li>
-                            <li class="social-item">
-                                {% post_to_twitter self.title post_url '<span><i class="fa-brands fa-twitter"></i></span>' %}
-                            </li>
-                            <li class="social-item">
-                                {% post_to_linkendin post_url '<span><i class="fa-brands fa-linkedin"></i></span>' %}
-                            </li>
-                        </ul>
                     </div>
 
                 </section>

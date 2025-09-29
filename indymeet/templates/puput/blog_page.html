@@ -1,6 +1,6 @@
 {% extends "puput/base.html" %}
 
-{% load static i18n wagtailcore_tags wagtailimages_tags puput_tags social_share %}
+{% load static i18n wagtailcore_tags wagtailimages_tags puput_tags %}
 
 {% block title %}
     {% if search_term %}
@@ -73,22 +73,7 @@
                     {% else %}
                         {{ entry.body|truncatewords_html:70 }}
                     {% endif %}
-                    <div class="flex justify-between">
-                        <ul class="social-share flex flex-row">
-                            <li class="social-item">
-                               {% post_to_facebook post_url '<span><i class="fa-brands fa-facebook"></i></span>' %}
-                            </li>
-                            <li class="social-item">
-                                {% post_to_twitter entry.title post_url '<span><i class="fa-brands fa-twitter"></i></span>' %}
-                            </li>
-                            <li class="social-item">
-                                {% post_to_linkendin post_url '<span><i class="fa-brands fa-linkedin"></i></span>' %}
-                            </li>
-                        </ul>
-                        <div class="">
-                            <a class="blog_btn continue" href="{{ post_url }}">{% trans 'read more' %} &raquo;</a>
-                        </div>
-                    </div>
+                    <a class="blog_btn continue" href="{{ post_url }}">{% trans 'read more' %} &raquo;</a>
                     {% include 'puput/entry_links.html' %}
                     </div>
                 </section>
