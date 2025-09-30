@@ -31,13 +31,12 @@
 
                 {% endfor %}
 
-                {% if not read_only %}
-                <button type="submit" class="block w-full mt-5 px-5 py-3 text-sm font-medium text-white bg-blue-500 rounded-lg">
-                    {% trans "Submit" %}
-                </button>
-                {% endif %}
-            </form>
-        </div>
+            {% if not read_only %}
+            <button type="submit" class="action-button mt-8 mb-4 block w-full">
+                {% trans "Submit" %}
+            </button>
+            {% endif %}
+        </form>
     </div>
 </main>
 {% endblock %}
