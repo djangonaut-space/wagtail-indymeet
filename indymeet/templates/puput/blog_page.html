@@ -69,7 +69,7 @@
                     <div class="article">
                     {% include 'puput/entry_page_header.html' %}
                     {% if entry.excerpt %}
-                        {{ entry.excerpt }}
+                        {{ entry.excerpt|safe }}
                     {% else %}
                         {{ entry.body|truncatewords_html:70 }}
                     {% endif %}
