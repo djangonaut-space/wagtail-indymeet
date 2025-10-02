@@ -1,5 +1,5 @@
 {% load i18n %}
 <form action="{% url 'resend_email_confirmation' %}"  method="POST" class="inline-block sm:ml-4 sm:float-right">
    {% csrf_token %}
-   <button type="submit">{% translate "Resend Email" %}</button>
+   <button class="action-button" type="submit">{% translate "Resend Email" %}</button>
 </form>
