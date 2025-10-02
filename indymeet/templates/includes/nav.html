@@ -84,9 +84,12 @@
                     </a>
                   </li>
                   <li class="p-2">
-                    <a href="{% url 'logout' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                    <form action="{% url 'logout' %}" method="post">
+                      {% csrf_token %}
+                      <button type="submit" class="block outline-link text-gray-500 transition hover:text-ds-purple">
                         {% trans "Logout" %}
-                    </a>
+                      </button>
+                    </form>
                   </li>
                 </ul>
               </div>
@@ -154,9 +157,10 @@
                             </a>
                         </li>
                         <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'logout' %}">
-                                {% trans "Logout" %}
-                            </a>
+                            <form action="{% url 'logout' %}" method="post">
+                              {% csrf_token %}
+                              <button type="submit" class="block outline-link text-gray-500 transition hover:text-ds-purple">{% trans "Logout" %}</button>
+                            </form>
                         </li>
                         {%  else %}
                         <li class="p-2">
