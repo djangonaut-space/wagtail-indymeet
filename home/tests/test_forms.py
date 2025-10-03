@@ -141,7 +141,7 @@ class UserSurveyResponseFormTests(TestCase):
         )
         self.assertEqual(
             question_responses.get(question=self.question_ids["URL"]).value,
-            "http://www.example.com",
+            "https://www.example.com",
         )
         self.assertEqual(
             question_responses.get(question=self.question_ids["EMAIL"]).value,
