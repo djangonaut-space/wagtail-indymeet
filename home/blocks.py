@@ -238,11 +238,16 @@ class RichTextBlock(blocks.StructBlock):
         template = "blocks/rich_text.html"
 
 
+class TextBlock(blocks.TextBlock):
+    class Meta:
+        template = "blocks/paragraph.html"
+
+
 class BaseStreamBlock(blocks.StreamBlock):
     heading = HeadingBlock(label="Heading", icon="h1")
     rich_text = RichTextBlock()
     list = ListBlock(label="List", icon="list-ol")
-    paragraph = blocks.TextBlock(max_length=10000)
+    paragraph = TextBlock(max_length=10000)
     html = blocks.RawHTMLBlock(icon="code", label="Raw HTML")
     image = ImageChooserBlock()
     caption = CustomCaption()

@@ -1,4 +1,4 @@
-from colorful.fields import RGBColorField
+from puput.fields import ColorField
 from django.utils.translation import gettext_lazy as _
 from puput import abstracts
 from wagtail.admin.panels import FieldPanel
@@ -14,7 +14,7 @@ from home.blocks import BaseStreamBlock
 
 
 class BlogAbstract(abstracts.BlogAbstract):
-    main_color = RGBColorField(_("Blog Main Color"), default="#5c0287")
+    main_color = ColorField(_("Blog Main Color"), default="#5c0287")
 
     class Meta:
         abstract = True
@@ -24,7 +24,6 @@ class EntryAbstract(abstracts.EntryAbstract):
     body = StreamField(
         BaseStreamBlock(),
         verbose_name="StreamField Body",
-        use_json_field=True,
         null=True,
     )
 

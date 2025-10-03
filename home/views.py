@@ -31,7 +31,7 @@ def event_calendar(request):
 
 class EventDetailView(DetailView):
     model = Event
-    template_name = "home/prerelease/event_detail.html"
+    template_name = "home/event_detail.html"
 
     def get_object(self, queryset=None):
         if not queryset:
@@ -64,7 +64,7 @@ class EventDetailView(DetailView):
 
 class EventListView(ListView):
     model = Event
-    template_name = "home/prerelease/event_list.html"
+    template_name = "home/event_list.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -92,7 +92,7 @@ class EventListView(ListView):
 
 class SessionDetailView(DetailView):
     model = Session
-    template_name = "home/prerelease/session_detail.html"
+    template_name = "home/session_detail.html"
 
     def get_queryset(self):
         return Session.objects.with_applications(user=self.request.user)
@@ -100,7 +100,7 @@ class SessionDetailView(DetailView):
 
 class SessionListView(ListView):
     model = Session
-    template_name = "home/prerelease/session_list.html"
+    template_name = "home/session_list.html"
     context_object_name = "sessions"
 
     def get_queryset(self):

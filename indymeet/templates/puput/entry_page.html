@@ -1,5 +1,5 @@
 {% extends "puput/base.html" %}
-{% load i18n wagtailcore_tags wagtailimages_tags tailwind_tags puput_tags social_share %}
+{% load i18n wagtailcore_tags wagtailimages_tags tailwind_tags puput_tags %}
 
 {% block title %}
     {{ self.title }} | {{ blog_page.title }}
@@ -60,21 +60,10 @@
                     <div class="flex flex-row justify-between mt-8">
                         <div class="">
                             <a href="{% pageurl blog_page %}" class="text-ds-purple back">
-                                <i class="fa-solid fa-angle-left"></i> {% trans 'Return' %}
+                                <i class="text-ds-purple fa-solid fa-angle-left"></i> {% trans 'Return' %}
                             </a>
                         </div>
                         {% entry_url self blog_page as post_url %}
-                        <ul class="social-share-all text-center flex flex-row-reverse">
-                            <li class="social-item">
-                            {% post_to_facebook post_url '<span><i class="fa-brands fa-facebook"></i></span>' %}
-                            </li>
-                            <li class="social-item">
-                                {% post_to_twitter self.title post_url '<span><i class="fa-brands fa-twitter"></i></span>' %}
-                            </li>
-                            <li class="social-item">
-                                {% post_to_linkendin post_url '<span><i class="fa-brands fa-linkedin"></i></span>' %}
-                            </li>
-                        </ul>
                     </div>
 
                 </section>

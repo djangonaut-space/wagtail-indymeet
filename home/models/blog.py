@@ -57,7 +57,6 @@ class GeneralPage(Page):
         verbose_name="StreamField Body",
         blank=True,
         null=True,
-        use_json_field=True,
     )
 
     content_panels = Page.content_panels + [

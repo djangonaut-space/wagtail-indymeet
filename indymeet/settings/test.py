@@ -7,3 +7,9 @@ PASSWORD_HASHERS = [
 ]
 # Disable ssl for testing on CI
 DATABASES["default"].setdefault("OPTIONS", {}).pop("sslmode", None)
+
+# The manifest storage from production.py would require collectstatic to be run
+# before the tests could run.
+STORAGES["staticfiles"][
+    "BACKEND"
+] = "django.contrib.staticfiles.storage.StaticFilesStorage"

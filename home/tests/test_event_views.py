@@ -32,7 +32,7 @@ class EventViewTests(TestCase):
     def test_list_no_events(self):
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/prerelease/event_list.html")
+        self.assertTemplateUsed("home/event_list.html")
         self.assertContains(response, "No upcoming events.")
         self.assertContains(response, "No past events.")
 
@@ -40,7 +40,7 @@ class EventViewTests(TestCase):
         upcoming_event = self.create_upcoming_event()
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/prerelease/event_list.html")
+        self.assertTemplateUsed("home/event_list.html")
         self.assertNotContains(response, "No upcoming events.")
         self.assertContains(response, "No past events.")
         self.assertContains(response, upcoming_event.title)
@@ -51,7 +51,7 @@ class EventViewTests(TestCase):
         past_event = self.create_past_event()
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/prerelease/event_list.html")
+        self.assertTemplateUsed("home/event_list.html")
         self.assertNotContains(response, "No upcoming events.")
         self.assertNotContains(response, "No past events.")
         self.assertContains(response, upcoming_event.title)
@@ -64,7 +64,7 @@ class EventViewTests(TestCase):
         timezone.activate("Europe/Berlin")  # UTC + 1
         response = self.client.get(upcoming_event.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/prerelease/event_detail.html")
+        self.assertTemplateUsed("home/event_detail.html")
         self.assertContains(response, "Feb 01, 2023 11:00 CET")
         self.assertContains(
             response, '<a href="https://zoom.link" rel="nofollow">https://zoom.link</a>'

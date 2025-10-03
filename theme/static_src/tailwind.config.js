@@ -44,12 +44,6 @@ module.exports = {
     ],
     theme: {
         extend: {
-            colors: {
-                'ds-purple': '#5c0287'
-            },
-            textColor: {
-                'ds-purple': '#5c0287'
-            },
             fontFamily: {
                 sans: [
                     'Inter',
@@ -82,7 +76,5 @@ module.exports = {
          */
         require('@tailwindcss/forms'),
         require('@tailwindcss/typography'),
-        require('@tailwindcss/line-clamp'),
-        require('@tailwindcss/aspect-ratio'),
     ],
 }

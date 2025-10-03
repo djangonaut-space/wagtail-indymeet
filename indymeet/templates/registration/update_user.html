@@ -20,7 +20,7 @@
               {% csrf_token %}
 
               {{ form }}
-              <button type="submit" class="mt-4">{% translate "Save" %}</button>
+              <button type="submit" class="action-button mt-4">{% translate "Save" %}</button>
               <a class="px-4 text-ds-purple hover:underline cursor-pointer" href="{% url "profile" %}"> {% trans "Cancel" %}</a>
             </form>
           </div>

@@ -10,7 +10,8 @@ server. You may have access to the credentials in the
 
 1. Log into Hetzner account
 2. Add your ssh key to Security -> Add SSH Key
-3. ``ssh root@djangonaut.space`` or ``ssh root@staging.djangonaut.space`` (they go to the same place)
+3. Add your ssh key to ``~/.ssh/authorized_keys`` on the server (may need another person's help or use the Console in the web app)
+4. ``ssh root@djangonaut.space`` or ``ssh root@staging.djangonaut.space`` (they go to the same place)
 
 ## Running a remote command
 

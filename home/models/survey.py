@@ -76,7 +76,7 @@ class Question(BaseModel):
     label = models.CharField(
         max_length=500, help_text=_("Enter your question in here.")
     )
-    type_field = models.CharField(choices=TypeField.choices, max_length=100)
+    type_field = models.CharField(choices=TypeField, max_length=100)
     choices = models.TextField(
         blank=True,
         help_text=_(
