@@ -21,10 +21,10 @@ charset-normalizer==3.4.3
 defusedxml==0.7.1
     # via willow
 dj-database-url==3.0.1
-    # via -r requirements/requirements.in
-django==5.2.6
+    # via -r requirements.in
+django==5.2.7
     # via
-    #   -r requirements/requirements.in
+    #   -r requirements.in
     #   dj-database-url
     #   django-anymail
     #   django-debug-toolbar
@@ -45,13 +45,13 @@ django==5.2.6
     #   sentry-sdk
     #   wagtail
 django-anymail==13.1
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 django-debug-toolbar==6.0.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 django-el-pagination==4.0.0
     # via puput
 django-extensions==4.1
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 django-filter==25.1
     # via wagtail
 django-modelcluster==6.4
@@ -59,9 +59,9 @@ django-modelcluster==6.4
 django-permissionedforms==0.1
     # via wagtail
 django-recaptcha==4.1.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 django-storages==1.14.6
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 django-stubs-ext==5.2.5
     # via django-tasks
 django-taggit==6.1.0
@@ -69,13 +69,13 @@ django-taggit==6.1.0
     #   puput
     #   wagtail
 django-tailwind==4.2.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 django-tasks==0.6.1
     # via wagtail
 django-treebeard==4.7.1
     # via wagtail
 django-widget-tweaks==1.5.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 djangorestframework==3.16.1
     # via wagtail
 draftjs-exporter==5.1.0
@@ -85,7 +85,7 @@ et-xmlfile==2.0.0
 filetype==1.2.0
     # via willow
 gunicorn==23.0.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 idna==3.10
     # via requests
 laces==0.1.2
@@ -105,20 +105,20 @@ pillow==11.3.0
 pillow-heif==1.1.0
     # via willow
 psycopg2-binary==2.9.10
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 puput==2.2.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 python-dotenv==1.1.1
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 requests==2.32.5
     # via
     #   django-anymail
     #   wagtail
 sentry-sdk==2.39.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 six==1.17.0
     # via
-    #   -r requirements/requirements.in
+    #   -r requirements.in
     #   bleach
 soupsieve==2.8
     # via beautifulsoup4
@@ -127,24 +127,24 @@ sqlparse==0.5.3
     #   django
     #   django-debug-toolbar
 supervisor==4.3.0
-    # via -r requirements/requirements.in
+    # via -r requirements.in
 telepath==0.3.1
     # via wagtail
 typing-extensions==4.15.0
     # via
-    #   -r requirements/requirements.in
+    #   -r requirements.in
     #   beautifulsoup4
     #   django-stubs-ext
     #   django-tasks
 urllib3==2.5.0
     # via
-    #   -r requirements/requirements.in
+    #   -r requirements.in
     #   django-anymail
     #   requests
     #   sentry-sdk
 wagtail==6.4.2
     # via
-    #   -r requirements/requirements.in
+    #   -r requirements.in
     #   puput
     #   wagtail-markdown
 wagtail-markdown==0.11.1
@@ -152,4 +152,6 @@ wagtail-markdown==0.11.1
 webencodings==0.5.1
     # via bleach
 willow==1.11.0
-    # via wagtail
+    # via
+    #   wagtail
+    #   willow
