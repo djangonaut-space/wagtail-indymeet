@@ -252,3 +252,6 @@ class FormRenderer(TemplatesSetting):
 
 
 FORM_RENDERER = "indymeet.settings.base.FormRenderer"
+
+# Should be removed in Django 6.0
+FORMS_URLFIELD_ASSUME_HTTPS = True
