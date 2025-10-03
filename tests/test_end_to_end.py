@@ -217,17 +217,14 @@ class TestDjangoOpportunities:
 
         assert opportunity_cards.count()
         opportunity_cards.first.click()
-        page.wait_for_timeout(300)
 
         # Find modal overlay (parent of dialog)
         modal_overlay = page.locator(".fixed.inset-0.bg-black.bg-opacity-50")
-        expect(modal_overlay).to_be_visible()
+        modal_overlay.wait_for(state="visible")
 
         # Click on overlay background (outside the modal content)
-        modal_overlay.click(position={"x": 50, "y": 50})
-        page.wait_for_timeout(300)
-
-        expect(modal_overlay).not_to_be_visible()
+        modal_overlay.click(position={"x": 5, "y": 5})
+        modal_overlay.wait_for(state="hidden")
 
     def test_keyboard_navigation_on_cards(self, page: Page):
         """Test keyboard navigation functionality on cards."""
