@@ -214,7 +214,7 @@ class TestDjangoOpportunities:
     # I'm not sure why this is failing on CI. It passes locally and within the actual
     # application. The next steps are to get the traces and images from CI to inspect
     # why it may be failing.
-    @expectedFailure
+    @pytest.mark.xfail
     def test_modal_close_by_clicking_overlay(self, page: Page):
         """Test closing modal by clicking the overlay."""
         # Open modal
