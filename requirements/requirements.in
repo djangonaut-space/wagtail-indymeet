@@ -1,4 +1,4 @@
-Django==4.1.*
+Django==4.2.*
 wagtail==5.0.*
 django-storages
 psycopg2-binary
