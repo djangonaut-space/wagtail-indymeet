@@ -59,7 +59,7 @@ const django_contribution_opportunities = [
     "description": "Start or help organize Django meetups in your local area to build regional Django communities and provide networking opportunities."
   },
   {
-    "name": "Employer Donation Advocate",
+    "name": "Employer Donation Liaison",
     "type": "community",
     "tags": ["fundraising", "corporate-relations"],
     "requirements": [
@@ -72,7 +72,7 @@ const django_contribution_opportunities = [
       "community engagement",
     ],
     "links": [
-      "form-link-here",
+      "https://forms.gle/79riJCQrQ8t25Ey56",
       "https://www.djangoproject.com/foundation/corporate-membership/",
       "https://www.djangoproject.com/foundation/donate/"
     ],
