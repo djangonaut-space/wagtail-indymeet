@@ -1,2 +1,0 @@
-# This links to the base requirements to support Dokku - herokuish builds.
--r requirements/requirements.txt

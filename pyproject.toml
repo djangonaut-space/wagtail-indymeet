@@ -1,7 +1,45 @@
 [project]
 name = "djangonaut_space"
 version = "1.0.0"
+requires-python = ">=3.11"
 urls = {homepage = "https://github.com/djangonaut-space/wagtail-indymeet"}
+dependencies = [
+    "Django==5.2.*",
+    "wagtail",
+    "django-storages",
+    "psycopg2-binary",
+    "django-anymail",
+    "six",
+    "django-recaptcha>=4",
+    "python-dotenv",
+    "puput",
+    "urllib3",
+    "django-extensions",
+    "django-debug-toolbar",
+    "typing-extensions",
+    "django-tailwind",
+    "sentry-sdk[django]",
+    "supervisor",
+    "django-widget-tweaks",
+    "dj-database-url",
+    "gunicorn",
+]
+
+[project.optional-dependencies]
+test = [
+    "freezegun",
+    "playwright",
+    "pytest",
+    "pytest-django",
+    "pytest-mock",
+    "pytest-playwright",
+    "factory_boy",
+    "unittest_parametrize",
+]
+dev = [
+    "pre-commit",
+    "django-tailwind[reload]",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "indymeet.settings.test"
