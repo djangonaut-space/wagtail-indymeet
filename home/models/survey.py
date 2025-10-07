@@ -63,10 +63,9 @@ class TypeField(models.TextChoices):
 class Question(BaseModel):
     key = models.CharField(
         max_length=500,
-        unique=True,
         blank=True,
         help_text=_(
-            "Unique key for this question, fill in the blank if "
+            "Unique key for this question within the survey, fill in the blank if "
             "you want to use for automatic generation."
         ),
     )
@@ -99,6 +98,11 @@ class Question(BaseModel):
 
     class Meta:
         ordering = ["ordering"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["survey", "key"], name="unique_question_key_per_survey"
+            )
+        ]
 
     def __str__(self):
         return f"{self.label}-survey-{self.survey.id}"
