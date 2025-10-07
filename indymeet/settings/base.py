@@ -30,7 +30,6 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 INSTALLED_APPS = [
     "accounts",
     "home",
-    "search",
     "anymail",
     "django_recaptcha",
     "wagtail.contrib.forms",
