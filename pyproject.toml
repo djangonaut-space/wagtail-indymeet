@@ -1,0 +1,30 @@
+[project]
+name = "djangonaut_space"
+version = "1.0.0"
+urls = {homepage = "https://github.com/djangonaut-space/wagtail-indymeet"}
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "indymeet.settings.test"
+addopts = "--reuse-db -m 'not playwright'"
+markers = [
+    "playwright: mark test that requires playwright",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = [
+    "accounts",
+    "home",
+    "indymeet",
+]
+
+[tool.coverage.paths]
+source = [
+    "accounts",
+    "home",
+    "indymeet",
+]
+
+[tool.coverage.report]
+show_missing = true
