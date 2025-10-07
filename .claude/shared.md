@@ -95,6 +95,13 @@ uv run pytest -m playwright --headed  # See browser
 - Write tests alongside all new features
 - Generate high-level architecture/design documentation in `docs/` folder
 - Write helpful docstrings that provide context
+- Run zizmor security checks on GitHub Actions workflows when modifying `.github/` directory
+
+### GitHub Actions Security
+- **Run zizmor locally** when modifying workflow files: `uvx zizmor .github/workflows/`
+- Zizmor checks for security issues in GitHub Actions workflows
+- The zizmor workflow runs automatically on PRs that modify `.github/` directory
+- Address any security findings before committing workflow changes
 
 ### Testing Requirements
 - **Always run tests** before considering work complete
@@ -314,6 +321,10 @@ uv run pytest path/to/test.py    # Specific test file
 uv run python manage.py tailwind install
 uv run python manage.py tailwind start
 uv run python manage.py tailwind build   # Production build
+
+# GitHub Actions Security
+uvx zizmor .github/workflows/           # Check all workflows
+uvx zizmor .github/workflows/tests.yml  # Check specific workflow
 
 # Production/staging locally
 uv run python manage.py runserver --settings=indymeet.settings.production

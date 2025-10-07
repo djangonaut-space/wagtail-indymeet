@@ -15,14 +15,17 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Cloning repo
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Push to dokku
-        uses: dokku/github-action@v1.8.0
+        uses: dokku/github-action@33d50129fe718c3f907c8b29ea58776ed3cf8221 # v1.8.0
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_DOKKU_SSH_PRIVATE_KEY }}
         with:
