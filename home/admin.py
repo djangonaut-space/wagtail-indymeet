@@ -1,6 +1,7 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import F, Max, Count
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from .models import Event
@@ -66,6 +67,23 @@ class QuestionInline(admin.StackedInline):
         "required",
         "ordering",
     )
+    readonly_fields = ("key",)
+
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    model = Question
+    list_display = [
+        "label",
+        "survey",
+        "type_field",
+        "required",
+        "ordering",
+    ]
+    list_filter = ["survey", "type_field", "required"]
+    search_fields = ["label", "survey__name", "key"]
+    list_editable = ["ordering"]
+    ordering = ["survey", "ordering"]
 
 
 @admin.register(Survey)
@@ -87,10 +105,15 @@ class SurveyAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "slug",
+        "session",
+        "question_count",
         "link",
         "responses",
         "latest_response",
     ]
+    list_filter = ["session", "editable", "deletable", "created_at"]
+    search_fields = ["name", "description", "session__title"]
+    actions = ["copy_survey"]
 
     def get_queryset(self, request):
         return (
@@ -101,6 +124,7 @@ class SurveyAdmin(admin.ModelAdmin):
                     "usersurveyresponse__user_id", distinct=True
                 ),
                 annotated_latest_response=Max("usersurveyresponse__created_at"),
+                annotated_question_count=Count("questions", distinct=True),
             )
         )
 
@@ -108,11 +132,53 @@ class SurveyAdmin(admin.ModelAdmin):
         url = obj.get_survey_response_url()
         return mark_safe(f'<a href="{url}">Copy to share</a>')
 
+    @admin.display(description="Questions", ordering="annotated_question_count")
+    def question_count(self, obj):
+        """Display the number of questions in this survey"""
+        return getattr(obj, "annotated_question_count", 0)
+
     def responses(self, obj):
         return getattr(obj, "annotated_responses_count", None)
 
     def latest_response(self, obj):
         return getattr(obj, "annotated_latest_response", None)
+
+    @admin.action(description="Copy selected surveys (with all questions)")
+    def copy_survey(self, request, queryset):
+        """
+        Copy selected surveys along with all their questions.
+        Creates new surveys with " (Copy)" appended to the name.
+        """
+        copied_count = 0
+        for survey in queryset:
+            # Get all questions before copying the survey
+            questions = list(survey.questions.all())
+
+            # Copy the survey
+            survey.pk = None
+            survey.id = None
+            survey.name = (
+                f"{survey.name} (Copied - {timezone.now().date().isoformat()})"
+            )
+            survey.slug = ""  # Will be auto-generated on save
+            survey.session = None  # New copy not attached to any session
+            survey.save()
+
+            # Copy all questions
+            for question in questions:
+                question.pk = None
+                question.id = None
+                question.survey = survey
+                question.key = ""  # Will be auto-generated on save
+                question.save()
+
+            copied_count += 1
+
+        self.message_user(
+            request,
+            f"Successfully copied {copied_count} survey(s) with all their questions.",
+            messages.SUCCESS,
+        )
 
 
 @admin.register(UserQuestionResponse)
