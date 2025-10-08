@@ -1,8 +1,11 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
+from datetime import timedelta
 
 from accounts.factories import UserFactory
 from home.factories import QuestionFactory
+from home.factories import SessionFactory
 from home.factories import SurveyFactory
 from home.factories import UserQuestionResponseFactory
 from home.factories import UserSurveyResponseFactory
@@ -101,7 +104,7 @@ class UserSurveyResponseViewTests(TestCase):
             question=cls.question_2,
             value="Pizza",
         )
-        cls.url = reverse("user_survey_response", kwargs={"pk": cls.survey_response.id})
+        cls.url = reverse("user_survey_response", kwargs={"slug": cls.survey.slug})
 
     def test_success_get(self):
         self.client.force_login(self.user)
@@ -119,4 +122,99 @@ class UserSurveyResponseViewTests(TestCase):
         different_user = UserFactory.create()
         self.client.force_login(different_user)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
+
+
+class EditUserSurveyResponseViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.survey = SurveyFactory.create(
+            name="Test Survey",
+            description="This is a description of the survey!",
+        )
+        cls.user = UserFactory.create()
+        cls.question = QuestionFactory.create(
+            survey=cls.survey,
+            label="How are you?",
+        )
+        cls.survey_response = UserSurveyResponseFactory(
+            survey=cls.survey, user=cls.user
+        )
+        UserQuestionResponseFactory(
+            user_survey_response=cls.survey_response,
+            question=cls.question,
+            value="Good",
+        )
+        cls.url = reverse("edit_user_survey_response", kwargs={"slug": cls.survey.slug})
+
+    def test_login_required(self):
+        response = self.client.get(self.url, follow=True)
+        self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
+
+    def test_cannot_edit_others_survey_response(self):
+        different_user = UserFactory.create()
+        self.client.force_login(different_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_can_edit_survey_response(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test Survey")
+        self.assertContains(response, "How are you?")
+        self.assertContains(response, "Good")
+
+    def test_edit_survey_response_success(self):
+        # Create a session with active application period
+        now = timezone.now().date()
+        SessionFactory.create(
+            application_survey=self.survey,
+            application_start_date=now - timedelta(days=1),
+            application_end_date=now + timedelta(days=10),
+        )
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url,
+            data={f"field_survey_{self.question.id}": "Excellent"},
+            follow=True,
+        )
+        self.assertContains(response, "Response updated!")
+        self.assertRedirects(response, reverse("profile"))
+        updated_response = UserQuestionResponse.objects.get(
+            user_survey_response=self.survey_response, question=self.question
+        )
+        self.assertEqual(updated_response.value, "Excellent")
+
+    def test_cannot_edit_session_application_after_deadline(self):
+        # Create a session with past application deadline
+        now = timezone.now().date()
+        SessionFactory.create(
+            application_survey=self.survey,
+            application_start_date=now - timedelta(days=10),
+            application_end_date=now - timedelta(days=1),
+        )
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url,
+            data={f"field_survey_{self.question.id}": "Excellent"},
+            follow=True,
+        )
+        self.assertContains(response, "You are no longer able to edit this.")
+
+    def test_can_edit_session_application_within_deadline(self):
+        # Create a session with active application period
+        now = timezone.now().date()
+        SessionFactory.create(
+            application_survey=self.survey,
+            application_start_date=now - timedelta(days=1),
+            application_end_date=now + timedelta(days=10),
+        )
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url,
+            data={f"field_survey_{self.question.id}": "Excellent"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test Survey")

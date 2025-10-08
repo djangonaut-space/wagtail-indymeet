@@ -70,7 +70,11 @@ class Question(BaseModel):
         ),
     )
     survey = models.ForeignKey(
-        Survey, related_name="questions", on_delete=models.CASCADE
+        Survey,
+        related_name="questions",
+        on_delete=models.CASCADE,
+        # Index comes from unique_question_key_per_survey
+        db_index=False,
     )
     label = models.CharField(
         max_length=500, help_text=_("Enter your question in here.")
@@ -122,27 +126,56 @@ class Question(BaseModel):
 
 
 class UserSurveyResponse(BaseModel):
-    survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
+    survey = models.ForeignKey(
+        Survey,
+        on_delete=models.CASCADE,
+        # Index comes from unique_user_survey_response
+        db_index=False,
+    )
     user = models.ForeignKey("accounts.CustomUser", on_delete=models.CASCADE)
 
     class Meta:
         ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["survey", "user"], name="unique_user_survey_response"
+            )
+        ]
 
     def __str__(self):
         return str(self.id)
 
+    def is_editable(self):
+        """Check if this response can be edited"""
+        # If survey has associated sessions, check if ANY session is still accepting applications
+        return any(
+            session.is_accepting_applications()
+            for session in self.survey.application_sessions.all()
+        )
+
 
 class UserQuestionResponse(BaseModel):
     question = models.ForeignKey(
-        Question, related_name="responses", on_delete=models.CASCADE
+        Question,
+        related_name="responses",
+        on_delete=models.CASCADE,
+        # Index is from unique_user_question_response
+        db_index=False,
     )
     value = models.TextField(help_text=_("The value of the answer given by the user."))
     user_survey_response = models.ForeignKey(
-        UserSurveyResponse, on_delete=models.CASCADE
+        UserSurveyResponse,
+        on_delete=models.CASCADE,
     )
 
     class Meta:
         ordering = ["question__ordering"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["question", "user_survey_response"],
+                name="unique_user_question_response",
+            )
+        ]
 
     def __str__(self):
         return f"{self.question}: {self.value}"

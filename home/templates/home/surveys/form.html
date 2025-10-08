@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% load i18n wagtailcore_tags static survey %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/survey.css' %}">
-{% endblock extra_css %}
-
 {% block content %}
 <main class="section">
     <div class="section-container">
-        <h1 class="text-center text-5xl">{{ title_page }}</h1>
+        <h1 class="text-center text-5xl">{{ survey.name }}</h1>
         <p class="max-w-md mx-auto mt-4 text-center text-gray-500">
-            {{ sub_title_page|linebreaks|urlize }}
+            {{ survey.description|linebreaks|urlize }}
         </p>
+        {% if form.non_field_errors %}
+          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+            <ul>{{ form.non_field_errors.as_ul }}</ul>
+          </div>
+        {% endif %}
         <form method="post">
             {% csrf_token %}
             {% for field in form %}
@@ -30,11 +31,9 @@
 
             {% endfor %}
 
-            {% if not read_only %}
             <button type="submit" class="action-button mt-8 mb-4 block w-full">
                 {% trans "Submit" %}
             </button>
-            {% endif %}
         </form>
     </div>
 </main>

@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from .views import CreateUserSurveyResponseFormView
+from .views import EditUserSurveyResponseView
 from .views import resource_link
 from .views import event_calendar
 from .views import EventDetailView
@@ -21,14 +22,19 @@ urlpatterns = [
     path("sessions/", SessionListView.as_view(), name="session_list"),
     path("sessions/<slug:slug>/", SessionDetailView.as_view(), name="session_detail"),
     path(
-        "survey_response/create/<str:slug>/",
+        "survey/<str:slug>/response/create/",
         CreateUserSurveyResponseFormView.as_view(),
         name="survey_response_create",
     ),
     path(
-        "survey_response/<int:pk>/",
+        "survey/<str:slug>/response/",
         UserSurveyResponseView.as_view(),
         name="user_survey_response",
+    ),
+    path(
+        "survey/<str:slug>/response/edit/",
+        EditUserSurveyResponseView.as_view(),
+        name="edit_user_survey_response",
     ),
     path("resource/<path:path>", resource_link, name="resource_link"),
     path(

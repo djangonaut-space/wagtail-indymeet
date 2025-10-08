@@ -1,9 +1,14 @@
+from datetime import timedelta
+
 from django.test import TestCase
+from django.utils import timezone
 
 from accounts.factories import UserFactory
-from home.factories import QuestionFactory
+from home.factories import QuestionFactory, SessionFactory
 from home.factories import SurveyFactory
+from home.factories import UserSurveyResponseFactory
 from home.forms import CreateUserSurveyResponseForm
+from home.forms import EditUserSurveyResponseForm
 from home.models import TypeField
 from home.models import UserQuestionResponse
 from home.models import UserSurveyResponse
@@ -12,6 +17,13 @@ from home.models import UserSurveyResponse
 class UserSurveyResponseFormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.simple_survey = SurveyFactory()
+        cls.simple_survey_question = QuestionFactory.create(
+            survey=cls.simple_survey,
+            label=f"Simple question?",
+            type_field="text",
+        )
+        # Create a full survey with all the bells and whistles
         cls.survey = SurveyFactory.create()
         cls.user = UserFactory.create()
         extra_type_field_kwargs = {
@@ -165,4 +177,76 @@ class UserSurveyResponseFormTests(TestCase):
         self.assertEqual(
             question_responses.get(question=self.question_ids["DATE"]).value,
             "2023-01-02",
+        )
+
+    def test_save_duplicate_response_raises_non_field_error(self):
+        """Test that attempting to save a duplicate response adds a non-field error."""
+        # Create initial response
+        UserSurveyResponseFactory.create(survey=self.simple_survey, user=self.user)
+        # Attempt to create another response for the same user and survey
+        form = CreateUserSurveyResponseForm(
+            survey=self.simple_survey,
+            user=self.user,
+            data={
+                f"field_survey_{self.simple_survey_question.id}": "Yup",
+            },
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("__all__", form.errors)
+        self.assertIn(
+            "You have already submitted a response. Please edit the other instead.",
+            form.errors["__all__"],
+        )
+
+
+class EditUserSurveyResponseFormTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory.create()
+        cls.simple_survey = SurveyFactory()
+        cls.simple_survey_question = QuestionFactory.create(
+            survey=cls.simple_survey,
+            label=f"Simple question?",
+            type_field="text",
+        )
+        cls.user_survey_response = UserSurveyResponseFactory.create(
+            survey=cls.simple_survey, user=cls.user
+        )
+
+    def test_edit_form(self):
+        """Test that attempting to edit a non-editable response adds a non-field error."""
+        # Create a session with active application period
+        now = timezone.now().date()
+        SessionFactory.create(
+            application_survey=self.simple_survey,
+            application_start_date=now - timedelta(days=1),
+            application_end_date=now + timedelta(days=10),
+        )
+        form = EditUserSurveyResponseForm(
+            instance=self.user_survey_response,
+            data={
+                f"field_survey_{self.simple_survey_question.id}": "Yup",
+            },
+        )
+        self.assertTrue(form.is_valid())
+        user_survey_response = form.save()
+        self.assertEqual(
+            user_survey_response.userquestionresponse_set.get().value, "Yup"
+        )
+
+    def test_edit_non_editable_response_raises_non_field_error(self):
+        """Test that attempting to edit a non-editable response adds a non-field error."""
+        form = EditUserSurveyResponseForm(
+            instance=self.user_survey_response,
+            data={
+                f"field_survey_{self.simple_survey_question.id}": "Yup",
+            },
+        )
+        self.assertFalse(form.is_valid())
+
+        # Check that non-field error was added
+        self.assertIn("__all__", form.errors)
+        self.assertEqual(
+            form.errors["__all__"],
+            ["You are no longer able to edit this."],
         )

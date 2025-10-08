@@ -4,7 +4,7 @@ from typing import Tuple
 from django import forms
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.utils.translation import gettext_lazy as _
 
 from home.constants import DATE_INPUT_FORMAT
@@ -136,6 +136,18 @@ class BaseSurveyForm(forms.Form):
 
 
 class CreateUserSurveyResponseForm(BaseSurveyForm):
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if UserSurveyResponse.objects.filter(
+            survey=self.survey, user=self.user
+        ).exists():
+            self.add_error(
+                None,
+                "You have already submitted a response. Please edit the other instead.",
+            )
+        return cleaned_data
+
     @transaction.atomic
     def save(self):
         cleaned_data = super().clean()
@@ -156,13 +168,14 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
                 value=value,
                 user_survey_response=user_survey_response,
             )
+        return user_survey_response
 
 
-class UserSurveyResponseForm(BaseSurveyForm):
+class EditUserSurveyResponseForm(BaseSurveyForm):
     def __init__(self, *args, instance, **kwargs):
         self.survey = instance.survey
         self.user_survey_response = instance
-        super().__init__(*args, survey=self.survey, user=instance.user, *args, **kwargs)
+        super().__init__(*args, survey=self.survey, user=instance.user, **kwargs)
         self._set_initial_data()
 
     def _set_initial_data(self):
@@ -174,4 +187,29 @@ class UserSurveyResponseForm(BaseSurveyForm):
                 self.fields[field_name].initial = question_response.value.split(",")
             else:
                 self.fields[field_name].initial = question_response.value
-            self.fields[field_name].disabled = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.user_survey_response.is_editable():
+            self.add_error(None, "You are no longer able to edit this.")
+        return cleaned_data
+
+    @transaction.atomic
+    def save(self):
+        cleaned_data = super().clean()
+
+        # Update existing responses
+        for question in self.questions:
+            field_name = f"field_survey_{question.id}"
+
+            if question.type_field == TypeField.MULTI_SELECT:
+                value = ",".join(cleaned_data[field_name])
+            else:
+                value = cleaned_data[field_name]
+
+            UserQuestionResponse.objects.update_or_create(
+                question=question,
+                user_survey_response=self.user_survey_response,
+                defaults={"value": value},
+            )
+        return self.user_survey_response

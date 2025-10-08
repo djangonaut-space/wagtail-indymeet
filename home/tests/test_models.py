@@ -9,6 +9,7 @@ from home.factories import SessionFactory
 from home.factories import SurveyFactory
 from home.factories import UserQuestionResponseFactory
 from home.factories import UserSurveyResponseFactory
+from home.models import Session
 from home.models import TypeField
 
 
@@ -91,3 +92,43 @@ class UserQuestionResponseTests(TestCase):
             response.get_value,
             '<a href="https://example.com" target="_blank">https://example.com</a>',
         )
+
+
+class UserSurveyResponseTests(TestCase):
+    def test_is_editable_with_accepting_session(self):
+        """Response is editable if at least one session is accepting applications"""
+        survey = SurveyFactory.create()
+        user = UserFactory.create()
+
+        # Create session with active application window
+        SessionFactory.create(
+            application_survey=survey,
+            application_start_date=datetime(2023, 10, 16).date(),
+            application_end_date=datetime(2023, 11, 15).date(),
+        )
+        response = UserSurveyResponseFactory.create(survey=survey, user=user)
+        with freeze_time("2023-10-20"):
+            self.assertTrue(response.is_editable())
+
+    def test_is_not_editable_with_closed_session(self):
+        """Response is not editable if all sessions have closed applications"""
+        survey = SurveyFactory.create()
+        user = UserFactory.create()
+
+        # Create session with closed application window
+        SessionFactory.create(
+            application_survey=survey,
+            application_start_date=datetime(2023, 10, 16).date(),
+            application_end_date=datetime(2023, 11, 15).date(),
+        )
+        response = UserSurveyResponseFactory.create(survey=survey, user=user)
+        # After application window closes
+        with freeze_time("2023-11-16 12:00:00"):
+            self.assertFalse(response.is_editable())
+
+    def test_is_not_editable_no_application_sessions(self):
+        """Response is not editable if no application sessions"""
+        survey = SurveyFactory.create()
+        user = UserFactory.create()
+        response = UserSurveyResponseFactory.create(survey=survey, user=user)
+        self.assertFalse(response.is_editable())

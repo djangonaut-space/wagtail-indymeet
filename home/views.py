@@ -12,7 +12,7 @@ from django.views.generic.edit import ModelFormMixin
 from django.views.generic.list import ListView
 
 from .forms import CreateUserSurveyResponseForm
-from .forms import UserSurveyResponseForm
+from .forms import EditUserSurveyResponseForm
 from .models import Event
 from .models import Session
 from .models import Survey
@@ -134,9 +134,7 @@ class CreateUserSurveyResponseFormView(
         return kwargs
 
     def get_context_data(self, **kwargs):
-        survey = self.get_object()
-        kwargs["title_page"] = survey.name
-        kwargs["sub_title_page"] = survey.description
+        kwargs["survey"] = self.get_object()
         return super().get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -151,34 +149,71 @@ class CreateUserSurveyResponseFormView(
             return self.form_invalid(form)
 
 
-class UserSurveyResponseView(
-    LoginRequiredMixin, UserPassesTestMixin, ModelFormMixin, DetailView
-):
+class UserSurveyResponseView(LoginRequiredMixin, DetailView):
+    """View for displaying a survey response (read-only)"""
+
     model = UserSurveyResponse
-    form_class = UserSurveyResponseForm
-    success_url = reverse_lazy("session_list")
-    template_name = "home/surveys/form.html"
+    template_name = "home/surveys/detail.html"
+    slug_field = "survey__slug"
 
     def get_queryset(self):
-        return UserSurveyResponse.objects.select_related("survey").prefetch_related(
-            Prefetch(
-                "userquestionresponse_set",
-                queryset=UserQuestionResponse.objects.select_related("question"),
+        return (
+            super()
+            .get_queryset()
+            .filter(user=self.request.user)
+            .select_related("survey")
+            .prefetch_related(
+                Prefetch(
+                    "userquestionresponse_set",
+                    queryset=UserQuestionResponse.objects.select_related("question"),
+                )
             )
         )
 
-    def test_func(self):
-        return UserSurveyResponse.objects.filter(
-            user=self.request.user, id=self.kwargs.get(self.pk_url_kwarg)
-        ).exists()
+    def get_context_data(self, **kwargs):
+        kwargs["survey"] = self.object.survey
+        kwargs["is_editable"] = self.object.is_editable()
+        kwargs["responses"] = self.object.userquestionresponse_set.all()
+        return super().get_context_data(**kwargs)
+
+
+class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView):
+    """View for editing a survey response"""
+
+    model = UserSurveyResponse
+    form_class = EditUserSurveyResponseForm
+    success_url = reverse_lazy("profile")
+    template_name = "home/surveys/form.html"
+    slug_field = "survey__slug"
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(user=self.request.user)
+            .select_related("survey")
+            .prefetch_related(
+                Prefetch(
+                    "userquestionresponse_set",
+                    queryset=UserQuestionResponse.objects.select_related("question"),
+                )
+            )
+        )
 
     def get_context_data(self, **kwargs):
-        survey = self.object.survey
-        kwargs["title_page"] = survey.name
-        kwargs["sub_title_page"] = survey.description
-        kwargs["read_only"] = True
-        context_data = super().get_context_data(**kwargs)
-        return context_data
+        kwargs["survey"] = self.object.survey
+        return super().get_context_data(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            form.save()
+            messages.success(self.request, gettext("Response updated!"))
+            return redirect(self.get_success_url())
+        else:
+            messages.error(self.request, gettext("Something went wrong."))
+            return self.form_invalid(form)
 
 
 def resource_link(request, path):

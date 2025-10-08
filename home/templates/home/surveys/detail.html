@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+
+{% block content %}
+<main class="section">
+    <div class="section-container">
+        <h1 class="text-center text-5xl">{{ survey.name }}</h1>
+        <p class="max-w-md mx-auto mt-4 text-center text-gray-500">
+            {{ survey.description|linebreaks|urlize }}
+        </p>
+
+        <div class="space-y-6 mt-6">
+            {% for response in responses %}
+                <div class="p-8 space-y-4 rounded-lg shadow-md border border-gray-200 bg-white">
+                    <label class="text-base font-medium">{{ response.question.label|linebreaksbr|urlize }}</label>
+                    {% if response.question.help_text %}
+                    <p class="text-sm text-gray-500">{{ response.question.help_text|linebreaksbr|urlize }}</p>
+                    {% endif %}
+                    <div class="mt-2 p-4 bg-gray-50 rounded border border-gray-200">
+                        {{ response.get_value|linebreaksbr }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-8 flex gap-4">
+            {% if is_editable %}
+            <a href="{% url 'edit_user_survey_response' survey.slug %}" class="action-button block text-center flex-1">
+                {% trans "Edit Response" %}
+            </a>
+            {% endif %}
+            <a href="{% url 'profile' %}" class="px-6 py-3 border border-gray-300 rounded hover:bg-gray-50 block text-center flex-1">
+                {% trans "Back to Profile" %}
+            </a>
+        </div>
+    </div>
+</main>
+{% endblock %}
