@@ -108,6 +108,7 @@ uv run pytest -m playwright --headed  # See browser
 - Write unit tests for new functionality (pytest or Django TestCase)
 - For JavaScript/frontend interactions, use Playwright tests with `@pytest.mark.playwright`
 - Playwright tests run with: `uv run pytest -m playwright`
+- Playwright tests should avoid generic wait calls
 
 ### Type Annotations Example
 ```python
