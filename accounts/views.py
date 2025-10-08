@@ -116,7 +116,13 @@ class SignUpView(CreateView):
 
 @login_required(login_url="/accounts/login")
 def profile(request):
-    return render(request, "registration/profile.html")
+    from home.models import UserSurveyResponse
+
+    user_responses = UserSurveyResponse.objects.filter(
+        user=request.user
+    ).select_related("survey")
+    context = {"user_responses": user_responses}
+    return render(request, "registration/profile.html", context)
 
 
 class ResendConfirmationEmailView(LoginRequiredMixin, View):

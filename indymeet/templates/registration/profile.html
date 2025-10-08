@@ -85,6 +85,43 @@
             <a href="{% url 'update_user' %}">{% translate "Update" %}</a>
           </div>
         </div>
+
+        {% if user_responses %}
+        <div class="row pt-4 pb-4">
+            <div class="col">
+               <h2 class="text-3xl">{% translate "My Survey Responses" %}</h2>
+          </div>
+        </div>
+        <div class="row pb-4">
+          <div class="col">
+            <div class="space-y-4">
+                {% for response in user_responses %}
+                <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-medium">{{ response.survey.name }}</h3>
+                            <p class="text-sm text-gray-500 mt-1">{% translate "Submitted:" %} {{ response.created_at|date:"M d, Y" }}</p>
+                            {% if response.updated_at != response.created_at %}
+                            <p class="text-sm text-gray-500">{% translate "Updated:" %} {{ response.updated_at|date:"M d, Y" }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'user_survey_response' slug=response.survey.slug %}" class="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                                {% translate "View" %}
+                            </a>
+                            {% if response.is_editable %}
+                            <a href="{% url 'edit_user_survey_response' slug=response.survey.slug %}" class="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                                {% translate "Edit" %}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
     </div>
 </main>
 {% endblock content %}
