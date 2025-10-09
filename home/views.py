@@ -122,8 +122,8 @@ class CreateUserSurveyResponseFormView(
         user = self.request.user
         return (
             user.profile.email_confirmed
-            and not UserSurveyResponse.objects.filter(
-                survey__slug=self.kwargs.get(self.slug_url_kwarg), user=user
+            and not user.usersurveyresponse_set.filter(
+                survey__slug=self.kwargs.get(self.slug_url_kwarg)
             ).exists()
         )
 
