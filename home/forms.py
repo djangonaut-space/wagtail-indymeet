@@ -28,6 +28,24 @@ def make_choices(question: Question) -> list[tuple[str, str]]:
     return choices
 
 
+def to_field_name(question: Question) -> str:
+    """Convert a question to the response field name key."""
+    return f"field_survey_{question.id}"
+
+
+def get_response_value(data: dict, question: Question) -> str:
+    """
+    Fetch the question's value from the data dictionary,
+    typically a cleaned_data.
+    """
+    field_name = to_field_name(question)
+    return (
+        ",".join(data[field_name])
+        if question.type_field == TypeField.MULTI_SELECT
+        else data[field_name]
+    )
+
+
 class BaseSurveyForm(forms.Form):
     def __init__(self, *args, survey, user, **kwargs):
         self.survey = survey
@@ -38,7 +56,7 @@ class BaseSurveyForm(forms.Form):
 
         for question in self.questions:
             # to generate field name
-            field_name = f"field_survey_{question.id}"
+            field_name = to_field_name(question)
 
             if question.type_field == TypeField.MULTI_SELECT:
                 choices = make_choices(question)
@@ -155,19 +173,21 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
         user_survey_response = UserSurveyResponse.objects.create(
             survey=self.survey, user=self.user
         )
-        for question in self.questions:
-            field_name = f"field_survey_{question.id}"
 
-            if question.type_field == TypeField.MULTI_SELECT:
-                value = ",".join(cleaned_data[field_name])
-            else:
-                value = cleaned_data[field_name]
-
-            UserQuestionResponse.objects.create(
+        question_responses = [
+            UserQuestionResponse(
                 question=question,
-                value=value,
                 user_survey_response=user_survey_response,
+                value=get_response_value(cleaned_data, question),
             )
+            for question in self.questions
+        ]
+        UserQuestionResponse.objects.bulk_create(
+            question_responses,
+            update_conflicts=True,
+            update_fields=("value",),
+            unique_fields=("question", "user_survey_response"),
+        )
         return user_survey_response
 
 
@@ -182,7 +202,7 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
         question_responses = self.user_survey_response.userquestionresponse_set.all()
 
         for question_response in question_responses:
-            field_name = f"field_survey_{question_response.question.id}"
+            field_name = to_field_name(question_response.question)
             if question_response.question.type_field == TypeField.MULTI_SELECT:
                 self.fields[field_name].initial = question_response.value.split(",")
             else:
@@ -198,18 +218,18 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
     def save(self):
         cleaned_data = super().clean()
 
-        # Update existing responses
-        for question in self.questions:
-            field_name = f"field_survey_{question.id}"
-
-            if question.type_field == TypeField.MULTI_SELECT:
-                value = ",".join(cleaned_data[field_name])
-            else:
-                value = cleaned_data[field_name]
-
-            UserQuestionResponse.objects.update_or_create(
+        question_responses = [
+            UserQuestionResponse(
                 question=question,
                 user_survey_response=self.user_survey_response,
-                defaults={"value": value},
+                value=get_response_value(cleaned_data, question),
             )
+            for question in self.questions
+        ]
+        UserQuestionResponse.objects.bulk_create(
+            question_responses,
+            update_conflicts=True,
+            update_fields=("value",),
+            unique_fields=("question", "user_survey_response"),
+        )
         return self.user_survey_response
