@@ -167,12 +167,7 @@ class EditUserSurveyResponseViewTests(TestCase):
 
     def test_edit_survey_response_success(self):
         # Create a session with active application period
-        now = timezone.now().date()
-        SessionFactory.create(
-            application_survey=self.survey,
-            application_start_date=now - timedelta(days=1),
-            application_end_date=now + timedelta(days=10),
-        )
+        SessionFactory.create_active(self.survey)
         self.client.force_login(self.user)
         response = self.client.post(
             self.url,
@@ -204,12 +199,7 @@ class EditUserSurveyResponseViewTests(TestCase):
 
     def test_can_edit_session_application_within_deadline(self):
         # Create a session with active application period
-        now = timezone.now().date()
-        SessionFactory.create(
-            application_survey=self.survey,
-            application_start_date=now - timedelta(days=1),
-            application_end_date=now + timedelta(days=10),
-        )
+        SessionFactory.create_active(self.survey)
         self.client.force_login(self.user)
         response = self.client.post(
             self.url,

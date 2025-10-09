@@ -216,12 +216,7 @@ class EditUserSurveyResponseFormTests(TestCase):
     def test_edit_form(self):
         """Test that attempting to edit a non-editable response adds a non-field error."""
         # Create a session with active application period
-        now = timezone.now().date()
-        SessionFactory.create(
-            application_survey=self.simple_survey,
-            application_start_date=now - timedelta(days=1),
-            application_end_date=now + timedelta(days=10),
-        )
+        SessionFactory.create_active(self.simple_survey)
         form = EditUserSurveyResponseForm(
             instance=self.user_survey_response,
             data={
