@@ -108,7 +108,10 @@ class BaseSurveyForm(forms.Form):
                     validators=[
                         MinLengthValidator(
                             SURVEY_FIELD_VALIDATORS["min_length"]["text_area"]
-                        )
+                        ),
+                        MaxLengthValidator(
+                            SURVEY_FIELD_VALIDATORS["max_length"]["text_area"]
+                        ),
                     ],
                 )
             elif question.type_field == TypeField.RATING:
