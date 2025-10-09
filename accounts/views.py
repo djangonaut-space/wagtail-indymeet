@@ -116,12 +116,9 @@ class SignUpView(CreateView):
 
 @login_required(login_url="/accounts/login")
 def profile(request):
-    from home.models import UserSurveyResponse
-
-    user_responses = UserSurveyResponse.objects.filter(
-        user=request.user
-    ).select_related("survey")
-    context = {"user_responses": user_responses}
+    context = {
+        "user_responses": request.user.usersurveyresponse_set.select_related("survey")
+    }
     return render(request, "registration/profile.html", context)
 
 
