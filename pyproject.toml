@@ -47,6 +47,10 @@ addopts = "--reuse-db -m 'not playwright'"
 markers = [
     "playwright: mark test that requires playwright",
 ]
+filterwarnings = [
+    "ignore:The FORMS_URLFIELD_ASSUME_HTTPS transitional setting is deprecated:django.utils.deprecation.RemovedInDjango60Warning",
+    "ignore:The usage of `WidgetWithScript` hook is deprecated:wagtail.utils.deprecation.RemovedInWagtail70Warning",
+]
 
 [tool.coverage.run]
 branch = true
