@@ -17,6 +17,7 @@ class ProfileFactory(factory.django.DjangoModelFactory):
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CustomUser
+        skip_postgeneration_save = True
 
     username = factory.Sequence(lambda n: "user_%d" % n)
     first_name = "Jane"
