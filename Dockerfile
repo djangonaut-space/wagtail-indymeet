@@ -1,7 +1,8 @@
 FROM ubuntu:20.04
-FROM python:3.11-slim-bookworm
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
-WORKDIR /app
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ARG NODE_MAJOR=20
 
@@ -13,30 +14,27 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install nodejs -y \
   && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man \
-  && apt-get clean \
-  && useradd --create-home python \
-  && chown python:python -R /app
+  && apt-get clean
 
-USER python
+# Copy the project into the image
+ADD . /app
 
-COPY --chown=python:python requirements/requirements.txt ./
-
-RUN pip install -r requirements.txt
-
-ENV DEBUG="${DEBUG}" \
-    PYTHONUNBUFFERED="true" \
-    PATH="${PATH}:/home/python/.local/bin" \
-    DJANGO_SETTINGS_MODULE="indymeet.settings.dev" \
-    USER="python"
-
-COPY --chown=python:python . .
-
+# Sync the project into a new environment, asserting the lockfile is up to date
 WORKDIR /app
+
+# Install dependencies
+RUN uv sync --locked  --extra dev --extra test
+
+ENV PATH="/home/python/.local/bin:${PATH}" \
+    DEBUG="${DEBUG}" \
+    PYTHONUNBUFFERED="true" \
+    DJANGO_SETTINGS_MODULE="indymeet.settings.dev"
+
 
 RUN npm install ./theme/static_src
 
-RUN python manage.py tailwind install --no-input;
-RUN python manage.py tailwind build --no-input;
-RUN python manage.py collectstatic --no-input;
+RUN uv run python manage.py tailwind install --no-input;
+RUN uv run python manage.py tailwind build --no-input;
+RUN uv run python manage.py collectstatic --no-input;
 
-CMD ["python", "manage.py", "runserver"]
+CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]

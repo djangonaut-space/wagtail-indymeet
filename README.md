@@ -109,6 +109,7 @@ This section should list any major frameworks/libraries used to bootstrap your p
 
 This is an example of how to list things you need to use the software and how to install them.
 * Python version 3.11
+* [uv](https://docs.astral.sh/uv/) - Fast Python package installer and resolver
 
 ### Installation
 
@@ -116,17 +117,13 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    git clone https://github.com/dawnwages/wagtail-indymeet.git
    ```
-2. create your virtual environment
+2. Install uv if you haven't already
    ```sh
-   python -m venv venv
-   ```
-   activate in Linux:
-   ```sh
-   source venv/bin/activate
-   ```
-   activate in Windows:
-   ```sh
-   venv\Scripts\activate
+   # On macOS and Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # On Windows
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
 3. Create a posgresql database
    ```sh
@@ -140,13 +137,13 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    postgres=# exit
    ```
-4. install requirements:
+4. Install dependencies (this will automatically create a virtual environment)
    ```sh
-   pip install -r requirements/requirements-dev.txt
+   uv sync --extra dev --extra test
    ```
-   set up the git hook scripts
+   Set up the git hook scripts
    ```sh
-   pre-commit install
+   uv run pre-commit install
    ```
 5. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
    Copy in Linux:
@@ -159,22 +156,22 @@ This is an example of how to list things you need to use the software and how to
    ```
 6. Run migrations and create superuser
    ```sh
-   python manage.py migrate
+   uv run python manage.py migrate
    # Potentially load data first
-   # python manage.py loaddata fixtures/data.json
-   python manage.py createsuperuser
+   # uv run python manage.py loaddata fixtures/data.json
+   uv run python manage.py createsuperuser
    ```
 7. Install tailwind. You also need npm installed.
    ```sh
-   python manage.py tailwind install
+   uv run python manage.py tailwind install
    ```
 8. Run server locally
    ```sh
-   python manage.py runserver
+   uv run python manage.py runserver
    ```
 9. Run tailwind in another terminal locally
    ```sh
-   python manage.py tailwind start
+   uv run python manage.py tailwind start
    ```
 
 Alternatively, if you're not using Windows you can run the following instead of steps 8 and 9:
@@ -193,12 +190,12 @@ If you have docker installed, alternatively
 
 1. Have docker running and then run:
    ```sh
-   docker-compose up
+   docker compose up
    ```
 
 2. In a new terminal, run any setup commands you need such as
    ```sh
-   docker-compose exec web python manage.py createsuperuser
+   docker compose exec web python manage.py createsuperuser
    ```
 
 3. Go to: http://127.0.0.1:8000/ and enjoy!
@@ -235,8 +232,8 @@ on.
 top level of the project.
 3. Create a new database such as ``createdb -U djangonaut -W -O djangonaut djangonaut-space2``
 4. Change your settings or environment variables to point to the new database
-5. ``python manage.py migrate``
-6. ``python manage.py loaddata fixtures/data.json``
+5. ``uv run python manage.py migrate``
+6. ``uv run python manage.py loaddata fixtures/data.json``
 
 
 <!-- CONTRIBUTING -->
@@ -263,18 +260,18 @@ or using [`pytest`](https://docs.pytest.org/).
 To run the tests:
 
 ```shell
-pytest
+uv run pytest
 ```
 
 There are also Playwright tests that can be run. To run these tests:
 
 ```shell
 # Be sure playwright is properly installed and has a test user for accessing /admin
-playwright install --with-deps
+uv run playwright install --with-deps
 # This is the actual test command
-pytest -m playwright
+uv run pytest -m playwright
 # Run the tests in headed mode (so you can see the browser)
-pytest -m playwright --headed
+uv run pytest -m playwright --headed
 ```
 
 ### Merging changes
@@ -330,18 +327,35 @@ occur in rare cases where a change must be pushed out to production immediately.
 
 **Running production or staging locally**
 - Set .env variables `USER`, `PASSWORD` and `HOST` for either `staging` or `production` in order to access staging db. Credentials are in the password manager
-- `python manage.py runserver --settings=indymeet.settings.production`
+- `uv run python manage.py runserver --settings=indymeet.settings.production`
 
 **Migrate production or staging db**
 - Set terminal variables for `USER`, `PASSWORD` and `HOST` for either `staging` or `production` db. Credentials are in the password manager.
-- `python manage.py migrate --settings=indymeet.settings.production`
+- `uv run python manage.py migrate --settings=indymeet.settings.production`
 
 ### Updating dependencies
-This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to manage
-dependencies. Most dependencies should be updated via Dependabot, but if they need
-to be updated manually you would need to run `pip-compile --upgrade ...`. The rest of
-the command can be found in the particular `requirements/*.txt` file you'd like to
-update.
+This project uses [`uv`](https://docs.astral.sh/uv/) to manage dependencies.
+
+To add a new dependency:
+```sh
+# Add to main dependencies
+uv add package-name
+
+# Add to dev dependencies
+uv add --dev package-name
+
+# Add to test dependencies
+uv add --optional test package-name
+```
+
+To update dependencies:
+```sh
+# Update all dependencies
+uv lock --upgrade
+
+# Update a specific package
+uv lock --upgrade-package package-name
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

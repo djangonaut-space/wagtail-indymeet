@@ -10,7 +10,7 @@ x-app: &default-app
 services:
   web:
     <<: *default-app
-    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "uv run python manage.py migrate && uv run python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     expose:
@@ -22,14 +22,14 @@ services:
 
   tailwind:
     <<: *default-app
-    command: "python manage.py tailwind start"
+    command: "uv run python manage.py tailwind start"
     # Without tty, no stdin, and tailwind watcher aborts
     # https://github.com/tailwindlabs/tailwindcss/issues/5324
     tty: true
 
   db:
     restart: always
-    image: postgres:15
+    image: postgres:17
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
