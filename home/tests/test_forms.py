@@ -245,3 +245,31 @@ class EditUserSurveyResponseFormTests(TestCase):
             form.errors["__all__"],
             ["You are no longer able to edit this."],
         )
+
+    def test_edit_form_updates_timestamp(self):
+        """Test that editing a survey response updates the updated_at timestamp."""
+        # Create a session with active application period
+        SessionFactory.create_active(self.simple_survey)
+
+        # Get the original timestamp
+        original_timestamp = self.user_survey_response.updated_at
+
+        # Edit the response
+        form = EditUserSurveyResponseForm(
+            instance=self.user_survey_response,
+            data={
+                f"field_survey_{self.simple_survey_question.id}": "Updated response",
+            },
+        )
+        self.assertTrue(form.is_valid())
+        form.save()
+
+        # Refresh from database
+        self.user_survey_response.refresh_from_db()
+
+        # Verify timestamp was updated
+        self.assertGreater(
+            self.user_survey_response.updated_at,
+            original_timestamp,
+            "updated_at timestamp should be updated after editing",
+        )

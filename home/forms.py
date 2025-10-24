@@ -5,6 +5,7 @@ from django import forms
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
 from django.db import transaction, IntegrityError
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from home.constants import DATE_INPUT_FORMAT
@@ -220,6 +221,8 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
     @transaction.atomic
     def save(self):
         cleaned_data = super().clean()
+        self.user_survey_response.updated_at = timezone.now()
+        self.user_survey_response.save(update_fields=["updated_at"])
 
         question_responses = [
             UserQuestionResponse(
