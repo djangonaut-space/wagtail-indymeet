@@ -135,6 +135,7 @@ class CreateUserSurveyResponseFormView(
 
     def get_context_data(self, **kwargs):
         kwargs["survey"] = self.get_object()
+        kwargs["is_editing"] = False
         return super().get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -202,6 +203,7 @@ class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView)
 
     def get_context_data(self, **kwargs):
         kwargs["survey"] = self.object.survey
+        kwargs["is_editing"] = True
         return super().get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):

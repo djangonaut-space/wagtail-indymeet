@@ -49,6 +49,23 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
         self.assertContains(response, "Test Survey")
         self.assertContains(response, "This is a description of the survey!")
 
+    def test_template_shows_create_mode(self):
+        """Test that template renders correctly in create mode."""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        content = response.content.decode()
+        # Should show "Create" in breadcrumb
+        self.assertIn(">Create</li>", content)
+        # Should NOT show "Edit" in breadcrumb
+        self.assertNotIn(">Edit</li>", content)
+        # In create mode, the breadcrumb should show survey name as plain text, not a link
+        self.assertNotIn(
+            f'<a href="{reverse("user_survey_response", kwargs={"slug": self.survey.slug})}"',
+            content,
+        )
+
     def test_error_message(self):
         self.client.force_login(self.user)
         response = self.client.post(self.url, {})
@@ -164,6 +181,23 @@ class EditUserSurveyResponseViewTests(TestCase):
         self.assertContains(response, "Test Survey")
         self.assertContains(response, "How are you?")
         self.assertContains(response, "Good")
+
+    def test_template_shows_edit_mode(self):
+        """Test that template renders correctly in edit mode."""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        content = response.content.decode()
+        # Should show "Edit" in breadcrumb
+        self.assertIn(">Edit</li>", content)
+        # Should NOT show "Create" in breadcrumb
+        self.assertNotIn(">Create</li>", content)
+        # Should have link back to survey response view in breadcrumb
+        self.assertIn(
+            f'href="{reverse("user_survey_response", kwargs={"slug": self.survey.slug})}"',
+            content,
+        )
 
     def test_edit_survey_response_success(self):
         # Create a session with active application period

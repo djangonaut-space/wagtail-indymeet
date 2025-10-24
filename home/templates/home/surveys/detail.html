@@ -4,10 +4,29 @@
 {% block content %}
 <main class="section">
     <div class="section-container">
+        <nav class="mb-4 text-sm" aria-label="breadcrumb">
+            <ol class="flex items-center gap-2">
+                <li><a href="{% url 'profile' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% translate "Profile" %}</a></li>
+                <li class="text-gray-400">/</li>
+                <li class="text-gray-600">Survey / {{ survey.name }}</li>
+            </ol>
+        </nav>
+
         <h1 class="text-center text-5xl">{{ survey.name }}</h1>
         <p class="max-w-md mx-auto mt-4 text-center text-gray-500">
             {{ survey.description|linebreaks|urlize }}
         </p>
+
+        <div class="mt-8 mb-4 flex gap-4">
+            {% if is_editable %}
+            <a href="{% url 'edit_user_survey_response' survey.slug %}" class="px-6 py-3 bg-ds-purple text-white text-center flex-1 rounded hover:bg-purple-500">
+                {% trans "Edit Response" %}
+            </a>
+            {% endif %}
+            <a href="{% url 'profile' %}" class="px-6 py-3 border border-gray-300 rounded hover:bg-gray-50 text-center flex-1">
+                {% trans "Back to Profile" %}
+            </a>
+        </div>
 
         <div class="space-y-6 mt-6">
             {% for response in responses %}
@@ -21,17 +40,6 @@
                     </div>
                 </div>
             {% endfor %}
-        </div>
-
-        <div class="mt-8 flex gap-4">
-            {% if is_editable %}
-            <a href="{% url 'edit_user_survey_response' survey.slug %}" class="action-button block text-center flex-1">
-                {% trans "Edit Response" %}
-            </a>
-            {% endif %}
-            <a href="{% url 'profile' %}" class="px-6 py-3 border border-gray-300 rounded hover:bg-gray-50 block text-center flex-1">
-                {% trans "Back to Profile" %}
-            </a>
         </div>
     </div>
 </main>

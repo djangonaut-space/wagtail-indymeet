@@ -4,6 +4,19 @@
 {% block content %}
 <main class="section">
     <div class="section-container">
+        <nav class="mb-4 text-sm" aria-label="breadcrumb">
+            <ol class="flex items-center gap-2">
+                <li><a href="{% url 'profile' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% translate "Profile" %}</a></li>
+                <li class="text-gray-400">/ Survey /</li>
+                {% if is_editing %}
+                  <li><a href="{% url 'user_survey_response' slug=survey.slug %}" class="text-blue-600 hover:text-blue-800 hover:underline">{{ survey.name }}</a></li>
+                  <li class="text-gray-400">/</li>
+                {% else %}
+                  <li class="text-gray-400">/ {{ survey.name }} /</li>
+                {% endif %}
+                <li class="text-gray-600">{% if is_editing %}{% trans "Edit" %}{% else %}{% trans "Create" %}{% endif %}</li>
+            </ol>
+        </nav>
         <h1 class="text-center text-5xl">{{ survey.name }}</h1>
         <p class="max-w-md mx-auto mt-4 text-center text-gray-500">
             {{ survey.description|linebreaks|urlize }}
@@ -14,6 +27,11 @@
           </div>
         {% endif %}
         <form method="post">
+            {% if is_editing %}
+                <button type="submit" class="action-button mt-8 mb-4 block w-full">
+                    {% trans "Submit" %}
+                </button>
+            {% endif %}
             {% csrf_token %}
             {% for field in form %}
                 <div class="p-8 mt-6 mb-0 space-y-4 rounded-lg shadow-md border border-gray-200 bg-white">

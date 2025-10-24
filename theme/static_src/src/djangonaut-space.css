@@ -40,7 +40,7 @@
 
 @layer components {
     .action-button {
-        @apply bg-ds-purple hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer;
+        @apply bg-ds-purple hover:bg-purple-500 text-white px-4 py-2 rounded font-medium transition-colors cursor-pointer;
     }
 }
 
