@@ -7,7 +7,7 @@ dependencies = [
     "Django==5.2.*",
     "wagtail",
     "django-storages",
-    "psycopg2-binary",
+    "psycopg[binary]",
     "django-anymail",
     "six",
     "django-recaptcha>=4",
