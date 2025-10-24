@@ -5,99 +5,102 @@
             <img alt="Djangonaut Space" class="nav-brand-icon" src="{% static 'img/main-purple-transparent.png' %}"/>
         </a>
 
-    <div class="flex flex-1 items-center justify-end md:justify-between">
-        <nav aria-label="Global" class="hidden md:block">
-            <ul class="flex items-center gap-8">
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" target="_blank" href="https://github.com/djangonaut-space/program/blob/main/README.md">
-                        {% trans "Program Documentation" %}
-                    </a>
-                </li>
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% url 'event_list' %}">
-                        {% trans "Events" %}
-                    </a>
-                </li>
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% url 'session_list' %}">
-                        {% trans "Sessions" %}
-                    </a>
-                </li>
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% url 'opportunities' %}">
-                        {% trans "Contribute" %}
-                    </a>
-                </li>
-                <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% slugurl 'comms' %}">
-                        {% trans "Blog" %}
-                    </a>
-                </li>
-                 <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="https://opencollective.com/djangonaut-space">
-                       <i class="fa-regular fa-heart text-ds-purple"></i> {% trans "Donate" %}
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <div class="flex flex-1 items-center justify-end md:justify-between">
+            <nav aria-label="Global" class="hidden md:block">
+                <ul class="flex items-center gap-8">
+                    <li>
+                        <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" target="_blank" href="https://github.com/djangonaut-space/program/blob/main/README.md">
+                            {% trans "Program Documentation" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% url 'event_list' %}">
+                            {% trans "Events" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% url 'session_list' %}">
+                            {% trans "Sessions" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% url 'opportunities' %}">
+                            {% trans "Contribute" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="{% slugurl 'comms' %}">
+                            {% trans "Blog" %}
+                        </a>
+                    </li>
+                     <li>
+                        <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"  href="https://opencollective.com/djangonaut-space">
+                           <i class="fa-regular fa-heart text-ds-purple"></i> {% trans "Donate" %}
+                        </a>
+                    </li>
+                </ul>
+            </nav>
 
-        {% if not user.is_authenticated %}
-        <div class="flex items-center gap-4">
-            <div class="sm:flex sm:gap-4">
-                <a
-                    class="block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer"
-                    href="https://buttondown.com/djangonaut-space"
-                    target="_blank"
-                >
-                  {% trans "Subscribe" %}
-                </a>
-                {% comment %}
-                Remove these until we get a sign-up path working. For now, redirect to the mailing list subscription
+            {% if not user.is_authenticated %}
+            <ul class="flex items-center gap-8 ">
+                <li>
+                    <a
+                        class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer"
+                        href="https://buttondown.com/djangonaut-space"
+                        target="_blank"
+                    >
+                      {% trans "Subscribe" %}
+                    </a>
+                </li>
                 {% if "login" not in request.path %}
-                <a class="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-ds-purple transition hover:bg-gray-300 sm:block cursor-pointer" href="{% url 'login' %}?next_page={{request.path}}">
-                  {% trans "Login" %}
-                </a>
+                <li>
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" href="{% url 'login' %}?next_page={{request.path}}">
+                      {% trans "Login" %}
+                    </a>
+                </li>
                 {% endif %}
                 {% if "signup" not in request.path %}
-                <a class="block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer" href="{% url 'signup' %}">
-                  {% trans "Sign Up" %}
-                </a>
+                <li>
+                <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" href="{% url 'signup' %}">
+                      {% trans "Sign Up" %}
+                    </a>
+                </li>
                 {% endif %}
-                {% endcomment %}
-          </div>
-          {% else %}
-           <div class="relative hidden md:block" x-data="{ showDropdown: false }">
-              <button type="button" class="block bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" @click="showDropdown = !showDropdown">
-                <span class="sr-only">Open user menu</span>
-                <img class="w-8 h-8 rounded-full" src={%  if user.profile.bio_image %}"{{ user.profile.bio_image }}"{% else %}"{% static 'img/favicon.png' %}"{% endif %} alt="Profile photo">
-              </button>
-              <div x-cloak x-show="showDropdown">
-                <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44" aria-labelledby="user-menu-button">
-                  <li class="p-2">
-                    <a href="{% url 'profile' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
-                        {% trans "Profile" %}
-                    </a>
-                  </li>
-                  <li class="p-2">
-                    <a href="{% url 'password_change' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
-                        {% trans "Update password" %}
-                    </a>
-                  </li>
-                  <li class="p-2">
-                    <form action="{% url 'logout' %}" method="post">
-                      {% csrf_token %}
-                      <button type="submit" class="block outline-link text-gray-500 transition hover:text-ds-purple">
-                        {% trans "Logout" %}
-                      </button>
-                    </form>
-                  </li>
-                </ul>
-              </div>
-           </div>
-           {% endif %}
+            </ul>
+            {% else %}
+             <div class="relative hidden md:block" x-data="{ showDropdown: false }">
+                <button type="button" class="block bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" @click="showDropdown = !showDropdown">
+                  <span class="sr-only">Open user menu</span>
+                  <img class="w-8 h-8 rounded-full" src={%  if user.profile.bio_image %}"{{ user.profile.bio_image }}"{% else %}"{% static 'img/favicon.png' %}"{% endif %} alt="Profile photo">
+                </button>
+                <div x-cloak x-show="showDropdown">
+                  <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44" aria-labelledby="user-menu-button">
+                    <li class="p-2">
+                      <a href="{% url 'profile' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                          {% trans "Profile" %}
+                      </a>
+                    </li>
+                    <li class="p-2">
+                      <a href="{% url 'password_change' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                          {% trans "Update password" %}
+                      </a>
+                    </li>
+                    <li class="p-2">
+                      <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                          {% trans "Logout" %}
+                        </button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+             </div>
+            {% endif %}
             <div class="relative block md:hidden" x-data="{ showDropdown: false }">
                 <button
-                    class="block rounded bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden" @click="showDropdown = !showDropdown"
+                    class="block rounded bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden"
+                    @click="showDropdown = !showDropdown"
                 >
                     <span class="sr-only">Toggle menu</span>
                     <svg
