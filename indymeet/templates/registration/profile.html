@@ -43,9 +43,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Email confirmed" %}</td>
                         <td class="pt-4 pb-1 pr-6 flex items-center">
                             {%  if user.profile.email_confirmed %}
-                            <span><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <span><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
+                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
                             {% include 'includes/resend_confirmation_email_button.html' %}
                             {% endif %}
                         </td>
@@ -54,9 +54,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving Program updates?" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                             {%  if user.profile.receiving_program_updates %}
-                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -64,9 +64,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving event updates?" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                             {%  if user.profile.receiving_event_updates %}
-                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -74,9 +74,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving Newsletter?" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                         {%  if user.profile.receiving_newsletter %}
-                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -84,9 +84,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Weekly Availability" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                             {% if user.availability.slots %}
-                            <i class="fa-solid fa-check"></i> {% translate "Set" %} ({{ user.availability.slots|length }} {% translate "slots" %})
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Set" %}</span> ({{ user.availability.slots|length }} {% translate "slots" %})
                             {% else %}
-                            <i class="fa-solid fa-x"></i> {% translate "Not set" %}
+                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "Not set" %}</span>
                             {% endif %}
                         </td>
                     </tr>
