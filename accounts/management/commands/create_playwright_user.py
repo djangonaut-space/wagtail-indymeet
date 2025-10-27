@@ -15,13 +15,14 @@ class Command(BaseCommand):
     help = "Used to create a playwright test user."
 
     def handle(self, *args, **options):
-        user = User.objects.create_user(
+        user, _ = User.objects.get_or_create(
             username=os.environ["PLAYWRIGHT_TEST_USERNAME"],
-            password=os.environ["PLAYWRIGHT_TEST_PASSWORD"],
             first_name="Playwright",
             last_name="Test",
             is_staff=True,
             is_superuser=False,
         )
-        user.groups.add(Group.objects.get(name="Editors"))
+        user.set_password(os.environ["PLAYWRIGHT_TEST_PASSWORD"])
+        user.save()
+        user.groups.add(Group.objects.get_or_create(name="Editors")[0])
         self.stdout.write("Created playwright test user - %s." % user.username)
