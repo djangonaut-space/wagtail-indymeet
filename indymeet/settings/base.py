@@ -254,3 +254,20 @@ FORM_RENDERER = "indymeet.settings.base.FormRenderer"
 
 # Should be removed in Django 6.0
 FORMS_URLFIELD_ASSUME_HTTPS = True
+
+######################
+# Application settings
+######################
+
+# Identify what environment the application is running in.
+# The value for production is production.
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "dev")
+
+# Any emails specified here can be send transactional emails
+# This is helpful for testing notifications in non-production
+# environments.
+ALLOWED_EMAILS_FOR_TESTING = [
+    email
+    for email in (os.environ.get("ALLOWED_EMAILS_FOR_TESTING") or "").split(";")
+    if email
+]
