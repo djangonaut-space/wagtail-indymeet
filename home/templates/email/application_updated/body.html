@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Submitted</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Availability Updated</h1>
+            <p>Hello {{ user.first_name }},</p>
+
+            <p>You have successfully updated your application for {{ session.title }}. You view and edit your responses at <a href="{{ response.get_fulL_url }}">{{ response.get_full_url }}</a>.</p>
+
+            <p>Please be sure to set your availability at <a href="{{ availability.get_fulL_url }}">{{ availability.get_full_url }}</a> too!</p>
+
+            <p>Thank you,</p>
+
+            <p>Djangonaut Space</p>
+        </div>
+    </body>
+</html>

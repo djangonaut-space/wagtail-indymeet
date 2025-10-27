@@ -1,0 +1,9 @@
+Hello {{ user.first_name }},
+
+You have successfully updated your application for {{ session.title }}. You can view and edit your responses at {{ response.get_full_url }}.
+
+Please be sure to set your availability at {{ availability.get_full_url }} too!
+
+Thank you,
+
+Djangonaut Space
