@@ -250,3 +250,117 @@ class SurveyCSVExportTest(TestCase):
         self.assertIn(
             f"survey_{self.survey.slug}_responses.csv", response["Content-Disposition"]
         )
+
+
+class SurveyCSVImportViewTest(TestCase):
+    """Test the CSV import admin view."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_superuser(
+            username="admin", email="admin@example.com", password="test"
+        )
+
+        cls.respondent = User.objects.create_user(
+            username="user1",
+            email="user1@example.com",
+        )
+
+        cls.session = Session.objects.create(
+            title="Test Session 2025",
+            slug="test-session-2025",
+            start_date="2025-01-01",
+            end_date="2025-06-01",
+            invitation_date="2024-12-01",
+            application_start_date="2024-11-01",
+            application_end_date="2024-12-15",
+        )
+
+        cls.survey = Survey.objects.create(
+            name="Test Survey",
+            description="A test survey",
+            session=cls.session,
+        )
+
+        cls.survey2 = Survey.objects.create(
+            name="Another Survey",
+            description="Another test survey",
+        )
+
+        # Create survey response
+        cls.response = UserSurveyResponse.objects.create(
+            survey=cls.survey,
+            user=cls.respondent,
+        )
+
+    def setUp(self):
+        """Set up test data."""
+        self.factory = RequestFactory()
+        self.admin = SurveyAdmin(Survey, AdminSite())
+        self.client.login(username="admin", password="test")
+
+    def test_import_csv_view_get(self):
+        """Test GET request shows the import form."""
+        url = reverse("admin:survey_import_csv", args=[self.survey.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Import Survey Response Scores")
+        self.assertContains(response, "CSV File")
+
+    def test_import_from_csv_action_single_survey(self):
+        """Test admin action redirects to import form for single survey."""
+        request = self.factory.post("/admin/home/survey/")
+        request.user = self.user
+        request.session = {}
+        request._messages = FallbackStorage(request)
+
+        queryset = Survey.objects.filter(pk=self.survey.pk)
+        response = self.admin.import_from_csv(request, queryset)
+
+        expected_url = reverse("admin:survey_import_csv", args=[self.survey.id])
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, expected_url)
+
+    def test_import_from_csv_action_multiple_surveys(self):
+        """Test admin action shows error for multiple surveys."""
+        request = self.factory.post("/admin/home/survey/")
+        request.user = self.user
+        request.session = {}
+        request._messages = FallbackStorage(request)
+
+        queryset = Survey.objects.filter(pk__in=[self.survey.pk, self.survey2.pk])
+        response = self.admin.import_from_csv(request, queryset)
+
+        # Should return None and add error message
+        self.assertIsNone(response)
+
+    def test_import_csv_view_post_valid(self):
+        """Test POST with valid CSV redirects and shows success message."""
+        csv_content = "Response ID,Score\n" f"{self.response.id},10\n"
+        csv_file = io.BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "scores.csv"
+
+        url = reverse("admin:survey_import_csv", args=[self.survey.id])
+        response = self.client.post(url, {"csv_file": csv_file})
+
+        # Check redirect to survey list
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("admin:home_survey_changelist"))
+
+        # Verify score was updated
+        self.response.refresh_from_db()
+        self.assertEqual(self.response.score, 10)
+
+    def test_import_csv_view_post_invalid(self):
+        """Test POST with invalid CSV shows form errors."""
+        csv_content = "Invalid,CSV\ndata,here\n"
+        csv_file = io.BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "scores.csv"
+
+        url = reverse("admin:survey_import_csv", args=[self.survey.id])
+        response = self.client.post(url, {"csv_file": csv_file})
+
+        # Check form is re-rendered with errors
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Response ID")

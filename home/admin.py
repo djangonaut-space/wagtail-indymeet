@@ -5,7 +5,7 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
-from .forms import SurveyCSVExportForm
+from .forms import SurveyCSVExportForm, SurveyCSVImportForm
 from .models import Event
 from .models import ResourceLink
 from .models import Question
@@ -115,7 +115,7 @@ class SurveyAdmin(admin.ModelAdmin):
     ]
     list_filter = ["session", "editable", "deletable", "created_at"]
     search_fields = ["name", "description", "session__title"]
-    actions = ["copy_survey", "export_to_csv_with_scorers"]
+    actions = ["copy_survey", "export_to_csv_with_scorers", "import_from_csv"]
 
     def get_queryset(self, request):
         return (
@@ -146,13 +146,18 @@ class SurveyAdmin(admin.ModelAdmin):
         return getattr(obj, "annotated_latest_response", None)
 
     def get_urls(self):
-        """Add custom URL for CSV export with scorers"""
+        """Add custom URLs for CSV export and import"""
         urls = super().get_urls()
         custom_urls = [
             path(
                 "<int:survey_id>/export-csv/",
                 self.admin_site.admin_view(self.export_csv_view),
                 name="survey_export_csv",
+            ),
+            path(
+                "<int:survey_id>/import-csv/",
+                self.admin_site.admin_view(self.import_csv_view),
+                name="survey_import_csv",
             ),
         ]
         return custom_urls + urls
@@ -178,6 +183,30 @@ class SurveyAdmin(admin.ModelAdmin):
         }
         return render(request, "admin/survey_export_csv.html", context)
 
+    def import_csv_view(self, request, survey_id):
+        """Handle the CSV import form and processing"""
+        survey = Survey.objects.get(pk=survey_id)
+
+        if request.method == "POST":
+            form = SurveyCSVImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                result = form.import_scores(survey)
+                success_msg = f"Successfully updated {result['updated']} response(s)."
+                self.message_user(request, success_msg, messages.SUCCESS)
+                return redirect("admin:home_survey_changelist")
+        else:
+            form = SurveyCSVImportForm()
+
+        context = {
+            "form": form,
+            "survey": survey,
+            "opts": self.model._meta,
+            "has_view_permission": self.has_view_permission(request),
+            "site_title": self.admin_site.site_title,
+            "site_header": self.admin_site.site_header,
+        }
+        return render(request, "admin/survey_import_csv.html", context)
+
     @admin.action(description="Export to CSV with scorers")
     def export_to_csv_with_scorers(self, request, queryset):
         """Redirect to CSV export form for selected survey"""
@@ -191,6 +220,21 @@ class SurveyAdmin(admin.ModelAdmin):
 
         survey = queryset.first()
         url = reverse("admin:survey_export_csv", args=[survey.id])
+        return redirect(url)
+
+    @admin.action(description="Import scores from CSV")
+    def import_from_csv(self, request, queryset):
+        """Redirect to CSV import form for selected survey"""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one survey to import.",
+                messages.ERROR,
+            )
+            return
+
+        survey = queryset.first()
+        url = reverse("admin:survey_import_csv", args=[survey.id])
         return redirect(url)
 
     @admin.action(description="Copy selected surveys (with all questions)")

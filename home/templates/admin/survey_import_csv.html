@@ -1,0 +1,67 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:home_survey_changelist' %}">{% trans 'Surveys' %}</a>
+    &rsaquo; <a href="{% url 'admin:home_survey_change' survey.pk %}">{{ survey.name }}</a>
+    &rsaquo; {% trans 'Import CSV' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Import Survey Response Scores: {{ survey.name }}</h1>
+
+    <p>
+        Upload a CSV file to import scores for survey responses. The CSV file must contain
+        <strong>Response ID</strong> and <strong>Score</strong> columns. All other columns will be ignored.
+    </p>
+
+    <div class="help">
+        <h3>Important Notes:</h3>
+        <ul>
+            <li>Only the <strong>Response ID</strong> and <strong>Score</strong> columns are required.</li>
+            <li>Response IDs must match existing survey responses for this specific survey.</li>
+            <li>Both values must be integers.</li>
+            <li>Rows with empty Response ID or Score will be skipped.</li>
+            <li>This import will only update scores for responses belonging to the survey: <strong>{{ survey.name }}</strong></li>
+        </ul>
+    </div>
+
+    <form method="post" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-row errors">
+                <ul class="errorlist">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div>
+            {% for field in form %}
+                <div class="form-row">
+                    {{ field.errors }}
+                    <div>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+                        {% if field.help_text %}
+                            <p class="help">{{ field.help_text|safe }}</p>
+                        {% endif %}
+                        {{ field }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Import Scores' %}" class="default" />
+            <a href="{% url 'admin:home_survey_changelist' %}" class="button cancel-link">{% trans 'Cancel' %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

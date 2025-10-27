@@ -1,8 +1,10 @@
 import csv
+import io
 from typing import List
 from typing import Tuple
 
 from django import forms
+from django.core import validators
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
 from django.db import transaction, IntegrityError
@@ -404,3 +406,150 @@ class SurveyCSVExportForm(forms.Form):
             writer.writerow(row)
 
         return response
+
+
+class SurveyCSVImportForm(forms.Form):
+    """Form for importing scores from a CSV file"""
+
+    csv_file = forms.FileField(
+        label=_("CSV File"),
+        validators=[validators.FileExtensionValidator(["csv"])],
+        required=True,
+        help_text=_(
+            "Upload a CSV file with 'Response ID' and 'Score' columns. "
+            "Only these columns will be processed; all other columns will be ignored."
+        ),
+    )
+
+    def clean_csv_file(self) -> list[tuple[int, int]]:
+        """
+        Parse and validate the CSV file.
+
+        Returns:
+            List of tuples (response_id, score) for valid rows
+
+        Raises:
+            forms.ValidationError: If CSV is invalid or missing required columns
+        """
+        csv_file = self.cleaned_data.get("csv_file")
+        if not csv_file:
+            raise forms.ValidationError(_("No file was uploaded."))
+
+        # Check file extension
+        if not csv_file.name.endswith(".csv"):
+            raise forms.ValidationError(_("File must be a CSV file."))
+
+        try:
+            # Read the file content and decode it
+            file_content = csv_file.read().decode("utf-8-sig")  # utf-8-sig handles BOM
+            csv_file.seek(0)  # Reset file pointer for potential re-reading
+
+            # Parse CSV
+            reader = csv.DictReader(io.StringIO(file_content))
+
+            # Validate required columns exist
+            if not reader.fieldnames:
+                raise forms.ValidationError(_("CSV file is empty or has no headers."))
+
+            if "Response ID" not in reader.fieldnames:
+                raise forms.ValidationError(
+                    _("CSV file must contain a 'Response ID' column.")
+                )
+
+            if "Score" not in reader.fieldnames:
+                raise forms.ValidationError(
+                    _("CSV file must contain a 'Score' column.")
+                )
+
+            # Parse and validate rows
+            updates = []
+            errors = []
+            row_number = 1  # Start at 1 for header, increment for data rows
+
+            for row in reader:
+                row_number += 1
+                response_id_str = row.get("Response ID", "").strip()
+                score_str = row.get("Score", "").strip()
+
+                # Skip rows with empty Response ID or Score
+                if not response_id_str or not score_str:
+                    continue
+
+                # Validate Response ID is an integer
+                try:
+                    response_id = int(response_id_str)
+                except ValueError:
+                    errors.append(
+                        _(
+                            f"Row {row_number}: Invalid Response ID '{response_id_str}' "
+                            "(must be an integer)"
+                        )
+                    )
+                    continue
+
+                # Validate Score is an integer
+                try:
+                    score = int(score_str)
+                except ValueError:
+                    errors.append(
+                        _(
+                            f"Row {row_number}: Invalid Score '{score_str}' (must be an integer)"
+                        )
+                    )
+                    continue
+
+                updates.append((response_id, score))
+
+            # Report errors if any
+            if errors:
+                raise forms.ValidationError(errors)
+
+            # Ensure we have at least one valid row
+            if not updates:
+                raise forms.ValidationError(
+                    "No valid data rows found. Ensure the CSV has 'Response ID' "
+                    "and 'Score' columns with valid integer values."
+                )
+
+            return updates
+
+        except UnicodeDecodeError:
+            raise forms.ValidationError(
+                "File encoding error. Please ensure the file is UTF-8 encoded."
+            )
+        except csv.Error as e:
+            raise forms.ValidationError(f"CSV parsing error: {e}")
+
+    def import_scores(self, survey: Survey) -> dict:
+        """
+        Import scores from the validated CSV data.
+
+        Args:
+            survey: The survey to import scores for
+
+        Returns:
+            Dictionary with import statistics:
+                - updated: Number of responses updated
+        """
+        updates = self.cleaned_data.get("csv_file")
+        if not updates:
+            return {"updated": 0}
+
+        response_ids = [response_id for response_id, _ in updates]
+        score_map = {response_id: score for response_id, score in updates}
+
+        # Fetch all relevant UserSurveyResponse objects for this survey only
+        existing_responses = UserSurveyResponse.objects.filter(
+            id__in=response_ids,
+            survey=survey,
+        )
+
+        # Update scores using a transaction
+        updated_count = 0
+        with transaction.atomic():
+            for response in existing_responses.select_for_update():
+                response.score = score_map[response.id]
+                response.save(update_fields=["score"])
+                updated_count += 1
+
+        return {"updated": updated_count}

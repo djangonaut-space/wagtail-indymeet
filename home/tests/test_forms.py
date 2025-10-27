@@ -3,6 +3,7 @@ import io
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
@@ -12,7 +13,7 @@ from home.factories import SurveyFactory
 from home.factories import UserSurveyResponseFactory
 from home.forms import CreateUserSurveyResponseForm
 from home.forms import EditUserSurveyResponseForm
-from home.forms import SurveyCSVExportForm
+from home.forms import SurveyCSVExportForm, SurveyCSVImportForm
 from home.models import Question
 from home.models import Survey
 from home.models import TypeField
@@ -520,3 +521,216 @@ class SurveyCSVExportFormTests(TestCase):
 
         # Check BOM is present
         self.assertTrue(response.content.startswith(b"\xef\xbb\xbf"))
+
+
+class SurveyCSVImportFormTests(TestCase):
+    """Test the CSV import form validation and processing logic."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.survey = SurveyFactory.create(name="Test Survey")
+        cls.survey2 = SurveyFactory.create(name="Another Survey")
+        cls.user1 = UserFactory.create()
+        cls.user2 = UserFactory.create()
+
+        # Create survey responses
+        cls.response1 = UserSurveyResponse.objects.create(
+            survey=cls.survey,
+            user=cls.user1,
+        )
+        cls.response2 = UserSurveyResponse.objects.create(
+            survey=cls.survey,
+            user=cls.user2,
+        )
+        cls.response3 = UserSurveyResponse.objects.create(
+            survey=cls.survey2,
+            user=cls.user1,
+        )
+
+    def test_clean_csv_file_valid_data(self):
+        """Test clean_csv_file parses valid CSV correctly."""
+        csv_content = (
+            "Response ID,Score\n" f"{self.response1.id},10\n" f"{self.response2.id},8\n"
+        )
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertTrue(form.is_valid())
+
+        updates = form.cleaned_data["csv_file"]
+        self.assertEqual(len(updates), 2)
+        self.assertIn((self.response1.id, 10), updates)
+        self.assertIn((self.response2.id, 8), updates)
+
+    def test_clean_csv_file_with_extra_columns(self):
+        """Test clean_csv_file ignores extra columns."""
+        csv_content = (
+            "Response ID,Submitter Name,Question 1,Score,Extra Column\n"
+            f"{self.response1.id},John Doe,Answer,5,Ignored\n"
+        )
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertTrue(form.is_valid())
+
+        updates = form.cleaned_data["csv_file"]
+        self.assertEqual(updates, [(self.response1.id, 5)])
+
+    def test_clean_csv_file_skips_empty_rows(self):
+        """Test clean_csv_file skips rows with empty Response ID or Score."""
+        csv_content = (
+            "Response ID,Score\n"
+            f"{self.response1.id},10\n"
+            ",8\n"  # Empty Response ID
+            f"{self.response2.id},\n"  # Empty Score
+        )
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertTrue(form.is_valid())
+
+        updates = form.cleaned_data["csv_file"]
+        self.assertEqual(updates, [(self.response1.id, 10)])
+
+    def test_clean_csv_file_missing_response_id_column(self):
+        """Test clean_csv_file fails if Response ID column is missing."""
+        csv_content = "Score\n10\n8\n"
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertFalse(form.is_valid())
+        self.assertIn("Response ID", str(form.errors["csv_file"]))
+
+    def test_clean_csv_file_missing_score_column(self):
+        """Test clean_csv_file fails if Score column is missing."""
+        csv_content = "Response ID\n1\n2\n"
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertFalse(form.is_valid())
+        self.assertIn("Score", str(form.errors["csv_file"]))
+
+    def test_clean_csv_file_invalid_response_id(self):
+        """Test clean_csv_file shows error for non-integer Response ID."""
+        csv_content = "Response ID,Score\nabc,10\n"
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertFalse(form.is_valid())
+        self.assertIn("Invalid Response ID", str(form.errors["csv_file"]))
+
+    def test_clean_csv_file_invalid_score(self):
+        """Test clean_csv_file shows error for non-integer Score."""
+        csv_content = f"Response ID,Score\n{self.response1.id},abc\n"
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertFalse(form.is_valid())
+        self.assertIn("Invalid Score", str(form.errors["csv_file"]))
+
+    def test_clean_csv_file_no_valid_rows(self):
+        """Test clean_csv_file shows error when no valid data rows."""
+        csv_content = "Response ID,Score\n,,\n,,\n"
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertFalse(form.is_valid())
+        self.assertIn("No valid data rows", str(form.errors["csv_file"]))
+
+    def test_clean_csv_file_with_utf8_bom(self):
+        """Test clean_csv_file handles UTF-8 BOM correctly."""
+        csv_content = (
+            "\ufeff"  # UTF-8 BOM
+            "Response ID,Score\n"
+            f"{self.response1.id},10\n"
+        )
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertTrue(form.is_valid())
+
+        updates = form.cleaned_data["csv_file"]
+        self.assertEqual(updates, [(self.response1.id, 10)])
+
+    def test_import_scores_valid_data(self):
+        """Test import_scores updates scores correctly."""
+        csv_content = (
+            "Response ID,Score\n" f"{self.response1.id},10\n" f"{self.response2.id},8\n"
+        )
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertTrue(form.is_valid())
+
+        result = form.import_scores(self.survey)
+
+        # Verify scores were updated
+        self.response1.refresh_from_db()
+        self.response2.refresh_from_db()
+        self.assertEqual(self.response1.score, 10)
+        self.assertEqual(self.response2.score, 8)
+        self.assertEqual(result["updated"], 2)
+
+    def test_import_scores_skips_wrong_survey(self):
+        """Test import_scores silently skips responses from other surveys."""
+        csv_content = (
+            "Response ID,Score\n"
+            f"{self.response1.id},10\n"
+            f"{self.response3.id},5\n"  # This belongs to survey2
+        )
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertTrue(form.is_valid())
+
+        result = form.import_scores(self.survey)
+
+        # Verify only response1 was updated
+        self.response1.refresh_from_db()
+        self.response3.refresh_from_db()
+        self.assertEqual(self.response1.score, 10)
+        self.assertIsNone(self.response3.score)
+        self.assertEqual(result["updated"], 1)
+
+    def test_import_scores_skips_not_found(self):
+        """Test import_scores silently skips non-existent response IDs."""
+        csv_content = (
+            "Response ID,Score\n"
+            f"{self.response1.id},10\n"
+            "999999,5\n"  # Non-existent ID
+        )
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertTrue(form.is_valid())
+
+        result = form.import_scores(self.survey)
+
+        # Verify response1 was updated
+        self.response1.refresh_from_db()
+        self.assertEqual(self.response1.score, 10)
+        self.assertEqual(result["updated"], 1)
