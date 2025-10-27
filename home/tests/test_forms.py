@@ -1,5 +1,8 @@
+import csv
+import io
 from datetime import timedelta
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
@@ -9,9 +12,14 @@ from home.factories import SurveyFactory
 from home.factories import UserSurveyResponseFactory
 from home.forms import CreateUserSurveyResponseForm
 from home.forms import EditUserSurveyResponseForm
+from home.forms import SurveyCSVExportForm
+from home.models import Question
+from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
 from home.models import UserSurveyResponse
+
+User = get_user_model()
 
 
 class UserSurveyResponseFormTests(TestCase):
@@ -273,3 +281,242 @@ class EditUserSurveyResponseFormTests(TestCase):
             original_timestamp,
             "updated_at timestamp should be updated after editing",
         )
+
+
+class SurveyCSVExportFormTests(TestCase):
+    """Test the SurveyCSVExportForm CSV generation methods."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.respondent1 = User.objects.create_user(
+            username="user1",
+            email="user1@example.com",
+            first_name="John",
+            last_name="Doe",
+        )
+        cls.respondent2 = User.objects.create_user(
+            username="user2",
+            email="user2@example.com",
+            first_name="Jane",
+            last_name="Smith",
+        )
+
+        cls.survey = SurveyFactory.create(name="Test Survey")
+
+        cls.question1 = Question.objects.create(
+            survey=cls.survey,
+            label="What is your email?",
+            type_field=TypeField.EMAIL,
+            ordering=1,
+        )
+        cls.question2 = Question.objects.create(
+            survey=cls.survey,
+            label="Rate your experience",
+            type_field=TypeField.RATING,
+            choices="5",
+            ordering=2,
+        )
+        cls.question3 = Question.objects.create(
+            survey=cls.survey,
+            label="Tell us about yourself",
+            type_field=TypeField.TEXT_AREA,
+            ordering=3,
+        )
+
+        # Create survey responses
+        cls.response1 = UserSurveyResponse.objects.create(
+            survey=cls.survey,
+            user=cls.respondent1,
+        )
+        UserQuestionResponse.objects.create(
+            question=cls.question1,
+            user_survey_response=cls.response1,
+            value="john@example.com",
+        )
+        UserQuestionResponse.objects.create(
+            question=cls.question2,
+            user_survey_response=cls.response1,
+            value="5",
+        )
+        UserQuestionResponse.objects.create(
+            question=cls.question3,
+            user_survey_response=cls.response1,
+            value="I am a Django developer with 5 years of experience.",
+        )
+
+        cls.response2 = UserSurveyResponse.objects.create(
+            survey=cls.survey,
+            user=cls.respondent2,
+        )
+        UserQuestionResponse.objects.create(
+            question=cls.question1,
+            user_survey_response=cls.response2,
+            value="jane@example.com",
+        )
+        UserQuestionResponse.objects.create(
+            question=cls.question2,
+            user_survey_response=cls.response2,
+            value="4",
+        )
+        UserQuestionResponse.objects.create(
+            question=cls.question3,
+            user_survey_response=cls.response2,
+            value="I am interested in contributing to open source.",
+        )
+
+    def test_clean_scorer_names_parses_correctly(self):
+        """Test scorer names are parsed from textarea."""
+        form = SurveyCSVExportForm(data={"scorer_names": "Alice\nBob\nCharlie"})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["scorer_names"], ["Alice", "Bob", "Charlie"])
+
+    def test_clean_scorer_names_handles_empty_lines(self):
+        """Test empty lines are filtered out."""
+        form = SurveyCSVExportForm(data={"scorer_names": "Alice\n\nBob\n\n\nCharlie\n"})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["scorer_names"], ["Alice", "Bob", "Charlie"])
+
+    def test_clean_scorer_names_handles_empty_string(self):
+        """Test empty string returns empty list."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["scorer_names"], [])
+
+    def test_generate_full_csv_without_scorers(self):
+        """Test full CSV generation without scorer names."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_full_csv(self.survey)
+
+        # Parse CSV content (remove BOM if present)
+        content = response.content.decode("utf-8-sig")
+        csv_reader = csv.reader(io.StringIO(content))
+        rows = list(csv_reader)
+
+        # Check header
+        expected_header = [
+            "Response ID",
+            "Submitter Name",
+            "What is your email?",
+            "Rate your experience",
+            "Tell us about yourself",
+            "Score",
+        ]
+        self.assertEqual(rows[0], expected_header)
+
+        # Check data rows
+        self.assertEqual(len(rows), 3)  # Header + 2 responses
+        self.assertEqual(rows[1][0], str(self.response1.id))
+        self.assertEqual(rows[1][1], "John Doe")
+        self.assertEqual(rows[1][5], "")  # Empty Score
+
+    def test_generate_full_csv_with_scorers(self):
+        """Test full CSV generation with scorer names."""
+        form = SurveyCSVExportForm(data={"scorer_names": "Alice\nBob"})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_full_csv(self.survey)
+
+        # Parse CSV content (remove BOM if present)
+        content = response.content.decode("utf-8-sig")
+        csv_reader = csv.reader(io.StringIO(content))
+        rows = list(csv_reader)
+
+        # Check header includes scorer columns
+        expected_header = [
+            "Response ID",
+            "Submitter Name",
+            "What is your email?",
+            "Rate your experience",
+            "Tell us about yourself",
+            "Alice score",
+            "Bob score",
+            "Score",
+        ]
+        self.assertEqual(rows[0], expected_header)
+        self.assertEqual(rows[1][5], "")  # Alice score
+        self.assertEqual(rows[1][6], "")  # Bob score
+        self.assertEqual(rows[1][7], "")  # Score
+
+    def test_generate_single_scorer_csv(self):
+        """Test single scorer CSV only includes TEXT_AREA questions."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_single_scorer_csv(self.survey)
+
+        # Parse CSV content (remove BOM if present)
+        content = response.content.decode("utf-8-sig")
+        csv_reader = csv.reader(io.StringIO(content))
+        rows = list(csv_reader)
+
+        # Check header - only TEXT_AREA questions and single Score column
+        expected_header = [
+            "Response ID",
+            "Tell us about yourself",  # TEXT_AREA type only
+            "Score",  # Single aggregate score column
+        ]
+        self.assertEqual(rows[0], expected_header)
+
+        # Check data rows
+        self.assertEqual(len(rows), 3)  # Header + 2 responses
+        self.assertEqual(rows[1][0], str(self.response1.id))
+        self.assertEqual(
+            rows[1][1], "I am a Django developer with 5 years of experience."
+        )
+        self.assertEqual(rows[1][2], "")  # Empty Score column
+
+    def test_generate_single_scorer_csv_ignores_scorer_names(self):
+        """Test single scorer CSV ignores scorer names field."""
+        form = SurveyCSVExportForm(data={"scorer_names": "Alice\nBob\nCharlie"})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_single_scorer_csv(self.survey)
+
+        # Parse CSV content (remove BOM if present)
+        content = response.content.decode("utf-8-sig")
+        csv_reader = csv.reader(io.StringIO(content))
+        rows = list(csv_reader)
+
+        # Should still have only single Score column
+        expected_header = [
+            "Response ID",
+            "Tell us about yourself",
+            "Score",
+        ]
+        self.assertEqual(rows[0], expected_header)
+
+    def test_generate_csv_routes_to_full(self):
+        """Test generate_csv method routes to full CSV by default."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_csv(self.survey, {})
+
+        # Check filename to verify it's the full CSV
+        self.assertIn("_responses.csv", response["Content-Disposition"])
+
+    def test_generate_csv_routes_to_single_scorer(self):
+        """Test generate_csv method routes to single scorer CSV when requested."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_csv(self.survey, {"generate_scorer_csv": ""})
+
+        # Check filename to verify it's the single scorer CSV
+        self.assertIn("_single_scorer.csv", response["Content-Disposition"])
+
+    def test_csv_uses_utf8_encoding(self):
+        """Test CSV files use UTF-8 encoding with BOM."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_full_csv(self.survey)
+
+        # Check content type
+        self.assertIn("text/csv", response["Content-Type"])
+        self.assertIn("utf-8", response["Content-Type"])
+
+        # Check BOM is present
+        self.assertTrue(response.content.startswith(b"\xef\xbb\xbf"))

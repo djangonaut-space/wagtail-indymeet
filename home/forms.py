@@ -1,3 +1,4 @@
+import csv
 from typing import List
 from typing import Tuple
 
@@ -5,12 +6,14 @@ from django import forms
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
 from django.db import transaction, IntegrityError
+from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from home.constants import DATE_INPUT_FORMAT
 from home.constants import SURVEY_FIELD_VALIDATORS
 from home.models import Question
+from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
 from home.models import UserSurveyResponse
@@ -239,3 +242,165 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
             unique_fields=("question", "user_survey_response"),
         )
         return self.user_survey_response
+
+
+class SurveyCSVExportForm(forms.Form):
+    """Form for generating CSV export with scorer columns"""
+
+    scorer_names = forms.CharField(
+        label=_("Scorer Names"),
+        widget=forms.Textarea(attrs={"rows": 5, "cols": 40}),
+        required=False,
+        help_text=_(
+            "Enter one scorer name per line. These will be added as "
+            "empty columns in the CSV for external scoring."
+        ),
+    )
+
+    def clean_scorer_names(self) -> list[str]:
+        """Parse scorer names from textarea input"""
+        scorer_names_text = self.cleaned_data.get("scorer_names", "")
+        if not scorer_names_text.strip():
+            return []
+
+        # Split by newlines and strip whitespace
+        scorers = [
+            name.strip() for name in scorer_names_text.split("\n") if name.strip()
+        ]
+        return scorers
+
+    def generate_csv(self, survey: Survey, request_data: dict) -> HttpResponse:
+        """
+        Generate CSV based on which button was clicked.
+
+        Args:
+            survey: The survey to export
+            request_data: POST data to check which button was clicked
+
+        Returns:
+            HttpResponse with CSV file
+        """
+        if "generate_scorer_csv" in request_data:
+            return self.generate_single_scorer_csv(survey)
+        else:
+            return self.generate_full_csv(survey)
+
+    def generate_full_csv(self, survey: Survey) -> HttpResponse:
+        """Generate CSV file with survey responses and scorer columns"""
+        scorer_names = self.cleaned_data.get("scorer_names", [])
+
+        # Get all responses for this survey with related data
+        responses = (
+            UserSurveyResponse.objects.filter(survey=survey)
+            .select_related("user")
+            .prefetch_related("userquestionresponse_set__question")
+            .order_by("id")
+        )
+
+        # Get all questions for this survey
+        questions = survey.questions.all().order_by("ordering")
+
+        # Create the HTTP response with CSV headers (UTF-8 encoded)
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            f'attachment; filename="survey_{survey.slug}_responses.csv"'
+        )
+        # Add UTF-8 BOM to ensure Excel and other tools properly recognize UTF-8
+        response.write("\ufeff")
+
+        writer = csv.writer(response)
+
+        # Write header row
+        header = ["Response ID", "Submitter Name"]
+        # Add question labels as columns
+        header.extend([q.label for q in questions])
+        # Add scorer columns
+        header.extend([f"{name} score" for name in scorer_names])
+        # Add Score column
+        header.append("Score")
+        writer.writerow(header)
+
+        # Write data rows
+        for response_obj in responses:
+            row = [
+                response_obj.id,
+                f"{response_obj.user.first_name} {response_obj.user.last_name}".strip()
+                or response_obj.user.email,
+            ]
+
+            # Get all question responses for this survey response
+            question_responses = {
+                qr.question_id: qr.value
+                for qr in response_obj.userquestionresponse_set.all()
+            }
+
+            # Add question responses in order
+            for question in questions:
+                row.append(question_responses.get(question.id, ""))
+
+            # Add empty scorer columns
+            row.extend([""] * len(scorer_names))
+
+            # Add empty Score column
+            row.append("")
+
+            writer.writerow(row)
+
+        return response
+
+    def generate_single_scorer_csv(self, survey: Survey) -> HttpResponse:
+        """
+        Generate anonymized Single Scorer CSV with only TEXT_AREA questions.
+        Suitable for session organizers to score anonymously.
+        """
+        # Get all responses for this survey with related data
+        responses = (
+            UserSurveyResponse.objects.filter(survey=survey)
+            .select_related("user")
+            .prefetch_related("userquestionresponse_set__question")
+            .order_by("id")
+        )
+
+        # Get only TEXT_AREA questions
+        questions = survey.questions.filter(type_field=TypeField.TEXT_AREA).order_by(
+            "ordering"
+        )
+
+        # Create the HTTP response with CSV headers (UTF-8 encoded)
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            f'attachment; filename="survey_{survey.slug}_single_scorer.csv"'
+        )
+        # Add UTF-8 BOM to ensure Excel and other tools properly recognize UTF-8
+        response.write("\ufeff")
+
+        writer = csv.writer(response)
+
+        # Write header row - only Response ID and TEXT_AREA questions
+        header = ["Response ID"]
+        # Add question labels as columns
+        header.extend([q.label for q in questions])
+        # Add single Score column (no individual scorer columns)
+        header.append("Score")
+        writer.writerow(header)
+
+        # Write data rows
+        for response_obj in responses:
+            row = [response_obj.id]
+
+            # Get all question responses for this survey response
+            question_responses = {
+                qr.question_id: qr.value
+                for qr in response_obj.userquestionresponse_set.all()
+            }
+
+            # Add only TEXT_AREA question responses in order
+            for question in questions:
+                row.append(question_responses.get(question.id, ""))
+
+            # Add empty Score column
+            row.append("")
+
+            writer.writerow(row)
+
+        return response

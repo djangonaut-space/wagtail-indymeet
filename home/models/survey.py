@@ -134,6 +134,11 @@ class UserSurveyResponse(BaseModel):
         db_index=False,
     )
     user = models.ForeignKey("accounts.CustomUser", on_delete=models.CASCADE)
+    score = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Aggregate score for this survey response"),
+    )
 
     class Meta:
         ordering = ["-updated_at"]
