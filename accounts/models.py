@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
@@ -5,6 +6,7 @@ from django.core.signing import TimestampSigner
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.urls import reverse
 from wagtail.models import Orderable
 
 from accounts.fields import DefaultOneToOneField
@@ -169,6 +171,12 @@ class UserAvailability(models.Model):
                 # Return the hour within the day (0.0-23.5)
                 day_slots.append(slot - day_start)
         return day_slots
+
+    def get_absolute_url(self):
+        return reverse("availability")
+
+    def get_full_url(self):
+        return settings.BASE_URL + self.get_absolute_url()
 
 
 # ====================== Signals =======================

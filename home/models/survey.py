@@ -1,9 +1,12 @@
+from django.conf import settings
 from django.db import models
-from django.db.models import UniqueConstraint
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+
+from accounts.models import UserAvailability
+from home import email
 
 
 class BaseModel(models.Model):
@@ -153,6 +156,40 @@ class UserSurveyResponse(BaseModel):
             session.is_accepting_applications()
             for session in self.survey.application_sessions.all()
         )
+
+    def get_absolute_url(self):
+        return reverse("user_survey_response", kwargs={"slug": self.survey.slug})
+
+    def get_full_url(self):
+        return settings.BASE_URL + self.get_absolute_url()
+
+    def send_created_notification(self):
+        if session := self.survey.session:
+            availability, _ = UserAvailability.objects.get_or_create(user=self.user)
+            context = {
+                "availability": availability,
+                "response": self,
+                "session": session,
+            }
+            email.send(
+                email_template="application_created",
+                recipient_list=[self.user.email],
+                context=context,
+            )
+
+    def send_updated_notification(self):
+        if session := self.survey.session:
+            availability, _ = UserAvailability.objects.get_or_create(user=self.user)
+            context = {
+                "availability": availability,
+                "response": self,
+                "session": session,
+            }
+            email.send(
+                email_template="application_updated",
+                recipient_list=[self.user.email],
+                context=context,
+            )
 
 
 class UserQuestionResponse(BaseModel):

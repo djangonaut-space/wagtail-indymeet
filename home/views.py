@@ -142,7 +142,8 @@ class CreateUserSurveyResponseFormView(
         form = self.get_form()
         self.object = self.get_object()
         if form.is_valid():
-            form.save()
+            user_survey_response = form.save()
+            user_survey_response.send_created_notification()
             messages.success(self.request, gettext("Response sent!"))
             return self.form_valid(form)
         else:
@@ -192,7 +193,7 @@ class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView)
             super()
             .get_queryset()
             .filter(user=self.request.user)
-            .select_related("survey")
+            .select_related("survey__session")
             .prefetch_related(
                 Prefetch(
                     "userquestionresponse_set",
@@ -210,7 +211,8 @@ class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView)
         self.object = self.get_object()
         form = self.get_form()
         if form.is_valid():
-            form.save()
+            user_survey_response = form.save()
+            user_survey_response.send_updated_notification()
             messages.success(self.request, gettext("Response updated!"))
             return redirect(self.get_success_url())
         else:
