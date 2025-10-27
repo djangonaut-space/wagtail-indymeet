@@ -1,9 +1,11 @@
 from django.contrib import admin, messages
 from django.db.models import F, Max, Count
-from django.urls import reverse
+from django.shortcuts import render, redirect
+from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from .forms import SurveyCSVExportForm
 from .models import Event
 from .models import ResourceLink
 from .models import Question
@@ -11,7 +13,7 @@ from .models import Session
 from .models import SessionMembership
 from .models import Survey
 from .models import UserQuestionResponse
-from .models import UserSurveyResponse
+from .models import UserSurveyResponse as UserSurveyResponseModel
 
 
 @admin.register(Event)
@@ -113,7 +115,7 @@ class SurveyAdmin(admin.ModelAdmin):
     ]
     list_filter = ["session", "editable", "deletable", "created_at"]
     search_fields = ["name", "description", "session__title"]
-    actions = ["copy_survey"]
+    actions = ["copy_survey", "export_to_csv_with_scorers"]
 
     def get_queryset(self, request):
         return (
@@ -142,6 +144,54 @@ class SurveyAdmin(admin.ModelAdmin):
 
     def latest_response(self, obj):
         return getattr(obj, "annotated_latest_response", None)
+
+    def get_urls(self):
+        """Add custom URL for CSV export with scorers"""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<int:survey_id>/export-csv/",
+                self.admin_site.admin_view(self.export_csv_view),
+                name="survey_export_csv",
+            ),
+        ]
+        return custom_urls + urls
+
+    def export_csv_view(self, request, survey_id):
+        """Handle the CSV export form and generation"""
+        survey = Survey.objects.get(pk=survey_id)
+
+        if request.method == "POST":
+            form = SurveyCSVExportForm(request.POST)
+            if form.is_valid():
+                return form.generate_csv(survey, request.POST)
+        else:
+            form = SurveyCSVExportForm()
+
+        context = {
+            "form": form,
+            "survey": survey,
+            "opts": self.model._meta,
+            "has_view_permission": self.has_view_permission(request),
+            "site_title": self.admin_site.site_title,
+            "site_header": self.admin_site.site_header,
+        }
+        return render(request, "admin/survey_export_csv.html", context)
+
+    @admin.action(description="Export to CSV with scorers")
+    def export_to_csv_with_scorers(self, request, queryset):
+        """Redirect to CSV export form for selected survey"""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one survey to export.",
+                messages.ERROR,
+            )
+            return
+
+        survey = queryset.first()
+        url = reverse("admin:survey_export_csv", args=[survey.id])
+        return redirect(url)
 
     @admin.action(description="Copy selected surveys (with all questions)")
     def copy_survey(self, request, queryset):
@@ -223,9 +273,9 @@ class UserQuestionResponseAdmin(admin.ModelAdmin):
         return obj.annotated_user_email
 
 
-@admin.register(UserSurveyResponse)
-class UserSurveyResponse(admin.ModelAdmin):
-    model = UserSurveyResponse
+@admin.register(UserSurveyResponseModel)
+class UserSurveyResponseAdmin(admin.ModelAdmin):
+    model = UserSurveyResponseModel
     raw_id_fields = [
         "user",
         "survey",
