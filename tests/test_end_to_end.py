@@ -62,7 +62,8 @@ class TestDjangoOpportunities:
         """Wait for Alpine.js to initialize and opportunities to load."""
         opps_page.wait_for_selector('[x-data*="opportunitiesApp"]')
         opps_page.wait_for_load_state("networkidle")
-        opps_page.wait_for_timeout(500)  # Allow Alpine.js to fully initialize
+        # Wait for the results counter to appear, indicating Alpine has initialized
+        opps_page.get_by_text(RESULTS_PATTERN).wait_for(state="visible")
 
     def test_page_loads_correctly(self, opps_page: Page):
         """Test that the page loads with all main elements."""
@@ -87,22 +88,22 @@ class TestDjangoOpportunities:
         """Test the name search filter with autocomplete."""
         name_input = opps_page.get_by_label("Search by Name")
         name_input.fill("Google")
-        opps_page.wait_for_timeout(300)
 
         # Check that results are filtered by looking for cards containing "Google"
         # Use a more semantic approach to find opportunity cards
         opportunity_cards = opps_page.get_by_role("button").filter(has_text="Google")
-        assert opportunity_cards.count()
+        # Wait for the filtered results to appear
         expect(opportunity_cards.first).to_be_visible()
+        assert opportunity_cards.count()
 
     def test_autocomplete_selection(self, opps_page: Page):
         """Test selecting an item from autocomplete dropdown."""
         name_input = opps_page.get_by_label("Search by Name")
         name_input.fill("Goo")
-        opps_page.wait_for_timeout(300)
 
-        # Look for autocomplete suggestions
+        # Look for autocomplete suggestions - wait for them to appear
         autocomplete_items = opps_page.locator(".suggestion-item")
+        expect(autocomplete_items.first).to_be_visible()
         assert autocomplete_items.count()
         first_suggestion = autocomplete_items.first
         suggestion_text = first_suggestion.inner_text()
@@ -115,7 +116,6 @@ class TestDjangoOpportunities:
         """Test the outcomes search filter."""
         outcomes_input = opps_page.get_by_label("Search by Outcomes")
         outcomes_input.fill("technical")
-        opps_page.wait_for_timeout(300)
 
         # Verify filtering occurred by checking results counter
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
@@ -125,7 +125,6 @@ class TestDjangoOpportunities:
         """Test the requirements search filter."""
         requirements_input = opps_page.get_by_label("Search by Requirements")
         requirements_input.fill("Django")
-        opps_page.wait_for_timeout(300)
 
         # Verify filtering occurred
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
@@ -135,7 +134,6 @@ class TestDjangoOpportunities:
         """Test the description search filter."""
         description_input = opps_page.get_by_label("Search Description")
         description_input.fill("student")
-        opps_page.wait_for_timeout(300)
 
         # Verify filtering occurred
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
@@ -145,15 +143,14 @@ class TestDjangoOpportunities:
         """Test the tag search filter."""
         description_input = opps_page.get_by_label("Search by Tags")
         description_input.fill("Fellowship")
-        opps_page.wait_for_timeout(300)
 
         # Verify filtering occurred
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
         expect(results_text).to_be_visible()
         # Look for cards that contain mentorship tags
         fellowship_cards = opps_page.get_by_role("button").filter(has_text="fellow")
-        assert fellowship_cards.count()
         expect(fellowship_cards.first).to_be_visible()
+        assert fellowship_cards.count()
 
     def test_type_filter_functionality(self, opps_page: Page):
         """Test the type checkbox filters."""
@@ -161,7 +158,6 @@ class TestDjangoOpportunities:
         education_checkbox = opps_page.get_by_label("Education")
         # Get the checkbox label text to verify filtering
         education_checkbox.check()
-        opps_page.wait_for_timeout(300)
 
         # Verify results counter updates
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
@@ -170,16 +166,15 @@ class TestDjangoOpportunities:
     def test_clear_filters_functionality(self, opps_page: Page):
         """Test the clear all filters button."""
         # Apply some filters first
-        opps_page.get_by_label("Search by Name").fill("Test")
-        opps_page.wait_for_timeout(300)
+        name_input = opps_page.get_by_label("Search by Name")
+        name_input.fill("Test")
 
         # Click clear filters using the button role
         clear_button = opps_page.get_by_role("button", name="Clear All Filters")
         clear_button.click()
-        opps_page.wait_for_timeout(300)
 
         # Verify filters are cleared
-        expect(opps_page.get_by_label("Search by Name")).to_have_value("")
+        expect(name_input).to_have_value("")
 
     def test_card_click_opens_modal(self, opps_page: Page):
         """Test that clicking a card opens the modal."""
@@ -197,7 +192,6 @@ class TestDjangoOpportunities:
         # Get the card title for verification
         card_title = first_card.get_by_role("heading").inner_text()
         first_card.click()
-        opps_page.wait_for_timeout(300)
 
         # Check that modal dialog is visible
         modal = opps_page.get_by_role("dialog")
@@ -214,7 +208,6 @@ class TestDjangoOpportunities:
 
         assert opportunity_cards.count()
         opportunity_cards.first.click()
-        opps_page.wait_for_timeout(300)
 
         # Check modal dialog is open
         modal = opps_page.get_by_role("dialog")
@@ -222,8 +215,8 @@ class TestDjangoOpportunities:
 
         # Check that modal sections are present using headings
         description_heading = modal.get_by_role("heading", name="Description")
-        assert description_heading.count()
         expect(description_heading).to_be_visible()
+        assert description_heading.count()
 
     def test_modal_close_with_x_button(self, opps_page: Page):
         """Test closing modal with the X button."""
@@ -232,7 +225,6 @@ class TestDjangoOpportunities:
 
         assert opportunity_cards.count()
         opportunity_cards.first.click()
-        opps_page.wait_for_timeout(300)
 
         modal = opps_page.get_by_role("dialog")
         expect(modal).to_be_visible()
@@ -240,7 +232,6 @@ class TestDjangoOpportunities:
         # Click close button using aria-label
         close_button = opps_page.get_by_label("Close modal")
         close_button.click()
-        opps_page.wait_for_timeout(300)
 
         expect(modal).not_to_be_visible()
 
@@ -275,19 +266,18 @@ class TestDjangoOpportunities:
         # Focus and use Enter key
         first_card.focus()
         opps_page.keyboard.press("Enter")
-        opps_page.wait_for_timeout(300)
 
         modal = opps_page.get_by_role("dialog")
         expect(modal).to_be_visible()
 
-        # Close modal
-        opps_page.keyboard.press("Escape")
-        opps_page.wait_for_timeout(300)
+        # Close modal with X button
+        close_button = opps_page.get_by_label("Close modal")
+        close_button.click()
+        expect(modal).not_to_be_visible()
 
-        # Test Space key
+        # Test Space key also opens modal
         first_card.focus()
         opps_page.keyboard.press("Space")
-        opps_page.wait_for_timeout(300)
 
         expect(modal).to_be_visible()
 
@@ -296,7 +286,6 @@ class TestDjangoOpportunities:
         # Apply multiple filters using semantic selectors
         opps_page.get_by_label("Search by Name").fill("Google")
         opps_page.get_by_label("Search by Tags").fill("mentorship")
-        opps_page.wait_for_timeout(500)
 
         # Check that results counter is visible and updated
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
@@ -310,7 +299,6 @@ class TestDjangoOpportunities:
         """Test that no results message appears when filters match nothing."""
         # Search for something unlikely to match
         opps_page.get_by_label("Search by Name").fill("NonexistentOpportunity12345")
-        opps_page.wait_for_timeout(300)
 
         # Check for no results message or zero count
         no_results = opps_page.get_by_text("No opportunities found")
@@ -329,7 +317,6 @@ class TestDjangoOpportunities:
 
         # Apply a filter
         opps_page.get_by_label("Search by Tags").fill("mentorship")
-        opps_page.wait_for_timeout(300)
 
         # Check that the counter is still visible and properly formatted
         expect(results_text).to_be_visible()
@@ -353,7 +340,6 @@ class TestDjangoOpportunities:
         """Parameterized test for individual search fields using semantic selectors."""
         search_input = opps_page.get_by_label(search_label)
         search_input.fill(search_term)
-        opps_page.wait_for_timeout(300)
 
         # Verify that the search was applied (counter should be visible)
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
@@ -435,7 +421,6 @@ class TestDjangoOpportunities:
         # Check the first available type
         first_checkbox = type_checkboxes.first
         first_checkbox.check()
-        opps_page.wait_for_timeout(300)
 
         # Verify that filtering occurred
         results_text = opps_page.get_by_text(RESULTS_PATTERN)
@@ -443,7 +428,6 @@ class TestDjangoOpportunities:
 
         # Uncheck to verify it toggles
         first_checkbox.uncheck()
-        opps_page.wait_for_timeout(300)
 
         # Results should update again
         expect(results_text).to_be_visible()
@@ -455,7 +439,6 @@ class TestDjangoOpportunities:
 
         assert opportunity_cards.count() > 0
         opportunity_cards.first.click()
-        opps_page.wait_for_timeout(300)
 
         modal = opps_page.get_by_role("dialog")
         expect(modal).to_be_visible()
