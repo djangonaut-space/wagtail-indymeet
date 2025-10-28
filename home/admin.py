@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
-from .models import Event
+from .models import Event, Team
 from .models import ResourceLink
 from .models import Question
 from .models import Session
@@ -48,14 +48,18 @@ class SessionMembershipInline(admin.TabularInline):
 
 @admin.register(SessionMembership)
 class SessionMembershipAdmin(admin.ModelAdmin):
-    model = SessionMembership
     list_display = ("user", "session", "role", "created")
 
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    model = Session
     inlines = [SessionMembershipInline]
+
+
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
+    list_display = ("name", "project", "session")
+    list_filter = ("session",)
 
 
 class QuestionInline(admin.StackedInline):
