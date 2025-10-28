@@ -318,8 +318,9 @@ class SurveyCSVExportForm(forms.Form):
         header.extend([q.label for q in questions])
         # Add scorer columns
         header.extend([f"{name} score" for name in scorer_names])
-        # Add Score column
+        # Add Score and Selection Rank columns
         header.append("Score")
+        header.append("Selection Rank")
         writer.writerow(header)
 
         # Write data rows
@@ -343,7 +344,8 @@ class SurveyCSVExportForm(forms.Form):
             # Add empty scorer columns
             row.extend([""] * len(scorer_names))
 
-            # Add empty Score column
+            # Add empty Score and Selection Rank columns
+            row.append("")
             row.append("")
 
             writer.writerow(row)
@@ -382,8 +384,9 @@ class SurveyCSVExportForm(forms.Form):
         header = ["Response ID"]
         # Add question labels as columns
         header.extend([q.label for q in questions])
-        # Add single Score column (no individual scorer columns)
+        # Add Score and Selection Rank columns (no individual scorer columns)
         header.append("Score")
+        header.append("Selection Rank")
         writer.writerow(header)
 
         # Write data rows
@@ -400,7 +403,8 @@ class SurveyCSVExportForm(forms.Form):
             for question in questions:
                 row.append(question_responses.get(question.id, ""))
 
-            # Add empty Score column
+            # Add empty Score and Selection Rank columns
+            row.append("")
             row.append("")
 
             writer.writerow(row)
@@ -416,17 +420,18 @@ class SurveyCSVImportForm(forms.Form):
         validators=[validators.FileExtensionValidator(["csv"])],
         required=True,
         help_text=_(
-            "Upload a CSV file with 'Response ID' and 'Score' columns. "
+            "Upload a CSV file with 'Response ID', 'Score', and 'Selection Rank' columns. "
             "Only these columns will be processed; all other columns will be ignored."
         ),
     )
 
-    def clean_csv_file(self) -> list[tuple[int, int]]:
+    def clean_csv_file(self) -> list[tuple[int, int, int]]:
         """
         Parse and validate the CSV file.
 
         Returns:
-            List of tuples (response_id, score) for valid rows
+            List of tuples (response_id, score, selection_rank) for valid rows.
+            All three values are required integers.
 
         Raises:
             forms.ValidationError: If CSV is invalid or missing required columns
@@ -451,15 +456,12 @@ class SurveyCSVImportForm(forms.Form):
             if not reader.fieldnames:
                 raise forms.ValidationError(_("CSV file is empty or has no headers."))
 
-            if "Response ID" not in reader.fieldnames:
-                raise forms.ValidationError(
-                    _("CSV file must contain a 'Response ID' column.")
-                )
-
-            if "Score" not in reader.fieldnames:
-                raise forms.ValidationError(
-                    _("CSV file must contain a 'Score' column.")
-                )
+            required_columns = ["Response ID", "Score", "Selection Rank"]
+            for column in required_columns:
+                if column not in reader.fieldnames:
+                    raise forms.ValidationError(
+                        _(f"CSV file must contain a '{column}' column.")
+                    )
 
             # Parse and validate rows
             updates = []
@@ -470,9 +472,10 @@ class SurveyCSVImportForm(forms.Form):
                 row_number += 1
                 response_id_str = row.get("Response ID", "").strip()
                 score_str = row.get("Score", "").strip()
+                selection_rank_str = row.get("Selection Rank", "").strip()
 
-                # Skip rows with empty Response ID or Score
-                if not response_id_str or not score_str:
+                # Skip rows with empty Response ID, Score, or Selection Rank
+                if not response_id_str or not score_str or not selection_rank_str:
                     continue
 
                 # Validate Response ID is an integer
@@ -498,7 +501,19 @@ class SurveyCSVImportForm(forms.Form):
                     )
                     continue
 
-                updates.append((response_id, score))
+                # Validate Selection Rank is an integer (required)
+                try:
+                    selection_rank = int(selection_rank_str)
+                except ValueError:
+                    errors.append(
+                        _(
+                            f"Row {row_number}: Invalid Selection Rank '{selection_rank_str}' "
+                            "(must be an integer)"
+                        )
+                    )
+                    continue
+
+                updates.append((response_id, score, selection_rank))
 
             # Report errors if any
             if errors:
@@ -507,8 +522,8 @@ class SurveyCSVImportForm(forms.Form):
             # Ensure we have at least one valid row
             if not updates:
                 raise forms.ValidationError(
-                    "No valid data rows found. Ensure the CSV has 'Response ID' "
-                    "and 'Score' columns with valid integer values."
+                    "No valid data rows found. Ensure the CSV has 'Response ID', "
+                    "'Score', and 'Selection Rank' columns with valid integer values."
                 )
 
             return updates
@@ -535,8 +550,11 @@ class SurveyCSVImportForm(forms.Form):
         if not updates:
             return {"updated": 0}
 
-        response_ids = [response_id for response_id, _ in updates]
-        score_map = {response_id: score for response_id, score in updates}
+        response_ids = [response_id for response_id, _, _ in updates]
+        score_map = {response_id: score for response_id, score, _ in updates}
+        selection_rank_map = {
+            response_id: selection_rank for response_id, _, selection_rank in updates
+        }
 
         # Fetch all relevant UserSurveyResponse objects for this survey only
         existing_responses = UserSurveyResponse.objects.filter(
@@ -544,12 +562,13 @@ class SurveyCSVImportForm(forms.Form):
             survey=survey,
         )
 
-        # Update scores using a transaction
+        # Update scores and selection_rank using a transaction
         updated_count = 0
         with transaction.atomic():
             for response in existing_responses.select_for_update():
                 response.score = score_map[response.id]
-                response.save(update_fields=["score"])
+                response.selection_rank = selection_rank_map[response.id]
+                response.save(update_fields=["score", "selection_rank"])
                 updated_count += 1
 
         return {"updated": updated_count}

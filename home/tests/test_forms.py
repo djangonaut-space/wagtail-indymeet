@@ -403,6 +403,7 @@ class SurveyCSVExportFormTests(TestCase):
             "Rate your experience",
             "Tell us about yourself",
             "Score",
+            "Selection Rank",
         ]
         self.assertEqual(rows[0], expected_header)
 
@@ -411,6 +412,7 @@ class SurveyCSVExportFormTests(TestCase):
         self.assertEqual(rows[1][0], str(self.response1.id))
         self.assertEqual(rows[1][1], "John Doe")
         self.assertEqual(rows[1][5], "")  # Empty Score
+        self.assertEqual(rows[1][6], "")  # Empty Selection Rank
 
     def test_generate_full_csv_with_scorers(self):
         """Test full CSV generation with scorer names."""
@@ -434,11 +436,13 @@ class SurveyCSVExportFormTests(TestCase):
             "Alice score",
             "Bob score",
             "Score",
+            "Selection Rank",
         ]
         self.assertEqual(rows[0], expected_header)
         self.assertEqual(rows[1][5], "")  # Alice score
         self.assertEqual(rows[1][6], "")  # Bob score
         self.assertEqual(rows[1][7], "")  # Score
+        self.assertEqual(rows[1][8], "")  # Selection Rank
 
     def test_generate_single_scorer_csv(self):
         """Test single scorer CSV only includes TEXT_AREA questions."""
@@ -452,11 +456,12 @@ class SurveyCSVExportFormTests(TestCase):
         csv_reader = csv.reader(io.StringIO(content))
         rows = list(csv_reader)
 
-        # Check header - only TEXT_AREA questions and single Score column
+        # Check header - only TEXT_AREA questions and Score/Selection Rank columns
         expected_header = [
             "Response ID",
             "Tell us about yourself",  # TEXT_AREA type only
             "Score",  # Single aggregate score column
+            "Selection Rank",  # Selection rank column
         ]
         self.assertEqual(rows[0], expected_header)
 
@@ -467,6 +472,7 @@ class SurveyCSVExportFormTests(TestCase):
             rows[1][1], "I am a Django developer with 5 years of experience."
         )
         self.assertEqual(rows[1][2], "")  # Empty Score column
+        self.assertEqual(rows[1][3], "")  # Empty Selection Rank column
 
     def test_generate_single_scorer_csv_ignores_scorer_names(self):
         """Test single scorer CSV ignores scorer names field."""
@@ -480,11 +486,12 @@ class SurveyCSVExportFormTests(TestCase):
         csv_reader = csv.reader(io.StringIO(content))
         rows = list(csv_reader)
 
-        # Should still have only single Score column
+        # Should still have only Score and Selection Rank columns
         expected_header = [
             "Response ID",
             "Tell us about yourself",
             "Score",
+            "Selection Rank",
         ]
         self.assertEqual(rows[0], expected_header)
 
@@ -550,7 +557,9 @@ class SurveyCSVImportFormTests(TestCase):
     def test_clean_csv_file_valid_data(self):
         """Test clean_csv_file parses valid CSV correctly."""
         csv_content = (
-            "Response ID,Score\n" f"{self.response1.id},10\n" f"{self.response2.id},8\n"
+            "Response ID,Score,Selection Rank\n"
+            f"{self.response1.id},10,0\n"
+            f"{self.response2.id},8,1\n"
         )
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
@@ -561,14 +570,14 @@ class SurveyCSVImportFormTests(TestCase):
 
         updates = form.cleaned_data["csv_file"]
         self.assertEqual(len(updates), 2)
-        self.assertIn((self.response1.id, 10), updates)
-        self.assertIn((self.response2.id, 8), updates)
+        self.assertIn((self.response1.id, 10, 0), updates)
+        self.assertIn((self.response2.id, 8, 1), updates)
 
     def test_clean_csv_file_with_extra_columns(self):
         """Test clean_csv_file ignores extra columns."""
         csv_content = (
-            "Response ID,Submitter Name,Question 1,Score,Extra Column\n"
-            f"{self.response1.id},John Doe,Answer,5,Ignored\n"
+            "Response ID,Submitter Name,Selection Rank,Question 1,Score,Extra Column\n"
+            f"{self.response1.id},John Doe,1,Answer,5,Ignored\n"
         )
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
@@ -578,15 +587,16 @@ class SurveyCSVImportFormTests(TestCase):
         self.assertTrue(form.is_valid())
 
         updates = form.cleaned_data["csv_file"]
-        self.assertEqual(updates, [(self.response1.id, 5)])
+        self.assertEqual(updates, [(self.response1.id, 5, 1)])
 
     def test_clean_csv_file_skips_empty_rows(self):
-        """Test clean_csv_file skips rows with empty Response ID or Score."""
+        """Test clean_csv_file skips rows with empty Response ID, Score, or Selection Rank."""
         csv_content = (
-            "Response ID,Score\n"
-            f"{self.response1.id},10\n"
-            ",8\n"  # Empty Response ID
-            f"{self.response2.id},\n"  # Empty Score
+            "Response ID,Score,Selection Rank\n"
+            f"{self.response1.id},10,1\n"
+            ",8,1\n"  # Empty Response ID
+            f"{self.response2.id},,1\n"  # Empty Score
+            f"{self.response3.id},10,\n"  # Empty Selection rank
         )
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
@@ -596,11 +606,11 @@ class SurveyCSVImportFormTests(TestCase):
         self.assertTrue(form.is_valid())
 
         updates = form.cleaned_data["csv_file"]
-        self.assertEqual(updates, [(self.response1.id, 10)])
+        self.assertEqual(updates, [(self.response1.id, 10, 1)])
 
     def test_clean_csv_file_missing_response_id_column(self):
         """Test clean_csv_file fails if Response ID column is missing."""
-        csv_content = "Score\n10\n8\n"
+        csv_content = "Score,Selection Rank\n10,8\n"
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
         )
@@ -611,7 +621,7 @@ class SurveyCSVImportFormTests(TestCase):
 
     def test_clean_csv_file_missing_score_column(self):
         """Test clean_csv_file fails if Score column is missing."""
-        csv_content = "Response ID\n1\n2\n"
+        csv_content = "Response ID,Selection Rank\n1,2\n"
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
         )
@@ -620,9 +630,20 @@ class SurveyCSVImportFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("Score", str(form.errors["csv_file"]))
 
+    def test_clean_csv_file_selection_rank_column(self):
+        """Test clean_csv_file fails if Selection Rank column is missing."""
+        csv_content = "Response ID,Score\n1,2\n"
+        csv_file = SimpleUploadedFile(
+            "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
+        )
+
+        form = SurveyCSVImportForm(data={}, files={"csv_file": csv_file})
+        self.assertFalse(form.is_valid())
+        self.assertIn("Selection Rank", str(form.errors["csv_file"]))
+
     def test_clean_csv_file_invalid_response_id(self):
         """Test clean_csv_file shows error for non-integer Response ID."""
-        csv_content = "Response ID,Score\nabc,10\n"
+        csv_content = "Response ID,Score,Selection Rank\nabc,10,1\n"
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
         )
@@ -633,7 +654,7 @@ class SurveyCSVImportFormTests(TestCase):
 
     def test_clean_csv_file_invalid_score(self):
         """Test clean_csv_file shows error for non-integer Score."""
-        csv_content = f"Response ID,Score\n{self.response1.id},abc\n"
+        csv_content = f"Response ID,Score,Selection Rank\n{self.response1.id},abc,1\n"
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
         )
@@ -644,7 +665,7 @@ class SurveyCSVImportFormTests(TestCase):
 
     def test_clean_csv_file_no_valid_rows(self):
         """Test clean_csv_file shows error when no valid data rows."""
-        csv_content = "Response ID,Score\n,,\n,,\n"
+        csv_content = "Response ID,Score,Selection Rank\n,,\n,,\n"
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
         )
@@ -657,8 +678,8 @@ class SurveyCSVImportFormTests(TestCase):
         """Test clean_csv_file handles UTF-8 BOM correctly."""
         csv_content = (
             "\ufeff"  # UTF-8 BOM
-            "Response ID,Score\n"
-            f"{self.response1.id},10\n"
+            "Response ID,Score,Selection Rank\n"
+            f"{self.response1.id},10,1\n"
         )
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
@@ -668,12 +689,14 @@ class SurveyCSVImportFormTests(TestCase):
         self.assertTrue(form.is_valid())
 
         updates = form.cleaned_data["csv_file"]
-        self.assertEqual(updates, [(self.response1.id, 10)])
+        self.assertEqual(updates, [(self.response1.id, 10, 1)])
 
     def test_import_scores_valid_data(self):
         """Test import_scores updates scores correctly."""
         csv_content = (
-            "Response ID,Score\n" f"{self.response1.id},10\n" f"{self.response2.id},8\n"
+            "Response ID,Score,Selection Rank\n"
+            f"{self.response1.id},10,1\n"
+            f"{self.response2.id},8,2\n"
         )
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
@@ -684,19 +707,21 @@ class SurveyCSVImportFormTests(TestCase):
 
         result = form.import_scores(self.survey)
 
-        # Verify scores were updated
+        # Verify scores and selection ranks were updated
         self.response1.refresh_from_db()
         self.response2.refresh_from_db()
         self.assertEqual(self.response1.score, 10)
+        self.assertEqual(self.response1.selection_rank, 1)
         self.assertEqual(self.response2.score, 8)
+        self.assertEqual(self.response2.selection_rank, 2)
         self.assertEqual(result["updated"], 2)
 
     def test_import_scores_skips_wrong_survey(self):
         """Test import_scores silently skips responses from other surveys."""
         csv_content = (
-            "Response ID,Score\n"
-            f"{self.response1.id},10\n"
-            f"{self.response3.id},5\n"  # This belongs to survey2
+            "Response ID,Score,Selection Rank\n"
+            f"{self.response1.id},10,1\n"
+            f"{self.response3.id},5,2\n"  # This belongs to survey2
         )
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
@@ -711,15 +736,17 @@ class SurveyCSVImportFormTests(TestCase):
         self.response1.refresh_from_db()
         self.response3.refresh_from_db()
         self.assertEqual(self.response1.score, 10)
+        self.assertEqual(self.response1.selection_rank, 1)
         self.assertIsNone(self.response3.score)
+        self.assertIsNone(self.response3.selection_rank)
         self.assertEqual(result["updated"], 1)
 
     def test_import_scores_skips_not_found(self):
         """Test import_scores silently skips non-existent response IDs."""
         csv_content = (
-            "Response ID,Score\n"
-            f"{self.response1.id},10\n"
-            "999999,5\n"  # Non-existent ID
+            "Response ID,Score,Selection Rank\n"
+            f"{self.response1.id},10,1\n"
+            "999999,5,2\n"  # Non-existent ID
         )
         csv_file = SimpleUploadedFile(
             "scores.csv", csv_content.encode("utf-8"), content_type="text/csv"
@@ -733,4 +760,5 @@ class SurveyCSVImportFormTests(TestCase):
         # Verify response1 was updated
         self.response1.refresh_from_db()
         self.assertEqual(self.response1.score, 10)
+        self.assertEqual(self.response1.selection_rank, 1)
         self.assertEqual(result["updated"], 1)

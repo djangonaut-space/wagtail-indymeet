@@ -142,6 +142,11 @@ class UserSurveyResponse(BaseModel):
         blank=True,
         help_text=_("Aggregate score for this survey response"),
     )
+    selection_rank = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Selection rank for this survey response"),
+    )
 
     class Meta:
         ordering = ["-updated_at"]

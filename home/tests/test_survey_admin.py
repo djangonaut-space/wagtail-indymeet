@@ -337,7 +337,7 @@ class SurveyCSVImportViewTest(TestCase):
 
     def test_import_csv_view_post_valid(self):
         """Test POST with valid CSV redirects and shows success message."""
-        csv_content = "Response ID,Score\n" f"{self.response.id},10\n"
+        csv_content = "Response ID,Score,Selection Rank\n" f"{self.response.id},10,1\n"
         csv_file = io.BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "scores.csv"
 
@@ -348,9 +348,10 @@ class SurveyCSVImportViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("admin:home_survey_changelist"))
 
-        # Verify score was updated
+        # Verify score and selection rank were updated
         self.response.refresh_from_db()
         self.assertEqual(self.response.score, 10)
+        self.assertEqual(self.response.selection_rank, 1)
 
     def test_import_csv_view_post_invalid(self):
         """Test POST with invalid CSV shows form errors."""
