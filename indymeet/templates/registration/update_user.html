@@ -19,77 +19,7 @@
             <form method="post">
               {% csrf_token %}
 
-              <div class="space-y-4 mb-4">
-                <div>
-                  <label for="{{ form.username.id_for_label }}" class="block mb-2">{{ form.username.label }}</label>
-                  {{ form.username|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ds-purple" |attr:"placeholder: Enter your username" }}
-                  {% if form.username.help_text %}
-                    <p class="text-sm text-gray-600 mt-1">{{ form.username.help_text }}</p>
-                  {% endif %}
-                  {% if form.username.errors %}
-                    <p class="text-sm text-red-600 mt-1">{{ form.username.errors }}</p>
-                  {% endif %}
-                </div>
-
-                <div>
-                  <label for="{{ form.email.id_for_label }}" class="block mb-2">{{ form.email.label }}</label>
-                  {{ form.email|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ds-purple" |attr:"placeholder: Enter your email" }}
-                  {% if form.email.help_text %}
-                    <p class="text-sm text-gray-600 mt-1">{{ form.email.help_text|safe }}</p>
-                  {% endif %}
-                  {% if form.email.errors %}
-                    <p class="text-sm text-red-600 mt-1">{{ form.email.errors }}</p>
-                  {% endif %}
-                </div>
-
-                <div>
-                  <label for="{{ form.first_name.id_for_label }}" class="block mb-2">{{ form.first_name.label }}</label>
-                  {{ form.first_name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ds-purple" |attr:"placeholder: Enter your first name" }}
-                  {% if form.first_name.help_text %}
-                    <p class="text-sm text-gray-600 mt-1">{{ form.first_name.help_text }}</p>
-                  {% endif %}
-                  {% if form.first_name.errors %}
-                    <p class="text-sm text-red-600 mt-1">{{ form.first_name.errors }}</p>
-                  {% endif %}
-                </div>
-
-                <div>
-                  <label for="{{ form.last_name.id_for_label }}" class="block mb-2">{{ form.last_name.label }}</label>
-                  {{ form.last_name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ds-purple" |attr:"placeholder: Enter your last name" }}
-                  {% if form.last_name.help_text %}
-                    <p class="text-sm text-gray-600 mt-1">{{ form.last_name.help_text }}</p>
-                  {% endif %}
-                  {% if form.last_name.errors %}
-                    <p class="text-sm text-red-600 mt-1">{{ form.last_name.errors }}</p>
-                  {% endif %}
-                </div>
-
-                <div class="space-y-3">
-                  <div>
-                    {{ form.receive_program_updates|add_class:"w-4 h-4 border border-gray-300 rounded focus:ring-2 focus:ring-ds-purple" }}
-                    <label for="{{ form.receive_program_updates.id_for_label }}" class="ml-2">{{ form.receive_program_updates.label }}</label>
-                    {% if form.receive_program_updates.help_text %}
-                      <p class="text-sm text-gray-600 mt-1 ml-6">{{ form.receive_program_updates.help_text }}</p>
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    {{ form.receive_event_updates|add_class:"w-4 h-4 border border-gray-300 rounded focus:ring-2 focus:ring-ds-purple" }}
-                    <label for="{{ form.receive_event_updates.id_for_label }}" class="ml-2">{{ form.receive_event_updates.label }}</label>
-                    {% if form.receive_event_updates.help_text %}
-                      <p class="text-sm text-gray-600 mt-1 ml-6">{{ form.receive_event_updates.help_text }}</p>
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    {{ form.receive_newsletter|add_class:"w-4 h-4 border border-gray-300 rounded focus:ring-2 focus:ring-ds-purple" }}
-                    <label for="{{ form.receive_newsletter.id_for_label }}" class="ml-2">{{ form.receive_newsletter.label }}</label>
-                    {% if form.receive_newsletter.help_text %}
-                      <p class="text-sm text-gray-600 mt-1 ml-6">{{ form.receive_newsletter.help_text }}</p>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
+              {{ form }}
 
               <div class="flex gap-4 mt-6">
                 <button type="submit" class="px-6 py-2 bg-ds-purple text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-ds-purple">{% translate "Save" %}</button>
