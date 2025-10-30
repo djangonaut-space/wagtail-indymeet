@@ -51,7 +51,12 @@ jobs:
           uv run playwright install
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --cov --cov-branch --cov-report=xml
 
       - name: Run playwright tests
-        run: uv run pytest -m playwright
+        run: uv run pytest -m playwright --cov --cov-branch --cov-report=xml
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

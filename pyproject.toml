@@ -30,6 +30,7 @@ test = [
     "freezegun",
     "playwright",
     "pytest",
+    "pytest-cov",
     "pytest-django",
     "pytest-mock",
     "pytest-playwright",
