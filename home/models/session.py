@@ -93,6 +93,15 @@ class Session(models.Model):
 
 
 class Team(models.Model):
+    # Minimum required overlap hours for team formation
+    MIN_NAVIGATOR_MEETING_HOURS = 5
+    MIN_CAPTAIN_OVERLAP_HOURS = 3
+
+    class Meta:
+        permissions = [
+            ("form_team", "Can form teams from the pool of applicants."),
+        ]
+
     session = models.ForeignKey(Session, related_name="teams", on_delete=models.CASCADE)
     name = models.CharField()
     project = models.CharField(

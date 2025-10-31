@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from accounts.models import UserAvailability
 from home import email
+from home.managers import UserSurveyResponseQuerySet
 
 
 class BaseModel(models.Model):
@@ -147,6 +148,8 @@ class UserSurveyResponse(BaseModel):
         blank=True,
         help_text=_("Selection rank for this survey response"),
     )
+
+    objects = models.Manager.from_queryset(UserSurveyResponseQuerySet)()
 
     class Meta:
         ordering = ["-updated_at"]
