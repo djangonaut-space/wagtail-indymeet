@@ -1,4 +1,3 @@
-FROM ubuntu:20.04
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 # Install uv
