@@ -1,0 +1,22 @@
+{% load i18n %}
+<div class="filter-field">
+    {% if field.field.widget.input_type == "checkbox" %}
+        <label for="{{ field.id_for_label }}">
+            {{ field }}
+            {{ field.label }}
+        </label>
+    {% else %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+        {{ field }}
+    {% endif %}
+
+    {% if field.help_text %}
+        <p class="help-text">{{ field.help_text }}</p>
+    {% endif %}
+
+    {% if field.errors %}
+        <div class="error-messages">
+            {{ field.errors }}
+        </div>
+    {% endif %}
+</div>

@@ -1,0 +1,17 @@
+{% load i18n %}
+{# Template for rendering form fields in the toolbar #}
+<div class="toolbar-field">
+    {% if not field.is_hidden %}
+        {% if field.field.widget.input_type != "checkbox" and field.label %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+        {% endif %}
+        {{ field }}
+        {% if field.errors %}
+            <span class="error-messages">
+                {{ field.errors|join:", " }}
+            </span>
+        {% endif %}
+    {% else %}
+        {{ field }}
+    {% endif %}
+</div>

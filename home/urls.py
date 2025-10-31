@@ -1,15 +1,14 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
-from .views import CreateUserSurveyResponseFormView
-from .views import EditUserSurveyResponseView
-from .views import resource_link
-from .views import event_calendar
-from .views import EventDetailView
-from .views import EventListView
-from .views import SessionDetailView
-from .views import SessionListView
-from .views import UserSurveyResponseView
+from home.views.events import EventDetailView, EventListView, event_calendar
+from home.views.resources import resource_link
+from home.views.sessions import SessionDetailView, SessionListView
+from home.views.surveys import (
+    CreateUserSurveyResponseFormView,
+    EditUserSurveyResponseView,
+    UserSurveyResponseView,
+)
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),

@@ -1,0 +1,502 @@
+/* Team Formation Admin Styles */
+
+/* ============================================
+   Layout
+   ============================================ */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.main-content {
+    min-width: 0;
+}
+
+.side-panel {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.side-panel-header {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #417690;
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 10;
+}
+
+.section-header {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid #417690;
+    padding: 0.5rem 1rem;
+    background: #f5f5f5;
+}
+
+/* ============================================
+   Toolbar
+   ============================================ */
+.actions-toolbar {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.actions-toolbar select,
+.actions-toolbar button {
+    margin: 0;
+}
+
+.toolbar-section {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 30px;
+    background: #ddd;
+    margin: 0 0.5rem;
+}
+
+/* Overlap form styling */
+#overlap-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#overlap-form label {
+    margin: 0;
+    font-weight: normal;
+    font-size: 0.9em;
+}
+
+#overlap-form .form-select {
+    margin: 0;
+}
+
+#overlap-form ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+#overlap-form ul li {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+#overlap-form ul li label {
+    margin: 0;
+}
+
+.analysis-type-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.analysis-type-wrapper ul {
+    display: flex !important;
+    gap: 0.5rem !important;
+}
+
+/* ============================================
+   Filter Section
+   ============================================ */
+.filter-section {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: white;
+    border-radius: 4px;
+}
+
+.filter-section summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.filter-field label {
+    font-weight: 500;
+    font-size: 0.95em;
+    color: #333;
+}
+
+.filter-field input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+.filter-field .error-messages {
+    margin-top: 0.25rem;
+}
+
+/* ============================================
+   Applicants Table
+   ============================================ */
+.applicants-section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.applicant-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.applicant-table th,
+.applicant-table td {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.applicant-table th {
+    background: #f5f5f5;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.applicant-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.applicant-table th.sortable:hover {
+    background: #e8e8e8;
+}
+
+.applicant-table th.sortable::after {
+    content: ' ⇅';
+    opacity: 0.3;
+    font-size: 0.8em;
+}
+
+.applicant-table th.sortable.sorted-asc::after {
+    content: ' ↑';
+    opacity: 1;
+}
+
+.applicant-table th.sortable.sorted-desc::after {
+    content: ' ↓';
+    opacity: 1;
+}
+
+.applicant-table tr:hover {
+    background: #f0f8ff;
+}
+
+.applicant-table tbody tr.selected {
+    background: #e7f3ff;
+}
+
+/* ============================================
+   Availability Display
+   ============================================ */
+.availability-cell {
+    font-size: 0.75em;
+    line-height: 1.3;
+    padding: 0.25rem !important;
+    vertical-align: top;
+    min-width: 150px;
+}
+
+.availability-display {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.day-row {
+    display: flex;
+    gap: 0.25rem;
+    padding: 1px 0;
+}
+
+.day-label {
+    font-weight: bold;
+    min-width: 28px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.day-times {
+    color: #333;
+    flex: 1;
+}
+
+.no-avail {
+    color: #999;
+}
+
+.no-availability {
+    color: #dc3545;
+}
+
+/* ============================================
+   Overlap Results
+   ============================================ */
+#overlap-results {
+    margin-bottom: 1rem;
+}
+
+.overlap-result {
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border: 1px solid #007bff;
+    background: #e7f3ff;
+    border-radius: 4px;
+}
+
+.overlap-result-nested {
+    margin-left: 1rem;
+    margin-top: 0.5rem;
+}
+
+.overlap-sufficient {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.overlap-insufficient {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+/* ============================================
+   Team Cards
+   ============================================ */
+.team-card {
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    background: white;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.team-card.invalid {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+.team-card.valid {
+    border-color: #28a745;
+    background: #f0fff0;
+}
+
+.team-card h3 {
+    font-size: 1.1em;
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.team-members-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    font-size: 0.85em;
+}
+
+.team-members-table th,
+.team-members-table td {
+    border: 1px solid #ddd;
+    padding: 0.25rem;
+    text-align: left;
+}
+
+.team-members-table th {
+    background: #f5f5f5;
+    font-weight: bold;
+    font-size: 0.8em;
+}
+
+/* ============================================
+   Badges
+   ============================================ */
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin: 0.1rem;
+}
+
+.badge-navigator { background: #17a2b8; color: white; }
+.badge-captain { background: #ffc107; color: black; }
+.badge-djangonaut { background: #6c757d; color: white; }
+.badge-unassigned { background: #ffc107; color: black; }
+
+/* ============================================
+   Stats
+   ============================================ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.stat-item {
+    padding: 0.5rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.stat-label {
+    font-weight: bold;
+    font-size: 0.85em;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+.pagination {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    gap: 0.5rem;
+}
+
+.pagination a,
+.pagination span {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    text-decoration: none;
+    color: #333;
+}
+
+.pagination .current {
+    background: #417690;
+    color: white;
+    border-color: #417690;
+}
+
+.pagination a:hover {
+    background: #f5f5f5;
+}
+
+/* ============================================
+   Status Icons
+   ============================================ */
+.status-icon-error {
+    color: #dc3545;
+}
+
+.status-icon-success {
+    color: #28a745;
+}
+
+.status-icon-muted {
+    color: #999;
+}
+
+/* ============================================
+   Messages & Help Text
+   ============================================ */
+.error-messages {
+    color: #dc3545;
+    font-size: 0.9em;
+}
+
+.error-messages-block {
+    color: #dc3545;
+    margin-bottom: 0.5rem;
+}
+
+.help-text {
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
+}
+
+.empty-message {
+    padding: 1rem;
+}
+
+.empty-message-centered {
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+}
+
+.empty-message-small {
+    font-size: 0.85em;
+    color: #666;
+    margin: 0.5rem 0;
+}
+
+/* ============================================
+   Misc Components
+   ============================================ */
+.djangonaut-details {
+    margin-top: 0.75rem;
+}
+
+.application-link {
+    font-size: 0.85em;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 1200px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .side-panel {
+        position: relative;
+        max-height: none;
+        order: -1;
+    }
+}

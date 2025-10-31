@@ -1,24 +1,28 @@
 import csv
 import io
-from typing import List
-from typing import Tuple
 
 from django import forms
 from django.core import validators
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from accounts.models import CustomUser
 from home.constants import DATE_INPUT_FORMAT
 from home.constants import SURVEY_FIELD_VALIDATORS
-from home.models import Question
+from home.models import Question, Team, SessionMembership
 from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
 from home.models import UserSurveyResponse
+from home.availability import (
+    calculate_overlap,
+    calculate_team_overlap,
+    format_slots_as_ranges,
+)
 from home.validators import RatingValidator
 from home.widgets import CheckboxSelectMultipleSurvey
 from home.widgets import DateSurvey
@@ -572,3 +576,375 @@ class SurveyCSVImportForm(forms.Form):
                 updated_count += 1
 
         return {"updated": updated_count}
+
+
+# Team Formation Forms
+
+
+class ApplicantFilterForm(forms.Form):
+    """Form for filtering applicants by various criteria."""
+
+    score_min = forms.IntegerField(
+        label=_("Minimum Score"),
+        required=False,
+        widget=forms.NumberInput(
+            attrs={"class": "form-input", "placeholder": "e.g., 0"}
+        ),
+    )
+    score_max = forms.IntegerField(
+        label=_("Maximum Score"),
+        required=False,
+        widget=forms.NumberInput(
+            attrs={"class": "form-input", "placeholder": "e.g., 10"}
+        ),
+    )
+
+    rank_min = forms.IntegerField(
+        label=_("Minimum Selection Rank"),
+        required=False,
+        widget=forms.NumberInput(
+            attrs={"class": "form-input", "placeholder": "e.g., 1"}
+        ),
+    )
+    rank_max = forms.IntegerField(
+        label=_("Maximum Selection Rank"),
+        required=False,
+        widget=forms.NumberInput(
+            attrs={"class": "form-input", "placeholder": "e.g., 50"}
+        ),
+    )
+
+    team = forms.ModelChoiceField(
+        label=_("Team Assignment"),
+        queryset=None,
+        required=False,
+        empty_label=_("All"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    show_unassigned_only = forms.BooleanField(
+        label=_("Show only unassigned applicants"),
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+    )
+
+    overlap_with_navigators = forms.ModelChoiceField(
+        label=_("Has overlap with navigators"),
+        queryset=None,
+        required=False,
+        empty_label=_("All"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+        help_text=_(
+            "Show only applicants with availability overlap with team navigators"
+        ),
+    )
+
+    overlap_with_captain = forms.ModelChoiceField(
+        label=_("Has overlap with captain"),
+        queryset=None,
+        required=False,
+        empty_label=_("All"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+        help_text=_("Show only applicants with availability overlap with team captain"),
+    )
+
+    def __init__(self, *args, session=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.session = session
+
+        if session:
+            # Populate team choices for this session
+            team_queryset = session.teams.all().order_by("name")
+            self.fields["team"].queryset = team_queryset
+            self.fields["overlap_with_navigators"].queryset = team_queryset
+            self.fields["overlap_with_captain"].queryset = team_queryset
+
+
+class OverlapAnalysisForm(forms.Form):
+    """Form for analyzing availability overlap between selected users and team members."""
+
+    prefix = "overlap"
+
+    user_ids = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True,
+        help_text=_("Comma-separated list of user IDs to analyze"),
+    )
+
+    team = forms.ModelChoiceField(
+        label=_("Team"),
+        queryset=None,
+        required=True,
+        help_text=_("Team whose navigators/captain will be included in analysis"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    analysis_type = forms.ChoiceField(
+        label=_("Analysis Type"),
+        choices=[
+            ("overlap-navigator", _("Check Navigator Overlap")),
+            ("overlap-captain", _("Check Captain Overlap")),
+        ],
+        initial="overlap-navigator",
+        widget=forms.RadioSelect(attrs={"class": "form-radio"}),
+    )
+
+    def __init__(self, *args, session=None, **kwargs):
+        """Initialize form with session context for team queryset."""
+        super().__init__(*args, **kwargs)
+        self.session = session
+        if session:
+            self.fields["team"].queryset = Team.objects.filter(
+                session=session
+            ).order_by("name")
+
+    def clean_user_ids(self) -> list[int]:
+        """Parse and validate user IDs."""
+
+        user_ids_str = self.cleaned_data.get("user_ids", "")
+        if not user_ids_str:
+            raise forms.ValidationError(_("No users selected"))
+
+        try:
+            user_ids = [
+                int(uid.strip()) for uid in user_ids_str.split(",") if uid.strip()
+            ]
+        except ValueError:
+            raise forms.ValidationError(_("Invalid user ID format"))
+
+        if not user_ids:
+            raise forms.ValidationError(_("No users selected"))
+
+        # Verify users exist
+        existing_count = CustomUser.objects.filter(id__in=user_ids).count()
+        if existing_count != len(user_ids):
+            raise forms.ValidationError(_("Some selected users do not exist"))
+
+        return user_ids
+
+    def get_selected_users(self) -> list[CustomUser]:
+        """
+        Get selected users with prefetched availability.
+
+        Returns:
+            List of CustomUser instances with availability prefetched
+        """
+        user_ids = self.cleaned_data["user_ids"]
+        return list(
+            CustomUser.objects.filter(id__in=user_ids).prefetch_related("availability")
+        )
+
+    def get_team_navigators(self) -> list[CustomUser]:
+        """
+        Get navigators from the selected team.
+
+        Returns:
+            List of navigator users with availability prefetched
+
+        Raises:
+            forms.ValidationError: If team has no navigators
+        """
+        team = self.cleaned_data["team"]
+        navigator_memberships = (
+            SessionMembership.objects.filter(
+                team=team, role=SessionMembership.NAVIGATOR
+            )
+            .select_related("user")
+            .prefetch_related("user__availability")
+        )
+
+        navigators = [m.user for m in navigator_memberships]
+
+        if not navigators:
+            raise forms.ValidationError(
+                f"Team '{team.name}' has no navigators assigned"
+            )
+
+        return navigators
+
+    def get_team_captain(self) -> CustomUser:
+        """
+        Get captain from the selected team.
+
+        Returns:
+            Captain user with availability prefetched
+
+        Raises:
+            forms.ValidationError: If team has no captain
+        """
+        team = self.cleaned_data["team"]
+        captain_memberships = (
+            SessionMembership.objects.filter(team=team, role=SessionMembership.CAPTAIN)
+            .select_related("user")
+            .prefetch_related("user__availability")
+        )
+
+        captains = [m.user for m in captain_memberships]
+
+        if not captains:
+            raise forms.ValidationError(f"Team '{team.name}' has no captain assigned")
+
+        return captains[0]  # Use first captain if multiple
+
+    def calculate_navigator_overlap_context(self) -> dict:
+        """
+        Calculate navigator overlap (navigators + selected users).
+
+        Returns:
+            Context dictionary with overlap analysis results
+        """
+        team = self.cleaned_data["team"]
+        navigators = self.get_team_navigators()
+        selected_users = self.get_selected_users()
+
+        # Calculate navigator overlap (navigators + selected users)
+        all_users = navigators + selected_users
+        slots, hours = calculate_overlap(all_users)
+        time_ranges = format_slots_as_ranges(slots)
+
+        return {
+            "team": team,
+            "analysis_type": "overlap-navigator",
+            "navigators": navigators,
+            "selected_users": selected_users,
+            "hour_blocks": hours,
+            "time_ranges": time_ranges,
+            "is_sufficient": hours >= 5,
+        }
+
+    def calculate_captain_overlap_context(self) -> dict:
+        """
+        Calculate captain overlaps (with each selected user).
+
+        Returns:
+            Context dictionary with overlap analysis results
+        """
+        team = self.cleaned_data["team"]
+        captain = self.get_team_captain()
+        selected_users = self.get_selected_users()
+
+        # Calculate captain overlaps (with each selected user)
+        results = []
+        for user in selected_users:
+            slots, hours = calculate_overlap([captain, user])
+            time_ranges = format_slots_as_ranges(slots)
+            results.append(
+                {
+                    "user": user,
+                    "hour_blocks": hours,
+                    "time_ranges": time_ranges,
+                    "is_sufficient": hours >= 2,
+                }
+            )
+
+        return {
+            "team": team,
+            "analysis_type": "overlap-captain",
+            "captain": captain,
+            "results": results,
+        }
+
+    def get_overlap_context(self) -> dict:
+        """
+        Get overlap analysis context based on analysis type.
+
+        Returns:
+            Context dictionary for template rendering
+
+        Raises:
+            forms.ValidationError: If team members are missing
+        """
+        analysis_type = self.cleaned_data["analysis_type"]
+
+        if analysis_type == "overlap-navigator":
+            return self.calculate_navigator_overlap_context()
+        else:  # captain
+            return self.calculate_captain_overlap_context()
+
+
+class BulkTeamAssignmentForm(forms.Form):
+    """Form for bulk assignment of users to a team."""
+
+    prefix = "bulk_assign"
+
+    user_ids = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True,
+        help_text=_("Comma-separated list of user IDs to assign"),
+    )
+
+    team = forms.ModelChoiceField(
+        label=_("Team"),
+        queryset=None,
+        required=True,
+        empty_label=_("-- Choose Team --"),
+        widget=forms.Select(attrs={"class": "form-select", "id": "bulk-team-select"}),
+        help_text=_("Select the team to assign selected users to"),
+    )
+
+    def __init__(self, *args, session=None, **kwargs):
+        """Initialize form with session context for team queryset."""
+        super().__init__(*args, **kwargs)
+        self.session = session
+        if session:
+
+            self.fields["team"].queryset = Team.objects.filter(
+                session=session
+            ).order_by("name")
+
+    def clean_user_ids(self) -> list[int]:
+        """Parse and validate user IDs."""
+
+        user_ids_str = self.cleaned_data.get("user_ids", "")
+        if not user_ids_str:
+            raise forms.ValidationError(_("No users selected"))
+
+        try:
+            user_ids = [
+                int(uid.strip()) for uid in user_ids_str.split(",") if uid.strip()
+            ]
+        except ValueError:
+            raise forms.ValidationError(_("Invalid user ID format"))
+
+        if not user_ids:
+            raise forms.ValidationError(_("No users selected"))
+
+        # Verify users exist
+        existing_count = CustomUser.objects.filter(id__in=user_ids).count()
+        if existing_count != len(user_ids):
+            raise forms.ValidationError(_("Some selected users do not exist"))
+
+        return user_ids
+
+    @transaction.atomic
+    def save(self) -> int:
+        """
+        Assign selected users to the team.
+
+        Returns:
+            Number of users successfully assigned
+        """
+
+        if not self.session:
+            raise ValueError("Session must be set before saving")
+
+        user_ids = self.cleaned_data["user_ids"]
+        team = self.cleaned_data["team"]
+
+        assigned_count = 0
+        for user_id in user_ids:
+            try:
+                user = CustomUser.objects.get(pk=user_id)
+                membership, created = SessionMembership.objects.get_or_create(
+                    user=user,
+                    session=self.session,
+                    defaults={"role": SessionMembership.DJANGONAUT},
+                )
+                membership.team = team
+                # Don't change role - keep whatever it was
+                membership.save()
+                assigned_count += 1
+            except CustomUser.DoesNotExist:
+                continue
+
+        return assigned_count
