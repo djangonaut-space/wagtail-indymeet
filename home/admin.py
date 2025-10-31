@@ -14,6 +14,7 @@ from .models import SessionMembership
 from .models import Survey
 from .models import UserQuestionResponse
 from .models import UserSurveyResponse as UserSurveyResponseModel
+from .views.team_formation import calculate_overlap_ajax, team_formation_view
 
 
 @admin.register(Event)
@@ -54,6 +55,39 @@ class SessionMembershipAdmin(admin.ModelAdmin):
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
     inlines = [SessionMembershipInline]
+    actions = ["form_teams_action"]
+
+    def get_urls(self):
+        """Add custom URLs for team formation"""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<int:session_id>/form-teams/",
+                self.admin_site.admin_view(team_formation_view),
+                name="session_form_teams",
+            ),
+            path(
+                "<int:session_id>/calculate-overlap/",
+                self.admin_site.admin_view(calculate_overlap_ajax),
+                name="session_calculate_overlap",
+            ),
+        ]
+        return custom_urls + urls
+
+    @admin.action(description="Form teams for this session")
+    def form_teams_action(self, request, queryset):
+        """Redirect to team formation interface for selected session"""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one session to form teams.",
+                messages.ERROR,
+            )
+            return
+
+        session = queryset.first()
+        url = reverse("admin:session_form_teams", args=[session.id])
+        return redirect(url)
 
 
 @admin.register(Team)
@@ -321,6 +355,13 @@ class UserQuestionResponseAdmin(admin.ModelAdmin):
         return obj.annotated_user_email
 
 
+class UserQuestionResponseInline(admin.StackedInline):
+    model = UserQuestionResponse
+    readonly_fields = ["question", "value"]
+    extra = 0
+    can_delete = False
+
+
 @admin.register(UserSurveyResponseModel)
 class UserSurveyResponseAdmin(admin.ModelAdmin):
     model = UserSurveyResponseModel
@@ -339,6 +380,7 @@ class UserSurveyResponseAdmin(admin.ModelAdmin):
         "user__first_name",
         "user__last_name",
     ]
+    inlines = [UserQuestionResponseInline]
 
     def get_queryset(self, request):
         return (
