@@ -1,8 +1,7 @@
 import factory
 from django.db.models.signals import post_save
 
-from accounts.models import CustomUser
-from accounts.models import UserProfile
+from accounts.models import CustomUser, UserAvailability, UserProfile
 
 
 @factory.django.mute_signals(post_save)
@@ -24,3 +23,11 @@ class UserFactory(factory.django.DjangoModelFactory):
     last_name = "Doe"
     email = "example@example.com"
     profile = factory.RelatedFactory(ProfileFactory, factory_related_name="user")
+
+
+class UserAvailabilityFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = UserAvailability
+
+    user = factory.SubFactory(UserFactory)
+    slots = []
