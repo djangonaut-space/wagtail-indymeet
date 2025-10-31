@@ -221,7 +221,7 @@ class EditUserSurveyResponseViewTests(TestCase):
         SessionFactory.create(
             application_survey=self.survey,
             application_start_date=now - timedelta(days=10),
-            application_end_date=now - timedelta(days=1),
+            application_end_date=now - timedelta(days=2),
         )
         self.client.force_login(self.user)
         response = self.client.post(
