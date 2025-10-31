@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.forms",
     # other
+    "django_filters",
     "storages",
     "tailwind",
     "theme",

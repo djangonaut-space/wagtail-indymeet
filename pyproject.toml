@@ -23,6 +23,7 @@ dependencies = [
     "django-widget-tweaks",
     "dj-database-url",
     "gunicorn",
+    "django-filter>=25.2",
 ]
 
 [project.optional-dependencies]
