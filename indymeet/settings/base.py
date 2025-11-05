@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "wagtail",
     # puput support
     "wagtail.contrib.legacy.richtext",
+    "wagtail.contrib.search_promotions",
     "wagtail.contrib.sitemaps",
     "wagtail.contrib.routable_page",
     "puput",
