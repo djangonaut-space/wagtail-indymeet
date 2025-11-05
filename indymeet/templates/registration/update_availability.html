@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static widget_tweaks %}
+
+{% block title %}{% translate "Set Availability | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Set Availability | Djangonaut Space" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+<style>
+    /* Viselect selection area styling - hidden */
+    .selection-area {
+        display: none;
+    }
+
+    /* Prevent text selection during drag */
+    #availability-grid {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+
+    /* Selected time slot styling */
+    .time-slot.selected {
+        background-color: rgb(59, 130, 246) !important;
+    }
+
+    /* Selecting (preview) time slot styling for adding */
+    td.time-slot.selecting.adding {
+        background-color: rgba(59, 130, 246, 0.5) !important;
+    }
+
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container max-w-6xl">
+        <nav class="mb-4 text-sm" aria-label="breadcrumb">
+            <ol class="flex items-center gap-2">
+                <li><a href="{% url 'profile' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% translate "Profile" %}</a></li>
+                <li class="text-gray-400">/</li>
+                <li class="text-gray-600">{% translate "Set Availability" %}</li>
+            </ol>
+        </nav>
+
+        <h1 class="text-5xl mb-6">{% translate "Set Your Availability" %}</h1>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p class="text-sm">
+                <strong>{% translate "Instructions:" %}</strong>
+                {% translate "Click and drag to select time slots when you're generally available each week. To remove selections, click the cell. Times are shown in your local timezone." %}
+            </p>
+        </div>
+
+        <form method="post" id="availability-form">
+            {% csrf_token %}
+            <div class="mb-3 flex gap-4">
+                <button type="button" id="clear-all" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    {% translate "Clear All" %}
+                </button>
+                <button type="submit" class="action-button">
+                    {% translate "Save Availability" %}
+                </button>
+            </div>
+
+            <!-- Hidden template elements for cloning -->
+            <div id="templates" class="hidden">
+              <table>
+                <tr id="time-row-template">
+                    <th class="border border-gray-200"></th>
+                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                </tr>
+              </table>
+            </div>
+
+            <table id="availability-grid" class="w-full">
+                <thead>
+                    <tr>
+                        <th class="bg-gray-50 border border-gray-200"></th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200 w-1/8">{% translate "Sun" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200 w-1/8">{% translate "Mon" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200 w-1/8">{% translate "Tue" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200 w-1/8">{% translate "Wed" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200 w-1/8">{% translate "Thu" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200 w-1/8">{% translate "Fri" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200 w-1/8">{% translate "Sat" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Time slots will be generated by JavaScript -->
+                </tbody>
+            </table>
+
+            <!-- Hidden field for form submission -->
+            {{ form.slots }}
+
+            <div class="mt-3 flex gap-4">
+                <button type="button" id="clear-all" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    {% translate "Clear All" %}
+                </button>
+                <button type="submit" class="action-button">
+                    {% translate "Save Availability" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script type="module">
+    import SelectionArea from '{% static "js/viselect.mjs" %}';
+
+    // Availability data management
+    const availabilityData = {
+        slots: {{ object.slots|default:"[]"|safe }},
+
+        toUTCSlot(localDay, localHour) {
+            // Convert local day/hour to UTC hours from start of week
+            //
+            // This function handles timezone conversion because:
+            // 1. The grid displays times in the USER'S LOCAL TIMEZONE
+            // 2. We store availability in UTC for consistency across timezones
+            // 3. The day can SHIFT during conversion (e.g., Mon 11 PM PST → Tue 7 AM UTC)
+            //
+            // Example: User in Los Angeles (PST, UTC-8) selects "Monday 2:00 PM"
+            //   - Input: localDay=1 (Monday), localHour=14.0
+            //   - Local time: Monday 2:00 PM PST
+            //   - UTC time: Monday 10:00 PM UTC (22:00)
+            //   - Output: (1 * 24) + 22 = 46.0 hours from start of week
+            //
+            // The "weird" implementation using a reference date is necessary because
+            // JavaScript doesn't provide a simple way to convert "day of week + hour"
+            // between timezones - we must go through actual Date objects.
+
+            // Use Jan 7, 2024 as reference (a Sunday) to represent a week
+            const baseDate = new Date('2024-01-07T00:00:00');
+            const localDate = new Date(baseDate);
+
+            // Set the date to the desired local day (0=Sun, 1=Mon, etc.)
+            localDate.setDate(baseDate.getDate() + localDay);
+
+            // Set the time within that day (in user's local timezone)
+            localDate.setHours(Math.floor(localHour));
+            localDate.setMinutes((localHour % 1) * 60);
+
+            // Extract what day/time this is in UTC
+            const utcDay = localDate.getUTCDay();
+            const utcHour = localDate.getUTCHours() + (localDate.getUTCMinutes() / 60);
+
+            // Convert to hours from start of week (Sunday 00:00 UTC = 0.0)
+            return (utcDay * 24.0) + utcHour;
+        },
+
+        hasSlot(localDay, localHour) {
+            const utcSlot = this.toUTCSlot(localDay, localHour);
+            return this.slots.some(s => Math.abs(s - utcSlot) < 0.0001);
+        },
+
+        addSlot(localDay, localHour) {
+            const utcSlot = this.toUTCSlot(localDay, localHour);
+            if (!this.hasSlot(localDay, localHour)) {
+                this.slots.push(utcSlot);
+                this.slots.sort((a, b) => a - b);
+            }
+        },
+
+        removeSlot(localDay, localHour) {
+            const utcSlot = this.toUTCSlot(localDay, localHour);
+            this.slots = this.slots.filter(s => Math.abs(s - utcSlot) >= 0.0001);
+        },
+
+        clearAll() {
+            this.slots = [];
+        }
+    };
+
+    // Get template elements
+    const timeRowTemplate = document.getElementById('time-row-template');
+    const tbody = document.querySelector('#availability-grid tbody');
+
+    // Generate row by row (each row is a time, columns are days)
+    const timeFormatter = new Intl.DateTimeFormat(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: undefined  // Let browser decide based on locale
+    });
+
+    for (let hour = 0; hour < 24; hour++) {
+        for (let half = 0; half < 2; half++) {
+            const timeValue = hour + (half * 0.5);
+
+            // Format time according to user's locale
+            const date = new Date(2024, 0, 1, hour, 0);
+            const timeStr = timeFormatter.format(date);
+
+            // Clone row template
+            const row = timeRowTemplate.cloneNode(true);
+            row.removeAttribute('id');
+
+            // Set time label (only for :00 times)
+            const timeLabel = row.querySelector('th');
+            if (half === 0) {
+                timeLabel.textContent = timeStr;
+                timeLabel.rowSpan = 2
+            } else {
+               timeLabel.remove()
+            }
+
+            // Set up all day slots in this row
+            const slots = row.querySelectorAll('.time-slot');
+            slots.forEach((slot, day) => {
+                slot.dataset.day = day;
+                slot.dataset.hour = timeValue;
+
+                // Check if already selected
+                if (availabilityData.hasSlot(day, timeValue)) {
+                    slot.classList.add('selected');
+                }
+            });
+
+            tbody.appendChild(row);
+        }
+    }
+
+
+    // Initialize Viselect
+    const selection = new SelectionArea({
+        selectables: ['.time-slot'],
+        boundaries: ['#availability-grid'],
+        startAreas: ['#availability-grid'],
+        behaviour: {
+            overlap: 'keep',
+            intersect: 'touch',
+            startThreshold: 5,
+        }
+    })
+    selection.select('.time-slot.selected', true)
+
+
+    // Show preview highlighting during selection
+    selection.on('move', ({ store: { changed: { added, removed } } }) => {
+        // Add preview highlight to newly selected items
+        for (const el of added) {
+            if (el.classList.contains('time-slot')) {
+                el.classList.add('selecting', 'adding');
+            }
+        }
+
+        // Remove preview highlight from deselected items
+        for (const el of removed) {
+            if (el.classList.contains('time-slot')) {
+                el.classList.remove('selecting', 'adding');
+            }
+        }
+    });
+
+    // Handle selection
+    selection.on('stop', ({ store }) => {
+        const { stored } = store;
+
+        // Remove all preview highlights
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.classList.remove('selecting', 'adding', 'selected');
+        });
+        availabilityData.clearAll();
+
+        // Update all slots based on selection mode
+        for (const slot of stored) {
+            if (slot.classList.contains('time-slot')) {
+                const day = parseInt(slot.dataset.day);
+                const hour = parseFloat(slot.dataset.hour);
+
+                slot.classList.add('selected');
+                availabilityData.addSlot(day, hour);
+            }
+        }
+    });
+
+    // Clear all button
+    document.getElementById('clear-all').addEventListener('click', () => {
+        if (confirm('{% translate "Are you sure you want to clear all availability?" %}')) {
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selecting', 'adding', 'selected');
+            });
+            availabilityData.clearAll();
+            selection.clearSelection(true, true);
+        }
+    });
+
+    // Form submission
+    document.getElementById('availability-form').addEventListener('submit', (e) => {
+        const slotsField = document.getElementById('id_slots');
+        slotsField.value = JSON.stringify(availabilityData.slots);
+    });
+</script>
+
+{% endblock content %}

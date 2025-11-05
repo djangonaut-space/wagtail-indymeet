@@ -108,6 +108,7 @@ uv run pytest -m playwright --headed  # See browser
 - Write unit tests for new functionality (pytest or Django TestCase)
 - For JavaScript/frontend interactions, use Playwright tests with `@pytest.mark.playwright`
 - Playwright tests run with: `uv run pytest -m playwright`
+- Playwright tests should avoid generic wait calls
 
 ### Type Annotations Example
 ```python
@@ -164,14 +165,14 @@ def process_application(
 The next major development effort involves building a comprehensive application review and team formation system. This is documented here for context when working on related features.
 
 ### Phase 1: Application Administration
-- Copy surveys/applications from previous sessions
-- Manage application questions and structure
+- Completed: ~~Copy surveys/applications from previous sessions~~
+- Completed: ~~Manage application questions and structure~~
 
 ### Phase 2: Applying (Issue #303)
-- View other application responses
-- Copy responses from previous applications
-- Edit application responses
-- Upload availability schedules
+- Completed: ~~View other application responses~~
+- Completed: ~~Copy responses from previous applications~~
+- Completed: ~~Edit application responses~~
+- Completed: ~~Upload availability schedules~~
 - Email notifications on submission
 
 ### Phase 3: Application Review

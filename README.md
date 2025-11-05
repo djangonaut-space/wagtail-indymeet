@@ -3,8 +3,6 @@
 *** build from Best-README-Template.
 -->
 
-
-
 <!-- PROJECT SHIELDS -->
 [![Run tests](https://github.com/djangonaut-space/wagtail-indymeet/actions/workflows/tests.yml/badge.svg)](https://github.com/djangonaut-space/wagtail-indymeet/actions/workflows/tests.yml)
 <!-- [![Contributors][contributors-shield]][contributors-url]
@@ -12,8 +10,6 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url] -->
-
-
 
 <!-- PROJECT LOGO -->
 <br />
@@ -23,20 +19,7 @@
   </a>
 
   <h3 align="center">Djangonaut Space Website</h3>
-
-  <p align="center">
-    A Wagtail CMS clone of <a href="https://contributing.today">contributing today »</a>
-    <br />
-    <br />
-    <a href="https://djangonaut.space">Visit site</a>
-    ·
-    <a href="https://github.com/djangonaut-space/wagtail-indymeet/issues/new">Report Bug</a>
-    ·
-    <a href="https://github.com/djangonaut-space/wagtail-indymeet/issues/new">Request Feature</a>
-  </p>
 </div>
-
-
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -55,7 +38,7 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
+    <li><a href="#documentation">Documentation</a></li>
     <li>
       <a href="#contributing">Contributing</a>
       <ul>
@@ -70,38 +53,28 @@
   </ol>
 </details>
 
-
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-We want to run a light weight virtual meetup/video series.
+This is the web application for the Djangonaut Space mentoring program. The platform is built with Django and Wagtail CMS. While it includes a Wagtail-based blog, the primary application is a Django system that manages:
 
-Here's why:
-* Sometimes you want to connect with a community in real time.
-* The culture of Twitch first streaming alienates as many audiences as it invites.
-* Having a list of events easily shown as well as resources about speakers in the series.
-
-We thought contributing.today did it well, but it's build on ASP.NET so we're building it in Python!
+- **Recurring application and ranking processes** for cohort selection
+- **Session management** (cohorts/mentoring sessions) with participants, navigators, and captains
+- **Application workflows** including surveys, review, scoring, and team formation
+- **Team formation and management** with availability matching and project assignments
+- **Email notifications** throughout the application and acceptance process
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 ### Built With
 
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-
-* [![Wagtail][Wagtail]][wagtail.org]
-* [![Tailwind][tailwindcss.com]][tailwindcss.com]
-* [![Alpine.Js][alpinejs.dev]][alpinejs.dev]
-* [![Django][Djangoproject.com]][Djangoproject.com]
+* [Wagtail](https://wagtail.org)
+* [Tailwind](https://tailwindcss.com)
+* [Alpine.Js](https://alpinejs.dev)
+* [Django](https://Djangoproject.com)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-<!-- GETTING STARTED -->
 ## Getting Started
 
 
@@ -235,8 +208,12 @@ top level of the project.
 5. ``uv run python manage.py migrate``
 6. ``uv run python manage.py loaddata fixtures/data.json``
 
+## Documentation
 
-<!-- CONTRIBUTING -->
+There is a [growing collection of documentation](https://github.com/djangonaut-space/wagtail-indymeet/tree/develop/docs) for the web application. At a minimum, it should contain the information for how to manage this application.
+
+Information about the program can be found in the [program repository](https://github.com/djangonaut-space/program).
+
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
@@ -254,7 +231,7 @@ Don't forget to give the project a star! Thanks again!
 
 ### Testing
 
-Tests can be written using [Django's TestCase syntax](https://docs.djangoproject.com/en/5.0/topics/testing/overview/)
+Tests can be written using [Django's TestCase syntax](https://docs.djangoproject.com/en/5.2/topics/testing/overview/)
 or using [`pytest`](https://docs.pytest.org/).
 
 To run the tests:
@@ -359,22 +336,9 @@ uv lock --upgrade-package package-name
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- CONTACT -->
-## Contact
-
-- Dawn Wages - [@dawnwagessays](https://twitter.com/bajoranengineer) - [@bajoranengineer@mastodon.online](https://mastodon.online/@bajoranengineer)
-- [Djangonaut Space Organizers](mailto:contact@djangonaut.space)
-
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

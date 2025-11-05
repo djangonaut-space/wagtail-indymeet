@@ -92,6 +92,30 @@ class Session(models.Model):
         return settings.BASE_URL + self.get_absolute_url()
 
 
+class Team(models.Model):
+    # Minimum required overlap hours for team formation
+    MIN_NAVIGATOR_MEETING_HOURS = 5
+    MIN_CAPTAIN_OVERLAP_HOURS = 3
+
+    class Meta:
+        permissions = [
+            ("form_team", "Can form teams from the pool of applicants."),
+        ]
+
+    session = models.ForeignKey(Session, related_name="teams", on_delete=models.CASCADE)
+    name = models.CharField()
+    project = models.CharField(
+        help_text=_("The name of the project the team is working on."),
+        default="Django",
+    )
+    project_url = models.URLField(
+        help_text="The URL for the project", default="https://github.com/django/django"
+    )
+
+    def __str__(self):
+        return f"{self.name} - {self.project}"
+
+
 class SessionMembership(models.Model):
     class Meta:
         constraints = [
@@ -101,13 +125,15 @@ class SessionMembership(models.Model):
         ]
 
     DJANGONAUT = "Djangonaut"
-    NAVIGATOR = "Navigator"
     CAPTAIN = "Captain"
+    NAVIGATOR = "Navigator"
+    ORGANIZER = "Organizer"
 
     ROLES = (
         (DJANGONAUT, _("Djangonaut")),
-        (NAVIGATOR, _("Navigator")),
         (CAPTAIN, _("Mentor")),
+        (NAVIGATOR, _("Navigator")),
+        (ORGANIZER, _("Organizer")),
     )
     created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
@@ -117,6 +143,13 @@ class SessionMembership(models.Model):
     )
     session = models.ForeignKey(
         Session, related_name="session_memberships", on_delete=models.CASCADE
+    )
+    team = models.ForeignKey(
+        Team,
+        null=True,
+        blank=True,
+        related_name="session_memberships",
+        on_delete=models.CASCADE,
     )
     role = models.CharField(max_length=64, choices=ROLES, default=DJANGONAUT)
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()

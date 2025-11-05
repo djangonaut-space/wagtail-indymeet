@@ -22,6 +22,8 @@ from django.views.generic.edit import UpdateView
 from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
 from .forms import EmailSubscriptionsChangeForm
+from .forms import UserAvailabilityForm
+from .models import UserAvailability
 from .tokens import account_activation_token
 
 
@@ -116,7 +118,10 @@ class SignUpView(CreateView):
 
 @login_required(login_url="/accounts/login")
 def profile(request):
-    return render(request, "registration/profile.html")
+    context = {
+        "user_responses": request.user.usersurveyresponse_set.select_related("survey")
+    }
+    return render(request, "registration/profile.html", context)
 
 
 class ResendConfirmationEmailView(LoginRequiredMixin, View):
@@ -197,5 +202,27 @@ class UpdateEmailSubscriptionView(LoginRequiredMixin, UpdateView):
             self.request,
             messages.INFO,
             "Your profile information has been updated successfully.",
+        )
+        return reverse("profile")
+
+
+class UpdateAvailabilityView(LoginRequiredMixin, UpdateView):
+    """View for updating user's weekly availability."""
+
+    form_class = UserAvailabilityForm
+    template_name = "registration/update_availability.html"
+
+    def get_object(self, queryset=None):
+        """Get or create the UserAvailability object for the current user."""
+        availability, created = UserAvailability.objects.get_or_create(
+            user=self.request.user
+        )
+        return availability
+
+    def get_success_url(self):
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            "Your availability has been updated successfully.",
         )
         return reverse("profile")

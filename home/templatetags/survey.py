@@ -21,3 +21,15 @@ def create_star(number, id_element, num_stars):
     return utils_create_star(
         active_star=int(number), num_stars=num_stars, id_element=id_element
     )
+
+
+@register.filter(name="get")
+def get(dictionary, key):
+    """
+    Get an item from a dictionary by key.
+
+    Usage: {{ my_dict|get:"key_name" }}
+    """
+    if dictionary is None:
+        return None
+    return dictionary.get(key)

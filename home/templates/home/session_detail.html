@@ -33,7 +33,7 @@
           <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{{ session.end_date|date:"M d, Y" }}</dd>
         </dl>
         <p>{{ session.description|linebreaksbr|urlizetrunc:25 }}</p>
-        {% if session.is_accepting_applications and not session.completed_application %}
+        {% if session.is_accepting_applications and not session.annotated_completed_application %}
           <br />
           <h2 class="text-4xl">You have {{ session.application_end_anywhere_on_earth|timeuntil}} to submit your application</h2>
           <br />

@@ -7,6 +7,7 @@ from .views import CustomPasswordResetView
 from .views import profile
 from .views import ResendConfirmationEmailView
 from .views import SignUpView
+from .views import UpdateAvailabilityView
 from .views import UpdateEmailSubscriptionView
 from .views import UpdateUserView
 
@@ -39,5 +40,10 @@ urlpatterns = [
         "email_subscriptions/",
         UpdateEmailSubscriptionView.as_view(),
         name="email_subscriptions",
+    ),
+    path(
+        "availability/",
+        UpdateAvailabilityView.as_view(),
+        name="availability",
     ),
 ]

@@ -4,6 +4,7 @@ from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
 
 from .models import CustomUser
+from .models import UserAvailability
 from .models import UserProfile
 
 
@@ -115,3 +116,22 @@ class EmailSubscriptionsChangeForm(forms.ModelForm):
             "receiving_program_updates": "Please check this to opt-in for receiving emails about "
             "upcoming program sessions. You can opt-out on your profile page at anytime.",
         }
+
+
+class UserAvailabilityForm(forms.ModelForm):
+    """
+    Form for updating user availability.
+
+    The actual slot selection happens via JavaScript on the frontend.
+    This form just handles the JSON data submission.
+    """
+
+    slots = forms.JSONField(
+        required=False,
+        widget=forms.HiddenInput(),
+        help_text="Your weekly availability slots (managed via the calendar interface)",
+    )
+
+    class Meta:
+        model = UserAvailability
+        fields = ("slots",)

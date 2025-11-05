@@ -43,9 +43,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Email confirmed" %}</td>
                         <td class="pt-4 pb-1 pr-6 flex items-center">
                             {%  if user.profile.email_confirmed %}
-                            <span><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <span><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
+                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
                             {% include 'includes/resend_confirmation_email_button.html' %}
                             {% endif %}
                         </td>
@@ -54,9 +54,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving Program updates?" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                             {%  if user.profile.receiving_program_updates %}
-                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            <span class="text-gray-500"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -64,9 +64,9 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving event updates?" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                             {%  if user.profile.receiving_event_updates %}
-                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            <span class="text-gray-500"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -74,17 +74,67 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Receiving Newsletter?" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                         {%  if user.profile.receiving_newsletter %}
-                            <i class="fa-solid fa-check"></i> {% translate "Yes" %}
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Yes" %}</span>
                             {%  else %}
-                            <i class="fa-solid fa-x"></i> {% translate "No" %}
+                            <span class="text-gray-500"><i class="fa-solid fa-x"></i> {% translate "No" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Weekly Availability" %}</td>
+                        <td class="pt-4 pb-1 pr-6">
+                            {% if user.availability.slots %}
+                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Set" %}</span> ({{ user.availability.slots|length }} {% translate "slots" %})
+                            {% else %}
+                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "Not set" %}</span>
                             {% endif %}
                         </td>
                     </tr>
                 </tbody>
             </table>
-            <a href="{% url 'update_user' %}">{% translate "Update" %}</a>
+            <div class="flex gap-4">
+                <a href="{% url 'update_user' %}" class="inline-block px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">{% translate "Update Profile" %}</a>
+                <a href="{% url 'availability' %}" class="inline-block px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">{% translate "Set Availability" %}</a>
+            </div>
           </div>
         </div>
+
+        {% if user_responses %}
+        <div class="row pt-4 pb-4">
+            <div class="col">
+               <h2 class="text-3xl">{% translate "My Survey Responses" %}</h2>
+          </div>
+        </div>
+        <div class="row pb-4">
+          <div class="col">
+            <div class="space-y-4">
+                {% for response in user_responses %}
+                <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-medium">{{ response.survey.name }}</h3>
+                            <p class="text-sm text-gray-500 mt-1">{% translate "Submitted:" %} {{ response.created_at|date:"M d, Y" }}</p>
+                            {% if response.updated_at != response.created_at %}
+                            <p class="text-sm text-gray-500">{% translate "Updated:" %} {{ response.updated_at|date:"M d, Y" }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'user_survey_response' slug=response.survey.slug %}" class="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                                {% translate "View" %}
+                            </a>
+                            {% if response.is_editable %}
+                            <a href="{% url 'edit_user_survey_response' slug=response.survey.slug %}" class="px-4 py-2 text-sm bg-ds-purple text-white rounded hover:bg-purple-500">
+                                {% translate "Edit" %}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
     </div>
 </main>
 {% endblock content %}

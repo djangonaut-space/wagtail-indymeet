@@ -1,0 +1,40 @@
+{% load i18n %}
+
+{% if is_sufficient %}
+<div class="overlap-result overlap-sufficient{% if is_nested %} overlap-result-nested{% endif %}">
+{% else %}
+<div class="overlap-result overlap-insufficient{% if is_nested %} overlap-result-nested{% endif %}">
+{% endif %}
+    {% if is_nested %}
+        {# Compact format for nested results (captain meetings) #}
+        {% if is_sufficient %}✓{% else %}⚠{% endif %}
+        <strong>{{ title }}:</strong>
+        {{ hour_blocks }} {% trans "hour blocks (need 2)" %}<br>
+        <strong>{% trans "Times:" %}</strong>
+        {% if time_ranges %}
+            {{ time_ranges|join:", " }}
+        {% else %}
+            {% trans "None" %}
+        {% endif %}
+    {% else %}
+        {# Full format for group results #}
+        <strong>{{ title }}</strong> (Team: {{ team.name }})<br>
+        {% if navigators %}
+            <em>{% trans "Navigators:" %} {% for nav in navigators %}{{ nav.get_full_name|default:nav.email }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
+        {% endif %}
+        {% if selected_users %}
+            <em>{% trans "Selected applicants:" %} {{ selected_users|length }}</em><br>
+        {% endif %}
+        {% if is_sufficient %}
+            ✓ {% trans "Sufficient" %}: {{ hour_blocks }} {% trans "hour blocks found (need 5)" %}<br>
+        {% else %}
+            ⚠ {% trans "Insufficient" %}: {{ hour_blocks }} {% trans "hour blocks found (need 5)" %}<br>
+        {% endif %}
+        <strong>{% trans "Time Ranges:" %}</strong>
+        {% if time_ranges %}
+            {{ time_ranges|join:", " }}
+        {% else %}
+            {% trans "None" %}
+        {% endif %}
+    {% endif %}
+</div>

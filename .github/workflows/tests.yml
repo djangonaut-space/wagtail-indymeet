@@ -43,7 +43,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7
 
       - name: Install dependencies
         run: |
@@ -51,7 +51,12 @@ jobs:
           uv run playwright install
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --cov --cov-branch --cov-report=xml --cov-report=term
 
       - name: Run playwright tests
-        run: uv run pytest -m playwright
+        run: uv run pytest -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7  # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

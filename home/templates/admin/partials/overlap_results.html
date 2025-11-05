@@ -1,0 +1,30 @@
+{% load i18n %}
+
+{% if form %}
+    {# Display form errors when form validation fails #}
+    <div class="overlap-result overlap-insufficient">
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                {{ error }}<br>
+            {% endfor %}
+        {% endif %}
+        {% for field in form %}
+            {% if field.errors %}
+                <strong>{{ field.label }}:</strong>
+                {% for error in field.errors %}
+                    {{ error }}<br>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% elif analysis_type == 'overlap-navigator' %}
+    {% include "admin/partials/overlap_result_item.html" with is_sufficient=is_sufficient title="Navigator(s) Overlap" team=team hour_blocks=hour_blocks time_ranges=time_ranges navigators=navigators selected_users=selected_users %}
+{% elif analysis_type == 'overlap-captain' %}
+    <div class="overlap-result">
+        <strong>{% trans "Captain Overlap" %}</strong> (Team: {{ team.name }})<br>
+        <em>{% trans "Captain:" %} {{ captain.get_full_name|default:captain.email }}</em>
+    </div>
+    {% for result in results %}
+        {% include "admin/partials/overlap_result_item.html" with is_sufficient=result.is_sufficient title=result.user.get_full_name|default:result.user.email hour_blocks=result.hour_blocks time_ranges=result.time_ranges is_nested=True %}
+    {% endfor %}
+{% endif %}

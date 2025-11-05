@@ -96,7 +96,7 @@ class SessionViewTests(TestCase):
         self.assertNotContains(response, "You may not be able to apply for sessions")
         self.assertContains(response, "View Application")
         survey_detail_url = reverse(
-            "user_survey_response", kwargs={"pk": survey_response.id}
+            "user_survey_response", kwargs={"slug": self.survey.slug}
         )
         self.assertContains(response, survey_detail_url)
 

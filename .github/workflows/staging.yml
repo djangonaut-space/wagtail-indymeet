@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: Push to dokku
-        uses: dokku/github-action@33d50129fe718c3f907c8b29ea58776ed3cf8221 # v1.8.0
+        uses: dokku/github-action@823c08b33e974704528c7c7f3d3d8002426e7634 # v1.9.0
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_DOKKU_SSH_PRIVATE_KEY }}
         with:

@@ -1,13 +1,21 @@
+from datetime import timedelta
+
 import factory
+from django.utils import timezone
 
 from accounts.factories import UserFactory
-from home.models import Event, ResourceLink
-from home.models import Question
-from home.models import Session
-from home.models import Survey
-from home.models import TypeField
-from home.models import UserQuestionResponse
-from home.models import UserSurveyResponse
+from home.models import (
+    Event,
+    Question,
+    ResourceLink,
+    Session,
+    SessionMembership,
+    Survey,
+    Team,
+    TypeField,
+    UserQuestionResponse,
+    UserSurveyResponse,
+)
 
 
 class EventFactory(factory.django.DjangoModelFactory):
@@ -43,6 +51,16 @@ class SessionFactory(factory.django.DjangoModelFactory):
     application_end_date = factory.Faker("date")
     application_url = factory.Sequence(lambda n: "https://apply.session%d.com" % n)
 
+    @classmethod
+    def create_active(cls, survey) -> Session:
+        """Create an active session for a given survey."""
+        today = timezone.now().date()
+        return SessionFactory.create(
+            application_survey=survey,
+            application_start_date=today - timedelta(days=1),
+            application_end_date=today + timedelta(days=10),
+        )
+
 
 class SurveyFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -75,3 +93,23 @@ class UserQuestionResponseFactory(factory.django.DjangoModelFactory):
     question = factory.SubFactory(QuestionFactory)
     value = factory.Sequence(lambda n: "Answer %d" % n)
     user_survey_response = factory.SubFactory(UserSurveyResponseFactory)
+
+
+class TeamFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Team
+
+    session = factory.SubFactory(SessionFactory)
+    name = factory.Sequence(lambda n: "Team %d" % n)
+    project = "Django"
+    project_url = "https://github.com/django/django"
+
+
+class SessionMembershipFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SessionMembership
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    team = factory.SubFactory(TeamFactory)
+    role = SessionMembership.DJANGONAUT

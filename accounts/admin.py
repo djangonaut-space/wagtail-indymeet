@@ -6,6 +6,7 @@ from django.http import HttpResponse
 
 from accounts.models import CustomUser
 from accounts.models import Link
+from accounts.models import UserAvailability
 from accounts.models import UserProfile
 
 
@@ -53,3 +54,23 @@ class UserProfileAdmin(ExportCsvMixin, admin.ModelAdmin):
     inlines = (LinksInline,)
     model = UserProfile
     actions = ["export_as_csv"]
+
+
+@admin.register(UserAvailability)
+class UserAvailabilityAdmin(admin.ModelAdmin):
+    """Admin interface for UserAvailability."""
+
+    list_display = ("user", "slot_count", "updated_at")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+    )
+    readonly_fields = ("updated_at",)
+    raw_id_fields = ("user",)
+
+    @admin.display(description="Number of Slots")
+    def slot_count(self, obj: UserAvailability) -> int:
+        """Display the number of availability slots."""
+        return len(obj.slots)

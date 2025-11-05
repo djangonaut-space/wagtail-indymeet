@@ -25,12 +25,12 @@ repos:
   hooks:
   - id: sphinx-lint
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.20.0
+  rev: v3.21.0
   hooks:
   - id: pyupgrade
     args: [--py311-plus]
 - repo: https://github.com/adamchainz/django-upgrade
-  rev: 1.29.0
+  rev: 1.29.1
   hooks:
   - id: django-upgrade
     args: [--target-version, '5.2']

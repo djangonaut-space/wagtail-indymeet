@@ -7,7 +7,7 @@ dependencies = [
     "Django==5.2.*",
     "wagtail",
     "django-storages",
-    "psycopg2-binary",
+    "psycopg[binary]",
     "django-anymail",
     "six",
     "django-recaptcha>=4",
@@ -23,6 +23,7 @@ dependencies = [
     "django-widget-tweaks",
     "dj-database-url",
     "gunicorn",
+    "django-filter>=25.2",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +31,7 @@ test = [
     "freezegun",
     "playwright",
     "pytest",
+    "pytest-cov",
     "pytest-django",
     "pytest-mock",
     "pytest-playwright",
@@ -46,6 +48,10 @@ DJANGO_SETTINGS_MODULE = "indymeet.settings.test"
 addopts = "--reuse-db -m 'not playwright'"
 markers = [
     "playwright: mark test that requires playwright",
+]
+filterwarnings = [
+    "ignore:The FORMS_URLFIELD_ASSUME_HTTPS transitional setting is deprecated:django.utils.deprecation.RemovedInDjango60Warning",
+    "ignore:The usage of `WidgetWithScript` hook is deprecated:wagtail.utils.deprecation.RemovedInWagtail70Warning",
 ]
 
 [tool.coverage.run]

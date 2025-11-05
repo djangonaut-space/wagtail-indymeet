@@ -5,12 +5,20 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
 
   # Maintain dependencies for NPM / tailwind generation
   - package-ecosystem: "npm"
     directory: "theme/static_src/"
     schedule:
       interval: "monthly"
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -21,3 +29,7 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"

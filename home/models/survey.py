@@ -1,8 +1,13 @@
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+
+from accounts.models import UserAvailability
+from home import email
+from home.managers import UserSurveyResponseQuerySet
 
 
 class BaseModel(models.Model):
@@ -63,15 +68,18 @@ class TypeField(models.TextChoices):
 class Question(BaseModel):
     key = models.CharField(
         max_length=500,
-        unique=True,
         blank=True,
         help_text=_(
-            "Unique key for this question, fill in the blank if "
+            "Unique key for this question within the survey, fill in the blank if "
             "you want to use for automatic generation."
         ),
     )
     survey = models.ForeignKey(
-        Survey, related_name="questions", on_delete=models.CASCADE
+        Survey,
+        related_name="questions",
+        on_delete=models.CASCADE,
+        # Index comes from unique_question_key_per_survey
+        db_index=False,
     )
     label = models.CharField(
         max_length=500, help_text=_("Enter your question in here.")
@@ -99,6 +107,11 @@ class Question(BaseModel):
 
     class Meta:
         ordering = ["ordering"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["survey", "key"], name="unique_question_key_per_survey"
+            )
+        ]
 
     def __str__(self):
         return f"{self.label}-survey-{self.survey.id}"
@@ -118,27 +131,102 @@ class Question(BaseModel):
 
 
 class UserSurveyResponse(BaseModel):
-    survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
+    survey = models.ForeignKey(
+        Survey,
+        on_delete=models.CASCADE,
+        # Index comes from unique_user_survey_response
+        db_index=False,
+    )
     user = models.ForeignKey("accounts.CustomUser", on_delete=models.CASCADE)
+    score = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Aggregate score for this survey response"),
+    )
+    selection_rank = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Selection rank for this survey response"),
+    )
+
+    objects = models.Manager.from_queryset(UserSurveyResponseQuerySet)()
 
     class Meta:
         ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["survey", "user"], name="unique_user_survey_response"
+            )
+        ]
 
     def __str__(self):
         return str(self.id)
 
+    def is_editable(self):
+        """Check if this response can be edited"""
+        # If survey has associated sessions, check if ANY session is still accepting applications
+        return any(
+            session.is_accepting_applications()
+            for session in self.survey.application_sessions.all()
+        )
+
+    def get_absolute_url(self):
+        return reverse("user_survey_response", kwargs={"slug": self.survey.slug})
+
+    def get_full_url(self):
+        return settings.BASE_URL + self.get_absolute_url()
+
+    def send_created_notification(self):
+        if session := self.survey.session:
+            availability, _ = UserAvailability.objects.get_or_create(user=self.user)
+            context = {
+                "availability": availability,
+                "response": self,
+                "session": session,
+            }
+            email.send(
+                email_template="application_created",
+                recipient_list=[self.user.email],
+                context=context,
+            )
+
+    def send_updated_notification(self):
+        if session := self.survey.session:
+            availability, _ = UserAvailability.objects.get_or_create(user=self.user)
+            context = {
+                "availability": availability,
+                "response": self,
+                "session": session,
+            }
+            email.send(
+                email_template="application_updated",
+                recipient_list=[self.user.email],
+                context=context,
+            )
+
 
 class UserQuestionResponse(BaseModel):
     question = models.ForeignKey(
-        Question, related_name="responses", on_delete=models.CASCADE
+        Question,
+        related_name="responses",
+        on_delete=models.CASCADE,
+        # Index is from unique_user_question_response
+        db_index=False,
     )
     value = models.TextField(help_text=_("The value of the answer given by the user."))
     user_survey_response = models.ForeignKey(
-        UserSurveyResponse, on_delete=models.CASCADE
+        UserSurveyResponse,
+        on_delete=models.CASCADE,
     )
 
     class Meta:
         ordering = ["question__ordering"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["question", "user_survey_response"],
+                name="unique_user_question_response",
+            )
+        ]
 
     def __str__(self):
         return f"{self.question}: {self.value}"

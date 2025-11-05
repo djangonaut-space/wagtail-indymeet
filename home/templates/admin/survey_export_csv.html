@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:home_survey_changelist' %}">{% trans 'Surveys' %}</a>
+    &rsaquo; <a href="{% url 'admin:home_survey_change' survey.pk %}">{{ survey.name }}</a>
+    &rsaquo; {% trans 'Export CSV' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Export Survey Responses: {{ survey.name }}</h1>
+
+    <p>
+        Generate CSV files with survey responses. You can optionally specify scorer names
+        to add empty columns that can be filled in by external reviewers.
+    </p>
+
+    <h2>Export Options</h2>
+    <ul>
+        <li><strong>Full CSV:</strong> Includes Response ID, Submitter Name, all questions, scorer columns, and Score column.</li>
+        <li><strong>Single Scorer CSV:</strong> Anonymous version with Response ID, only TEXT_AREA questions, and scorer columns. Suitable for session organizers to score anonymously.</li>
+    </ul>
+
+    <form method="post" action="">
+        {% csrf_token %}
+
+        <div>
+            {% for field in form %}
+                <div class="form-row">
+                    {{ field.errors }}
+                    <div>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+                        {% if field.help_text %}
+                            <p class="help">{{ field.help_text|safe }}</p>
+                        {% endif %}
+                        {{ field }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" name="generate_full_csv" value="{% trans 'Generate Full CSV' %}" class="default" />
+            <input type="submit" name="generate_scorer_csv" value="{% trans 'Generate Single Scorer CSV' %}" />
+            <a href="{% url 'admin:home_survey_changelist' %}" class="button cancel-link">{% trans 'Cancel' %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

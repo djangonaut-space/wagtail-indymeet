@@ -1,0 +1,385 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static survey %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/team_formation_admin.css' %}">
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:home_session_changelist' %}">{% trans 'Sessions' %}</a>
+    &rsaquo; <a href="{% url 'admin:home_session_change' session.pk %}">{{ session.title }}</a>
+    &rsaquo; {% trans 'Form Teams' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% trans "Form Teams:" %} {{ session.title }}</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="messagelist">
+            <div class="{{ message.tags }}">{{ message }}</div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <p class="help-text">
+        {% trans "Select applicants and assign them to teams. Teams require navigators and djangonauts to have at least 5 hours of overlapping availability." %}
+    </p>
+
+    <div class="main-layout">
+        <div class="main-content">
+            <!-- Actions Toolbar -->
+            <div class="actions-toolbar">
+                <div class="toolbar-section">
+                    <form id="assign-form"
+                          method="post"
+                          action=""
+                          data-user-ids-id="{{ bulk_form.user_ids.id_for_label }}"
+                    >
+                        {% csrf_token %}
+
+                        {% if bulk_form.non_field_errors %}
+                            <div class="error-messages-block">
+                                {% for error in bulk_form.non_field_errors %}
+                                    {{ error }}<br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% for field in bulk_form %}
+                            {% if field.name == 'user_ids' %}
+                                {{ field }}
+                            {% else %}
+                                {% include "admin/widgets/toolbar_field.html" with field=field %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <button type="submit" class="button default">{% trans "Assign to Team" %}</button>
+                    </form>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <div class="toolbar-section">
+                    <form id="overlap-form"
+                          hx-post="{% url 'admin:session_calculate_overlap' session.id %}"
+                          hx-target="#overlap-results"
+                          hx-swap="innerHTML"
+                          data-user-ids-id="{{ overlap_form.user_ids.id_for_label }}"
+                    >
+                        {% csrf_token %}
+
+                        {% for field in overlap_form %}
+                            {% if field.name == 'analysis_type' %}
+                                <div class="analysis-type-wrapper">
+                                    {{ field }}
+                                </div>
+                            {% else %}
+                                {% include "admin/widgets/toolbar_field.html" with field=field %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <button type="submit" class="button default">{% trans "Check Overlap" %}</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Overlap Results -->
+            <div id="overlap-results"></div>
+
+            <!-- Filters -->
+            <details class="filter-section" open>
+                <summary>
+                    {% trans "Filters" %}
+                </summary>
+                <form method="get" action="">
+                    <div class="filter-grid">
+                        {% for field in filter_form %}
+                            {% include "admin/widgets/filter_field.html" with field=field %}
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <input type="submit" value="{% trans 'Apply Filters' %}" class="default" />
+                        <a href="{% url 'admin:session_form_teams' session.pk %}" class="button">{% trans 'Clear' %}</a>
+                    </div>
+                </form>
+            </details>
+
+            <!-- Applicants Table -->
+            <section class="applicants-section" id="applicants-container">
+                <div class="section-header">
+                    {% trans "Applicants" %} ({{ page_obj.paginator.count }})
+                </div>
+
+                {% if page_obj %}
+                <table class="applicant-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all" /></th>
+                            <th>{% trans "Name" %}</th>
+                            <th class="sortable {% if sort_by == 'score' %}sorted-{{ sort_order }}{% endif %}"
+                                data-sort="score">
+                                {% trans "Score" %}
+                            </th>
+                            <th class="sortable {% if sort_by == 'selection_rank' %}sorted-{{ sort_order }}{% endif %}"
+                                data-sort="selection_rank">
+                                {% trans "Rank" %}
+                            </th>
+                            <th>{% trans "Team" %}</th>
+                            <th class="sortable {% if sort_by == 'previous_application_count' %}sorted-{{ sort_order }}{% endif %}"
+                                data-sort="previous_application_count">
+                                {% trans "Prev Apps" %}
+                            </th>
+                            <th title="{% trans 'Has availability data' %}">{% trans "Avail" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for applicant in page_obj %}
+                        <tr>
+                            <td><input type="checkbox" class="applicant-checkbox" value="{{ applicant.user.id }}" /></td>
+                            <td>
+                                <strong>{{ applicant.user.get_full_name|default:applicant.user.email }}</strong>
+                                <br>
+                                <a href="{% url 'admin:home_usersurveyresponse_change' applicant.response.id %}" target="_blank" class="application-link">
+                                    {% trans "View Application" %} →
+                                </a>
+                            </td>
+                            <td>{{ applicant.score|default:"—" }}</td>
+                            <td>{{ applicant.selection_rank|default:"—" }}</td>
+                            <td>
+                                {% if applicant.current_team %}
+                                    {{ applicant.current_team.name }}
+                                {% else %}
+                                    <span class="badge badge-unassigned">{% trans "Unassigned" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ applicant.previous_application_count }}</td>
+                            <td class="availability-cell">
+                                {% if applicant.has_availability %}
+                                    <div class="availability-display">
+                                        {% for day in days_of_week %}
+                                            <div class="day-row">
+                                                <span class="day-label">{{ day }}:</span>
+                                                <span class="day-times">
+                                                    {% with day_avail=applicant.availability_by_day|get:day %}
+                                                        {% if day_avail %}
+                                                            {{ day_avail|join:", " }}
+                                                        {% else %}
+                                                            <span class="no-avail">—</span>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                </span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="no-availability">✗ No availability</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% querystring page=1 %}">{% trans "First" %}</a>
+                        <a href="?{% querystring page=page_obj.previous_page_number %}">{% trans "Previous" %}</a>
+                    {% endif %}
+
+                    <span class="current">
+                        {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?{% querystring page=page_obj.next_page_number %}">{% trans "Next" %}</a>
+                        <a href="?{% querystring page=page_obj.paginator.num_pages %}">{% trans "Last" %}</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% else %}
+                    <p class="empty-message">{% trans "No applicants found." %}</p>
+                {% endif %}
+            </section>
+
+        </div>
+
+        <!-- Side Panel: Current Teams -->
+        <aside class="side-panel">
+            <div class="side-panel-header">{% trans "Current Teams" %} ({{ teams|length }})</div>
+
+            <div class="teams-container">
+                {% for team_data in teams %}
+                <div class="team-card {% if team_data.is_valid %}valid{% else %}invalid{% endif %}">
+                    <h3>{{ team_data.team.name }}</h3>
+                    <p><strong>{% trans "Project:" %}</strong> {{ team_data.team.project }}</p>
+                    <p>
+                        <strong>{% trans "Navigators:" %}</strong>
+                        {% for navigator in team_data.navigators %}
+                            {{ navigator.get_full_name|default:navigator.email }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            <em>{% trans "None" %}</em>
+                        {% endfor %}
+                    </p>
+                    <p>
+                        <strong>{% trans "Captain:" %}</strong>
+                        {% if team_data.captain %}
+                            {{ team_data.captain.get_full_name|default:team_data.captain.email }}
+                        {% else %}
+                            <em>{% trans "None" %}</em>
+                        {% endif %}
+                    </p>
+
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">{% trans "Navigator Meeting Hours" %}</span>
+                            <div>
+                                <strong>{{ team_data.navigator_meeting_hours }}</strong> hour blocks
+                                {% if team_data.navigator_meeting_hours < min_navigator_hours %}
+                                    <span class="status-icon-error">⚠</span>
+                                {% else %}
+                                    <span class="status-icon-success">✓</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="djangonaut-details">
+                        <span class="stat-label">{% trans "Djangonauts" %} ({{ team_data.djangonaut_details|length }})</span>
+                        <table class="team-members-table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Name" %}</th>
+                                    <th>{% trans "Score" %}</th>
+                                    <th>{% trans "Rank" %}</th>
+                                    <th title="{% trans 'Hours of overlap with captain' %}">{% trans "Capt. Hrs" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for djangonaut in team_data.djangonaut_details %}
+                                <tr>
+                                    <td>{{ djangonaut.user.get_full_name|default:djangonaut.user.email }}</td>
+                                    <td>{{ djangonaut.score|default:"—" }}</td>
+                                    <td>{{ djangonaut.selection_rank|default:"—" }}</td>
+                                    <td>
+                                        {% if djangonaut.captain_hours is not None %}
+                                            {{ djangonaut.captain_hours }}
+                                            {% if djangonaut.captain_hours < min_captain_hours %}
+                                                <span class="status-icon-error">⚠</span>
+                                            {% else %}
+                                                <span class="status-icon-success">✓</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="status-icon-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="empty-message-small">
+                                        <em>{% trans "No djangonauts assigned" %}</em>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="empty-message-centered">
+                    <em>{% trans "No teams created yet." %}</em>
+                </p>
+                {% endfor %}
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+{{ sort_config|json_script:"sort-config" }}
+
+<script>
+// Load configuration from JSON
+const sortConfig = JSON.parse(document.getElementById('sort-config').textContent);
+
+// Sortable columns
+document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', function() {
+        const sortBy = this.getAttribute('data-sort');
+        const currentSort = sortConfig.sort_by;
+        const currentOrder = sortConfig.sort_order;
+
+        // Toggle order if clicking same column, otherwise default to desc (first click)
+        let newOrder = 'desc';
+        if (sortBy === currentSort) {
+            // Toggle between desc and asc
+            newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+        }
+
+        // Build URL with sort parameters and existing filters
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', sortBy);
+        url.searchParams.set('order', newOrder);
+        url.searchParams.set('page', '1'); // Reset to first page on sort
+
+        window.location.href = url.toString();
+    });
+});
+
+// Select all checkbox functionality
+document.getElementById('select-all')?.addEventListener('change', function(e) {
+    document.querySelectorAll('.applicant-checkbox').forEach(cb => {
+        cb.checked = e.target.checked;
+        cb.closest('tr').classList.toggle('selected', e.target.checked);
+    });
+});
+
+// Highlight selected rows
+document.querySelectorAll('.applicant-checkbox').forEach(cb => {
+    cb.addEventListener('change', function() {
+        this.closest('tr').classList.toggle('selected', this.checked);
+    });
+});
+
+// Populate hidden user_ids field and validate before assign form submission
+const assignForm = document.getElementById('assign-form')
+assignForm?.addEventListener('submit', function(e) {
+    const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked'))
+        .map(cb => cb.value);
+    const userIdsField = document.getElementById(assignForm.dataset.userIdsId);
+
+    if (selectedIds.length === 0) {
+        e.preventDefault();
+        alert('{% trans "Please select at least one applicant." %}');
+        return false;
+    }
+
+    // Populate hidden field with comma-separated user IDs
+    userIdsField.value = selectedIds.join(',');
+});
+
+// Populate hidden user_ids field and validate before overlap form submission
+const overlapForm = document.getElementById('overlap-form')
+overlapForm?.addEventListener('submit', function(e) {
+    const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked'))
+        .map(cb => cb.value);
+
+    if (selectedIds.length === 0) {
+        e.preventDefault();
+        alert('{% trans "Please select at least one applicant." %}');
+        return false;
+    }
+
+    const userIdsField = document.getElementById(overlapForm.dataset.userIdsId);
+    userIdsField.value = selectedIds.join(',');
+});
+</script>
+{% endblock %}

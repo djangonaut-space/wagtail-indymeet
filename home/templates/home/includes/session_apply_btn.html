@@ -1,9 +1,14 @@
 {% if session.is_accepting_applications %}
   {% if session.application_url %}
   <a href="{{ session.application_url }}" target="_blank" class="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer">Apply</a>
-  {% elif request.user.is_authenticated and not session.completed_application and request.user.profile.email_confirmed %}
+  {% elif request.user.is_authenticated and not session.annotated_completed_application and request.user.profile.email_confirmed %}
   <a href="{{ session.get_application_url }}" target="_blank" class="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer">Apply</a>
-  {% elif session.completed_application %}
-  <a href="{% url 'user_survey_response' session.completed_application %}" target="_blank" class="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer">View Application</a>
+  {% elif session.annotated_completed_application %}
+  <div class="flex gap-2">
+    <a href="{% url 'user_survey_response' session.application_survey.slug %}" class="rounded-md bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-900 transition hover:bg-gray-300 cursor-pointer">View Application</a>
+    <a href="{% url 'edit_user_survey_response' session.application_survey.slug %}" class="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-300 hover:text-ds-purple cursor-pointer">Edit Application</a>
+  </div>
   {% endif %}
+{% elif session.annotated_completed_application %}
+  <a href="{% url 'user_survey_response' session.application_survey.slug %}" class="rounded-md bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-900 transition hover:bg-gray-300 cursor-pointer">View Application</a>
 {% endif %}
