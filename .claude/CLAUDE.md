@@ -160,75 +160,6 @@ def process_application(
 3. `main` requires linear history
 4. If committing directly to `main`, rebase `develop` on `main` afterward
 
-## Upcoming Major Feature: Application Administration System
-
-The next major development effort involves building a comprehensive application review and team formation system. This is documented here for context when working on related features.
-
-### Phase 1: Application Administration
-- Completed: ~~Copy surveys/applications from previous sessions~~
-- Completed: ~~Manage application questions and structure~~
-
-### Phase 2: Applying (Issue #303)
-- Completed: ~~View other application responses~~
-- Completed: ~~Copy responses from previous applications~~
-- Completed: ~~Edit application responses~~
-- Completed: ~~Upload availability schedules~~
-- Email notifications on submission
-
-### Phase 3: Application Review
-- View all questions for a survey
-- View all responses for a specific question
-- Score responses (-1, 0, 1)
-- View applicant's responses to other questions
-- Analyze tutorial submissions for code quality
-- **Alternative:** CSV export/import to integrate with existing process
-
-### Phase 4: Team Formation
-- **Availability overlap analysis:** Count overlapping times for navigators
-- **Advanced filtering:**
-  - Score, project selections, tutorial quality
-  - Diversity metrics, gender diversity
-  - Selection rank, team assignments
-  - Availability overlap counts
-  - Previous application history and scores
-- **Interactive team building:**
-  - Select people and associate with rank
-  - Find overlapping times for navigator + multiple people
-  - Find overlapping times for captain + person
-  - Form teams (navigator, captain, djangonauts) with validation
-
-### Phase 5: Teams Creation
-- Models for teams attached to sessions:
-  - Team drive link, multiple captains/navigators
-  - Project name/link, resource links
-- Update Session model for notification tracking
-- Update SessionMembership for acceptance workflow
-- Admin actions:
-  - Send acceptance emails (with confirmation)
-  - Send reminder emails about accepting
-- Acceptance workflow:
-  - Create membership acceptance page
-  - Send notification about next steps
-- Welcome email admin action for all teams
-- Team views:
-  - Organizers/navigators/captains view survey responses
-  - Navigators/captains update project info and resources
-  - Team members view project links, contacts, drive folder
-- Generate Google Sheets for contacts
-
-### Phase 6: Team Formation Algorithm
-**Proposed algorithm for optimal team assignments:**
-
-1. Sort members by: ascending rank → ascending availability → descending score
-2. Allocate members to navigators where 5+ hours overlap
-3. Maximize full teams before moving to next navigator
-4. **Tree-based optimization:**
-   - Root node = session
-   - Child nodes = adding next available person to teams
-   - Only add if availability check passes for that team
-   - Per-team tracking
-5. **Evaluation:** Sort by longest branches to identify best team configurations
-
 ## Important Considerations
 
 ### When Writing Code
@@ -236,6 +167,7 @@ The next major development effort involves building a comprehensive application 
 - **Wagtail blocks need improvement** - the current StreamField blocks are limited
 - **Documentation is sparse** - please generate architecture docs in `docs/` when adding major features
 - **Testing is mandatory** - no exceptions
+- **Avoid local imports** - When possible, put the imports at the top of the file
 
 ### Database Patterns
 - Use Django ORM best practices
