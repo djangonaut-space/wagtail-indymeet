@@ -8,7 +8,7 @@ from django.urls import reverse
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserAvailability
 from home.admin import SessionAdmin
-from home.factories import ProjectFactory
+from home.factories import ProjectFactory, TeamFactory
 from home.forms import ApplicantFilterForm
 from home.models import (
     Question,
@@ -166,10 +166,7 @@ class ApplicantFilterFormTestCase(TestCase):
             application_end_date="2025-02-15",
         )
 
-        project = ProjectFactory()
-        self.team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        self.team = TeamFactory(session=self.session, name="Test Team")
 
     def test_form_initialization_with_session(self):
         """Test form initializes with session teams."""
@@ -250,10 +247,7 @@ class TeamFormationViewTestCase(TestCase):
     def test_calculate_overlap_ajax_requires_users(self):
         """Test AJAX overlap calculation requires user selection."""
         # Create team
-        project = ProjectFactory()
-        team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        team = TeamFactory(session=self.session, name="Test Team")
 
         url = reverse("admin:session_calculate_overlap", args=[self.session.id])
         response = self.client.post(
@@ -271,10 +265,7 @@ class TeamFormationViewTestCase(TestCase):
     def test_calculate_overlap_ajax_navigator(self):
         """Test AJAX navigator overlap calculation with htmx."""
         # Create team with navigators
-        project = ProjectFactory()
-        team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        team = TeamFactory(session=self.session, name="Test Team")
 
         navigator = UserFactory(
             username="nav1", email="nav1@example.com", password="test"
@@ -321,10 +312,7 @@ class TeamFormationViewTestCase(TestCase):
         """Test bulk assignment of users to a team."""
 
         # Create team
-        project = ProjectFactory()
-        team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        team = TeamFactory(session=self.session, name="Test Team")
 
         # Create test users
         user1 = UserFactory(username="user1", email="user1@example.com")
@@ -359,10 +347,7 @@ class TeamFormationViewTestCase(TestCase):
         """Test filtering applicants by availability overlap with navigators."""
 
         # Create team
-        project = ProjectFactory()
-        team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        team = TeamFactory(session=self.session, name="Test Team")
 
         # Create navigator with availability
         navigator = UserFactory(
@@ -419,10 +404,7 @@ class TeamFormationViewTestCase(TestCase):
         """Test filtering applicants by availability overlap with captain."""
 
         # Create team
-        project = ProjectFactory()
-        team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        team = TeamFactory(session=self.session, name="Test Team")
 
         # Create captain with availability
         captain = UserFactory(
@@ -479,10 +461,7 @@ class TeamFormationViewTestCase(TestCase):
         """Test filtering by navigator overlap when team has no navigators."""
 
         # Create team without navigators
-        project = ProjectFactory()
-        team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        team = TeamFactory(session=self.session, name="Test Team")
 
         # Create applicant
         applicant = UserFactory(
@@ -506,10 +485,7 @@ class TeamFormationViewTestCase(TestCase):
         """Test that team formation view includes captain overlap hours for djangonauts."""
 
         # Create team
-        project = ProjectFactory()
-        team = Team.objects.create(
-            session=self.session, name="Test Team", project=project
-        )
+        team = TeamFactory(session=self.session, name="Test Team")
 
         # Create captain
         captain = UserFactory(

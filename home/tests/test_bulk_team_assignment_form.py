@@ -3,7 +3,7 @@
 from django.test import TestCase
 
 from accounts.factories import UserFactory
-from home.factories import ProjectFactory, SessionFactory, SurveyFactory
+from home.factories import ProjectFactory, SessionFactory, SurveyFactory, TeamFactory
 from home.forms import BulkTeamAssignmentForm
 from home.models import ProjectPreference, Team, UserSurveyResponse
 
@@ -25,11 +25,11 @@ class BulkTeamAssignmentFormTestCase(TestCase):
         # Add projects to session
         self.session.available_projects.add(self.project_django, self.project_wagtail)
 
-        # Create teams
-        self.django_team = Team.objects.create(
+        # Create teams (using TeamFactory)
+        self.django_team = TeamFactory(
             session=self.session, name="Django Team", project=self.project_django
         )
-        self.wagtail_team = Team.objects.create(
+        self.wagtail_team = TeamFactory(
             session=self.session, name="Wagtail Team", project=self.project_wagtail
         )
 

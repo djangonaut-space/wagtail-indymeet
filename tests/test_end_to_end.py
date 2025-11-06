@@ -26,6 +26,7 @@ from home.factories import (
     ProjectFactory,
     SessionFactory,
     SurveyFactory,
+    TeamFactory,
     UserSurveyResponseFactory,
 )
 from home.models import Session, SessionMembership, Survey, Team, UserSurveyResponse
@@ -650,13 +651,12 @@ class TestTeamFormation:
         session.application_survey = survey
         session.save()
 
-        # Create teams
-        project = ProjectFactory(name="Django")
-        team_alpha = Team.objects.create(
-            session=session, name="Team Alpha", project=project
+        # Create teams (TeamFactory automatically creates a project)
+        team_alpha = TeamFactory(
+            session=session, name="Team Alpha", project__name="Django"
         )
-        team_beta = Team.objects.create(
-            session=session, name="Team Beta", project=project
+        team_beta = TeamFactory(
+            session=session, name="Team Beta", project=team_alpha.project
         )
 
         # Create applicants (users with survey responses)
