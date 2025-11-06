@@ -6,9 +6,10 @@ from typing import Optional
 
 import django_filters
 from django import forms
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Exists, OuterRef
 
-from home.models import Team, UserSurveyResponse
+from accounts.models import CustomUser
+from home.models import Project, Team, UserSurveyResponse
 
 
 class BooleanFilter(django_filters.BooleanFilter):
@@ -57,6 +58,12 @@ class ApplicantFilterSet(django_filters.FilterSet):
         method="filter_captain_overlap",
     )
 
+    project_preference = django_filters.ModelChoiceFilter(
+        queryset=Project.objects.none(),
+        label="Project Preference",
+        method="filter_by_project_preference",
+    )
+
     class Meta:
         model = UserSurveyResponse
         fields = []
@@ -72,6 +79,11 @@ class ApplicantFilterSet(django_filters.FilterSet):
             self.filters["team"].queryset = team_queryset
             self.filters["overlap_with_navigators"].queryset = team_queryset
             self.filters["overlap_with_captain"].queryset = team_queryset
+
+            # Populate project queryset with session's available projects
+            self.filters["project_preference"].queryset = (
+                session.available_projects.all()
+            )
 
     def filter_by_team(
         self, queryset: QuerySet, name: str, value: Team | None
@@ -103,4 +115,18 @@ class ApplicantFilterSet(django_filters.FilterSet):
         """Filter applicants by availability overlap with team captain."""
         if value and self.session:
             return queryset.with_captain_overlap(value)
+        return queryset
+
+    def filter_by_project_preference(
+        self, queryset: QuerySet, name: str, value: Project | None
+    ) -> QuerySet:
+        """Filter applicants by their project preferences."""
+        if value and self.session:
+            users_with_preference = CustomUser.objects.with_project_preference(
+                project=value,
+                session=self.session,
+            )
+            return queryset.filter(
+                Exists(users_with_preference.filter(user_id=OuterRef("id")))
+            )
         return queryset

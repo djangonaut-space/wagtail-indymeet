@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from accounts.models import CustomUser
 from home.constants import DATE_INPUT_FORMAT
 from home.constants import SURVEY_FIELD_VALIDATORS
-from home.models import Question, Team, SessionMembership
+from home.models import Question, Team, SessionMembership, ProjectPreference
 from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
@@ -64,6 +64,14 @@ class BaseSurveyForm(forms.Form):
         self.questions = self.survey.questions.all().order_by("ordering")
         super().__init__(*args, **kwargs)
 
+        # Add project preference field if survey is associated with a session
+        self.session = None
+        for app_session in self.survey.application_sessions.all():
+            if app_session.is_accepting_applications():
+                self.session = app_session
+                break
+
+        # Add all question fields first
         for question in self.questions:
             # to generate field name
             field_name = to_field_name(question)
@@ -151,6 +159,23 @@ class BaseSurveyForm(forms.Form):
             self.fields[field_name].help_text = question.help_text
             self.field_names.append(field_name)
 
+        # Add project preference field if session has available projects
+        if self.session and self.session.available_projects.exists():
+            project_choices = [
+                (project.id, project.name)
+                for project in self.session.available_projects.all()
+            ]
+            self.fields["project_preferences"] = forms.MultipleChoiceField(
+                choices=project_choices,
+                label=_("Project Preferences"),
+                help_text=_(
+                    "Select the projects you would like to work on. "
+                    "Leave blank if you're okay with any project."
+                ),
+                widget=CheckboxSelectMultipleSurvey,
+                required=False,
+            )
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -201,6 +226,21 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
             update_fields=("value",),
             unique_fields=("question", "user_survey_response"),
         )
+
+        # Save project preferences if provided and session exists
+        if self.session and (
+            project_preferences := cleaned_data.get("project_preferences")
+        ):
+            preferences = [
+                ProjectPreference(
+                    user=self.user,
+                    session=self.session,
+                    project_id=project_id,
+                )
+                for project_id in project_preferences
+            ]
+            ProjectPreference.objects.bulk_create(preferences, ignore_conflicts=True)
+
         return user_survey_response
 
 
@@ -212,6 +252,7 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
         self._set_initial_data()
 
     def _set_initial_data(self):
+
         question_responses = self.user_survey_response.userquestionresponse_set.all()
 
         for question_response in question_responses:
@@ -220,6 +261,13 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
                 self.fields[field_name].initial = question_response.value.split(",")
             else:
                 self.fields[field_name].initial = question_response.value
+
+        # Set initial data for project preferences
+        if self.session and "project_preferences" in self.fields:
+            existing_prefs = ProjectPreference.objects.for_user_session(
+                user=self.user_survey_response.user, session=self.session
+            ).values_list("project_id", flat=True)
+            self.fields["project_preferences"].initial = list(existing_prefs)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -247,6 +295,27 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
             update_fields=("value",),
             unique_fields=("question", "user_survey_response"),
         )
+
+        # Update project preferences if session exists
+        if self.session and (
+            project_preferences := cleaned_data.get("project_preferences")
+        ):
+            # Delete existing preferences for this user/session
+            ProjectPreference.objects.for_user_session(
+                user=self.user_survey_response.user, session=self.session
+            ).exclude(project_id__in=project_preferences).delete()
+
+            # Create new preferences if projects were selected
+            preferences = [
+                ProjectPreference(
+                    user=self.user_survey_response.user,
+                    session=self.session,
+                    project_id=project_id,
+                )
+                for project_id in project_preferences
+            ]
+            ProjectPreference.objects.bulk_create(preferences, ignore_conflicts=True)
+
         return self.user_survey_response
 
 
@@ -915,6 +984,41 @@ class BulkTeamAssignmentForm(forms.Form):
             raise forms.ValidationError(_("Some selected users do not exist"))
 
         return user_ids
+
+    def clean(self):
+        """Validate that users' project preferences match the team's project."""
+        cleaned_data = super().clean()
+
+        # Only validate if we have both user_ids and team
+        if "user_ids" not in cleaned_data or "team" not in cleaned_data:
+            return cleaned_data
+
+        user_ids = cleaned_data["user_ids"]
+        team = cleaned_data["team"]
+
+        # Get users who have invalid/conflicting project preferences
+        users_with_invalid_pref = CustomUser.objects.filter(
+            id__in=user_ids
+        ).with_invalid_project_preference(
+            project=team.project,
+            session=self.session,
+        )
+
+        # Build error message if any users have mismatched preferences
+        user_list = ", ".join(
+            user.get_full_name() or user.email for user in users_with_invalid_pref
+        )
+        if user_list:
+            self.add_error(
+                "team",
+                _(
+                    f"The following users have not selected '{team.project.name}'"
+                    f"as a preference: {user_list}. Users with no preferences can "
+                    "be assigned to any project."
+                ),
+            )
+
+        return cleaned_data
 
     @transaction.atomic
     def save(self) -> int:

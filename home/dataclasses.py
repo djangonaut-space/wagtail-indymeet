@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from accounts.models import CustomUser
-from home.models import Team, UserSurveyResponse
+from home.models import Project, Team, UserSurveyResponse
 
 
 @dataclass
@@ -26,6 +26,7 @@ class ApplicantData:
     previous_avg_score: float | None
     has_availability: bool
     availability_by_day: dict[str, list[str]]  # Day name -> time ranges
+    project_preferences: list[Project]  # List of preferred projects
 
 
 @dataclass

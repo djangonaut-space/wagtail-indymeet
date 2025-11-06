@@ -205,6 +205,11 @@ def get_filtered_applicants(
         if prev_avg_score is not None:
             prev_avg_score = round(prev_avg_score, 1)
 
+        # Get project preferences for this user/session
+        project_preferences = [
+            pref.project for pref in getattr(user, "prefetched_project_preferences", [])
+        ]
+
         applicants.append(
             ApplicantData(
                 user=user,
@@ -217,6 +222,7 @@ def get_filtered_applicants(
                 previous_avg_score=prev_avg_score,
                 has_availability=has_availability,
                 availability_by_day=availability_by_day,
+                project_preferences=project_preferences,
             )
         )
 

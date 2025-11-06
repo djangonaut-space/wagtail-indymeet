@@ -22,7 +22,12 @@ from playwright.sync_api import Page
 
 from accounts.factories import UserFactory
 from accounts.models import CustomUser
-from home.factories import SessionFactory, SurveyFactory, UserSurveyResponseFactory
+from home.factories import (
+    ProjectFactory,
+    SessionFactory,
+    SurveyFactory,
+    UserSurveyResponseFactory,
+)
 from home.models import Session, SessionMembership, Survey, Team, UserSurveyResponse
 
 logger = getLogger(__name__)
@@ -646,8 +651,13 @@ class TestTeamFormation:
         session.save()
 
         # Create teams
-        team_alpha = Team.objects.create(session=session, name="Team Alpha")
-        team_beta = Team.objects.create(session=session, name="Team Beta")
+        project = ProjectFactory()
+        team_alpha = Team.objects.create(
+            session=session, name="Team Alpha", project=project
+        )
+        team_beta = Team.objects.create(
+            session=session, name="Team Beta", project=project
+        )
 
         # Create applicants (users with survey responses)
         users = UserFactory.create_batch(

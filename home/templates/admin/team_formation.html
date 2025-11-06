@@ -220,7 +220,7 @@
                 {% for team_data in teams %}
                 <div class="team-card {% if team_data.is_valid %}valid{% else %}invalid{% endif %}">
                     <h3>{{ team_data.team.name }}</h3>
-                    <p><strong>{% trans "Project:" %}</strong> {{ team_data.team.project }}</p>
+                    <p><strong>{% trans "Project:" %}</strong> {{ team_data.team.project.name }}</p>
                     <p>
                         <strong>{% trans "Navigators:" %}</strong>
                         {% for navigator in team_data.navigators %}
