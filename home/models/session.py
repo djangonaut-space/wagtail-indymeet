@@ -10,6 +10,30 @@ from home.managers import SessionMembershipQuerySet
 from home.managers import SessionQuerySet
 
 
+class Project(models.Model):
+    """
+    Represents a project that teams can work on.
+
+    Projects are standalone entities that can be associated with multiple sessions,
+    allowing applicants to indicate their project preferences during application.
+    """
+
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text=_("The name of the project (e.g., 'Django', 'Wagtail')"),
+    )
+    url = models.URLField(
+        help_text=_("The URL for the project repository or website"),
+    )
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Session(models.Model):
     """Represents a mentoring session / cohort for Djangonaut Space"""
 
@@ -49,6 +73,12 @@ class Session(models.Model):
         help_text="This is a URL to the Djangonaut application form. Likely Google Forms.",
         null=True,
         blank=True,
+    )
+    available_projects = models.ManyToManyField(
+        Project,
+        related_name="sessions",
+        blank=True,
+        help_text=_("Projects available for selection during this session"),
     )
 
     objects = models.Manager.from_queryset(SessionQuerySet)()
@@ -104,16 +134,85 @@ class Team(models.Model):
 
     session = models.ForeignKey(Session, related_name="teams", on_delete=models.CASCADE)
     name = models.CharField()
-    project = models.CharField(
-        help_text=_("The name of the project the team is working on."),
-        default="Django",
-    )
-    project_url = models.URLField(
-        help_text="The URL for the project", default="https://github.com/django/django"
+    project = models.ForeignKey(
+        Project,
+        related_name="teams",
+        on_delete=models.PROTECT,
+        help_text=_("The project the team is working on."),
     )
 
-    def __str__(self):
-        return f"{self.name} - {self.project}"
+    def __str__(self) -> str:
+        return f"{self.name} - {self.project.name}"
+
+
+class ProjectPreferenceQuerySet(models.QuerySet):
+    """Custom QuerySet for ProjectPreference model."""
+
+    def for_user_session(
+        self, user: "CustomUser", session: "Session"
+    ) -> "ProjectPreferenceQuerySet":
+        """
+        Filter preferences for a specific user and session.
+
+        Args:
+            user: The user to filter by
+            session: The session to filter by
+
+        Returns:
+            QuerySet of ProjectPreference objects for this user/session combination
+        """
+        return self.filter(user=user, session=session)
+
+    def for_session(self, session: "Session") -> "ProjectPreferenceQuerySet":
+        """
+        Filter preferences for a specific session.
+
+        Args:
+            session: The session to filter by
+
+        Returns:
+            QuerySet of ProjectPreference objects for this session
+        """
+        return self.filter(session=session)
+
+
+class ProjectPreference(models.Model):
+    """
+    Represents a user's project preferences for a session application.
+
+    Users can indicate which projects they prefer to work on during application.
+    If no preferences exist, the user is okay with any project.
+    """
+
+    user = models.ForeignKey(
+        "accounts.CustomUser",
+        related_name="project_preferences",
+        on_delete=models.CASCADE,
+        # Index comes from unique_project_preference
+        db_index=False,
+    )
+    session = models.ForeignKey(
+        Session,
+        related_name="project_preferences",
+        on_delete=models.CASCADE,
+    )
+    project = models.ForeignKey(
+        Project,
+        related_name="preferences",
+        on_delete=models.CASCADE,
+    )
+
+    objects = models.Manager.from_queryset(ProjectPreferenceQuerySet)()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "session", "project"], name="unique_project_preference"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user.username} - {self.project.name} ({self.session.title})"
 
 
 class SessionMembership(models.Model):

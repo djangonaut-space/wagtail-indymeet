@@ -6,6 +6,7 @@ from django.utils import timezone
 from accounts.factories import UserFactory
 from home.models import (
     Event,
+    Project,
     Question,
     ResourceLink,
     Session,
@@ -95,14 +96,21 @@ class UserQuestionResponseFactory(factory.django.DjangoModelFactory):
     user_survey_response = factory.SubFactory(UserSurveyResponseFactory)
 
 
+class ProjectFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Project
+
+    name = factory.Sequence(lambda n: "Project %d" % n)
+    url = factory.Sequence(lambda n: "https://github.com/project-%d" % n)
+
+
 class TeamFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Team
 
     session = factory.SubFactory(SessionFactory)
     name = factory.Sequence(lambda n: "Team %d" % n)
-    project = "Django"
-    project_url = "https://github.com/django/django"
+    project = factory.SubFactory(ProjectFactory)
 
 
 class SessionMembershipFactory(factory.django.DjangoModelFactory):

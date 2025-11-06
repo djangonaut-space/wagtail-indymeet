@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
-from .models import Event, Team
+from .models import Event, Project, Team
 from .models import ResourceLink
 from .models import Question
 from .models import Session
@@ -21,6 +21,13 @@ from .views.team_formation import calculate_overlap_ajax, team_formation_view
 class EventAdmin(admin.ModelAdmin):
     model = Event
     filter_horizontal = ("speakers", "rsvped_members", "organizers")
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ("name", "url")
+    search_fields = ("name",)
+    ordering = ("name",)
 
 
 @admin.register(ResourceLink)
@@ -47,6 +54,13 @@ class SessionMembershipInline(admin.TabularInline):
     extra = 0
 
 
+class SessionProjectInline(admin.TabularInline):
+    model = Session.available_projects.through
+    extra = 0
+    verbose_name = "Available Project"
+    verbose_name_plural = "Available Projects"
+
+
 @admin.register(SessionMembership)
 class SessionMembershipAdmin(admin.ModelAdmin):
     list_display = ("user", "session", "role", "created")
@@ -54,7 +68,7 @@ class SessionMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    inlines = [SessionMembershipInline]
+    inlines = [SessionMembershipInline, SessionProjectInline]
     actions = ["form_teams_action"]
 
     def get_urls(self):

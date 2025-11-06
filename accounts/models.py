@@ -1,9 +1,10 @@
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
 from django.core.signing import TimestampSigner
 from django.db import models
+from django.db.models import QuerySet
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
@@ -12,8 +13,62 @@ from wagtail.models import Orderable
 from accounts.fields import DefaultOneToOneField
 
 
+class CustomUserQuerySet(QuerySet):
+    def with_project_preference(
+        self, project: "Project", session: "Session"
+    ) -> "QuerySet[CustomUser]":
+        """
+        Filter users who have selected a specific project as a preference for a session.
+
+        Args:
+            project: The project to filter by
+            session: The session context
+
+        Returns:
+            QuerySet of CustomUser objects who have this project preference
+        """
+        return self.filter(
+            project_preferences__project=project,
+            project_preferences__session=session,
+        ).distinct()
+
+    def with_invalid_project_preference(
+        self, project: "Project", session: "Session"
+    ) -> "QuerySet[CustomUser]":
+        """
+        Filter users whose project preferences conflict with the specified project.
+
+        Returns users who have indicated project preferences for this session,
+        but have NOT selected the specified project. These users would have
+        an invalid/conflicting preference if assigned to a team working on
+        the specified project.
+
+        Users with no project preferences at all are NOT included in the results,
+        as they can be assigned to any project.
+
+        Args:
+            project: The project to check preferences against
+            session: The session context
+
+        Returns:
+            QuerySet of CustomUser objects who have expressed preferences for
+            this session but not for the specified project.
+        """
+        # Get users who have this project as a preference
+        users_with_this_pref = self.with_project_preference(
+            project, session
+        ).values_list("id", flat=True)
+
+        # Exclude those users, but only include users who have preferences for this session
+        return (
+            self.exclude(id__in=users_with_this_pref)
+            .filter(project_preferences__session=session)
+            .distinct()
+        )
+
+
 class CustomUser(AbstractUser):
-    pass
+    objects = UserManager.from_queryset(CustomUserQuerySet)()
 
 
 class UserProfile(models.Model):

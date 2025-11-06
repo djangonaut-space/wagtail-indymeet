@@ -1,5 +1,3 @@
-from typing import Optional
-
 from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
@@ -226,9 +224,21 @@ class UserSurveyResponseQuerySet(QuerySet):
             - annotated_has_availability
             - prefetched session memberships
             - prefetched user availability
+            - prefetched project preferences
         """
+        from home.models import ProjectPreference
+
         if not session or not session.application_survey:
             return self.none()
+
+        # Prefetch project preferences for this session
+        project_prefs_prefetch = Prefetch(
+            "user__project_preferences",
+            queryset=ProjectPreference.objects.for_session(session).select_related(
+                "project"
+            ),
+            to_attr="prefetched_project_preferences",
+        )
 
         return (
             self.for_survey(session.application_survey)
@@ -236,4 +246,5 @@ class UserSurveyResponseQuerySet(QuerySet):
             .with_previous_application_stats(session.application_survey)
             .with_availability_check()
             .with_session_memberships(session)
+            .prefetch_related(project_prefs_prefetch)
         )
