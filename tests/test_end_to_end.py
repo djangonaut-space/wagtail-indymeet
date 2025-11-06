@@ -686,6 +686,33 @@ class TestTeamFormation:
                 role=SessionMembership.DJANGONAUT,
             )
 
+        # Create navigators for both teams
+        navigator_alpha = UserFactory(
+            username="navigator_alpha",
+            email="navigator_alpha@test.com",
+            first_name="Navigator",
+            last_name="Alpha",
+        )
+        SessionMembership.objects.create(
+            session=session,
+            user=navigator_alpha,
+            team=team_alpha,
+            role=SessionMembership.NAVIGATOR,
+        )
+
+        navigator_beta = UserFactory(
+            username="navigator_beta",
+            email="navigator_beta@test.com",
+            first_name="Navigator",
+            last_name="Beta",
+        )
+        SessionMembership.objects.create(
+            session=session,
+            user=navigator_beta,
+            team=team_beta,
+            role=SessionMembership.NAVIGATOR,
+        )
+
         return TeamFormationTestData(
             session=session,
             survey=survey,
