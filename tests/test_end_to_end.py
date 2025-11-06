@@ -651,7 +651,7 @@ class TestTeamFormation:
         session.save()
 
         # Create teams
-        project = ProjectFactory()
+        project = ProjectFactory(name="Django")
         team_alpha = Team.objects.create(
             session=session, name="Team Alpha", project=project
         )

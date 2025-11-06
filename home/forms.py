@@ -64,13 +64,6 @@ class BaseSurveyForm(forms.Form):
         self.questions = self.survey.questions.all().order_by("ordering")
         super().__init__(*args, **kwargs)
 
-        # Add project preference field if survey is associated with a session
-        self.session = None
-        for app_session in self.survey.application_sessions.all():
-            if app_session.is_accepting_applications():
-                self.session = app_session
-                break
-
         # Add all question fields first
         for question in self.questions:
             # to generate field name
@@ -159,22 +152,30 @@ class BaseSurveyForm(forms.Form):
             self.fields[field_name].help_text = question.help_text
             self.field_names.append(field_name)
 
-        # Add project preference field if session has available projects
-        if self.session and self.session.available_projects.exists():
-            project_choices = [
-                (project.id, project.name)
-                for project in self.session.available_projects.all()
-            ]
-            self.fields["project_preferences"] = forms.MultipleChoiceField(
-                choices=project_choices,
-                label=_("Project Preferences"),
-                help_text=_(
-                    "Select the projects you would like to work on. "
-                    "Leave blank if you're okay with any project."
-                ),
-                widget=CheckboxSelectMultipleSurvey,
-                required=False,
-            )
+        # Add project preference field if survey is associated with a session
+        self.session = None
+        for app_session in self.survey.application_sessions.all():
+            if app_session.is_accepting_applications():
+                self.session = app_session
+
+                # Add project preference field if session has available projects
+                project_choices = [
+                    (project.id, project.name)
+                    for project in self.session.available_projects.all()
+                ]
+                if project_choices:
+                    self.fields["project_preferences"] = forms.MultipleChoiceField(
+                        choices=project_choices,
+                        label=_("Project Preferences"),
+                        help_text=_(
+                            "Select the projects you would like to work on. "
+                            "Leave blank if you're okay with any project."
+                        ),
+                        widget=CheckboxSelectMultipleSurvey,
+                        required=False,
+                    )
+                # Avoid continuing to loop through application sessions.
+                break
 
     def clean(self):
         cleaned_data = super().clean()
@@ -245,10 +246,9 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
 
 
 class EditUserSurveyResponseForm(BaseSurveyForm):
-    def __init__(self, *args, instance, **kwargs):
-        self.survey = instance.survey
+    def __init__(self, *args, instance: UserSurveyResponse, **kwargs):
         self.user_survey_response = instance
-        super().__init__(*args, survey=self.survey, user=instance.user, **kwargs)
+        super().__init__(*args, survey=instance.survey, user=instance.user, **kwargs)
         self._set_initial_data()
 
     def _set_initial_data(self):
