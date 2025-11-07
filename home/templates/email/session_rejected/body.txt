@@ -1,0 +1,16 @@
+Hello {{ user.first_name }},
+
+Thank you for applying to {{ session.title }}. We really appreciate the time and effort you put into your application.
+
+After careful consideration, we regret to inform you that we are unable to offer you a spot in this session. We received an overwhelming number of applications, and the decision-making process was very difficult.
+
+Session Details:
+- Start Date: {{ session.start_date|date:"F d, Y" }}
+- End Date: {{ session.end_date|date:"F d, Y" }}
+
+We encourage you to apply again in future cohorts. Many successful participants applied multiple times before being accepted. You can stay updated on upcoming sessions by visiting our website.
+
+Thank you for your interest in Djangonaut Space!
+
+Best regards,
+The Djangonaut Space Team

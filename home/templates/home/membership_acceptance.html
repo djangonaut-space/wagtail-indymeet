@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Session Membership Acceptance{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    {% if already_responded %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h1 class="text-3xl font-bold mb-4">
+                {% if accepted %}
+                    Membership Confirmed
+                {% else %}
+                    Membership Declined
+                {% endif %}
+            </h1>
+
+            {% if accepted %}
+                <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+                    <p class="text-green-800">
+                        You confirmed your participation in <strong>{{ membership.session.title }}</strong> on {{ accepted_at|date:"F d, Y" }}.
+                    </p>
+                </div>
+            {% else %}
+                <div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6">
+                    <p class="text-gray-800">
+                        You declined participation in <strong>{{ membership.session.title }}</strong> on {{ accepted_at|date:"F d, Y" }}.
+                    </p>
+                </div>
+            {% endif %}
+
+            <div class="mt-6">
+                <a href="{% url 'session_detail' slug=membership.session.slug %}" class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                    View Session Details
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h1 class="text-3xl font-bold mb-4">Confirm Your Participation</h1>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                <p class="text-blue-800">
+                    Congratulations! You've been accepted to <strong>{{ membership.session.title }}</strong>.
+                </p>
+            </div>
+
+            {% if membership.acceptance_deadline %}
+            <div class="mb-6">
+                <p class="text-gray-700 mb-2">
+                    <strong>Please respond by:</strong> {{ membership.acceptance_deadline|date:"F d, Y" }}
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3">Session Details</h2>
+                <dl class="grid grid-cols-1 gap-3">
+                    <div>
+                        <dt class="font-semibold text-gray-700">Session:</dt>
+                        <dd class="text-gray-900">{{ membership.session.title }}</dd>
+                    </div>
+                    <div>
+                        <dt class="font-semibold text-gray-700">Start Date:</dt>
+                        <dd class="text-gray-900">{{ membership.session.start_date|date:"F d, Y" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="font-semibold text-gray-700">End Date:</dt>
+                        <dd class="text-gray-900">{{ membership.session.end_date|date:"F d, Y" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="font-semibold text-gray-700">Your Role:</dt>
+                        <dd class="text-gray-900">{{ membership.get_role_display }}</dd>
+                    </div>
+                    {% if membership.team %}
+                    <div>
+                        <dt class="font-semibold text-gray-700">Team:</dt>
+                        <dd class="text-gray-900">{{ membership.team.name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="font-semibold text-gray-700">Project:</dt>
+                        <dd class="text-gray-900">
+                            <a href="{{ membership.team.project.url }}" target="_blank" class="text-blue-600 hover:underline">
+                                {{ membership.team.project.name }}
+                            </a>
+                        </dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            {% if membership.session.description %}
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3">About the Session</h2>
+                <div class="prose max-w-none text-gray-700">
+                    {{ membership.session.description|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+                {% for error in form.non_field_errors %}
+                <p class="text-red-800">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                {{ form.action }}
+
+                <div class="flex gap-4">
+                    <button
+                        type="submit"
+                        name="action"
+                        value="accept"
+                        class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    >
+                        Accept Membership
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="decline"
+                        class="flex-1 bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                        onclick="return confirm('Are you sure you want to decline this opportunity?')"
+                    >
+                        Decline Membership
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-sm text-gray-600">
+                <p>
+                    If you have any questions or concerns, please contact us at
+                    <a href="mailto:hello@djangonaut.space" class="text-blue-600 hover:underline">hello@djangonaut.space</a>
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

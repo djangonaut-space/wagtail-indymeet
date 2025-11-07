@@ -6,6 +6,7 @@ from django.core import validators
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
+from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
@@ -1086,3 +1087,94 @@ class BulkWaitlistForm(BaseTeamForm):
 
         # Return count of actually created entries
         return len(waitlist_entries)
+
+
+class SendSessionResultsForm(forms.Form):
+    """Form for sending session result notifications."""
+
+    deadline_days = forms.IntegerField(
+        initial=7,
+        validators=[MinValueValidator(1)],
+        help_text=_("Number of days from now for the acceptance deadline"),
+        widget=forms.NumberInput(attrs={"min": 1, "class": "form-control"}),
+    )
+
+
+class MembershipAcceptanceForm(forms.Form):
+    """Form for users to accept or decline their session membership."""
+
+    ACTION_ACCEPT = "accept"
+    ACTION_DECLINE = "decline"
+
+    ACTION_CHOICES = (
+        (ACTION_ACCEPT, _("Accept Membership")),
+        (ACTION_DECLINE, _("Decline Membership")),
+    )
+
+    action = forms.ChoiceField(
+        choices=ACTION_CHOICES,
+        widget=forms.HiddenInput(),
+        required=True,
+    )
+
+    def __init__(self, *args, membership: SessionMembership, **kwargs):
+        """Initialize form with membership context."""
+        super().__init__(*args, **kwargs)
+        self.membership = membership
+
+    def clean(self):
+        """Validate that user hasn't already responded and deadline hasn't passed."""
+        cleaned_data = super().clean()
+
+        if self.membership.accepted is not None:
+            raise forms.ValidationError(
+                _("You have already responded to this invitation.")
+            )
+
+        # Check if deadline has passed
+        if self.membership.acceptance_deadline:
+            if timezone.now().date() > self.membership.acceptance_deadline:
+                deadline_str = self.membership.acceptance_deadline.strftime("%B %d, %Y")
+                raise forms.ValidationError(
+                    _(
+                        f"The acceptance deadline ({deadline_str}) has passed. "
+                        "Please contact the organizers if you still wish to "
+                        "participate."
+                    )
+                )
+
+        return cleaned_data
+
+    def save(self) -> bool:
+        """
+        Save the acceptance/decline decision.
+
+        Returns:
+            True if accepted, False if declined
+        """
+        from home.email import send
+
+        action = self.cleaned_data["action"]
+        is_accepted = action == self.ACTION_ACCEPT
+
+        self.membership.accepted = is_accepted
+        self.membership.accepted_at = timezone.now()
+        self.membership.save(update_fields=["accepted", "accepted_at"])
+
+        # Send notification email to organizers if declined
+        if not is_accepted:
+            context = {
+                "user": self.membership.user,
+                "session": self.membership.session,
+                "membership": self.membership,
+            }
+            send(
+                email_template="membership_declined",
+                recipient_list=[
+                    "contact@djangonaut.space",
+                    "session@djangonaut.space",
+                ],
+                context=context,
+            )
+
+        return is_accepted

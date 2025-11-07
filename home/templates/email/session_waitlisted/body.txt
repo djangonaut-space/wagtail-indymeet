@@ -1,0 +1,16 @@
+Hello {{ user.first_name }},
+
+Thank you for applying to {{ session.title }}. We received many excellent applications this round.
+
+While we are unable to offer you a spot at this time, we have placed you on our waitlist. If spots become available before the session starts, we will reach out to you.
+
+Session Details:
+- Start Date: {{ session.start_date|date:"F d, Y" }}
+- End Date: {{ session.end_date|date:"F d, Y" }}
+
+We encourage you to apply again in future cohorts. You can stay updated on upcoming sessions by visiting our website.
+
+Thank you for your interest in Djangonaut Space!
+
+Best regards,
+The Djangonaut Space Team

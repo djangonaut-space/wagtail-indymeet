@@ -1,0 +1,14 @@
+Hello {{ user.first_name }},
+
+This is a friendly reminder that you've been accepted to {{ session.title }}, but we haven't received your confirmation yet.
+
+Please confirm your acceptance by {{ membership.acceptance_deadline|date:"F d, Y" }}
+
+To accept your spot, please visit: {{ acceptance_url }}
+
+If you do not confirm by the deadline, your spot may be offered to someone on the waitlist.
+
+If you have any questions or need an extension, please reach out to us.
+
+Best regards,
+The Djangonaut Space Team

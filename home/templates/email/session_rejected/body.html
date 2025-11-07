@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Update</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Application Update</h1>
+            <p>Hello {{ user.first_name }},</p>
+
+            <p>Thank you for applying to <strong>{{ session.title }}</strong>. We really appreciate the time and effort you put into your application.</p>
+
+            <p>After careful consideration, we regret to inform you that we are unable to offer you a spot in this session. We received an overwhelming number of applications, and the decision-making process was very difficult.</p>
+
+            <h2>Session Details</h2>
+            <ul>
+                <li><strong>Start Date:</strong> {{ session.start_date|date:"F d, Y" }}</li>
+                <li><strong>End Date:</strong> {{ session.end_date|date:"F d, Y" }}</li>
+            </ul>
+
+            <p>We encourage you to apply again in future cohorts. Many successful participants applied multiple times before being accepted. You can stay updated on upcoming sessions by visiting our website.</p>
+
+            <p>Thank you for your interest in Djangonaut Space!</p>
+
+            <p>Best regards,<br>
+            The Djangonaut Space Team</p>
+        </div>
+    </body>
+</html>

@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from home.views.events import EventDetailView, EventListView, event_calendar
+from home.views.membership_acceptance import accept_membership_view
 from home.views.resources import resource_link
 from home.views.sessions import SessionDetailView, SessionListView
 from home.views.surveys import (
@@ -20,6 +21,11 @@ urlpatterns = [
     ),
     path("sessions/", SessionListView.as_view(), name="session_list"),
     path("sessions/<slug:slug>/", SessionDetailView.as_view(), name="session_detail"),
+    path(
+        "sessions/<slug:slug>/accept/",
+        accept_membership_view,
+        name="accept_membership",
+    ),
     path(
         "survey/<str:slug>/response/create/",
         CreateUserSurveyResponseFormView.as_view(),

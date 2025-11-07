@@ -1,0 +1,20 @@
+Hello {{ user.first_name }},
+
+Congratulations! We're excited to let you know that you've been accepted to {{ session.title }}!
+
+Session Details:
+- Start Date: {{ session.start_date|date:"F d, Y" }}
+- End Date: {{ session.end_date|date:"F d, Y" }}
+{% if membership.team %}- Team: {{ membership.team.name }}{% endif %}
+{% if membership.role %}- Role: {{ membership.get_role_display }}{% endif %}
+
+IMPORTANT: Please confirm your acceptance by {{ membership.acceptance_deadline|date:"F d, Y" }}
+
+To accept your spot, please visit: {{ acceptance_url }}
+
+If you do not confirm by the deadline, your spot may be offered to someone on the waitlist.
+
+We look forward to working with you!
+
+Best regards,
+The Djangonaut Space Team

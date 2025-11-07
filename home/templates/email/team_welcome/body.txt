@@ -1,0 +1,22 @@
+Hello {{ user.first_name }},
+
+Welcome to {{ session.title }}! We're excited to have you as part of {{ team.name }}.
+
+Team Details:
+- Team Name: {{ team.name }}
+- Project: {{ team.project.name }}
+- Your Role: {{ membership.get_role_display }}
+
+Your Team Members:
+{% for member in team_members %}- {{ member.user.get_full_name }} ({{ member.get_role_display }}){% if member.user.email %} - {{ member.user.email }}{% endif %}
+{% endfor %}
+
+Next Steps:
+1. Introduce yourself to your team members
+2. Review the project repository: {{ team.project.url }}
+3. Attend the session kickoff meeting (details to follow)
+
+We're looking forward to a great session together!
+
+Best regards,
+The Djangonaut Space Team

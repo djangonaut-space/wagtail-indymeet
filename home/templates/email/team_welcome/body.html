@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to Your Team</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Welcome to Your Team!</h1>
+            <p>Hello {{ user.first_name }},</p>
+
+            <p>Welcome to <strong>{{ session.title }}</strong>! We're excited to have you as part of <strong>{{ team.name }}</strong>.</p>
+
+            <h2>Team Details</h2>
+            <ul>
+                <li><strong>Team Name:</strong> {{ team.name }}</li>
+                <li><strong>Project:</strong> <a href="{{ team.project.url }}">{{ team.project.name }}</a></li>
+                <li><strong>Your Role:</strong> {{ membership.get_role_display }}</li>
+            </ul>
+
+            <h2>Your Team Members</h2>
+            <ul>
+            {% for member in team_members %}
+                <li><strong>{{ member.user.get_full_name }}</strong> ({{ member.get_role_display }}){% if member.user.email %} - <a href="mailto:{{ member.user.email }}">{{ member.user.email }}</a>{% endif %}</li>
+            {% endfor %}
+            </ul>
+
+            <h2>Next Steps</h2>
+            <ol>
+                <li>Introduce yourself to your team members</li>
+                <li>Review the project repository: <a href="{{ team.project.url }}">{{ team.project.url }}</a></li>
+                <li>Attend the session kickoff meeting (details to follow)</li>
+            </ol>
+
+            <p>We're looking forward to a great session together!</p>
+
+            <p>Best regards,<br>
+            The Djangonaut Space Team</p>
+        </div>
+    </body>
+</html>

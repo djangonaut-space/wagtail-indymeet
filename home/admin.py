@@ -20,6 +20,11 @@ from .views.team_formation import (
     calculate_overlap_ajax,
     team_formation_view,
 )
+from .views.session_notifications import (
+    send_acceptance_reminders_view,
+    send_session_results_view,
+    send_team_welcome_emails_view,
+)
 
 
 @admin.register(Event)
@@ -68,16 +73,32 @@ class SessionProjectInline(admin.TabularInline):
 
 @admin.register(SessionMembership)
 class SessionMembershipAdmin(admin.ModelAdmin):
-    list_display = ("user", "session", "role", "created")
+    list_display = (
+        "user",
+        "session",
+        "role",
+        "team",
+        "accepted",
+        "acceptance_deadline",
+        "created",
+    )
+    list_filter = ("session", "role", "accepted")
+    search_fields = ("user__email", "user__first_name", "user__last_name")
+    readonly_fields = ("created", "accepted_at")
 
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
     inlines = [SessionMembershipInline, SessionProjectInline]
-    actions = ["form_teams_action"]
+    actions = [
+        "form_teams_action",
+        "send_session_results_action",
+        "send_acceptance_reminders_action",
+        "send_team_welcome_emails_action",
+    ]
 
     def get_urls(self):
-        """Add custom URLs for team formation"""
+        """Add custom URLs for team formation and notifications"""
         urls = super().get_urls()
         custom_urls = [
             path(
@@ -95,6 +116,21 @@ class SessionAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(calculate_overlap_ajax),
                 name="session_calculate_overlap",
             ),
+            path(
+                "<int:session_id>/send-session-results/",
+                self.admin_site.admin_view(send_session_results_view),
+                name="session_send_results",
+            ),
+            path(
+                "<int:session_id>/send-acceptance-reminders/",
+                self.admin_site.admin_view(send_acceptance_reminders_view),
+                name="session_send_acceptance_reminders",
+            ),
+            path(
+                "<int:session_id>/send-team-welcome-emails/",
+                self.admin_site.admin_view(send_team_welcome_emails_view),
+                name="session_send_team_welcome_emails",
+            ),
         ]
         return custom_urls + urls
 
@@ -111,6 +147,51 @@ class SessionAdmin(admin.ModelAdmin):
 
         session = queryset.first()
         url = reverse("admin:session_form_teams", args=[session.id])
+        return redirect(url)
+
+    @admin.action(description="Send session result notifications")
+    def send_session_results_action(self, request, queryset):
+        """Redirect to send session results interface for selected session"""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one session to send results.",
+                messages.ERROR,
+            )
+            return
+
+        session = queryset.first()
+        url = reverse("admin:session_send_results", args=[session.id])
+        return redirect(url)
+
+    @admin.action(description="Send acceptance reminder emails")
+    def send_acceptance_reminders_action(self, request, queryset):
+        """Redirect to send acceptance reminders interface for selected session"""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one session to send reminders.",
+                messages.ERROR,
+            )
+            return
+
+        session = queryset.first()
+        url = reverse("admin:session_send_acceptance_reminders", args=[session.id])
+        return redirect(url)
+
+    @admin.action(description="Send team welcome emails")
+    def send_team_welcome_emails_action(self, request, queryset):
+        """Redirect to send team welcome emails interface for selected session"""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one session to send welcome emails.",
+                messages.ERROR,
+            )
+            return
+
+        session = queryset.first()
+        url = reverse("admin:session_send_team_welcome_emails", args=[session.id])
         return redirect(url)
 
 
