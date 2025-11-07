@@ -5,7 +5,7 @@ from django.test import TestCase
 from accounts.factories import UserFactory
 from home.factories import ProjectFactory, SessionFactory, SurveyFactory, TeamFactory
 from home.forms import BulkTeamAssignmentForm
-from home.models import ProjectPreference, Team, UserSurveyResponse
+from home.models import ProjectPreference, Team, UserSurveyResponse, Waitlist
 
 
 class BulkTeamAssignmentFormTestCase(TestCase):
@@ -53,6 +53,12 @@ class BulkTeamAssignmentFormTestCase(TestCase):
             user=self.user2, session=self.session, project=self.project_django
         )
 
+        # Add user1 to waitlist to verify it gets cleared on assignment
+        Waitlist.objects.create(user=self.user1, session=self.session)
+        self.assertTrue(
+            Waitlist.objects.filter(user=self.user1, session=self.session).exists()
+        )
+
         form = BulkTeamAssignmentForm(
             data={
                 "bulk_assign-user_ids": f"{self.user1.id},{self.user2.id}",
@@ -62,6 +68,15 @@ class BulkTeamAssignmentFormTestCase(TestCase):
         )
 
         self.assertTrue(form.is_valid(), form.errors)
+        assigned_count = form.save()
+
+        # Verify users were assigned
+        self.assertEqual(assigned_count, 2)
+
+        # Verify user1's waitlist entry was cleared
+        self.assertFalse(
+            Waitlist.objects.filter(user=self.user1, session=self.session).exists()
+        )
 
     def test_valid_assignment_users_with_no_preferences(self):
         """Test that users with no preferences can be assigned to any team."""

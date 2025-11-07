@@ -67,6 +67,24 @@
                 <div class="toolbar-divider"></div>
 
                 <div class="toolbar-section">
+                    <form id="waitlist-form"
+                          method="post"
+                          action="{% url 'admin:session_add_to_waitlist' session.id %}?{% querystring %}"
+                          data-user-ids-id="{{ waitlist_form.user_ids.id_for_label }}"
+                    >
+                        {% csrf_token %}
+
+                        {% for field in waitlist_form %}
+                            {{ field }}
+                        {% endfor %}
+
+                        <button type="submit" class="button">{% trans "Add to Waitlist" %}</button>
+                    </form>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <div class="toolbar-section">
                     <form id="overlap-form"
                           hx-post="{% url 'admin:session_calculate_overlap' session.id %}"
                           hx-target="#overlap-results"
@@ -155,6 +173,8 @@
                             <td>
                                 {% if applicant.current_team %}
                                     {{ applicant.current_team.name }}
+                                {% elif applicant.is_waitlisted %}
+                                    Waitlisted
                                 {% else %}
                                     <span class="badge badge-unassigned">{% trans "Unassigned" %}</span>
                                 {% endif %}
@@ -379,6 +399,23 @@ overlapForm?.addEventListener('submit', function(e) {
     }
 
     const userIdsField = document.getElementById(overlapForm.dataset.userIdsId);
+    userIdsField.value = selectedIds.join(',');
+});
+
+// Populate hidden user_ids field and validate before waitlist form submission
+const waitlistForm = document.getElementById('waitlist-form')
+waitlistForm?.addEventListener('submit', function(e) {
+    const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked'))
+        .map(cb => cb.value);
+    const userIdsField = document.getElementById(waitlistForm.dataset.userIdsId);
+
+    if (selectedIds.length === 0) {
+        e.preventDefault();
+        alert('{% trans "Please select at least one applicant." %}');
+        return false;
+    }
+
+    // Populate hidden field with comma-separated user IDs
     userIdsField.value = selectedIds.join(',');
 });
 </script>

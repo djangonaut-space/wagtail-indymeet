@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from accounts.models import CustomUser
 from home.constants import DATE_INPUT_FORMAT
 from home.constants import SURVEY_FIELD_VALIDATORS
-from home.models import Question, Team, SessionMembership, ProjectPreference
+from home.models import Question, Team, SessionMembership, ProjectPreference, Waitlist
 from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
@@ -1039,19 +1039,109 @@ class BulkTeamAssignmentForm(forms.Form):
         team = self.cleaned_data["team"]
 
         assigned_count = 0
-        for user_id in user_ids:
-            try:
-                user = CustomUser.objects.get(pk=user_id)
-                membership, created = SessionMembership.objects.get_or_create(
-                    user=user,
-                    session=self.session,
-                    defaults={"role": SessionMembership.DJANGONAUT},
-                )
-                membership.team = team
-                # Don't change role - keep whatever it was
-                membership.save()
-                assigned_count += 1
-            except CustomUser.DoesNotExist:
-                continue
+        for user in CustomUser.objects.filter(id__in=user_ids):
+            membership, created = SessionMembership.objects.get_or_create(
+                user=user,
+                session=self.session,
+                defaults={"role": SessionMembership.DJANGONAUT},
+            )
+            membership.team = team
+            # Don't change role - keep whatever it was
+            membership.save()
+            assigned_count += 1
+
+        Waitlist.objects.filter(session=self.session, user__id__in=user_ids).delete()
 
         return assigned_count
+
+
+class BulkWaitlistForm(forms.Form):
+    """Form for bulk adding users to the session waitlist."""
+
+    prefix = "bulk_waitlist"
+
+    user_ids = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True,
+        help_text=_("Comma-separated list of user IDs to add to waitlist"),
+    )
+
+    def __init__(self, *args, session, **kwargs):
+        """Initialize form with session context (required)."""
+        super().__init__(*args, **kwargs)
+        if session is None:
+            raise ValueError("Session is required for BulkWaitlistForm")
+        self.session = session
+
+    def clean_user_ids(self) -> list[int]:
+        """Parse and validate user IDs."""
+        user_ids_str = self.cleaned_data.get("user_ids", "")
+        if not user_ids_str:
+            raise forms.ValidationError(_("No users selected"))
+
+        try:
+            user_ids = [
+                int(uid.strip()) for uid in user_ids_str.split(",") if uid.strip()
+            ]
+        except ValueError:
+            raise forms.ValidationError(_("Invalid user ID format"))
+
+        if not user_ids:
+            raise forms.ValidationError(_("No users selected"))
+
+        # Verify users exist
+        existing_count = CustomUser.objects.filter(id__in=user_ids).count()
+        if existing_count != len(user_ids):
+            raise forms.ValidationError(_("Some selected users do not exist"))
+
+        return user_ids
+
+    def clean(self):
+        """Validate that users are not already in the session or waitlist."""
+        cleaned_data = super().clean()
+
+        # Only validate if we have user_ids
+        if "user_ids" not in cleaned_data:
+            return cleaned_data
+
+        user_ids = cleaned_data["user_ids"]
+
+        # Check if any users are already session members
+        existing_members = SessionMembership.objects.filter(
+            user_id__in=user_ids, session=self.session
+        ).select_related("user")
+
+        if existing_members.exists():
+            member_names = ", ".join(
+                member.user.get_full_name() or member.user.email
+                for member in existing_members
+            )
+            self.add_error(
+                None,
+                _(
+                    f"The following users are already session members: {member_names}. "
+                    "Please remove them from selection."
+                ),
+            )
+
+        return cleaned_data
+
+    @transaction.atomic
+    def save(self) -> int:
+        """
+        Add selected users to the waitlist.
+
+        Returns:
+            Number of users successfully added to waitlist
+        """
+        user_ids = self.cleaned_data["user_ids"]
+
+        waitlist_entries = [
+            Waitlist(user_id=user_id, session=self.session) for user_id in user_ids
+        ]
+
+        # Use bulk_create with ignore_conflicts to handle race conditions
+        Waitlist.objects.bulk_create(waitlist_entries, ignore_conflicts=True)
+
+        # Return count of actually created entries
+        return len(waitlist_entries)

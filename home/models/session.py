@@ -220,7 +220,7 @@ class SessionMembership(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "session"], name="unique_session_membership"
+                fields=["session", "user"], name="unique_session_membership"
             )
         ]
 
@@ -242,7 +242,11 @@ class SessionMembership(models.Model):
         on_delete=models.CASCADE,
     )
     session = models.ForeignKey(
-        Session, related_name="session_memberships", on_delete=models.CASCADE
+        Session,
+        related_name="session_memberships",
+        on_delete=models.CASCADE,
+        # Index is covered by unique_session_membership
+        db_index=False,
     )
     team = models.ForeignKey(
         Team,
@@ -253,3 +257,46 @@ class SessionMembership(models.Model):
     )
     role = models.CharField(max_length=64, choices=ROLES, default=DJANGONAUT)
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()
+
+
+class Waitlist(models.Model):
+    """
+    Represents users who are waitlisted for a session.
+
+    Waitlisted users are applicants who are not outright rejected but also
+    not yet accepted into the session. They exist in a state between
+    application and acceptance, and may be promoted to SessionMembership
+    if space becomes available.
+    """
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session", "user"], name="unique_waitlist_entry"
+            )
+        ]
+        ordering = ["created_at"]
+        verbose_name = _("Waitlist Entry")
+        verbose_name_plural = _("Waitlist Entries")
+
+    user = models.ForeignKey(
+        "accounts.CustomUser",
+        related_name="waitlist_entries",
+        on_delete=models.CASCADE,
+        help_text=_("The user who is waitlisted for this session"),
+    )
+    session = models.ForeignKey(
+        Session,
+        related_name="waitlist_entries",
+        on_delete=models.CASCADE,
+        help_text=_("The session the user is waitlisted for"),
+        # Index is covered by unique_waitlist_entry
+        db_index=False,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text=_("When this user was added to the waitlist"),
+    )
+
+    def __str__(self) -> str:
+        return f"{self.user.get_full_name() or self.user.email} - {self.session.title}"

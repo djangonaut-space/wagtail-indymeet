@@ -15,12 +15,13 @@ from django.core.paginator import Paginator
 from django.db.models import Prefetch
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from home.dataclasses import ApplicantData, DjangonautDetail, TeamStatistics
 from home.filters import ApplicantFilterSet
-from home.forms import BulkTeamAssignmentForm, OverlapAnalysisForm
-from home.models import Session, SessionMembership, Team, UserSurveyResponse
+from home.forms import BulkTeamAssignmentForm, BulkWaitlistForm, OverlapAnalysisForm
+from home.models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
 from home.availability import (
     calculate_team_overlap,
     format_availability_by_day,
@@ -58,6 +59,9 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     else:
         bulk_form = BulkTeamAssignmentForm(session=session)
 
+    # Initialize waitlist form
+    waitlist_form = BulkWaitlistForm(session=session)
+
     # Get sorting parameters
     sort_by = request.GET.get("sort", "selection_rank")
     sort_order = request.GET.get("order", "asc")
@@ -83,6 +87,7 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
         "filter_form": filterset.form,  # Use the form from the filterset
         "overlap_form": overlap_form,
         "bulk_form": bulk_form,
+        "waitlist_form": waitlist_form,
         "page_obj": page_obj,
         "teams": teams_data,
         "sort_by": sort_by,
@@ -101,6 +106,41 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     }
 
     return render(request, "admin/team_formation.html", context)
+
+
+@permission_required("Team.form_team")
+@staff_member_required
+@require_http_methods(["POST"])
+def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
+    """
+    Handle adding users to the waitlist.
+
+    POST endpoint for bulk adding applicants to the session waitlist.
+    On success, redirects with success message and preserves querystring.
+    On validation error, redirects with error messages and preserves querystring.
+    """
+    session = get_object_or_404(Session, pk=session_id)
+
+    waitlist_form = BulkWaitlistForm(request.POST, session=session)
+    if waitlist_form.is_valid():
+        waitlisted_count = waitlist_form.save()
+        messages.success(
+            request,
+            f"Successfully added {waitlisted_count} user(s) to the waitlist.",
+        )
+    else:
+        # Add form errors as messages
+        for field, errors in waitlist_form.errors.items():
+            for error in errors:
+                messages.error(request, error)
+
+    # Preserve querystring when redirecting
+    redirect_url = reverse("admin:session_form_teams", args=[session.id])
+    querystring = request.GET.urlencode()
+    if querystring:
+        redirect_url = f"{redirect_url}?{querystring}"
+
+    return redirect(redirect_url)
 
 
 @permission_required("Team.form_team")
@@ -221,6 +261,7 @@ def get_filtered_applicants(
                 selection_rank=response.selection_rank,
                 current_team=current_team,
                 current_role=current_role,
+                is_waitlisted=response.annotated_is_waitlisted,
                 previous_application_count=response.annotated_previous_application_count,
                 previous_avg_score=prev_avg_score,
                 has_availability=has_availability,

@@ -763,7 +763,8 @@ class TestTeamFormation:
         5. Bulk team assignment
         6. HTMX overlap calculation
         7. Sorting functionality
-        8. Pagination
+        8. Teams panel visibility
+        9. Waitlist functionality
         """
         data = setup_team_formation_data
 
@@ -903,3 +904,20 @@ class TestTeamFormation:
 
         # Verify Team Alpha heading shows (team card is visible)
         expect(team_page.get_by_role("heading", name="Team Alpha")).to_be_visible()
+
+        # Test 9: Waitlist functionality
+        # Select an unassigned applicant for waitlist (nth(2) should be unassigned)
+        checkboxes = team_page.locator(".applicant-checkbox")  # Re-query
+        checkboxes.nth(2).check()
+
+        # Click add to waitlist button
+        team_page.get_by_role("button", name="Add to Waitlist").click()
+
+        # Wait for page reload
+        team_page.wait_for_load_state("networkidle")
+
+        # Verify success message appears
+        expect(team_page.locator(".messagelist").first).to_contain_text(
+            "Successfully added"
+        )
+        expect(team_page.locator(".messagelist").first).to_contain_text("waitlist")

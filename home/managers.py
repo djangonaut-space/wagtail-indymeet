@@ -120,6 +120,16 @@ class UserSurveyResponseQuerySet(QuerySet):
             annotated_has_availability=Exists(has_availability_subquery)
         )
 
+    def with_waitlisted(self, session):
+        """
+        Annotate the response with the user's waitlist membership.
+        """
+        return self.annotate(
+            annotated_is_waitlisted=Exists(
+                session.waitlist_entries.filter(user=OuterRef("user"))
+            ),
+        )
+
     def with_session_memberships(self, session):
         """
         Prefetch session memberships for a specific session.
@@ -247,5 +257,6 @@ class UserSurveyResponseQuerySet(QuerySet):
             .with_previous_application_stats(session.application_survey)
             .with_availability_check()
             .with_session_memberships(session)
+            .with_waitlisted(session)
             .prefetch_related(project_prefs_prefetch)
         )

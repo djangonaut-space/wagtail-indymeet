@@ -14,7 +14,12 @@ from .models import SessionMembership
 from .models import Survey
 from .models import UserQuestionResponse
 from .models import UserSurveyResponse as UserSurveyResponseModel
-from .views.team_formation import calculate_overlap_ajax, team_formation_view
+from .models import Waitlist
+from .views.team_formation import (
+    add_to_waitlist,
+    calculate_overlap_ajax,
+    team_formation_view,
+)
 
 
 @admin.register(Event)
@@ -81,6 +86,11 @@ class SessionAdmin(admin.ModelAdmin):
                 name="session_form_teams",
             ),
             path(
+                "<int:session_id>/add-to-waitlist/",
+                self.admin_site.admin_view(add_to_waitlist),
+                name="session_add_to_waitlist",
+            ),
+            path(
                 "<int:session_id>/calculate-overlap/",
                 self.admin_site.admin_view(calculate_overlap_ajax),
                 name="session_calculate_overlap",
@@ -108,6 +118,21 @@ class SessionAdmin(admin.ModelAdmin):
 class TeamAdmin(admin.ModelAdmin):
     list_display = ("name", "project", "session")
     list_filter = ("session",)
+
+
+@admin.register(Waitlist)
+class WaitlistAdmin(admin.ModelAdmin):
+    list_display = ("user", "session", "created_at")
+    list_filter = ("session", "created_at")
+    search_fields = (
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+        "session__title",
+    )
+    readonly_fields = ("created_at",)
+    raw_id_fields = ("user",)
+    ordering = ("-created_at",)
 
 
 class QuestionInline(admin.StackedInline):
