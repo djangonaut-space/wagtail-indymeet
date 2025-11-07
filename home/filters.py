@@ -141,3 +141,27 @@ class ApplicantFilterSet(django_filters.FilterSet):
             ).values_list("user_id", flat=True)
             return queryset.filter(user_id__in=waitlisted_user_ids)
         return queryset
+
+    def filter_exclude_waitlisted(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Exclude waitlisted applicants from results."""
+        if value is True and self.session:
+            # Get user IDs that are waitlisted for this session
+            waitlisted_user_ids = Waitlist.objects.filter(
+                session=self.session
+            ).values_list("user_id", flat=True)
+            return queryset.exclude(user_id__in=waitlisted_user_ids)
+        return queryset
+
+    def filter_waitlisted_only(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Show only waitlisted applicants."""
+        if value is True and self.session:
+            # Get user IDs that are waitlisted for this session
+            waitlisted_user_ids = Waitlist.objects.filter(
+                session=self.session
+            ).values_list("user_id", flat=True)
+            return queryset.filter(user_id__in=waitlisted_user_ids)
+        return queryset
