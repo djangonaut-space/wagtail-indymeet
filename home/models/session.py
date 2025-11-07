@@ -80,6 +80,14 @@ class Session(models.Model):
         blank=True,
         help_text=_("Projects available for selection during this session"),
     )
+    results_notifications_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Timestamp when application result notifications "
+            "(accepted/waitlist/rejected) were sent to applicants"
+        ),
+    )
 
     objects = models.Manager.from_queryset(SessionQuerySet)()
 
@@ -256,6 +264,24 @@ class SessionMembership(models.Model):
         on_delete=models.CASCADE,
     )
     role = models.CharField(max_length=64, choices=ROLES, default=DJANGONAUT)
+    accepted = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Whether the user has accepted their session membership. "
+            "None = not yet responded, True = accepted, False = declined"
+        ),
+    )
+    acceptance_deadline = models.DateField(
+        null=True,
+        blank=True,
+        help_text=_("Deadline for the user to accept their session membership"),
+    )
+    accepted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("Timestamp when the user accepted their session membership"),
+    )
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()
 
 
