@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib import admin, messages
 from django.db.models import F, Max, Count
 from django.shortcuts import render, redirect
@@ -21,7 +23,9 @@ from .views.team_formation import (
     team_formation_view,
 )
 from .views.session_notifications import (
+    reject_waitlisted_user,
     send_acceptance_reminders_view,
+    send_membership_acceptance_emails,
     send_session_results_view,
     send_team_welcome_emails_view,
 )
@@ -85,6 +89,23 @@ class SessionMembershipAdmin(admin.ModelAdmin):
     list_filter = ("session", "role", "accepted")
     search_fields = ("user__email", "user__first_name", "user__last_name")
     readonly_fields = ("created", "accepted_at")
+    actions = ["send_acceptance_emails_action"]
+
+    @admin.action(description="Send acceptance emails to selected members")
+    def send_acceptance_emails_action(self, request, queryset):
+        """
+        Send acceptance emails to selected SessionMembership records.
+
+        This action sends acceptance notification emails to users with
+        SessionMembership records, typically after team formation.
+        """
+        sent_count = send_membership_acceptance_emails(queryset.djangonauts())
+
+        self.message_user(
+            request,
+            f"Successfully sent {sent_count} acceptance email(s).",
+            messages.SUCCESS,
+        )
 
 
 @admin.register(Session)
@@ -214,6 +235,28 @@ class WaitlistAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
     raw_id_fields = ("user",)
     ordering = ("-created_at",)
+    actions = ["reject_waitlisted_users_action"]
+
+    @admin.action(description="Reject waitlisted users and send rejection emails")
+    def reject_waitlisted_users_action(self, request, queryset):
+        """
+        Reject selected users from the waitlist.
+
+        This action will:
+        1. Send rejection notification emails
+        2. Remove them from the waitlist
+        """
+        rejected_count = 0
+        for waitlist_entry in queryset:
+            reject_waitlisted_user(waitlist_entry)
+            rejected_count += 1
+
+        self.message_user(
+            request,
+            f"Successfully rejected {rejected_count} user(s) from the waitlist "
+            f"and sent rejection emails.",
+            messages.SUCCESS,
+        )
 
 
 class QuestionInline(admin.StackedInline):

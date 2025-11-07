@@ -7,6 +7,7 @@ Provides admin interfaces for:
 - Sending team welcome emails
 """
 
+import datetime
 from datetime import timedelta
 
 from django.conf import settings
@@ -210,6 +211,67 @@ def send_team_welcome_emails(session: Session, teams: QuerySet[Team]) -> int:
         sent_count += 1
 
     return sent_count
+
+
+def send_membership_acceptance_emails(
+    memberships: QuerySet[SessionMembership],
+) -> int:
+    """
+    Send acceptance emails to users with SessionMembership.
+
+    Args:
+        memberships: QuerySet of SessionMembership objects
+
+    Returns:
+        Number of emails sent
+    """
+    sent_count = 0
+
+    for membership in memberships:
+        acceptance_url = settings.BASE_URL + reverse(
+            "accept_membership", kwargs={"slug": membership.session.slug}
+        )
+
+        context = {
+            "user": membership.user,
+            "session": membership.session,
+            "membership": membership,
+            "acceptance_url": acceptance_url,
+        }
+
+        email.send(
+            email_template="session_accepted",
+            recipient_list=[membership.user.email],
+            context=context,
+        )
+        sent_count += 1
+
+    return sent_count
+
+
+def reject_waitlisted_user(waitlist_entry: Waitlist) -> None:
+    """
+    Reject a waitlisted user and send them a rejection email.
+
+    Sends a waitlist rejection notification email and removes the user
+    from the waitlist.
+
+    Args:
+        waitlist_entry: The Waitlist entry to reject
+    """
+    context = {
+        "user": waitlist_entry.user,
+        "session": waitlist_entry.session,
+    }
+
+    email.send(
+        email_template="waitlist_rejection",
+        recipient_list=[waitlist_entry.user.email],
+        context=context,
+    )
+
+    # Remove from waitlist
+    waitlist_entry.delete()
 
 
 @staff_member_required

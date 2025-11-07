@@ -27,6 +27,7 @@ from home.factories import (
     UserSurveyResponseFactory,
 )
 from home.models import SessionMembership, Waitlist
+from home.views.session_notifications import reject_waitlisted_user
 
 User = get_user_model()
 
@@ -622,3 +623,52 @@ class SessionMembershipModelAcceptanceFieldsTests(TestCase):
         membership.save()
         membership.refresh_from_db()
         self.assertFalse(membership.accepted)
+
+
+class RejectWaitlistedUserTests(TestCase):
+    """Tests for the reject_waitlisted_user function."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = UserFactory.create(
+            email="test@example.com", first_name="Test", last_name="User"
+        )
+        self.session = SessionFactory.create(title="Test Session", slug="test-session")
+        self.waitlist_entry = Waitlist.objects.create(
+            user=self.user, session=self.session
+        )
+
+    @patch("home.views.session_notifications.email.send")
+    def test_reject_waitlisted_user_sends_email(self, mock_send):
+        """Test that rejecting a waitlisted user sends a rejection email."""
+        reject_waitlisted_user(self.waitlist_entry)
+
+        # Verify email was sent
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        self.assertEqual(call_kwargs["email_template"], "waitlist_rejection")
+        self.assertEqual(call_kwargs["recipient_list"], [self.user.email])
+        self.assertIn("user", call_kwargs["context"])
+        self.assertIn("session", call_kwargs["context"])
+
+    @patch("home.views.session_notifications.email.send")
+    def test_reject_waitlisted_user_removes_from_waitlist(self, mock_send):
+        """Test that rejecting a waitlisted user removes them from the waitlist."""
+        reject_waitlisted_user(self.waitlist_entry)
+
+        # Verify user was removed from waitlist
+        self.assertFalse(
+            Waitlist.objects.filter(user=self.user, session=self.session).exists()
+        )
+
+    @patch("home.views.session_notifications.email.send")
+    def test_reject_waitlisted_user_does_not_create_membership(self, mock_send):
+        """Test that rejecting a waitlisted user doesn't create a SessionMembership."""
+        reject_waitlisted_user(self.waitlist_entry)
+
+        # Verify no membership was created
+        self.assertFalse(
+            SessionMembership.objects.filter(
+                user=self.user, session=self.session
+            ).exists()
+        )
