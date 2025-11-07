@@ -25,6 +25,10 @@ class CreateUserSurveyResponseFormView(
     success_url = reverse_lazy("session_list")
     template_name = "home/surveys/form.html"
 
+    def get_queryset(self):
+        """Get surveys with application_session prefetched."""
+        return super().get_queryset().select_related("application_session")
+
     def test_func(self):
         """Verify user can submit this survey."""
         user = self.request.user
@@ -75,7 +79,7 @@ class UserSurveyResponseView(LoginRequiredMixin, DetailView):
             super()
             .get_queryset()
             .filter(user=self.request.user)
-            .select_related("survey")
+            .select_related("survey__application_session")
             .prefetch_related(
                 Prefetch(
                     "userquestionresponse_set",
@@ -107,7 +111,7 @@ class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView)
             super()
             .get_queryset()
             .filter(user=self.request.user)
-            .select_related("survey__session")
+            .select_related("survey__application_session")
             .prefetch_related(
                 Prefetch(
                     "userquestionresponse_set",

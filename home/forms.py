@@ -3,6 +3,7 @@ import io
 
 from django import forms
 from django.core import validators
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
 from django.db import transaction
@@ -154,7 +155,11 @@ class BaseSurveyForm(forms.Form):
 
         # Add project preference field if survey is associated with a session
         self.session = None
-        for app_session in self.survey.application_sessions.all():
+        try:
+            app_session = self.survey.application_session
+        except ObjectDoesNotExist:
+            pass
+        else:
             if app_session.is_accepting_applications():
                 self.session = app_session
 
@@ -174,8 +179,6 @@ class BaseSurveyForm(forms.Form):
                         widget=CheckboxSelectMultipleSurvey,
                         required=False,
                     )
-                # Avoid continuing to loop through application sessions.
-                break
 
     def clean(self):
         cleaned_data = super().clean()

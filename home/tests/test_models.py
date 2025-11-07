@@ -131,8 +131,8 @@ class UserSurveyResponseTests(TestCase):
         with freeze_time("2023-11-16 12:00:00"):
             self.assertFalse(response.is_editable())
 
-    def test_is_not_editable_no_application_sessions(self):
-        """Response is not editable if no application sessions"""
+    def test_is_not_editable_no_application_session(self):
+        """Response is not editable if no application session"""
         survey = SurveyFactory.create()
         response = UserSurveyResponseFactory.create(survey=survey, user=self.user)
         self.assertFalse(response.is_editable())

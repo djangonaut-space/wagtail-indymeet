@@ -39,7 +39,9 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     - Quick team assignment actions
     - Current teams with statistics
     """
-    session = get_object_or_404(Session, pk=session_id)
+    session = get_object_or_404(
+        Session.objects.select_related("application_survey"), pk=session_id
+    )
 
     # Handle bulk team assignment
     if request.method == "POST":
@@ -142,7 +144,8 @@ def get_filtered_applicants(
 
     This function uses QuerySet methods to avoid N+1 queries.
     """
-    if not session.application_survey:
+    # Check application_survey_id first to avoid DB hit when not set
+    if not session.application_survey_id:
         # Return empty list and an unbound filterset
         filterset = ApplicantFilterSet(
             data=None,

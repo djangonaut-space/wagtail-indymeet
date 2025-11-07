@@ -14,7 +14,9 @@ class SessionDetailView(DetailView):
 
     def get_queryset(self):
         """Get sessions with user's application data."""
-        return Session.objects.with_applications(user=self.request.user)
+        return Session.objects.with_applications(user=self.request.user).select_related(
+            "application_survey"
+        )
 
 
 class SessionListView(ListView):
@@ -26,6 +28,8 @@ class SessionListView(ListView):
 
     def get_queryset(self):
         """Get sessions ordered by end date with user's application data."""
-        return Session.objects.with_applications(user=self.request.user).order_by(
-            "-end_date"
+        return (
+            Session.objects.with_applications(user=self.request.user)
+            .select_related("application_survey")
+            .order_by("-end_date")
         )

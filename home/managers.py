@@ -75,7 +75,7 @@ class UserSurveyResponseQuerySet(QuerySet):
         previous_responses_count = (
             UserSurveyResponse.objects.filter(user=OuterRef("user"))
             .exclude(survey=current_survey)
-            .filter(survey__application_sessions__isnull=False)
+            .filter(survey__application_session__isnull=False)
             .values("user")
             .annotate(annotated_count=Count("id"))
             .values("annotated_count")
@@ -88,7 +88,7 @@ class UserSurveyResponseQuerySet(QuerySet):
                 user=OuterRef("user"), score__isnull=False
             )
             .exclude(survey=current_survey)
-            .filter(survey__application_sessions__isnull=False)
+            .filter(survey__application_session__isnull=False)
             .values("user")
             .annotate(annotated_avg_score=Avg("score"))
             .values("annotated_avg_score")
@@ -228,7 +228,8 @@ class UserSurveyResponseQuerySet(QuerySet):
         """
         from home.models import ProjectPreference
 
-        if not session or not session.application_survey:
+        # Check application_survey_id first to avoid DB hit when not set
+        if not session or not session.application_survey_id:
             return self.none()
 
         # Prefetch project preferences for this session

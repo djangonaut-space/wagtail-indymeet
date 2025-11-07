@@ -62,9 +62,9 @@ class Session(models.Model):
     application_end_date = models.DateField(
         help_text="This is the end date for Djangonaut applications."
     )
-    application_survey = models.ForeignKey(
+    application_survey = models.OneToOneField(
         "home.Survey",
-        related_name="application_sessions",
+        related_name="application_session",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -111,7 +111,8 @@ class Session(models.Model):
         )
 
     def get_application_url(self):
-        if self.application_survey:
+        # Check application_survey_id first to avoid DB hit when not set
+        if self.application_survey_id:
             return self.application_survey.get_survey_response_url()
         return self.application_url
 

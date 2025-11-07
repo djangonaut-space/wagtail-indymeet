@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -164,11 +165,12 @@ class UserSurveyResponse(BaseModel):
 
     def is_editable(self):
         """Check if this response can be edited"""
-        # If survey has associated sessions, check if ANY session is still accepting applications
-        return any(
-            session.is_accepting_applications()
-            for session in self.survey.application_sessions.all()
-        )
+        # If survey has associated session, check if session is still accepting applications
+        # Use try/except for reverse OneToOne relation
+        try:
+            return self.survey.application_session.is_accepting_applications()
+        except ObjectDoesNotExist:
+            return False
 
     def get_absolute_url(self):
         return reverse("user_survey_response", kwargs={"slug": self.survey.slug})
