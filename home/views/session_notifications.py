@@ -226,10 +226,12 @@ def send_session_results_view(request: HttpRequest, session_id: int) -> HttpResp
     session = get_object_or_404(Session, pk=session_id)
 
     # Calculate counts for confirmation page
-    accepted_memberships = SessionMembership.objects.filter(
-        session=session
-    ).select_related("user", "team", "team__project")
-    accepted_count = accepted_memberships.count()
+    # Only send acceptance notifications to Djangonauts, but track all accepted users
+    djangonaut_memberships = (
+        SessionMembership.objects.for_session(session)
+        .djangonauts()
+        .select_related("user", "team", "team__project")
+    )
 
     waitlisted_entries = Waitlist.objects.filter(session=session).select_related("user")
     waitlisted_count = waitlisted_entries.count()
@@ -239,7 +241,9 @@ def send_session_results_view(request: HttpRequest, session_id: int) -> HttpResp
     ).select_related("user")
     applicant_count = applicant_responses.count()
     applicant_user_ids = set(applicant_responses.values_list("user_id", flat=True))
-    accepted_user_ids = set(accepted_memberships.values_list("user_id", flat=True))
+    # For rejection calculation, use ALL session memberships, not just Djangonauts
+    accepted_user_ids = set(djangonaut_memberships.values_list("user_id", flat=True))
+    accepted_count = len(accepted_user_ids)
     waitlisted_user_ids = set(waitlisted_entries.values_list("user_id", flat=True))
     rejected_user_ids = applicant_user_ids - accepted_user_ids - waitlisted_user_ids
     rejected_count = len(rejected_user_ids)
@@ -252,13 +256,13 @@ def send_session_results_view(request: HttpRequest, session_id: int) -> HttpResp
             deadline_days = form.cleaned_data["deadline_days"]
             acceptance_deadline = timezone.now().date() + timedelta(days=deadline_days)
 
-            # Bulk update acceptance deadline for memberships without one
-            accepted_memberships.filter(acceptance_deadline__isnull=True).update(
+            # Bulk update acceptance deadline for Djangonaut memberships without one
+            djangonaut_memberships.filter(acceptance_deadline__isnull=True).update(
                 acceptance_deadline=acceptance_deadline
             )
 
-            # Send accepted emails
-            sent_accepted_count = send_accepted_emails(session, accepted_memberships)
+            # Send accepted emails (only to Djangonauts)
+            sent_accepted_count = send_accepted_emails(session, djangonaut_memberships)
 
             # Send waitlisted emails
             sent_waitlisted_count = send_waitlisted_emails(session, waitlisted_entries)
@@ -315,12 +319,16 @@ def send_acceptance_reminders_view(
     """
     session = get_object_or_404(Session, pk=session_id)
 
-    # Get memberships that need reminders
-    pending_memberships = SessionMembership.objects.filter(
-        session=session,
-        accepted__isnull=True,
-        acceptance_deadline__isnull=False,
-    ).select_related("user", "team", "team__project")
+    # Get djangonaut memberships that need reminders
+    pending_memberships = (
+        SessionMembership.objects.for_session(session)
+        .djangonauts()
+        .filter(
+            accepted__isnull=True,
+            acceptance_deadline__isnull=False,
+        )
+        .select_related("user", "team", "team__project")
+    )
 
     if request.method == "POST":
         sent_count = send_acceptance_reminder_emails(session, pending_memberships)

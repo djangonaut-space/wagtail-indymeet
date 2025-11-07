@@ -31,16 +31,17 @@ def accept_membership_view(request: HttpRequest, slug: str) -> HttpResponse:
     Returns:
         HTTP response with the acceptance form or redirect
     """
-    # Look up membership based on session slug and current user
+    # Look up Djangonaut membership based on session slug and current user
     session = get_object_or_404(Session, slug=slug)
     membership = get_object_or_404(
-        SessionMembership.objects.select_related(
+        SessionMembership.objects.for_session(session)
+        .djangonauts()
+        .select_related(
             "session",
             "team",
             "team__project",
             "user",
         ),
-        session=session,
         user=request.user,
     )
 

@@ -42,6 +42,8 @@ class SessionResultsNotificationTests(TestCase):
             application_survey=cls.survey,
         )
 
+        cls.navigator = UserFactory.create(email="navigator@example.com")
+        cls.captain = UserFactory.create(email="captain@example.com")
         # Create accepted users with memberships
         cls.accepted_user1 = UserFactory.create(email="accepted1@example.com")
         cls.accepted_user2 = UserFactory.create(email="accepted2@example.com")
@@ -72,7 +74,19 @@ class SessionResultsNotificationTests(TestCase):
         cls.membership2 = SessionMembershipFactory.create(
             session=cls.session,
             user=cls.accepted_user2,
+            role=SessionMembership.DJANGONAUT,
+            team=None,
+        )
+        SessionMembershipFactory.create(
+            session=cls.session,
+            user=cls.navigator,
             role=SessionMembership.NAVIGATOR,
+            team=None,
+        )
+        SessionMembershipFactory.create(
+            session=cls.session,
+            user=cls.captain,
+            role=SessionMembership.CAPTAIN,
             team=None,
         )
 
@@ -101,8 +115,8 @@ class SessionResultsNotificationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Test Session")
-        # Check that counts are displayed
-        self.assertContains(response, "2")  # accepted count
+        # Check that counts are displayed (only Djangonauts get acceptance emails)
+        self.assertContains(response, "1")  # accepted count (only Djangonauts)
         self.assertContains(response, "2")  # waitlisted count
         self.assertContains(response, "2")  # rejected count
 
@@ -163,7 +177,7 @@ class SessionResultsNotificationTests(TestCase):
         BASE_URL="https://djangonaut.space",
     )
     def test_send_session_results_sets_acceptance_deadline(self):
-        """Test that acceptance deadlines are set for memberships"""
+        """Test that acceptance deadlines are set for Djangonaut memberships only"""
         url = reverse("admin:session_send_results", args=[self.session.id])
         self.client.post(
             url,
@@ -174,10 +188,12 @@ class SessionResultsNotificationTests(TestCase):
         self.membership1.refresh_from_db()
         self.membership2.refresh_from_db()
 
-        # Check deadlines are set
+        # Check deadline is set for Djangonaut only
         expected_deadline = timezone.now().date() + timedelta(days=10)
-        self.assertEqual(self.membership1.acceptance_deadline, expected_deadline)
-        self.assertEqual(self.membership2.acceptance_deadline, expected_deadline)
+        set_deadline = SessionMembership.objects.filter(
+            acceptance_deadline__isnull=False
+        ).values_list("id", flat=True)
+        self.assertEqual(set(set_deadline), {self.membership1.id, self.membership2.id})
 
 
 class AcceptanceReminderTests(TestCase):

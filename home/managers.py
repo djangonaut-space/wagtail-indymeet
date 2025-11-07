@@ -43,6 +43,10 @@ class SessionQuerySet(QuerySet):
 
 
 class SessionMembershipQuerySet(QuerySet):
+    def for_session(self, session):
+        """Filter memberships for a specific session."""
+        return self.filter(session=session)
+
     def djangonauts(self):
         return self.filter(role=self.model.DJANGONAUT)
 
