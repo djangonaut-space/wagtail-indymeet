@@ -732,47 +732,30 @@ class ApplicantFilterForm(forms.Form):
             self.fields["overlap_with_captain"].queryset = team_queryset
 
 
-class OverlapAnalysisForm(forms.Form):
-    """Form for analyzing availability overlap between selected users and team members."""
+class BaseTeamForm(forms.Form):
+    """
+    Base class for forms that require a session context
+    and accept a comma-delimited list of user IDs.
 
-    prefix = "overlap"
+    Provides:
+    - user_ids field (hidden input)
+    - clean_user_ids method with validation
+    - get_selected_users method to retrieve user objects
+    """
 
     user_ids = forms.CharField(
         widget=forms.HiddenInput(),
         required=True,
-        help_text=_("Comma-separated list of user IDs to analyze"),
+        help_text=_("Comma-separated list of user IDs"),
     )
 
-    team = forms.ModelChoiceField(
-        label=_("Team"),
-        queryset=None,
-        required=True,
-        help_text=_("Team whose navigators/captain will be included in analysis"),
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
-
-    analysis_type = forms.ChoiceField(
-        label=_("Analysis Type"),
-        choices=[
-            ("overlap-navigator", _("Check Navigator Overlap")),
-            ("overlap-captain", _("Check Captain Overlap")),
-        ],
-        initial="overlap-navigator",
-        widget=forms.RadioSelect(attrs={"class": "form-radio"}),
-    )
-
-    def __init__(self, *args, session=None, **kwargs):
-        """Initialize form with session context for team queryset."""
+    def __init__(self, *args, session, **kwargs):
+        """Initialize form with session context."""
         super().__init__(*args, **kwargs)
         self.session = session
-        if session:
-            self.fields["team"].queryset = Team.objects.filter(
-                session=session
-            ).order_by("name")
 
     def clean_user_ids(self) -> list[int]:
-        """Parse and validate user IDs."""
-
+        """Parse and validate comma-delimited user IDs."""
         user_ids_str = self.cleaned_data.get("user_ids", "")
         if not user_ids_str:
             raise forms.ValidationError(_("No users selected"))
@@ -805,6 +788,35 @@ class OverlapAnalysisForm(forms.Form):
         return list(
             CustomUser.objects.filter(id__in=user_ids).prefetch_related("availability")
         )
+
+
+class OverlapAnalysisForm(BaseTeamForm):
+    """Form for analyzing availability overlap between selected users and team members."""
+
+    prefix = "overlap"
+
+    team = forms.ModelChoiceField(
+        label=_("Team"),
+        queryset=None,
+        required=True,
+        help_text=_("Team whose navigators/captain will be included in analysis"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    analysis_type = forms.ChoiceField(
+        label=_("Analysis Type"),
+        choices=[
+            ("overlap-navigator", _("Check Navigator Overlap")),
+            ("overlap-captain", _("Check Captain Overlap")),
+        ],
+        initial="overlap-navigator",
+        widget=forms.RadioSelect(attrs={"class": "form-radio"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Initialize form with session context for team queryset."""
+        super().__init__(*args, **kwargs)
+        self.fields["team"].queryset = self.session.teams.order_by("name")
 
     def get_team_navigators(self) -> list[CustomUser]:
         """
@@ -934,16 +946,10 @@ class OverlapAnalysisForm(forms.Form):
             return self.calculate_captain_overlap_context()
 
 
-class BulkTeamAssignmentForm(forms.Form):
+class BulkTeamAssignmentForm(BaseTeamForm):
     """Form for bulk assignment of users to a team."""
 
     prefix = "bulk_assign"
-
-    user_ids = forms.CharField(
-        widget=forms.HiddenInput(),
-        required=True,
-        help_text=_("Comma-separated list of user IDs to assign"),
-    )
 
     team = forms.ModelChoiceField(
         label=_("Team"),
@@ -954,39 +960,10 @@ class BulkTeamAssignmentForm(forms.Form):
         help_text=_("Select the team to assign selected users to"),
     )
 
-    def __init__(self, *args, session=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Initialize form with session context for team queryset."""
         super().__init__(*args, **kwargs)
-        self.session = session
-        if session:
-
-            self.fields["team"].queryset = Team.objects.filter(
-                session=session
-            ).order_by("name")
-
-    def clean_user_ids(self) -> list[int]:
-        """Parse and validate user IDs."""
-
-        user_ids_str = self.cleaned_data.get("user_ids", "")
-        if not user_ids_str:
-            raise forms.ValidationError(_("No users selected"))
-
-        try:
-            user_ids = [
-                int(uid.strip()) for uid in user_ids_str.split(",") if uid.strip()
-            ]
-        except ValueError:
-            raise forms.ValidationError(_("Invalid user ID format"))
-
-        if not user_ids:
-            raise forms.ValidationError(_("No users selected"))
-
-        # Verify users exist
-        existing_count = CustomUser.objects.filter(id__in=user_ids).count()
-        if existing_count != len(user_ids):
-            raise forms.ValidationError(_("Some selected users do not exist"))
-
-        return user_ids
+        self.fields["team"].queryset = self.session.teams.order_by("name")
 
     def clean(self):
         """Validate that users' project preferences match the team's project."""
@@ -1055,46 +1032,10 @@ class BulkTeamAssignmentForm(forms.Form):
         return assigned_count
 
 
-class BulkWaitlistForm(forms.Form):
+class BulkWaitlistForm(BaseTeamForm):
     """Form for bulk adding users to the session waitlist."""
 
     prefix = "bulk_waitlist"
-
-    user_ids = forms.CharField(
-        widget=forms.HiddenInput(),
-        required=True,
-        help_text=_("Comma-separated list of user IDs to add to waitlist"),
-    )
-
-    def __init__(self, *args, session, **kwargs):
-        """Initialize form with session context (required)."""
-        super().__init__(*args, **kwargs)
-        if session is None:
-            raise ValueError("Session is required for BulkWaitlistForm")
-        self.session = session
-
-    def clean_user_ids(self) -> list[int]:
-        """Parse and validate user IDs."""
-        user_ids_str = self.cleaned_data.get("user_ids", "")
-        if not user_ids_str:
-            raise forms.ValidationError(_("No users selected"))
-
-        try:
-            user_ids = [
-                int(uid.strip()) for uid in user_ids_str.split(",") if uid.strip()
-            ]
-        except ValueError:
-            raise forms.ValidationError(_("Invalid user ID format"))
-
-        if not user_ids:
-            raise forms.ValidationError(_("No users selected"))
-
-        # Verify users exist
-        existing_count = CustomUser.objects.filter(id__in=user_ids).count()
-        if existing_count != len(user_ids):
-            raise forms.ValidationError(_("Some selected users do not exist"))
-
-        return user_ids
 
     def clean(self):
         """Validate that users are not already in the session or waitlist."""
