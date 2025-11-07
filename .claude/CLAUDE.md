@@ -276,3 +276,4 @@ uv run python manage.py migrate --settings=indymeet.settings.production
 ---
 
 **Remember:** Always run tests, write documentation, use type hints, and focus on building features for the Django application that supports the Djangonaut Space mentoring program.
+- Don't import modules in the method if it's not needed
