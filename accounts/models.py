@@ -67,8 +67,12 @@ class CustomUserQuerySet(QuerySet):
         )
 
 
+class CustomUserManager(UserManager.from_queryset(CustomUserQuerySet)):
+    pass
+
+
 class CustomUser(AbstractUser):
-    objects = UserManager.from_queryset(CustomUserQuerySet)()
+    objects = CustomUserManager()
 
 
 class UserProfile(models.Model):
