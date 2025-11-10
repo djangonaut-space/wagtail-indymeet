@@ -273,3 +273,6 @@ ALLOWED_EMAILS_FOR_TESTING = [
     for email in (os.environ.get("ALLOWED_EMAILS_FOR_TESTING") or "").split(";")
     if email
 ]
+
+# The invite URL for the Djangonaut Space Discord. Keep this private.
+DISCORD_INVITE_URL = os.environ.get("DISCORD_INVITE_URL", "")
