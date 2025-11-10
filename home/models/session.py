@@ -149,6 +149,11 @@ class Team(models.Model):
         on_delete=models.PROTECT,
         help_text=_("The project the team is working on."),
     )
+    google_drive_folder = models.URLField(
+        blank=True,
+        null=True,
+        help_text=_("Link to the team's Google Drive folder with workbooks"),
+    )
 
     def __str__(self) -> str:
         return f"{self.name} - {self.project.name}"
