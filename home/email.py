@@ -22,9 +22,11 @@ def send(email_template, recipient_list, context=None, from_email=None):
         if not recipient_list:
             return
 
-    email_context = context.copy()
+    email_context = context.copy() if context else {}
     # Strip the newline character that our formatter is likely to add in.
-    subject = render_to_string(f"email/{email_template}/subject.txt").strip()
+    subject = render_to_string(
+        f"email/{email_template}/subject.txt", email_context
+    ).strip()
     if settings.ENVIRONMENT != "production":
         subject = f"[{settings.ENVIRONMENT}] " + subject
     text = render_to_string(f"email/{email_template}/body.txt", email_context)
