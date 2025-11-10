@@ -1,15 +1,12 @@
 # Create your views here.
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordResetView
-from django.core.mail import send_mail
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
@@ -18,6 +15,8 @@ from django.utils.http import urlsafe_base64_encode
 from django.views import View
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import UpdateView
+
+from home.email import send
 
 from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
@@ -63,18 +62,15 @@ def send_user_confirmation_email(request, user):
         },
     )
     unsubscribe_link = reverse("email_subscriptions")
-    email_dict = {
+    email_context = {
         "cta_link": request.build_absolute_uri(invite_link),
         "name": user.get_full_name(),
         "unsubscribe_link": request.build_absolute_uri(unsubscribe_link),
     }
-    send_mail(
-        "Djangonaut Space Email Confirmation",
-        render_to_string("emails/email_confirmation.txt", email_dict),
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        html_message=render_to_string("emails/email_confirmation.html", email_dict),
-        fail_silently=False,
+    send(
+        email_template="email_confirmation",
+        recipient_list=[user.email],
+        context=email_context,
     )
 
 

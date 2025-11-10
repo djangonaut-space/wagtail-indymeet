@@ -13,3 +13,9 @@ DATABASES["default"].setdefault("OPTIONS", {}).pop("sslmode", None)
 STORAGES["staticfiles"][
     "BACKEND"
 ] = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+# Use locmem backend for email in tests
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
+# Set ENVIRONMENT to production so email sending is not restricted in tests
+ENVIRONMENT = "production"
