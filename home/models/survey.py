@@ -182,9 +182,13 @@ class UserSurveyResponse(BaseModel):
         if session := self.survey.session:
             availability, _ = UserAvailability.objects.get_or_create(user=self.user)
             context = {
+                "user": self.user,
+                "name": self.user.first_name or self.user.email,
                 "availability": availability,
                 "response": self,
                 "session": session,
+                "cta_link": self.get_full_url(),
+                "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
             }
             email.send(
                 email_template="application_created",
@@ -196,9 +200,13 @@ class UserSurveyResponse(BaseModel):
         if session := self.survey.session:
             availability, _ = UserAvailability.objects.get_or_create(user=self.user)
             context = {
+                "user": self.user,
+                "name": self.user.first_name or self.user.email,
                 "availability": availability,
                 "response": self,
                 "session": session,
+                "cta_link": self.get_full_url(),
+                "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
             }
             email.send(
                 email_template="application_updated",

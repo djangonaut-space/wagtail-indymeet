@@ -1,1 +1,1 @@
-{{ session.title }} - Application Update: Waitlisted
+Waitlist Status for {{ session.title }}

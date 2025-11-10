@@ -1,1 +1,1 @@
-Welcome to {{ session.title }} - Meet Your Team!
+Welcome to Djangonaut Space!

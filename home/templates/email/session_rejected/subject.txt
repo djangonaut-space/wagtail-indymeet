@@ -1,1 +1,1 @@
-{{ session.title }} - Application Update
+Application Decision for {{ session.title }}

@@ -1,16 +1,25 @@
-Hello {{ user.first_name }},
+Hello,
 
-Thank you for applying to {{ session.title }}. We really appreciate the time and effort you put into your application.
+We sincerely appreciate the enthusiasm and motivation you demonstrated in your application to join Djangonaut Space and start on your contributing adventure. We received a remarkable {{ applicant_count }} applicants and only can accept {{ accepted_count }} of those, making the selection process incredibly challenging. After careful consideration, we regret to inform you that we cannot offer acceptance for your participation in {{ session.title }}.
 
-After careful consideration, we regret to inform you that we are unable to offer you a spot in this session. We received an overwhelming number of applications, and the decision-making process was very difficult.
+We invite you to re-apply in a few months when the next session opens for applications. We do not have any specifics on that session.
 
-Session Details:
-- Start Date: {{ session.start_date|date:"F d, Y" }}
-- End Date: {{ session.end_date|date:"F d, Y" }}
+Unfortunately we don't have the availability to respond with the exact reasons why folks were rejected. We'd still like to help you improve for next time! Here are some things for you to consider.
 
-We encourage you to apply again in future cohorts. Many successful participants applied multiple times before being accepted. You can stay updated on upcoming sessions by visiting our website.
+- Complete Application: Be sure to complete the application in its entirety, including the Django Contribution Tutorial
+- Stand out: We have an average of 90 applicants per session, try to stand out
+- Community Connections: We favored people who have connections to the Django community over those that had none or few (join and participate on the Discord server and the forum)
+- Resilience Over Time: We favored people displaying resilience over a period of time (think weeks rather than a single day)
+- Django Experience: We favored folks who have some experience with Django over those with none
+- Authenticity: We favored answers that felt authentic rather than generated to match our ideals
 
-Thank you for your interest in Djangonaut Space!
+If you are feeling passionate and enthusiastic about contributing and connecting with the Django community but not sure where to start, we'd like to share some ideas: 🫸🫷
 
-Best regards,
-The Djangonaut Space Team
+- Django Discord: You can ask questions and connect with other folks in the django community and join live events, we even host some!
+- Contribute: You could also forge ahead to contribute to Django and ask questions of the folks in the Django server in #contributing-getting-started, people want to help! See the Django docs for more details: https://docs.djangoproject.com/en/dev/internals/contributing/
+- Community: Host meetings, give talks at meetups or conferences, write blog posts, or organize Django Girls events.
+
+There are many ways to contribute to the Django community and we hope that our inability to accept you into the program now will not deter you from continuing to be part of this wonderful Django community. 🤗
+
+Sincerely,
+Djangonaut Space Organizers

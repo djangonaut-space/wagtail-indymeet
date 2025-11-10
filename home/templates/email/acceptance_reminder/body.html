@@ -1,26 +1,38 @@
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Acceptance Reminder</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Reminder: Confirm Your Acceptance</h1>
-            <p>Hello {{ user.first_name }},</p>
+{% extends "email/base.html" %}
+{% load email_tags %}
 
-            <p>This is a friendly reminder that you've been accepted to <strong>{{ session.title }}</strong>, but we haven't received your confirmation yet.</p>
+{% block preheader %}Reminder: Confirm your spot in the Djangonaut Program{% endblock preheader %}
 
-            <p><strong>Please confirm your acceptance by {{ membership.acceptance_deadline|date:"F d, Y" }}</strong></p>
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We emailed you an invitation to join the Djangonaut Program and it's not too late to confirm your place as a Djangonaut! ⏰
+  </p>
 
-            <p><a href="{{ acceptance_url }}" style="display: inline-block; padding: 10px 20px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 5px;">Accept Your Spot</a></p>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Please confirm your acceptance by <strong>{{ membership.acceptance_deadline|date:"l F jS" }}</strong> (<a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">12:00 UTC</a>).
+  </p>
 
-            <p>If you do not confirm by the deadline, your spot may be offered to someone on the waitlist.</p>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Otherwise, we may not be able to accommodate you this round.
+  </p>
+{% endblock before_cta %}
 
-            <p>If you have any questions or need an extension, please reach out to us.</p>
+{% block cta_button_text %}Confirm Your Spot{% endblock cta_button_text %}
 
-            <p>Best regards,<br>
-            The Djangonaut Space Team</p>
-        </div>
-    </body>
-</html>
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The duration of this program is <strong><a href="{{ session.start_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.start_date|date:"F d, Y" }}</a> - <a href="{{ session.end_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.end_date|date:"F d, Y" }}</a></strong>.<br>
+    To learn more about the program you can read our documentation here: <a href="https://github.com/djangonaut-space/program" style="color: #5c0287;">https://github.com/djangonaut-space/program</a>
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Don't worry if this is not of interest to you or we have reached you at a bad time. We'd appreciate you letting us know. ❤️
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    All the best,<br><br>
+    Djangonaut Organisation Team 🚀<br>
+    ✉️ <a href="mailto:contact@djangonaut.space" style="color: #5c0287;">contact@djangonaut.space</a><br>
+    📄 <a href="https://github.com/djangonaut-space/program" style="color: #5c0287;">https://github.com/djangonaut-space/program</a>
+  </p>
+{% endblock after_cta %}

@@ -1,34 +1,60 @@
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Session Acceptance</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Congratulations!</h1>
-            <p>Hello {{ user.first_name }},</p>
+{% extends "email/base.html" %}
+{% load email_tags %}
 
-            <p>We're excited to let you know that you've been accepted to <strong>{{ session.title }}</strong>!</p>
+{% block preheader %}You've been selected for the Djangonaut Program!{% endblock preheader %}
 
-            <h2>Session Details</h2>
-            <ul>
-                <li><strong>Start Date:</strong> {{ session.start_date|date:"F d, Y" }}</li>
-                <li><strong>End Date:</strong> {{ session.end_date|date:"F d, Y" }}</li>
-                {% if membership.team %}<li><strong>Team:</strong> {{ membership.team.name }}</li>{% endif %}
-                {% if membership.role %}<li><strong>Role:</strong> {{ membership.get_role_display }}</li>{% endif %}
-            </ul>
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Congratulations! You've been selected to join the Djangonaut Program! 🎊 You will be working on the <strong>{{ membership.team.project.name }}</strong> project.
+  </p>
 
-            <p><strong>IMPORTANT:</strong> Please confirm your acceptance by <strong>{{ membership.acceptance_deadline|date:"F d, Y" }}</strong></p>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We are excited by your desire to help contribute back to Django and we want to rocket launch your success! 🚀
+  </p>
 
-            <p><a href="{{ acceptance_url }}" style="display: inline-block; padding: 10px 20px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 5px;">Accept Your Spot</a></p>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We hope you are as excited as we are and can commit to join this program! Please confirm your acceptance by <strong>{{ membership.acceptance_deadline|date:"F d, Y" }}</strong> (<a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">12:00 UTC</a>).
+  </p>
+{% endblock before_cta %}
 
-            <p>If you do not confirm by the deadline, your spot may be offered to someone on the waitlist.</p>
+{% block cta_button_text %}Accept Your Spot{% endblock cta_button_text %}
 
-            <p>We look forward to working with you!</p>
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The Djangonaut Program aims to level up the Django code contributions from our community and to help you become a future leader of Django. 💪 This is an 8 week group mentoring program with an emphasis on sustainability and longevity.
+  </p>
 
-            <p>Best regards,<br>
-            The Djangonaut Space Team</p>
-        </div>
-    </body>
-</html>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The duration of this program is <strong><a href="{{ session.start_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.start_date|date:"F d, Y" }}</a> - <a href="{{ session.end_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.end_date|date:"F d, Y" }}</a></strong>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you choose to join this cohort, you will be supported by experienced members of the community working to ensure your success on the program. This includes:
+  </p>
+
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Captains</strong>, community managers who embody Django's supportive culture and will reach out for personal check-ins throughout the program 🤝</li>
+    <li style="margin-bottom: 8px;"><strong>Navigators</strong>, experienced open source contributors who will guide you through the process of resolving tickets and facilitating change 👩‍💻</li>
+  </ul>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You will also be supported by your fellow Djangonauts who you will be encouraged to work together with when tackling issues. 🫸🫷
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    As a rough guide, we expect the time commitment of a Djangonaut to be around <strong>4 hours per week</strong>. This may be more or less depending on your own constraints and motivation.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    To learn more about the program you can read our documentation here: <a href="https://github.com/djangonaut-space/program" style="color: #5c0287;">https://github.com/djangonaut-space/program</a>
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Not sure about the program? Please let us know what questions you have.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    All the best,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}

@@ -1,41 +1,50 @@
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to Your Team</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Welcome to Your Team!</h1>
-            <p>Hello {{ user.first_name }},</p>
+{% extends "email/base.html" %}
+{% load email_tags %}
 
-            <p>Welcome to <strong>{{ session.title }}</strong>! We're excited to have you as part of <strong>{{ team.name }}</strong>.</p>
+{% block preheader %}Welcome to Djangonaut Space!{% endblock preheader %}
 
-            <h2>Team Details</h2>
-            <ul>
-                <li><strong>Team Name:</strong> {{ team.name }}</li>
-                <li><strong>Project:</strong> <a href="{{ team.project.url }}">{{ team.project.name }}</a></li>
-                <li><strong>Your Role:</strong> {{ membership.get_role_display }}</li>
-            </ul>
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello {% for djangonaut in djangonauts %}{{ djangonaut.user.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %} 👋</p>
+{% endblock greeting %}
 
-            <h2>Your Team Members</h2>
-            <ul>
-            {% for member in team_members %}
-                <li><strong>{{ member.user.get_full_name }}</strong> ({{ member.get_role_display }}){% if member.user.email %} - <a href="mailto:{{ member.user.email }}">{{ member.user.email }}</a>{% endif %}</li>
-            {% endfor %}
-            </ul>
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>Welcome to Djangonaut Space!</strong>
+  </p>
 
-            <h2>Next Steps</h2>
-            <ol>
-                <li>Introduce yourself to your team members</li>
-                <li>Review the project repository: <a href="{{ team.project.url }}">{{ team.project.url }}</a></li>
-                <li>Attend the session kickoff meeting (details to follow)</li>
-            </ol>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    ✨ Congratulations on joining this exciting journey! We are thrilled to have you on board and can't wait to see the incredible contributions you'll make to the Django community. ✨
+  </p>
 
-            <p>We're looking forward to a great session together!</p>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Your team, <strong>{{ team.name }}</strong>, will be working on <strong>{{ team.project.name }}</strong> with help from your navigator, <strong>{{ navigator.user.get_full_name }}</strong>, and your captain, <strong>{{ captain.user.get_full_name }}</strong>. They are here to guide you and have been CCed in this email. They are also in discord waiting for you in your team's channel. You can also expect your Navigator/Captain to reach out soon to schedule your first meetings and get the ball rolling. 🗓️
+  </p>
+{% endblock before_cta %}
 
-            <p>Best regards,<br>
-            The Djangonaut Space Team</p>
-        </div>
-    </body>
-</html>
+{% block cta_button %}
+  <a href="{{ discord_invite_url }}" target="_blank" style="border: solid 2px #5c0287; border-radius: 4px; box-sizing: border-box; cursor: pointer; display: inline-block; font-size: 16px; font-weight: bold; margin: 0; padding: 12px 24px; text-decoration: none; text-transform: capitalize; background-color: #5c0287; border-color: #5c0287; color: #ffffff;">Join Our Discord</a>
+{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Now, it's prep time! Take a moment to do a quick self-introduction in the Introductions Channel- share your passion, experience, and what you hope to achieve during the program. You can also check out our other channels like Resources, Life, and your Team Channel. 💬
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We will have two orientation/get to know each other meetings planned. You should try to attend one of them. You will find them in Discord under "Events".
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    To help you navigate smoothly, we've prepared some workbooks. They are in your team folder{% if team.google_drive_folder %} (<a href="{{ team.google_drive_folder }}" style="color: #5c0287;">{{ team.google_drive_folder }}</a>){% endif %}, so please find the appropriate workbook with your name. Be sure to go over "Week 0 - Prep Week" for follow-up steps. If you have any problems accessing your workbook, please let us know immediately. 📝
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you have any questions along the way, feel free to reach out to any organizer or an officer via email or in the discord for assistance.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    We're looking forward to an exciting and stellar experience with you! 🌟<br><br>
+    Best regards,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}

@@ -1,81 +1,54 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .details {
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .details dt {
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .details dd {
-            margin-left: 0;
-            margin-bottom: 10px;
-        }
-        .footer {
-            margin-top: 30px;
-            font-size: 0.9em;
-            color: #666;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <p>Hello,</p>
+{% extends "email/base.html" %}
+{% load email_tags %}
 
-        <p><strong>{{ user.get_full_name|default:user.email }}</strong> has declined their membership invitation for <strong>{{ session.title }}</strong>.</p>
+{% block preheader %}Membership Declined Notification{% endblock preheader %}
 
-        <div class="details">
-            <h3>User Details</h3>
-            <dl>
-                <dt>Name:</dt>
-                <dd>{{ user.get_full_name }}</dd>
-                <dt>Email:</dt>
-                <dd>{{ user.email }}</dd>
-                {% if membership.team %}
-                <dt>Team:</dt>
-                <dd>{{ membership.team.name }}</dd>
-                {% endif %}
-                {% if membership.role %}
-                <dt>Role:</dt>
-                <dd>{{ membership.get_role_display }}</dd>
-                {% endif %}
-            </dl>
-        </div>
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello 👋</p>
+{% endblock greeting %}
 
-        <div class="details">
-            <h3>Session Details</h3>
-            <dl>
-                <dt>Session:</dt>
-                <dd>{{ session.title }}</dd>
-                <dt>Start Date:</dt>
-                <dd>{{ session.start_date|date:"F d, Y" }}</dd>
-                <dt>End Date:</dt>
-                <dd>{{ session.end_date|date:"F d, Y" }}</dd>
-            </dl>
-        </div>
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>{{ user.get_full_name|default:user.email }}</strong> has declined their membership invitation for <strong>{{ session.title }}</strong>.
+  </p>
 
-        <p>This spot can now be offered to someone on the waitlist.</p>
+  <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="font-family: Helvetica, sans-serif; font-size: 18px; font-weight: bold; margin: 0 0 12px 0;">User Details</h3>
+    <dl style="margin: 0;">
+      <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Name:</dt>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">{{ user.get_full_name }}</dd>
+      <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Email:</dt>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">{{ user.email }}</dd>
+      {% if membership.team %}
+      <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Team:</dt>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">{{ membership.team.name }}</dd>
+      {% endif %}
+      {% if membership.role %}
+      <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Role:</dt>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">{{ membership.get_role_display }}</dd>
+      {% endif %}
+    </dl>
+  </div>
 
-        <div class="footer">
-            <p>Best regards,<br>
-            Djangonaut Space System</p>
-        </div>
-    </div>
-</body>
-</html>
+  <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="font-family: Helvetica, sans-serif; font-size: 18px; font-weight: bold; margin: 0 0 12px 0;">Session Details</h3>
+    <dl style="margin: 0;">
+      <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Session:</dt>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">{{ session.title }}</dd>
+      <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Start Date:</dt>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;"><a href="{{ session.start_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.start_date|date:"F d, Y" }}</a></dd>
+      <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">End Date:</dt>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;"><a href="{{ session.end_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.end_date|date:"F d, Y" }}</a></dd>
+    </dl>
+  </div>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    This spot can now be offered to someone on the waitlist.<br><br>
+    Best regards,<br>
+    Djangonaut Space System
+  </p>
+{% endblock after_cta %}

@@ -50,9 +50,12 @@ def send_accepted_emails(
 
         context = {
             "user": membership.user,
+            "name": membership.user.first_name or membership.user.email,
             "session": session,
             "membership": membership,
             "acceptance_url": acceptance_url,
+            "cta_link": acceptance_url,
+            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(
@@ -66,7 +69,10 @@ def send_accepted_emails(
 
 
 def send_waitlisted_emails(
-    session: Session, waitlisted_entries: QuerySet[Waitlist]
+    session: Session,
+    waitlisted_entries: QuerySet[Waitlist],
+    applicant_count: int,
+    accepted_count: int,
 ) -> int:
     """
     Send waitlist emails to users on the Waitlist.
@@ -74,6 +80,8 @@ def send_waitlisted_emails(
     Args:
         session: The session for which to send emails
         waitlisted_entries: QuerySet of Waitlist objects
+        applicant_count: Total number of applicants
+        accepted_count: Number of accepted applicants
 
     Returns:
         Number of emails sent
@@ -84,6 +92,8 @@ def send_waitlisted_emails(
         context = {
             "user": waitlist_entry.user,
             "session": session,
+            "applicant_count": applicant_count,
+            "accepted_count": accepted_count,
         }
 
         email.send(
@@ -100,6 +110,8 @@ def send_rejected_emails(
     session: Session,
     rejected_user_ids: set[int],
     applicant_responses: QuerySet[UserSurveyResponse],
+    applicant_count: int,
+    accepted_count: int,
 ) -> int:
     """
     Send rejection emails to users who applied but were neither accepted nor waitlisted.
@@ -108,6 +120,8 @@ def send_rejected_emails(
         session: The session for which to send emails
         rejected_user_ids: Set of user IDs who were rejected
         applicant_responses: QuerySet of UserSurveyResponse objects
+        applicant_count: Total number of applicants
+        accepted_count: Number of accepted applicants
 
     Returns:
         Number of emails sent
@@ -119,6 +133,8 @@ def send_rejected_emails(
         context = {
             "user": response.user,
             "session": session,
+            "applicant_count": applicant_count,
+            "accepted_count": accepted_count,
         }
 
         email.send(
@@ -153,9 +169,12 @@ def send_acceptance_reminder_emails(
 
         context = {
             "user": membership.user,
+            "name": membership.user.first_name or membership.user.email,
             "session": session,
             "membership": membership,
             "acceptance_url": acceptance_url,
+            "cta_link": acceptance_url,
+            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(
@@ -194,6 +213,13 @@ def send_team_welcome_emails(session: Session, teams: QuerySet[Team]) -> int:
         if not team_members.exists():
             continue
 
+        # Separate members by role
+        djangonauts = [
+            m for m in team_members if m.role == SessionMembership.DJANGONAUT
+        ]
+        navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
+        captains = [m for m in team_members if m.role == SessionMembership.CAPTAIN]
+
         # Collect all team member emails
         recipient_list = [member.user.email for member in team_members]
 
@@ -201,6 +227,10 @@ def send_team_welcome_emails(session: Session, teams: QuerySet[Team]) -> int:
             "session": session,
             "team": team,
             "team_members": team_members,
+            "djangonauts": djangonauts,
+            "navigator": navigators[0] if navigators else None,
+            "captain": captains[0] if captains else None,
+            "discord_invite_url": settings.DISCORD_INVITE_URL,
         }
 
         email.send(
@@ -234,9 +264,12 @@ def send_membership_acceptance_emails(
 
         context = {
             "user": membership.user,
+            "name": membership.user.first_name or membership.user.email,
             "session": membership.session,
             "membership": membership,
             "acceptance_url": acceptance_url,
+            "cta_link": acceptance_url,
+            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(
@@ -327,11 +360,17 @@ def send_session_results_view(request: HttpRequest, session_id: int) -> HttpResp
             sent_accepted_count = send_accepted_emails(session, djangonaut_memberships)
 
             # Send waitlisted emails
-            sent_waitlisted_count = send_waitlisted_emails(session, waitlisted_entries)
+            sent_waitlisted_count = send_waitlisted_emails(
+                session, waitlisted_entries, applicant_count, accepted_count
+            )
 
             # Send rejected emails
             sent_rejected_count = send_rejected_emails(
-                session, rejected_user_ids, applicant_responses
+                session,
+                rejected_user_ids,
+                applicant_responses,
+                applicant_count,
+                accepted_count,
             )
 
             # Mark notifications as sent

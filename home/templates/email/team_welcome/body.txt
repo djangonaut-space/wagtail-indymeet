@@ -1,22 +1,19 @@
-Hello {{ user.first_name }},
+Hello {% for djangonaut in djangonauts %}{{ djangonaut.user.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},
 
-Welcome to {{ session.title }}! We're excited to have you as part of {{ team.name }}.
+Welcome to Djangonaut Space!
 
-Team Details:
-- Team Name: {{ team.name }}
-- Project: {{ team.project.name }}
-- Your Role: {{ membership.get_role_display }}
+✨ Congratulations on joining this exciting journey! We are thrilled to have you on board and can't wait to see the incredible contributions you'll make to the Django community. ✨
 
-Your Team Members:
-{% for member in team_members %}- {{ member.user.get_full_name }} ({{ member.get_role_display }}){% if member.user.email %} - {{ member.user.email }}{% endif %}
-{% endfor %}
+Your team, {{ team.name }}, will be working on {{ team.project.name }} with help from your navigator, {{ navigator.user.get_full_name }}, and your captain, {{ captain.user.get_full_name }}. They are here to guide you and have been CCed in this email. They are also in discord waiting for you in your team's channel. You can also expect your Navigator/Captain to reach out soon to schedule your first meetings and get the ball rolling. 🗓️
 
-Next Steps:
-1. Introduce yourself to your team members
-2. Review the project repository: {{ team.project.url }}
-3. Attend the session kickoff meeting (details to follow)
+Now, it's prep time! Head over to our Discord ({{ discord_invite_url }}) to get started. Take a moment to do a quick self-introduction in the Introductions Channel- share your passion, experience, and what you hope to achieve during the program. You can also check out our other channels like Resources, Life, and your Team Channel. 💬
 
-We're looking forward to a great session together!
+We will have two orientation/get to know each other meetings planned. You should try to attend one of them. You will find them in Discord under "Events".
+
+To help you navigate smoothly, we've prepared some workbooks. They are in your team folder{% if team.google_drive_folder %} {{ team.google_drive_folder }}{% endif %}, so please find the appropriate workbook with your name. Be sure to go over "Week 0 - Prep Week" for follow-up steps. If you have any problems accessing your workbook, please let us know immediately. 📝
+
+If you have any questions along the way, feel free to reach out to any organizer or an officer via email or in the discord for assistance.
+
+We're looking forward to an exciting and stellar experience with you! 🌟
 
 Best regards,
-The Djangonaut Space Team
