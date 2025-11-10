@@ -17,7 +17,7 @@
   </p>
 
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
-    Your team, <strong>{{ team.name }}</strong>, will be working on <strong>{{ team.project.name }}</strong> with help from your navigator, <strong>{{ navigator.user.get_full_name }}</strong>, and your captain, <strong>{{ captain.user.get_full_name }}</strong>. They are here to guide you and have been CCed in this email. They are also in discord waiting for you in your team's channel. You can also expect your Navigator/Captain to reach out soon to schedule your first meetings and get the ball rolling. 🗓️
+    Your team, <strong>{{ team.name }}</strong>, will be working on <strong>{{ team.project.name }}</strong> with help from your navigator{{ navigators|pluralize }}, {% for navigator in navigators %}<strong>{{ navigator.user.get_full_name }}</strong>, {% endfor %}and your captain{{ captains|pluralize }}, {% for captain in captains %}<strong>{{ captain.user.get_full_name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}. They are here to guide you and have been CCed in this email. They are also in discord waiting for you in your team's channel. You can also expect your Navigator/Captain to reach out soon to schedule your first meetings and get the ball rolling. 🗓️
   </p>
 {% endblock before_cta %}
 

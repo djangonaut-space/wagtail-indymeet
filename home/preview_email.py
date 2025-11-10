@@ -184,8 +184,8 @@ def team_welcome_email(recipient_email: str, session: Session) -> None:
         "team": team,
         "team_members": team_members,
         "djangonauts": djangonauts,
-        "navigator": navigators[0] if navigators else None,
-        "captain": captains[0] if captains else None,
+        "navigators": navigators,
+        "captains": captains,
         "discord_invite_url": settings.DISCORD_INVITE_URL,
     }
 
