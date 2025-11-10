@@ -55,7 +55,6 @@ def send_accepted_emails(
             "membership": membership,
             "acceptance_url": acceptance_url,
             "cta_link": acceptance_url,
-            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(
@@ -174,7 +173,6 @@ def send_acceptance_reminder_emails(
             "membership": membership,
             "acceptance_url": acceptance_url,
             "cta_link": acceptance_url,
-            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(
@@ -269,7 +267,6 @@ def send_membership_acceptance_emails(
             "membership": membership,
             "acceptance_url": acceptance_url,
             "cta_link": acceptance_url,
-            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(

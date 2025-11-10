@@ -61,11 +61,9 @@ def send_user_confirmation_email(request, user):
             "token": account_activation_token.make_token(user),
         },
     )
-    unsubscribe_link = reverse("email_subscriptions")
     email_context = {
         "cta_link": request.build_absolute_uri(invite_link),
         "name": user.get_full_name(),
-        "unsubscribe_link": request.build_absolute_uri(unsubscribe_link),
     }
     send(
         email_template="email_confirmation",

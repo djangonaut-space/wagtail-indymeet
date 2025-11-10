@@ -31,7 +31,6 @@ def acceptance_email(recipient_email: str, membership: SessionMembership) -> Non
         "membership": membership,
         "acceptance_url": acceptance_url,
         "cta_link": acceptance_url,
-        "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
     }
 
     email.send(
@@ -60,7 +59,6 @@ def reminder_email(recipient_email: str, membership: SessionMembership) -> None:
         "membership": membership,
         "acceptance_url": acceptance_url,
         "cta_link": acceptance_url,
-        "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
     }
 
     email.send(

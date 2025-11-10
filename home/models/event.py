@@ -88,7 +88,6 @@ class Event(ClusterableModel):
             "user": user,
             "name": user.first_name or user.email,
             "cta_link": self.get_full_url(),
-            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(
@@ -107,7 +106,6 @@ class Event(ClusterableModel):
             "user": user,
             "name": user.first_name or user.email,
             "cta_link": self.get_full_url(),
-            "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
         }
 
         email.send(

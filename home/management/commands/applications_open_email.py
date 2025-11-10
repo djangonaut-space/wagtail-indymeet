@@ -48,7 +48,6 @@ class Command(BaseCommand):
                 ),
                 "cta_link": applications_starting_today.get_application_url(),
                 "name": user.get_full_name(),
-                "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
             }
             send(
                 email_template="application_open",

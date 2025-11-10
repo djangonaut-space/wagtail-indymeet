@@ -188,7 +188,6 @@ class UserSurveyResponse(BaseModel):
                 "response": self,
                 "session": session,
                 "cta_link": self.get_full_url(),
-                "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
             }
             email.send(
                 email_template="application_created",
@@ -206,7 +205,6 @@ class UserSurveyResponse(BaseModel):
                 "response": self,
                 "session": session,
                 "cta_link": self.get_full_url(),
-                "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
             }
             email.send(
                 email_template="application_updated",

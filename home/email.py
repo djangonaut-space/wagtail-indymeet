@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.urls import reverse
 
 
 def send(email_template, recipient_list, context=None, from_email=None):
@@ -23,6 +24,9 @@ def send(email_template, recipient_list, context=None, from_email=None):
             return
 
     email_context = context.copy() if context else {}
+    email_context["unsubscribe_link"] = settings.BASE_URL + reverse(
+        "email_subscriptions"
+    )
     # Strip the newline character that our formatter is likely to add in.
     subject = render_to_string(
         f"email/{email_template}/subject.txt", email_context
