@@ -7,6 +7,7 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from . import preview_email
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
 from .models import Event, Project, Team
 from .models import ResourceLink
@@ -89,7 +90,11 @@ class SessionMembershipAdmin(admin.ModelAdmin):
     list_filter = ("session", "role", "accepted")
     search_fields = ("user__email", "user__first_name", "user__last_name")
     readonly_fields = ("created", "accepted_at")
-    actions = ["send_acceptance_emails_action"]
+    actions = [
+        "send_acceptance_emails_action",
+        preview_email.acceptance_email_action,
+        preview_email.reminder_email_action,
+    ]
 
     @admin.action(description="Send acceptance emails to selected members")
     def send_acceptance_emails_action(self, request, queryset):
@@ -116,6 +121,9 @@ class SessionAdmin(admin.ModelAdmin):
         "send_session_results_action",
         "send_acceptance_reminders_action",
         "send_team_welcome_emails_action",
+        preview_email.rejection_email_action,
+        preview_email.waitlist_email_action,
+        preview_email.team_welcome_email_action,
     ]
 
     def get_urls(self):
