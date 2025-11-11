@@ -6,7 +6,7 @@
     {% else %}
       <div class="w-12 h-12 rounded-full bg-purple-200 flex items-center justify-center mr-3">
         <span class="text-purple-700 font-bold text-lg">
-          {{ membership.user.get_full_name }}
+          {{ membership.user.first_name|first|upper }}{{ membership.user.last_name|first|upper }}
         </span>
       </div>
     {% endif %}
