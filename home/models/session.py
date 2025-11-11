@@ -6,8 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from home.managers import SessionMembershipQuerySet
-from home.managers import SessionQuerySet
+from home.managers import SessionMembershipQuerySet, SessionQuerySet
 
 
 class Project(models.Model):
@@ -130,6 +129,43 @@ class Session(models.Model):
     def get_full_url(self):
         return settings.BASE_URL + self.get_absolute_url()
 
+    def is_current(self) -> bool:
+        """Check if the session is currently active (between start and end dates)."""
+        now = timezone.now().date()
+        return self.start_date <= now <= self.end_date
+
+    @property
+    def current_week(self) -> int | None:
+        """
+        Get the current week number of the session (1-indexed).
+
+        Returns:
+            Week number if session is current, None if session hasn't started or has ended.
+        """
+        now = timezone.now().date()
+        if now < self.start_date:
+            return None
+        if now > self.end_date:
+            return None
+        days_elapsed = (now - self.start_date).days
+        return (days_elapsed // 7) + 1
+
+    @property
+    def status(self) -> str:
+        """
+        Get the current status of the session.
+
+        Returns:
+            'current', 'upcoming', or 'past'
+        """
+        now = timezone.now().date()
+        if now < self.start_date:
+            return "upcoming"
+        elif now > self.end_date:
+            return "past"
+        else:
+            return "current"
+
 
 class Team(models.Model):
     # Minimum required overlap hours for team formation
@@ -157,6 +193,12 @@ class Team(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} - {self.project.name}"
+
+    def get_absolute_url(self) -> str:
+        """Get the URL for the team detail page."""
+        return reverse(
+            "team_detail", kwargs={"session_slug": self.session.slug, "pk": self.pk}
+        )
 
 
 class ProjectPreferenceQuerySet(models.QuerySet):
