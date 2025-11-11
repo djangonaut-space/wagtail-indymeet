@@ -23,7 +23,7 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
     """
 
     model = Team
-    template_name = "home/team_detail.html"
+    template_name = "home/session/team/team_detail.html"
     context_object_name = "team"
     user_session_membership = None
 
@@ -102,7 +102,7 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
     """
 
     model = UserSurveyResponse
-    template_name = "home/djangonaut_survey_response.html"
+    template_name = "home/session/team/djangonaut_survey_response.html"
     context_object_name = "survey_response"
 
     def get_object(

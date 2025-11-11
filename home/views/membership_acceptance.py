@@ -53,7 +53,7 @@ def accept_membership_view(request: HttpRequest, slug: str) -> HttpResponse:
             "accepted": membership.accepted,
             "accepted_at": membership.accepted_at,
         }
-        return render(request, "home/membership_acceptance.html", context)
+        return render(request, "home/session/membership_acceptance.html", context)
 
     if request.method == "POST":
         form = MembershipAcceptanceForm(request.POST, membership=membership)
@@ -84,4 +84,4 @@ def accept_membership_view(request: HttpRequest, slug: str) -> HttpResponse:
         "form": form,
     }
 
-    return render(request, "home/membership_acceptance.html", context)
+    return render(request, "home/session/membership_acceptance.html", context)

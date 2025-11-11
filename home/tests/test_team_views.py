@@ -158,21 +158,21 @@ class TeamDetailViewTests(TestCase):
         self.client.force_login(self.captain)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "home/team_detail.html")
+        self.assertTemplateUsed(response, "home/session/team/team_detail.html")
 
     def test_navigator_can_view_team_page(self) -> None:
         """Test that navigator can view team page."""
         self.client.force_login(self.navigator)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "home/team_detail.html")
+        self.assertTemplateUsed(response, "home/session/team/team_detail.html")
 
     def test_djangonaut_can_view_team_page(self) -> None:
         """Test that djangonaut can view team page."""
         self.client.force_login(self.djangonaut1)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "home/team_detail.html")
+        self.assertTemplateUsed(response, "home/session/team/team_detail.html")
 
     def test_organizer_can_view_any_team_page(self) -> None:
         """Test that organizer can view any team page in their session."""
@@ -191,7 +191,7 @@ class TeamDetailViewTests(TestCase):
         self.client.force_login(organizer)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "home/team_detail.html")
+        self.assertTemplateUsed(response, "home/session/team/team_detail.html")
 
     def test_organizer_from_different_session_gets_404(self) -> None:
         """Test that organizer from different session cannot view team."""
@@ -477,7 +477,7 @@ class UserSessionListViewTests(TestCase):
             response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "home/user_sessions.html")
+        self.assertTemplateUsed(response, "home/session/user_sessions.html")
 
     def test_displays_all_user_sessions(self) -> None:
         """Test that all user's sessions are displayed."""
