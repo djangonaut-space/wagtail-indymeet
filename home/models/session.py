@@ -129,10 +129,9 @@ class Session(models.Model):
     def get_full_url(self):
         return settings.BASE_URL + self.get_absolute_url()
 
-    def is_current(self) -> bool:
-        """Check if the session is currently active (between start and end dates)."""
-        now = timezone.now().date()
-        return self.start_date <= now <= self.end_date
+    def is_current_or_upcoming(self) -> bool:
+        """Check if the session is currently active or upcoming (before end dates)."""
+        return timezone.now().date() <= self.end_date
 
     @property
     def current_week(self) -> int | None:
@@ -143,8 +142,6 @@ class Session(models.Model):
             Week number if session is current, None if session hasn't started or has ended.
         """
         now = timezone.now().date()
-        if now < self.start_date:
-            return None
         if now > self.end_date:
             return None
         days_elapsed = (now - self.start_date).days

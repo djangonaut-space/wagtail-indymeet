@@ -51,55 +51,45 @@ class SessionTests(TestCase):
             # No longer 15th AoE
             self.assertFalse(self.session.is_accepting_applications())
 
-    def test_is_current_before_start(self):
-        """Test is_current() returns False before session starts."""
+    def test_is_current_or_upcoming_before_start(self):
+        """Test is_current_or_upcoming() returns True before session starts."""
         session = SessionFactory.create(
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 12, 31).date(),
         )
 
         with freeze_time("2024-05-31"):
-            self.assertFalse(session.is_current())
+            self.assertTrue(session.is_current_or_upcoming())
 
-    def test_is_current_on_start_date(self):
-        """Test is_current() returns True on session start date."""
-        session = SessionFactory.create(
-            start_date=datetime(2024, 6, 1).date(),
-            end_date=datetime(2024, 12, 31).date(),
-        )
-
-        with freeze_time("2024-06-01"):
-            self.assertTrue(session.is_current())
-
-    def test_is_current_during_session(self):
-        """Test is_current() returns True during session."""
+    def test_is_current_or_upcoming_during_session(self):
+        """Test is_current_or_upcoming() returns True during session."""
         session = SessionFactory.create(
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 12, 31).date(),
         )
 
         with freeze_time("2024-09-15"):
-            self.assertTrue(session.is_current())
+            self.assertTrue(session.is_current_or_upcoming())
 
-    def test_is_current_on_end_date(self):
-        """Test is_current() returns True on session end date."""
+    def test_is_current_or_upcoming_on_end_date(self):
+        """Test is_current_or_upcoming() returns True on session end date."""
         session = SessionFactory.create(
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 12, 31).date(),
         )
 
         with freeze_time("2024-12-31"):
-            self.assertTrue(session.is_current())
+            self.assertTrue(session.is_current_or_upcoming())
 
-    def test_is_current_after_end(self):
-        """Test is_current() returns False after session ends."""
+    def test_is_current_or_upcoming_after_end(self):
+        """Test is_current_or_upcoming() returns False after session ends."""
         session = SessionFactory.create(
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 12, 31).date(),
         )
 
         with freeze_time("2025-01-01"):
-            self.assertFalse(session.is_current())
+            self.assertFalse(session.is_current_or_upcoming())
 
     def test_current_week_before_start(self):
         """Test current_week returns None before session starts."""
@@ -108,8 +98,11 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
+        with freeze_time("2024-05-24"):
+            self.assertEqual(session.current_week, -1)
+
         with freeze_time("2024-05-31"):
-            self.assertIsNone(session.current_week)
+            self.assertEqual(session.current_week, 0)
 
     def test_current_week_first_day(self):
         """Test current_week returns 1 on first day of session."""

@@ -77,7 +77,7 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
 
         # Show survey link if session is active, has survey, and user is captain/navigator
         context["show_survey_link"] = (
-            team.session.is_current()
+            team.session.is_current_or_upcoming()
             and team.session.application_survey_id
             and self.user_session_membership.role
             in {
@@ -119,7 +119,7 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
         )
 
         # Check if session is current
-        if not self.djangonaut_membership.session.is_current():
+        if not self.djangonaut_membership.session.is_current_or_upcoming():
             raise PermissionDenied(
                 "Survey responses are only visible during active sessions."
             )
