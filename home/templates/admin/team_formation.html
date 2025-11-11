@@ -162,7 +162,7 @@
                         <tr>
                             <td><input type="checkbox" class="applicant-checkbox" value="{{ applicant.user.id }}" /></td>
                             <td>
-                                <strong>{{ applicant.user.get_full_name|default:applicant.user.email }}</strong>
+                                <strong>{{ applicant.user.get_full_name }}</strong>
                                 <br>
                                 <a href="{% url 'admin:home_usersurveyresponse_change' applicant.response.id %}" target="_blank" class="application-link">
                                     {% trans "View Application" %} →
@@ -244,7 +244,7 @@
                     <p>
                         <strong>{% trans "Navigators:" %}</strong>
                         {% for navigator in team_data.navigators %}
-                            {{ navigator.get_full_name|default:navigator.email }}{% if not forloop.last %}, {% endif %}
+                            {{ navigator.get_full_name }}{% if not forloop.last %}, {% endif %}
                         {% empty %}
                             <em>{% trans "None" %}</em>
                         {% endfor %}
@@ -252,7 +252,7 @@
                     <p>
                         <strong>{% trans "Captain:" %}</strong>
                         {% if team_data.captain %}
-                            {{ team_data.captain.get_full_name|default:team_data.captain.email }}
+                            {{ team_data.captain.get_full_name }}
                         {% else %}
                             <em>{% trans "None" %}</em>
                         {% endif %}
@@ -286,7 +286,7 @@
                             <tbody>
                                 {% for djangonaut in team_data.djangonaut_details %}
                                 <tr>
-                                    <td>{{ djangonaut.user.get_full_name|default:djangonaut.user.email }}</td>
+                                    <td>{{ djangonaut.user.get_full_name }}</td>
                                     <td>{{ djangonaut.score|default:"—" }}</td>
                                     <td>{{ djangonaut.selection_rank|default:"—" }}</td>
                                     <td>

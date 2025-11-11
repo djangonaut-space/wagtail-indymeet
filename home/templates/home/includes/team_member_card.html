@@ -11,7 +11,7 @@
       </div>
     {% endif %}
     <div>
-      <p class="font-bold text-gray-900">{{ membership.user.get_full_name|default:membership.user.username }}</p>
+      <p class="font-bold text-gray-900">{{ membership.user.get_full_name }}</p>
       {% if membership.user.profile.pronouns %}
         <p class="text-sm text-gray-600">{{ membership.user.profile.pronouns }}</p>
       {% endif %}
