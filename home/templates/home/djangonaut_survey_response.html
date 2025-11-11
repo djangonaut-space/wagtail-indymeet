@@ -9,9 +9,9 @@
   <div class="section-container max-w-4xl mx-auto">
     <nav class="mb-4 text-sm" aria-label="breadcrumb">
       <ol class="flex items-center gap-2">
-        <li><a href="{% url 'user_sessions' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% trans "My Sessions" %}</a></li>
+        <li><a href="{% url 'user_sessions' %}">{% trans "My Sessions" %}</a></li>
         <li class="text-gray-400">/</li>
-        <li><a href="{% url 'team_detail' session_slug=session.slug pk=team.pk %}" class="text-blue-600 hover:text-blue-800 hover:underline">{{ session.title }} - {{ team.name }}</a></li>
+        <li><a href="{% url 'team_detail' session_slug=session.slug pk=team.pk %}">{{ session.title }} - {{ team.name }}</a></li>
         <li class="text-gray-400">/</li>
         <li class="text-gray-600">{{ djangonaut.get_full_name }}'s Application</li>
       </ol>
