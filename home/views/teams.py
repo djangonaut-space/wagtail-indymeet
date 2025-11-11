@@ -88,7 +88,7 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
         )
 
         # Add Discord invite URL from settings
-        context["DISCORD_INVITE_URL"] = settings.DISCORD_INVITE_URL
+        context["discord_invite_url"] = settings.DISCORD_INVITE_URL
 
         return context
 
@@ -109,16 +109,12 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
         self, queryset: QuerySet[UserSurveyResponse] | None = None
     ) -> UserSurveyResponse:
         """Get survey response and verify access."""
-        session_slug = self.kwargs.get("session_slug")
-        user_id = self.kwargs.get("user_id")
-
-        # Get the session
         self.djangonaut_membership = get_object_or_404(
             SessionMembership.objects.select_related(
                 "session__application_survey", "team", "user"
             ),
-            session__slug=session_slug,
-            user_id=user_id,
+            session__slug=self.kwargs.get("session_slug"),
+            user_id=self.kwargs.get("user_id"),
             role=SessionMembership.DJANGONAUT,
         )
 

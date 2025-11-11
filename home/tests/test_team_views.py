@@ -598,7 +598,6 @@ class UserSessionListViewTests(TestCase):
             session=organizer_session,
             team=None,  # No team assigned
             role=SessionMembership.ORGANIZER,
-            accepted=True,
         )
 
         self.client.force_login(self.user)
@@ -611,12 +610,6 @@ class UserSessionListViewTests(TestCase):
         self.assertContains(response, "All Teams")
         self.assertContains(response, org_team1.name)
         self.assertContains(response, org_team2.name)
-
-        # Check that the organizer session card does not have a "View Team Page" button
-        # There should still be "View Team Page" links for sessions with teams
-        content = response.content.decode()
-        # Count occurrences - should have 3 for past/current/upcoming sessions with teams
-        self.assertEqual(content.count("View Team Page"), 3)
 
     def test_only_accepted_djangonaut_memberships_shown(self) -> None:
         """Test that only accepted Djangonaut memberships are shown."""

@@ -31,10 +31,7 @@
                 <div class="flex gap-2 mb-2">
                   {% if membership.session.status == 'current' %}
                     <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">
-                      Current
-                      {% if membership.session.current_week %}
-                        - Week {{ membership.session.current_week }}
-                      {% endif %}
+                      Current - Week {{ membership.session.current_week }}
                     </span>
                   {% elif membership.session.status == 'past' %}
                     <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">
@@ -73,7 +70,11 @@
               {% if membership.team %}
               <div>
                 <dt class="text-sm font-bold text-gray-700">Team:</dt>
-                <dd class="text-gray-900">{{ membership.team.name }}</dd>
+                <dd class="text-gray-900">
+                  <a href="{% url 'team_detail' session_slug=membership.session.slug pk=membership.team.pk %}">
+                    {{ membership.team.name }}
+                  </a>
+                </dd>
               </div>
               <div>
                 <dt class="text-sm font-bold text-gray-700">Project:</dt>
@@ -86,13 +87,7 @@
               {% endif %}
             </dl>
 
-            {% if membership.team %}
-            <div class="mt-4">
-              <a href="{% url 'team_detail' session_slug=membership.session.slug pk=membership.team.pk %}" class="action-button">
-                <i class="fas fa-users mr-2"></i>View Team Page
-              </a>
-            </div>
-            {% elif membership.role == "Organizer" %}
+            {% if membership.role == "Organizer" %}
             <div class="mt-4">
               <h4>All Teams</h4>
               <ul>

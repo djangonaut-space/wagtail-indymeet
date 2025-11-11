@@ -6,7 +6,7 @@
     {% else %}
       <div class="w-12 h-12 rounded-full bg-purple-200 flex items-center justify-center mr-3">
         <span class="text-purple-700 font-bold text-lg">
-          {{ membership.user.first_name|first|upper }}{{ membership.user.last_name|first|upper }}
+          {{ membership.user.get_full_name }}
         </span>
       </div>
     {% endif %}
@@ -23,7 +23,7 @@
     </a>
   </p>
   {% if show_survey_link %}
-    <a href="{% url 'djangonaut_survey_response' session_slug=team.session.slug user_id=membership.user.id %}" class="text-sm text-purple-600 hover:underline">
+    <a href="{% url 'djangonaut_survey_response' session_slug=team.session.slug user_id=membership.user.id %}" class="text-sm">
       <i class="fas fa-clipboard-list mr-1"></i>{% trans "View Application" %}
     </a>
   {% endif %}

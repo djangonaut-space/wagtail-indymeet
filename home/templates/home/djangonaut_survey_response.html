@@ -13,11 +13,11 @@
         <li class="text-gray-400">/</li>
         <li><a href="{% url 'team_detail' session_slug=session.slug pk=team.pk %}" class="text-blue-600 hover:text-blue-800 hover:underline">{{ session.title }} - {{ team.name }}</a></li>
         <li class="text-gray-400">/</li>
-        <li class="text-gray-600">{{ djangonaut.get_full_name|default:djangonaut.username }}'s Application</li>
+        <li class="text-gray-600">{{ djangonaut.get_full_name }}'s Application</li>
       </ol>
     </nav>
 
-    <h1 class="text-4xl font-extrabold mb-2">{{ djangonaut.get_full_name|default:djangonaut.username }}</h1>
+    <h1 class="text-4xl font-extrabold mb-2">{{ djangonaut.get_full_name }}</h1>
     <p class="text-gray-600 mb-6">Application for {{ session.title }}</p>
 
     <div class="bg-white shadow rounded-lg p-6">
