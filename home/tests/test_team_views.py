@@ -146,11 +146,12 @@ class TeamDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
 
-    def test_non_team_member_gets_403(self) -> None:
-        """Test that users not on the team get a 403 Forbidden."""
+    def test_non_session_member_gets_404(self) -> None:
+        """Test that users not in the session get a 404 Not Found."""
         self.client.force_login(self.other_user)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        # get_object_or_404 returns 404 when user has no membership in session
+        self.assertEqual(response.status_code, 404)
 
     def test_captain_can_view_team_page(self) -> None:
         """Test that captain can view team page."""
@@ -172,6 +173,76 @@ class TeamDetailViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "home/team_detail.html")
+
+    def test_organizer_can_view_any_team_page(self) -> None:
+        """Test that organizer can view any team page in their session."""
+        # Create organizer without team assignment
+        organizer = UserFactory.create(
+            first_name="Organizer", last_name="Admin", email="organizer@test.com"
+        )
+        SessionMembershipFactory.create(
+            user=organizer,
+            session=self.current_session,
+            team=None,  # No team assigned
+            role=SessionMembership.ORGANIZER,
+            accepted=True,
+        )
+
+        self.client.force_login(organizer)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "home/team_detail.html")
+
+    def test_organizer_from_different_session_gets_404(self) -> None:
+        """Test that organizer from different session cannot view team."""
+        # Create a different session
+        other_session = SessionFactory.create(
+            start_date=datetime(2024, 9, 1).date(),
+            end_date=datetime(2024, 11, 30).date(),
+        )
+
+        # Create organizer for different session
+        organizer = UserFactory.create(
+            first_name="Other", last_name="Organizer", email="other_org@test.com"
+        )
+        SessionMembershipFactory.create(
+            user=organizer,
+            session=other_session,
+            team=None,
+            role=SessionMembership.ORGANIZER,
+            accepted=True,
+        )
+
+        self.client.force_login(organizer)
+        response = self.client.get(self.url)
+        # Should get 404 because organizer doesn't have membership in current_session
+        self.assertEqual(response.status_code, 404)
+
+    def test_member_from_different_team_cannot_view(self) -> None:
+        """Test that members from a different team in same session cannot view team."""
+        # Create another team in same session
+        other_team = Team.objects.create(
+            session=self.current_session,
+            project=self.project,
+            name="Team Beta",
+        )
+
+        # Create user on different team
+        other_team_member = UserFactory.create(
+            first_name="Other", last_name="Member", email="other_member@test.com"
+        )
+        SessionMembershipFactory.create(
+            user=other_team_member,
+            session=self.current_session,
+            team=other_team,
+            role=SessionMembership.NAVIGATOR,
+            accepted=True,
+        )
+
+        self.client.force_login(other_team_member)
+        response = self.client.get(self.url)
+        # Should get 403 because user is on different team
+        self.assertEqual(response.status_code, 403)
 
     def test_team_page_shows_project_info(self) -> None:
         """Test that team page displays project information."""
@@ -277,7 +348,8 @@ class TeamDetailViewTests(TestCase):
 
         self.client.force_login(declined_user)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        # for_user() queryset method filters to accepted memberships, so returns 404
+        self.assertEqual(response.status_code, 404)
 
     def test_djangonaut_cannot_see_survey_links(self) -> None:
         """Test that Djangonauts cannot see 'View Application' links."""
@@ -289,6 +361,36 @@ class TeamDetailViewTests(TestCase):
 
         # But should not see "View Application" links
         self.assertNotContains(response, "View Application")
+
+    def test_organizer_can_see_survey_links(self) -> None:
+        """Test that Organizers can see 'View Application' links during active session."""
+        # Create organizer
+        organizer = UserFactory.create(
+            first_name="Organizer", last_name="Admin", email="organizer@test.com"
+        )
+        SessionMembershipFactory.create(
+            user=organizer,
+            session=self.current_session,
+            team=None,
+            role=SessionMembership.ORGANIZER,
+            accepted=True,
+        )
+
+        self.client.force_login(organizer)
+        response = self.client.get(self.url)
+
+        # Organizer should see "View Application" links
+        self.assertContains(response, "View Application")
+
+        # Check that links to survey responses exist for Djangonauts
+        djangonaut1_url = reverse(
+            "djangonaut_survey_response",
+            kwargs={
+                "session_slug": self.current_session.slug,
+                "user_id": self.djangonaut1.id,
+            },
+        )
+        self.assertContains(response, djangonaut1_url)
 
 
 @freeze_time("2024-06-15")
@@ -482,6 +584,15 @@ class UserSessionListViewTests(TestCase):
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 8, 30).date(),
         )
+        # Create teams for the organizer session
+        org_project = ProjectFactory.create(name="Test Project")
+        org_team1 = Team.objects.create(
+            session=organizer_session, project=org_project, name="Team One"
+        )
+        org_team2 = Team.objects.create(
+            session=organizer_session, project=org_project, name="Team Two"
+        )
+
         SessionMembershipFactory.create(
             user=self.user,
             session=organizer_session,
@@ -496,8 +607,13 @@ class UserSessionListViewTests(TestCase):
         self.assertContains(response, organizer_session.title)
         self.assertContains(response, "Organizer")
 
-        # Check that the organizer session card does not have a "View Team Page" link
-        # There should still be other "View Team Page" links for sessions with teams
+        # Check that the organizer session shows "All Teams" section
+        self.assertContains(response, "All Teams")
+        self.assertContains(response, org_team1.name)
+        self.assertContains(response, org_team2.name)
+
+        # Check that the organizer session card does not have a "View Team Page" button
+        # There should still be "View Team Page" links for sessions with teams
         content = response.content.decode()
         # Count occurrences - should have 3 for past/current/upcoming sessions with teams
         self.assertEqual(content.count("View Team Page"), 3)
@@ -701,7 +817,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
         self.assertContains(response, "Django Learner")
         self.assertContains(response, "I want to contribute to Django")
 
-    def test_djangonaut_cannot_view(self) -> None:
+    def test_djangonaut_on_same_team_can_view(self) -> None:
         """Test that Djangonauts on the same team can view each other's responses."""
         # Create another Djangonaut on the same team
         teammate = UserFactory.create(
@@ -717,13 +833,81 @@ class DjangonautSurveyResponseViewTests(TestCase):
 
         self.client.force_login(teammate)
         response = self.client.get(self.url)
+        # Djangonauts on same team can view each other's responses
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Django Learner")
+
+    def test_organizer_can_view_any_djangonaut_response(self) -> None:
+        """Test that organizers can view any Djangonaut's survey response in their session."""
+        # Create organizer without team assignment
+        organizer = UserFactory.create(
+            first_name="Organizer", last_name="Admin", email="organizer@test.com"
+        )
+        SessionMembershipFactory.create(
+            user=organizer,
+            session=self.current_session,
+            team=None,  # No team assigned
+            role=SessionMembership.ORGANIZER,
+            accepted=True,
+        )
+
+        self.client.force_login(organizer)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Django Learner")
+        self.assertContains(response, "I want to contribute to Django")
+        self.assertContains(response, "Intermediate")
+
+    def test_organizer_from_different_session_cannot_view(self) -> None:
+        """Test that organizers from different sessions cannot view survey responses."""
+        # Create a different session
+        other_session = SessionFactory.create(
+            start_date=datetime(2024, 9, 1).date(),
+            end_date=datetime(2024, 11, 30).date(),
+        )
+
+        # Create organizer for different session
+        organizer = UserFactory.create(
+            first_name="Other", last_name="Organizer", email="other_org@test.com"
+        )
+        SessionMembershipFactory.create(
+            user=organizer,
+            session=other_session,
+            team=None,
+            role=SessionMembership.ORGANIZER,
+            accepted=True,
+        )
+
+        self.client.force_login(organizer)
+        response = self.client.get(self.url)
+        # Should get 404 because organizer doesn't have membership in current_session
+        self.assertEqual(response.status_code, 404)
+
+    def test_member_from_different_team_cannot_view(self) -> None:
+        """Test that members from different team cannot view survey responses."""
+        # Create user on different team (Team Beta)
+        other_team_member = UserFactory.create(
+            first_name="Other", last_name="Member", email="other_member@test.com"
+        )
+        SessionMembershipFactory.create(
+            user=other_team_member,
+            session=self.current_session,
+            team=self.other_team,  # Different team
+            role=SessionMembership.NAVIGATOR,
+            accepted=True,
+        )
+
+        self.client.force_login(other_team_member)
+        response = self.client.get(self.url)
+        # Should get 403 because user is on different team
         self.assertEqual(response.status_code, 403)
 
-    def test_non_team_member_cannot_view(self) -> None:
-        """Test that non-team members cannot view responses."""
+    def test_non_session_member_cannot_view(self) -> None:
+        """Test that users not in the session cannot view responses."""
         self.client.force_login(self.other_user)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        # get_object_or_404 returns 404 when user has no membership in session
+        self.assertEqual(response.status_code, 404)
 
     @freeze_time("2024-09-01")
     def test_cannot_view_after_session_ends(self) -> None:

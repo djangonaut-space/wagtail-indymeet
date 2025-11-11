@@ -18,8 +18,8 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
     """
     Display team detail page with project info, contact info, and survey responses.
 
-    Access is restricted to team members only (Captains, Navigators, and Djangonauts
-    who are part of this team).
+    Access is restricted to team members (Captains, Navigators, and Djangonauts
+    who are part of this team) and Organizers of the session.
     """
 
     model = Team
@@ -35,12 +35,18 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
         """Get team and verify user has access."""
         team = super().get_object(queryset)
 
-        # Check if user is a member of this team
-        self.user_session_membership = (
-            SessionMembership.objects.for_user(self.request.user).for_team(team).first()
+        # Check if requesting user has permissions to view the team
+        self.user_session_membership = get_object_or_404(
+            SessionMembership.objects.for_user(self.request.user).for_session(
+                team.session
+            )
         )
 
-        if not self.user_session_membership:
+        # Only allow organizers or members of this specific team
+        if (
+            self.user_session_membership.role != SessionMembership.ORGANIZER
+            and self.user_session_membership.team != team
+        ):
             raise PermissionDenied("You do not have access to this team.")
 
         return team
@@ -52,7 +58,8 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
 
         # Get all team members with user details
         team_members = (
-            SessionMembership.objects.filter(~Q(accepted=False), team=team)
+            SessionMembership.objects.accepted()
+            .for_team(team)
             .select_related("user", "user__profile")
             .order_by("role", "user__first_name", "user__last_name")
         )
@@ -68,18 +75,16 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
             m for m in team_members if m.role == SessionMembership.DJANGONAUT
         ]
 
-        # Check if current user is a captain or navigator on this team
-
-        user_is_captain_or_navigator = self.user_session_membership.role in {
-            SessionMembership.CAPTAIN,
-            SessionMembership.NAVIGATOR,
-        }
-
         # Show survey link if session is active, has survey, and user is captain/navigator
         context["show_survey_link"] = (
             team.session.is_current()
             and team.session.application_survey_id
-            and user_is_captain_or_navigator
+            and self.user_session_membership.role
+            in {
+                SessionMembership.CAPTAIN,
+                SessionMembership.NAVIGATOR,
+                SessionMembership.ORGANIZER,
+            }
         )
 
         # Add Discord invite URL from settings
@@ -92,8 +97,8 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
     """
     Display a Djangonaut's application survey response.
 
-    Access is restricted to team members (Captains, Navigators, and other Djangonauts
-    on the same team) and only during an active session.
+    Access is restricted to Captains and Navigators on the same team as the Djangonaut,
+    as well as Organizers of the session. Only available during an active session.
     """
 
     model = UserSurveyResponse
@@ -126,18 +131,19 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
         # Check if session has application survey
         if not self.djangonaut_membership.session.application_survey_id:
             raise Http404("This session does not have an application survey.")
-        # Check if requesting user is on the same team
-        is_team_mentor = (
-            SessionMembership.objects.for_user(self.request.user)
-            .for_team(self.djangonaut_membership.team)
-            .filter(role__in=[SessionMembership.CAPTAIN, SessionMembership.NAVIGATOR])
-            .exists()
-        )
 
-        if not is_team_mentor:
-            raise PermissionDenied(
-                "You do not have access to this Djangonaut's responses."
+        # Check if requesting user has permissions to view the survey responses
+        self.user_session_membership = get_object_or_404(
+            SessionMembership.objects.for_user(self.request.user).for_session(
+                self.djangonaut_membership.session
             )
+        )
+        # Only allow organizers or captains/navigators on the same team
+        if (
+            self.user_session_membership.role != SessionMembership.ORGANIZER
+            and self.user_session_membership.team != self.djangonaut_membership.team
+        ):
+            raise PermissionDenied("You do not have access to this team.")
 
         # Get the survey response
         survey_response = get_object_or_404(
