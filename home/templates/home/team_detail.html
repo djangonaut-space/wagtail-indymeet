@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{{ team.name }} - {{ team.session.title }} | Djangonaut Space{% endblock %}
+{% block meta_title %}{{ team.name }} - {{ team.session.title }} | Djangonaut Space{% endblock %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+  <div class="section-container max-w-6xl mx-auto">
+    <nav class="mb-4 text-sm" aria-label="breadcrumb">
+      <ol class="flex items-center gap-2">
+        <li><a href="{% url 'user_sessions' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% trans "My Sessions" %}</a></li>
+        <li class="text-gray-400">/</li>
+        <li class="text-gray-600">{{ team.session.title }} - {{ team.name }}</li>
+      </ol>
+    </nav>
+
+    <h1 class="text-5xl mb-4">{{ team.name }}</h1>
+
+    <div class="mb-6">
+      {% if team.session.status == 'current' %}
+        <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold ml-2">
+          Active
+          {% if team.session.current_week %}
+            - Week {{ team.session.current_week }}
+          {% endif %}
+        </span>
+      {% elif team.session.status == 'past' %}
+        <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-bold ml-2">
+          Completed
+        </span>
+      {% elif team.session.status == 'upcoming' %}
+        <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold ml-2">
+          Upcoming
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Project Information -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <h2 class="text-2xl font-extrabold mb-4">Project</h2>
+      <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <dt class="text-sm font-bold text-gray-700">Project Name:</dt>
+          <dd class="text-gray-900">{{ team.project.name }}</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-sm font-bold text-gray-700">Project Repository:</dt>
+          <dd class="text-gray-900">
+            <a href="{{ team.project.url }}" target="_blank" rel="noopener noreferrer">
+              {{ team.project.url }}
+            </a>
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Resources -->
+    {% if team.google_drive_folder or DISCORD_INVITE_URL %}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <h2 class="text-2xl font-extrabold mb-4">Resources</h2>
+      <div class="space-y-3">
+        {% if team.google_drive_folder %}
+        <div class="flex items-center">
+          <svg class="w-6 h-6 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+          <a href="{{ team.google_drive_folder }}" target="_blank" rel="noopener noreferrer" class="font-bold">
+            Team Google Drive Folder
+          </a>
+        </div>
+        {% endif %}
+        <div class="flex items-center">
+          <i class="fab fa-discord w-6 h-6 mr-2 text-purple-600 text-xl"></i>
+          <a href="{{ DISCORD_INVITE_URL }}" target="_blank" rel="noopener noreferrer" class="font-bold">
+            Join Discord Server
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Team Members -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <h2 class="text-2xl font-extrabold mb-4">Team Members</h2>
+
+      <!-- Captains -->
+      {% if captains %}
+      <div class="mb-6">
+        <h3 class="text-lg font-extrabold mb-3">
+          <i class="fas fa-satellite-dish mr-2"></i>Captains
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for membership in captains %}
+            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False team=team %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Navigators -->
+      {% if navigators %}
+      <div class="mb-6">
+        <h3 class="text-lg font-extrabold mb-3">
+          <i class="fas fa-compass mr-2"></i>Navigators
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for membership in navigators %}
+            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False team=team %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Djangonauts -->
+      {% if djangonauts %}
+      <div>
+        <h3 class="text-lg font-extrabold mb-3">
+          <i class="fas fa-user-astronaut mr-2"></i>Djangonauts
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for membership in djangonauts %}
+            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=show_survey_link team=team %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</main>
+{% endblock content %}
