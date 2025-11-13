@@ -4,12 +4,13 @@ from django.views.generic import TemplateView
 from home.views.events import EventDetailView, EventListView, event_calendar
 from home.views.membership_acceptance import accept_membership_view
 from home.views.resources import resource_link
-from home.views.sessions import SessionDetailView, SessionListView
+from home.views.sessions import SessionDetailView, SessionListView, UserSessionListView
 from home.views.surveys import (
     CreateUserSurveyResponseFormView,
     EditUserSurveyResponseView,
     UserSurveyResponseView,
 )
+from home.views.teams import DjangonautSurveyResponseView, TeamDetailView
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),
@@ -19,12 +20,23 @@ urlpatterns = [
         EventDetailView.as_view(),
         name="event_detail",
     ),
+    path("my-sessions/", UserSessionListView.as_view(), name="user_sessions"),
     path("sessions/", SessionListView.as_view(), name="session_list"),
     path("sessions/<slug:slug>/", SessionDetailView.as_view(), name="session_detail"),
     path(
         "sessions/<slug:slug>/accept/",
         accept_membership_view,
         name="accept_membership",
+    ),
+    path(
+        "sessions/<slug:session_slug>/teams/<int:pk>/",
+        TeamDetailView.as_view(),
+        name="team_detail",
+    ),
+    path(
+        "sessions/<slug:session_slug>/djangonauts/<int:user_id>/survey-response/",
+        DjangonautSurveyResponseView.as_view(),
+        name="djangonaut_survey_response",
     ),
     path(
         "survey/<str:slug>/response/create/",

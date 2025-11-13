@@ -1,0 +1,11 @@
+{% for response in responses %}
+    <div class="p-8 space-y-4 rounded-lg shadow-md border border-gray-200 bg-white">
+        <label class="text-base font-medium">{{ response.question.label|linebreaksbr|urlize }}</label>
+        {% if response.question.help_text %}
+        <p class="text-sm text-gray-500">{{ response.question.help_text|linebreaksbr|urlize }}</p>
+        {% endif %}
+        <div class="mt-2 p-4 bg-gray-50 rounded border border-gray-200">
+            {{ response.get_value|linebreaksbr }}
+        </div>
+    </div>
+{% endfor %}

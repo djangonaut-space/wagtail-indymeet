@@ -12,7 +12,14 @@
 {% include 'home/includes/email_confirmed_warning.html' %}
 <main class="section my-3 mx-5">
     <div class="section-container">
-        <h1 class="text-5xl">Sessions</h1>
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-5xl">Sessions</h1>
+            {% if user.is_authenticated %}
+            <a href="{% url 'user_sessions' %}" class="action-button">
+                <i class="fas fa-history mr-2"></i>My Sessions
+            </a>
+            {% endif %}
+        </div>
         <div class="row pt-4 pb-4">
           <div class="col">
             <p>

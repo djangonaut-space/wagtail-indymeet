@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Subquery, Value
+from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Subquery, Value, Q
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -47,14 +47,64 @@ class SessionMembershipQuerySet(QuerySet):
         """Filter memberships for a specific session."""
         return self.filter(session=session)
 
+    def for_team(self, team):
+        """Filter memberships for a specific team."""
+        return self.filter(team=team)
+
     def djangonauts(self):
+        """Filter to only Djangonauts."""
         return self.filter(role=self.model.DJANGONAUT)
 
     def navigators(self):
+        """Filter to only Navigators."""
         return self.filter(role=self.model.NAVIGATOR)
 
     def captains(self):
+        """Filter to only Captains."""
         return self.filter(role=self.model.CAPTAIN)
+
+    def organizers(self):
+        """Filter to only Organizers."""
+        return self.filter(role=self.model.ORGANIZER)
+
+    def accepted(self):
+        """
+        Filter to memberships that are considered accepted/active.
+
+        Only Djangonauts need to explicitly accept their membership.
+        Captains, Navigators, and Organizers are automatically members.
+
+        Returns:
+            QuerySet of SessionMembership objects that are active members.
+        """
+        # Djangonauts must have accepted=True
+        # All other roles are automatically members (accepted can be None, True, or False)
+        return self.filter(
+            Q(role=self.model.DJANGONAUT, accepted=True)
+            | Q(
+                role__in=[
+                    self.model.CAPTAIN,
+                    self.model.NAVIGATOR,
+                    self.model.ORGANIZER,
+                ]
+            )
+        )
+
+    def for_user(self, user):
+        """
+        Filter memberships for a specific user, returning only accepted memberships.
+
+        This combines user filtering with the accepted() logic:
+        - For Djangonauts: only returns memberships where accepted=True
+        - For other roles: returns all memberships regardless of accepted status
+
+        Args:
+            user: The user to filter by
+
+        Returns:
+            QuerySet of accepted SessionMembership objects for the user.
+        """
+        return self.filter(user=user).accepted()
 
 
 class UserSurveyResponseQuerySet(QuerySet):

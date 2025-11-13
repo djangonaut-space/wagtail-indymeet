@@ -9,7 +9,7 @@
 
 {% block before_cta %}
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
-    <strong>{{ user.get_full_name|default:user.email }}</strong> has declined their membership invitation for <strong>{{ session.title }}</strong>.
+    <strong>{{ user.get_full_name }}</strong> has declined their membership invitation for <strong>{{ session.title }}</strong>.
   </p>
 
   <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">

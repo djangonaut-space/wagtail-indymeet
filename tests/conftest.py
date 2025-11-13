@@ -6,6 +6,24 @@ from playwright.sync_api import expect
 expect.set_options(timeout=5_000)
 
 
+def pytest_addoption(parser):
+    """Add custom command-line options."""
+    parser.addoption(
+        "--pause-at-end",
+        action="store_true",
+        default=False,
+        help="Pause at the end of Playwright tests for manual exploration",
+    )
+
+
+@pytest.fixture
+def pause_at_end(request):
+    """Fixture to check if --pause-at-end flag was provided. Only works with --headed"""
+    pause = request.config.getoption("--pause-at-end")
+    headed = request.config.getoption("--headed")
+    return pause and headed
+
+
 def pytest_runtest_setup(item):
     """
     Configure pytest environment per test item

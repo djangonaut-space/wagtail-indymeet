@@ -1,6 +1,6 @@
 Hello,
 
-{{ user.get_full_name|default:user.email }} has declined their membership invitation for {{ session.title }}.
+{{ user.get_full_name }} has declined their membership invitation for {{ session.title }}.
 
 User Details:
 - Name: {{ user.get_full_name }}

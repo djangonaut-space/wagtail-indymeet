@@ -831,9 +831,8 @@ class OverlapAnalysisForm(BaseTeamForm):
         """
         team = self.cleaned_data["team"]
         navigator_memberships = (
-            SessionMembership.objects.filter(
-                team=team, role=SessionMembership.NAVIGATOR
-            )
+            SessionMembership.objects.for_team(team)
+            .navigators()
             .select_related("user")
             .prefetch_related("user__availability")
         )
@@ -859,7 +858,8 @@ class OverlapAnalysisForm(BaseTeamForm):
         """
         team = self.cleaned_data["team"]
         captain_memberships = (
-            SessionMembership.objects.filter(team=team, role=SessionMembership.CAPTAIN)
+            SessionMembership.objects.for_team(team)
+            .captains()
             .select_related("user")
             .prefetch_related("user__availability")
         )
