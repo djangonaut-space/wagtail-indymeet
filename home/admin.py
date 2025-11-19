@@ -7,6 +7,7 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from indymeet.admin import DescriptiveSearchMixin
 from . import preview_email
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
 from .models import Event, Project, Team
@@ -33,20 +34,20 @@ from .views.session_notifications import (
 
 
 @admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
     filter_horizontal = ("speakers", "rsvped_members", "organizers")
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = ("name", "url")
     search_fields = ("name",)
     ordering = ("name",)
 
 
 @admin.register(ResourceLink)
-class ResourceLinkAdmin(admin.ModelAdmin):
+class ResourceLinkAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = (
         "path",
         "link",
@@ -77,7 +78,7 @@ class SessionProjectInline(admin.TabularInline):
 
 
 @admin.register(SessionMembership)
-class SessionMembershipAdmin(admin.ModelAdmin):
+class SessionMembershipAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = (
         "user",
         "session",
@@ -114,7 +115,7 @@ class SessionMembershipAdmin(admin.ModelAdmin):
 
 
 @admin.register(Session)
-class SessionAdmin(admin.ModelAdmin):
+class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     inlines = [SessionMembershipInline, SessionProjectInline]
     actions = [
         "form_teams_action",
@@ -225,13 +226,13 @@ class SessionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Team)
-class TeamAdmin(admin.ModelAdmin):
+class TeamAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = ("name", "project", "session")
     list_filter = ("session",)
 
 
 @admin.register(Waitlist)
-class WaitlistAdmin(admin.ModelAdmin):
+class WaitlistAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = ("user", "session", "created_at")
     list_filter = ("session", "created_at")
     search_fields = (
@@ -282,7 +283,7 @@ class QuestionInline(admin.StackedInline):
 
 
 @admin.register(Question)
-class QuestionAdmin(admin.ModelAdmin):
+class QuestionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Question
     list_display = [
         "label",
@@ -298,7 +299,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Survey)
-class SurveyAdmin(admin.ModelAdmin):
+class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Survey
     inlines = [QuestionInline]
     fields = (
@@ -485,7 +486,7 @@ class SurveyAdmin(admin.ModelAdmin):
 
 
 @admin.register(UserQuestionResponse)
-class UserQuestionResponseAdmin(admin.ModelAdmin):
+class UserQuestionResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = UserQuestionResponse
     list_filter = ["user_survey_response__survey__name"]
     list_display = [
@@ -534,7 +535,7 @@ class UserQuestionResponseInline(admin.StackedInline):
 
 
 @admin.register(UserSurveyResponseModel)
-class UserSurveyResponseAdmin(admin.ModelAdmin):
+class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = UserSurveyResponseModel
     raw_id_fields = [
         "user",
