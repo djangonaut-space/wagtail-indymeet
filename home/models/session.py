@@ -283,7 +283,7 @@ class SessionMembership(models.Model):
 
     ROLES = (
         (DJANGONAUT, _("Djangonaut")),
-        (CAPTAIN, _("Mentor")),
+        (CAPTAIN, _("Captain")),
         (NAVIGATOR, _("Navigator")),
         (ORGANIZER, _("Organizer")),
     )
