@@ -16,6 +16,7 @@ from home.models import (
     TypeField,
     UserQuestionResponse,
     UserSurveyResponse,
+    Waitlist,
 )
 
 
@@ -121,3 +122,11 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     session = factory.SubFactory(SessionFactory)
     team = factory.SubFactory(TeamFactory)
     role = SessionMembership.DJANGONAUT
+
+
+class WaitlistFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Waitlist
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)

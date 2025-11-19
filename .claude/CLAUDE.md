@@ -95,6 +95,7 @@ uv run pytest -m playwright --headed  # See browser
 - Write tests alongside all new features
 - Generate high-level architecture/design documentation in `docs/` folder
 - Write helpful docstrings that provide context
+- Avoid obvious or redundant inline comments for code.
 - Run zizmor security checks on GitHub Actions workflows when modifying `.github/` directory
 
 ### GitHub Actions Security

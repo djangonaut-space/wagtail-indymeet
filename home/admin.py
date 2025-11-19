@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.contrib import admin, messages
-from django.db.models import F, Max, Count
+from django.db.models import Exists, F, Max, Count, OuterRef
 from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from django.utils import timezone
@@ -534,6 +534,85 @@ class UserQuestionResponseInline(admin.StackedInline):
     can_delete = False
 
 
+class WaitlistStatusFilter(admin.SimpleListFilter):
+    """Filter UserSurveyResponses by waitlist status."""
+
+    title = "waitlist status"
+    parameter_name = "waitlisted"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("yes", "Waitlisted"),
+            ("no", "Not Waitlisted"),
+        )
+
+    def queryset(self, request, queryset):
+        """Filter the queryset based on waitlist status."""
+        waitlist_exists = Exists(
+            Waitlist.objects.filter(
+                user=OuterRef("user"),
+                session__application_survey=OuterRef("survey"),
+            )
+        )
+        if self.value() == "yes":
+            return queryset.filter(waitlist_exists)
+        elif self.value() == "no":
+            return queryset.filter(~waitlist_exists)
+        return queryset
+
+
+class SelectionStatusFilter(admin.SimpleListFilter):
+    """Filter UserSurveyResponses by selection status
+
+    Limits SessionMembership to Djangonaut role.
+    """
+
+    title = "selection status"
+    parameter_name = "selected"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("yes", "Selected"),
+            ("no", "Not Selected"),
+        )
+
+    def queryset(self, request, queryset):
+        """Filter the queryset based on selection status."""
+        membership_exists = Exists(
+            SessionMembership.objects.djangonauts().filter(
+                user=OuterRef("user"),
+                session__application_survey=OuterRef("survey"),
+            )
+        )
+        if self.value() == "yes":
+            return queryset.filter(membership_exists)
+        elif self.value() == "no":
+            return queryset.filter(~membership_exists)
+        return queryset
+
+
+class SessionFilter(admin.SimpleListFilter):
+    """Filter UserSurveyResponses by the Session"""
+
+    title = "session"
+    parameter_name = "session"
+
+    def lookups(self, request, model_admin):
+        """Return list of sessions that have application surveys."""
+        sessions = (
+            Session.objects.filter(application_survey__isnull=False)
+            .order_by("-application_start_date")
+            .values("id", "title")
+        )
+        return list(sessions)
+
+    def queryset(self, request, queryset):
+        """Filter the queryset based on selected session."""
+        if self.value():
+            return queryset.filter(survey__application_session__id=self.value())
+        return queryset
+
+
 @admin.register(UserSurveyResponseModel)
 class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = UserSurveyResponseModel
@@ -546,7 +625,12 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "user_email",
         "created_at",
     ]
-    list_filter = ["survey__name"]
+    list_filter = [
+        SessionFilter,
+        "survey__name",
+        WaitlistStatusFilter,
+        SelectionStatusFilter,
+    ]
     search_fields = [
         "user__email",
         "user__first_name",
