@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib import admin, messages
+from django.contrib.auth import get_user_model
 from django.db.models import Exists, F, Max, Count, OuterRef
 from django.shortcuts import render, redirect
 from django.urls import path, reverse
@@ -31,6 +32,8 @@ from .views.session_notifications import (
     send_session_results_view,
     send_team_welcome_emails_view,
 )
+
+User = get_user_model()
 
 
 @admin.register(Event)
@@ -65,6 +68,35 @@ class ResourceLinkAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         return mark_safe(f'<a href="{href}">Copy to share</a>')
 
 
+class UserWithMembershipFilter(admin.SimpleListFilter):
+    """Filter SessionMembership by user, showing only users with memberships."""
+
+    title = "user"
+    parameter_name = "user"
+
+    def lookups(self, request, model_admin):
+        """Return list of users who have session memberships."""
+        users = (
+            User.objects.filter(session_memberships__isnull=False)
+            .distinct()
+            .order_by("first_name", "last_name", "email")
+        )
+
+        return [
+            (
+                user.id,
+                user.get_full_name() or user.email,
+            )
+            for user in users
+        ]
+
+    def queryset(self, request, queryset):
+        """Filter the queryset based on selected user."""
+        if self.value():
+            return queryset.filter(user_id=self.value())
+        return queryset
+
+
 class SessionMembershipInline(admin.TabularInline):
     model = SessionMembership
     extra = 0
@@ -88,7 +120,7 @@ class SessionMembershipAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "acceptance_deadline",
         "created",
     )
-    list_filter = ("session", "role", "accepted")
+    list_filter = ("session", "role", "accepted", UserWithMembershipFilter)
     search_fields = ("user__email", "user__first_name", "user__last_name")
     readonly_fields = ("created", "accepted_at")
     actions = [
