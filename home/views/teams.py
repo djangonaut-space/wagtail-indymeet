@@ -1,17 +1,24 @@
 """Team-related views."""
 
+import json
 from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet, Q
-from django.http import Http404
-from django.shortcuts import get_object_or_404
+from django.http import Http404, HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, render
 from django.views.generic.detail import DetailView
 
 from accounts.models import CustomUser
 from home.models import Session, SessionMembership, Team, UserSurveyResponse
+from home.availability import (
+    calculate_overlap,
+    calculate_user_overlap,
+    format_availability_by_day,
+    get_user_slots,
+)
 
 
 class TeamDetailView(LoginRequiredMixin, DetailView):
@@ -29,7 +36,9 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self) -> QuerySet[Team]:
         """Get teams with related data prefetched."""
-        return Team.objects.select_related("session", "project")
+        return Team.objects.select_related("session", "project").prefetch_related(
+            "session_memberships__user__availability"
+        )
 
     def get_object(self, queryset: QuerySet[Team] | None = None) -> Team:
         """Get team and verify user has access."""
@@ -61,19 +70,38 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
             SessionMembership.objects.accepted()
             .for_team(team)
             .select_related("user", "user__profile")
+            .prefetch_related("user__availability")
             .order_by("role", "user__first_name", "user__last_name")
         )
 
         # Separate by role
-        context["captains"] = [
-            m for m in team_members if m.role == SessionMembership.CAPTAIN
-        ]
-        context["navigators"] = [
-            m for m in team_members if m.role == SessionMembership.NAVIGATOR
-        ]
-        context["djangonauts"] = [
+        captains = [m for m in team_members if m.role == SessionMembership.CAPTAIN]
+        navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
+        djangonauts = [
             m for m in team_members if m.role == SessionMembership.DJANGONAUT
         ]
+
+        # Calculate availability overlaps with logged-in user for each member
+        current_user = self.request.user
+        for membership in team_members:
+            if membership.user != current_user:
+                overlap_slots = calculate_user_overlap(current_user, membership.user)
+                membership.overlap_slots = overlap_slots
+            else:
+                membership.overlap_slots = []
+
+        context["captains"] = captains
+        context["navigators"] = navigators
+        context["djangonauts"] = djangonauts
+
+        # Calculate team availability (navigators + djangonauts)
+        team_overlap_slots, _ = calculate_overlap(
+            [m.user for m in navigators + djangonauts]
+        )
+        context["team_availability_by_day"] = format_availability_by_day(
+            team_overlap_slots
+        )
+        context["timezone"] = "UTC"  # Default to UTC on initial page load
 
         # Show survey link if session is active, has survey, and user is captain/navigator
         context["show_survey_link"] = (
@@ -168,3 +196,84 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
         context["question_responses"] = question_responses
 
         return context
+
+
+def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
+    """
+    Render team availability HTML fragment with timezone-converted times.
+
+    This view is called via HTMX to swap availability displays when toggling timezones.
+    """
+    team = get_object_or_404(Team, pk=pk)
+    timezone = request.GET.get("tz", "UTC")
+
+    # Get UTC offset in hours (positive or negative)
+    try:
+        offset_hours = float(request.GET.get("offset", 0))
+    except (ValueError, TypeError):
+        offset_hours = 0
+
+    # Check if requesting user has permissions to view the team
+    user_session_membership = get_object_or_404(
+        SessionMembership.objects.for_user(request.user).for_session(team.session)
+    )
+
+    # Only allow organizers or members of this specific team
+    if (
+        user_session_membership.role != SessionMembership.ORGANIZER
+        and user_session_membership.team != team
+    ):
+        raise PermissionDenied("You do not have access to this team.")
+
+    # Get team members
+    team_members = (
+        SessionMembership.objects.accepted()
+        .for_team(team)
+        .select_related("user", "user__profile")
+        .prefetch_related("user__availability")
+        .order_by("role", "user__first_name", "user__last_name")
+    )
+
+    navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
+    djangonauts = [m for m in team_members if m.role == SessionMembership.DJANGONAUT]
+
+    # Calculate team availability (navigators + djangonauts)
+    team_overlap_slots, _ = calculate_overlap(
+        [m.user for m in navigators + djangonauts]
+    )
+    team_availability_by_day = format_availability_by_day(
+        team_overlap_slots, offset_hours
+    )
+
+    # Calculate individual overlaps with current user
+    current_user = request.user
+    for membership in team_members:
+        if membership.user != current_user:
+            overlap_slots = calculate_user_overlap(current_user, membership.user)
+            membership.overlap_slots = overlap_slots
+            membership.offset_hours = offset_hours
+        else:
+            membership.overlap_slots = []
+            membership.offset_hours = offset_hours
+
+    context = {
+        "team": team,
+        "timezone": timezone,
+        "offset_hours": offset_hours,
+        "team_availability_by_day": team_availability_by_day,
+        "captains": [m for m in team_members if m.role == SessionMembership.CAPTAIN],
+        "navigators": navigators,
+        "djangonauts": djangonauts,
+        "show_survey_link": (
+            team.session.is_current_or_upcoming()
+            and team.session.application_survey_id
+            and user_session_membership.role
+            in {
+                SessionMembership.CAPTAIN,
+                SessionMembership.NAVIGATOR,
+                SessionMembership.ORGANIZER,
+            }
+        ),
+    }
+
+    return render(request, "home/session/team/availability_fragment.html", context)

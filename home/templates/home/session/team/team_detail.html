@@ -75,53 +75,80 @@
       </div>
     </div>
 
-    <!-- Team Members -->
-    <div class="bg-white shadow rounded-lg p-6 mb-6">
-      <h2 class="text-2xl font-extrabold mb-4">Team Members</h2>
-
-      <!-- Captains -->
-      {% if captains %}
-      <div class="mb-6">
-        <h3 class="text-lg font-extrabold mb-3">
-          <i class="fas fa-satellite-dish mr-2"></i>Captains
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {% for membership in captains %}
-            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False team=team %}
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-
-      <!-- Navigators -->
-      {% if navigators %}
-      <div class="mb-6">
-        <h3 class="text-lg font-extrabold mb-3">
-          <i class="fas fa-compass mr-2"></i>Navigators
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {% for membership in navigators %}
-            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False team=team %}
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-
-      <!-- Djangonauts -->
-      {% if djangonauts %}
-      <div>
-        <h3 class="text-lg font-extrabold mb-3">
-          <i class="fas fa-user-astronaut mr-2"></i>Djangonauts
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {% for membership in djangonauts %}
-            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=show_survey_link team=team %}
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
+    <div id="availability-container">
+      {% include 'home/session/team/availability_fragment.html' %}
     </div>
 
   </div>
 </main>
+
+<script>
+// Minimal JavaScript for timezone detection and HTMX support
+(function() {
+    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Get UTC offset in hours for the user's timezone
+    function getUserOffset() {
+        const now = new Date();
+        // getTimezoneOffset returns minutes, negative of what we need
+        return -now.getTimezoneOffset() / 60;
+    }
+
+    const userOffset = getUserOffset();
+
+    // Track current state (starts with user's timezone)
+    let currentTz = userTz;
+    let currentOffset = userOffset;
+
+    // Update button text based on current timezone
+    function updateButtonText() {
+        const buttonText = document.getElementById('toggle-button-text');
+        if (buttonText) {
+            buttonText.textContent = currentTz === 'UTC' ? 'Show in ' + userTz : 'Show in UTC';
+        }
+    }
+
+    // Function to toggle timezone and fetch new availability
+    window.toggleTimezone = function() {
+        // Toggle to the opposite of current state
+        if (currentTz === 'UTC') {
+            currentTz = userTz;
+            currentOffset = userOffset;
+        } else {
+            currentTz = 'UTC';
+            currentOffset = 0;
+        }
+
+        // Make HTMX request with new timezone
+        htmx.ajax('GET', '{% url "team_availability_fragment" team.id %}?tz=' + currentTz + '&offset=' + currentOffset, {
+            target: '#availability-container',
+            swap: 'innerHTML'
+        }).then(function() {
+            updateButtonText();
+        });
+    };
+
+    // Initial load with user's timezone
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('availability-container');
+        if (container) {
+            htmx.ajax('GET', '{% url "team_availability_fragment" team.id %}?tz=' + userTz + '&offset=' + userOffset, {
+                target: '#availability-container',
+                swap: 'innerHTML'
+            }).then(function() {
+                // After initial load, update button text
+                updateButtonText();
+            });
+        }
+    });
+
+    // Update button text after HTMX swap
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        // Only update if this was the availability container swap
+        if (event.detail.target.id === 'availability-container') {
+            updateButtonText();
+        }
+    });
+})();
+</script>
 {% endblock content %}

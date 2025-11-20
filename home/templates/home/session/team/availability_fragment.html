@@ -1,0 +1,85 @@
+{% load i18n %}
+<!-- Team Availability Section -->
+{% if team_availability_by_day %}
+<div id="team-availability-section" class="bg-white shadow rounded-lg p-6 mb-6">
+  <div class="flex justify-between items-center mb-4">
+    <div>
+      <h2 class="text-2xl font-extrabold">Team Availability</h2>
+      <p class="text-sm text-gray-600 mt-1">
+        <i class="fas fa-users mr-1"></i>When Navigators and Djangonauts can all meet together
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-gray-600">
+        Timezone: <span class="font-bold">{{ timezone }}</span>
+      </span>
+      <button onclick="toggleTimezone()"
+              class="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded transition-colors">
+        <span id="toggle-button-text"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% for day, ranges in team_availability_by_day.items %}
+    <div class="border border-gray-200 rounded p-3">
+      <h3 class="font-bold text-gray-900 mb-2">{{ day }}</h3>
+      <ul class="space-y-1">
+        {% for range in ranges %}
+        <li class="text-sm text-gray-700">
+          <i class="far fa-clock mr-1 text-purple-600"></i>{{ range }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Team Members Section -->
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+  <h2 class="text-2xl font-extrabold mb-4">Team Members</h2>
+
+  <!-- Captains -->
+  {% if captains %}
+  <div class="mb-6">
+    <h3 class="text-lg font-extrabold mb-3">
+      <i class="fas fa-satellite-dish mr-2"></i>Captains
+    </h3>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {% for membership in captains %}
+        {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False team=team timezone=timezone %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Navigators -->
+  {% if navigators %}
+  <div class="mb-6">
+    <h3 class="text-lg font-extrabold mb-3">
+      <i class="fas fa-compass mr-2"></i>Navigators
+    </h3>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {% for membership in navigators %}
+        {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False team=team timezone=timezone %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Djangonauts -->
+  {% if djangonauts %}
+  <div>
+    <h3 class="text-lg font-extrabold mb-3">
+      <i class="fas fa-user-astronaut mr-2"></i>Djangonauts
+    </h3>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {% for membership in djangonauts %}
+        {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=show_survey_link team=team timezone=timezone %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>

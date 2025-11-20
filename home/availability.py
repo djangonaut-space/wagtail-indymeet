@@ -6,13 +6,74 @@ that navigators can meet with all team members simultaneously, and captains
 can meet with each djangonaut individually.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 from accounts.models import UserAvailability
 from home.models import Team
 
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
 
-def get_user_slots(user: Any) -> list[float]:
+# Constants for availability calculations
+SLOT_INCREMENT = 0.5  # Each slot represents 30 minutes
+FLOAT_COMPARISON_THRESHOLD = 0.01  # Threshold for float equality checks
+HOURS_PER_WEEK = 168  # Total hours in a week (7 days * 24 hours)
+
+
+def _convert_to_12hour_format(hour_24: int) -> tuple[int, str]:
+    """
+    Convert 24-hour format to 12-hour format with AM/PM.
+
+    Args:
+        hour_24: Hour in 24-hour format (0-23)
+
+    Returns:
+        Tuple of (hour_12, period) where hour_12 is 1-12 and period is "AM" or "PM"
+    """
+    period = "AM" if hour_24 < 12 else "PM"
+    hour_12 = hour_24 % 12
+    if hour_12 == 0:
+        hour_12 = 12
+    return hour_12, period
+
+
+def _group_consecutive_slots(sorted_slots: list[float]) -> list[tuple[float, float]]:
+    """
+    Group consecutive time slots into ranges.
+
+    Args:
+        sorted_slots: Sorted list of time slot values
+
+    Returns:
+        List of (range_start, range_end) tuples representing consecutive slot ranges
+    """
+    if not sorted_slots:
+        return []
+
+    ranges = []
+    range_start = sorted_slots[0]
+    range_end = sorted_slots[0]
+
+    for i in range(1, len(sorted_slots)):
+        # Check if consecutive (SLOT_INCREMENT apart)
+        if (
+            abs(sorted_slots[i] - range_end - SLOT_INCREMENT)
+            < FLOAT_COMPARISON_THRESHOLD
+        ):
+            range_end = sorted_slots[i]
+        else:
+            # End current range and start new one
+            ranges.append((range_start, range_end))
+            range_start = sorted_slots[i]
+            range_end = sorted_slots[i]
+
+    # Add final range
+    ranges.append((range_start, range_end))
+
+    return ranges
+
+
+def get_user_slots(user: "CustomUser") -> list[float]:
     """
     Get availability slots for a user.
 
@@ -75,8 +136,8 @@ def count_one_hour_blocks(slots: list[float]) -> int:
     i = 0
 
     while i < len(slots) - 1:
-        # Check if current slot and next slot are consecutive (0.5 apart)
-        if abs(slots[i + 1] - slots[i] - 0.5) < 0.01:  # Float comparison
+        # Check if current slot and next slot are consecutive
+        if abs(slots[i + 1] - slots[i] - SLOT_INCREMENT) < FLOAT_COMPARISON_THRESHOLD:
             hour_blocks += 1
             i += 2  # Skip both slots that form this hour block
         else:
@@ -85,7 +146,7 @@ def count_one_hour_blocks(slots: list[float]) -> int:
     return hour_blocks
 
 
-def calculate_overlap(users: list[Any]) -> tuple[list[float], int]:
+def calculate_overlap(users: list["CustomUser"]) -> tuple[list[float], int]:
     """
     Find time slots where ALL users in a list are available simultaneously.
 
@@ -104,9 +165,6 @@ def calculate_overlap(users: list[Any]) -> tuple[list[float], int]:
     all_user_slots = [set(get_user_slots(user)) for user in users]
 
     # Find intersection of all users' availability
-    if not all_user_slots:
-        return [], 0
-
     overlapping_slots = set.intersection(*all_user_slots)
     sorted_overlap = sorted(overlapping_slots)
 
@@ -117,10 +175,10 @@ def calculate_overlap(users: list[Any]) -> tuple[list[float], int]:
 
 
 def calculate_team_overlap(
-    navigator_users: list[Any],
-    captain_user: Any | None,
-    djangonaut_users: list[Any],
-) -> dict[str, Any]:
+    navigator_users: list["CustomUser"],
+    captain_user: "CustomUser | None",
+    djangonaut_users: list["CustomUser"],
+) -> dict[str, int | list[float] | list[dict] | bool]:
     """
     Calculate availability overlaps for an entire team.
 
@@ -180,36 +238,65 @@ def calculate_team_overlap(
     return result
 
 
-def format_slot_as_time(slot: float) -> str:
+def convert_slot_with_offset(slot: float, offset_hours: float) -> float:
+    """
+    Convert a UTC slot to a different timezone using UTC offset.
+
+    Args:
+        slot: UTC slot value (0.0-167.5)
+        offset_hours: UTC offset in hours (e.g., -5 for EST, +1 for CET)
+
+    Returns:
+        Converted slot value, wrapped to stay within 0-168 range
+    """
+    converted = slot + offset_hours
+    # Wrap around the week (0-HOURS_PER_WEEK)
+    if converted < 0:
+        converted += HOURS_PER_WEEK
+    elif converted >= HOURS_PER_WEEK:
+        converted -= HOURS_PER_WEEK
+    return converted
+
+
+def format_slot_as_time(slot: float, offset_hours: float = 0) -> str:
     """
     Format a slot value as a human-readable time string.
 
     Args:
         slot: Time slot value (0.0 = Sunday 00:00 UTC, 167.5 = Saturday 23:30 UTC)
+        offset_hours: UTC offset in hours for timezone conversion
 
     Returns:
-        Formatted string like "Mon 14:30"
+        Formatted string like "Mon 2:30 PM"
     """
     days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+    # Apply offset if provided
+    if offset_hours != 0:
+        slot = convert_slot_with_offset(slot, offset_hours)
+
     day_index = int(slot // 24)
     hour_in_day = slot % 24
-    hours = int(hour_in_day)
+    hours24 = int(hour_in_day)
     minutes = int((hour_in_day % 1) * 60)
+
+    # Convert to 12-hour format with AM/PM
+    hours12, period = _convert_to_12hour_format(hours24)
 
     day_name = days[day_index] if 0 <= day_index < 7 else "???"
 
-    return f"{day_name} {hours:02d}:{minutes:02d}"
+    return f"{day_name} {hours12}:{minutes:02d} {period}"
 
 
-def format_slots_as_ranges(slots: list[float]) -> list[str]:
+def format_slots_as_ranges(slots: list[float], offset_hours: float = 0) -> list[str]:
     """
     Format a list of slots as time ranges for display.
 
-    Groups consecutive slots into ranges like "Mon 14:00-15:30".
+    Groups consecutive slots into ranges like "Mon 2:00 PM - 3:30 PM".
 
     Args:
         slots: Sorted list of time slot values
+        offset_hours: UTC offset in hours for timezone conversion
 
     Returns:
         List of formatted time range strings
@@ -217,50 +304,59 @@ def format_slots_as_ranges(slots: list[float]) -> list[str]:
     if not slots:
         return []
 
-    sorted_slots = sorted(slots)
-    ranges = []
-    range_start = sorted_slots[0]
-    range_end = sorted_slots[0]
+    # Convert all slots first if offset is provided
+    if offset_hours != 0:
+        converted_slots = [convert_slot_with_offset(s, offset_hours) for s in slots]
+        sorted_slots = sorted(converted_slots)
+    else:
+        sorted_slots = sorted(slots)
 
-    for i in range(1, len(sorted_slots)):
-        # Check if consecutive (0.5 hour apart)
-        if abs(sorted_slots[i] - range_end - 0.5) < 0.01:
-            range_end = sorted_slots[i]
-        else:
-            # End current range and start new one
-            start_time = format_slot_as_time(range_start)
-            end_time = format_slot_as_time(range_end + 0.5)  # Add 30 min to end
-            ranges.append(f"{start_time}-{end_time.split()[1]}")  # "Mon 14:00-15:30"
-            range_start = sorted_slots[i]
-            range_end = sorted_slots[i]
+    # Group consecutive slots into ranges
+    slot_ranges = _group_consecutive_slots(sorted_slots)
 
-    # Add final range
-    start_time = format_slot_as_time(range_start)
-    end_time = format_slot_as_time(range_end + 0.5)
-    ranges.append(f"{start_time}-{end_time.split()[1]}")
+    # Format each range
+    # Note: offset_hours=0 because slots are already converted above if needed
+    formatted_ranges = []
+    for range_start, range_end in slot_ranges:
+        start_time = format_slot_as_time(range_start, offset_hours=0)
+        # Add SLOT_INCREMENT to get the end time (end of the last 30-min slot)
+        end_time = format_slot_as_time(range_end + SLOT_INCREMENT, offset_hours=0)
+        # Extract just the time portion from end_time (remove day name)
+        end_time_only = end_time.split(" ", 1)[1]
+        formatted_ranges.append(f"{start_time} - {end_time_only}")
 
-    return ranges
+    return formatted_ranges
 
 
-def format_availability_by_day(slots: list[float]) -> dict[str, list[str]]:
+def format_availability_by_day(
+    slots: list[float], offset_hours: float = 0
+) -> dict[str, list[str]]:
     """
     Format availability slots grouped by day with time ranges.
 
     Args:
         slots: List of time slot values (0.0-167.5)
+        offset_hours: UTC offset in hours for timezone conversion
 
     Returns:
         Dict mapping day names to lists of time ranges
-        Example: {"Sun": ["7:30-10:00", "12:00-13:00"], "Mon": ["9:00-17:00"]}
+        Example: {"Sun": ["7:30 AM - 10:00 AM"], "Mon": ["9:00 AM - 5:00 PM"]}
     """
     if not slots:
         return {}
 
     days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+    # Convert all slots first if offset is provided
+    if offset_hours != 0:
+        converted_slots = [convert_slot_with_offset(s, offset_hours) for s in slots]
+    else:
+        converted_slots = slots
+
     day_slots = {day: [] for day in days}
 
     # Group slots by day
-    for slot in sorted(slots):
+    for slot in sorted(converted_slots):
         day_index = int(slot // 24)
         if 0 <= day_index < 7:
             day_name = days[day_index]
@@ -272,27 +368,14 @@ def format_availability_by_day(slots: list[float]) -> dict[str, list[str]]:
         if not day_slot_list:
             continue
 
-        ranges = []
         sorted_day_slots = sorted(day_slot_list)
-        range_start = sorted_day_slots[0]
-        range_end = sorted_day_slots[0]
+        slot_ranges = _group_consecutive_slots(sorted_day_slots)
 
-        for i in range(1, len(sorted_day_slots)):
-            # Check if consecutive (0.5 hour apart)
-            if abs(sorted_day_slots[i] - range_end - 0.5) < 0.01:
-                range_end = sorted_day_slots[i]
-            else:
-                # End current range and start new one
-                start_hour = range_start % 24
-                end_hour = (range_end + 0.5) % 24
-                ranges.append(format_time_range(start_hour, end_hour))
-                range_start = sorted_day_slots[i]
-                range_end = sorted_day_slots[i]
-
-        # Add final range
-        start_hour = range_start % 24
-        end_hour = (range_end + 0.5) % 24
-        ranges.append(format_time_range(start_hour, end_hour))
+        ranges = []
+        for range_start, range_end in slot_ranges:
+            start_hour = range_start % 24
+            end_hour = (range_end + SLOT_INCREMENT) % 24
+            ranges.append(format_time_range(start_hour, end_hour))
 
         day_ranges[day_name] = ranges
 
@@ -301,26 +384,41 @@ def format_availability_by_day(slots: list[float]) -> dict[str, list[str]]:
 
 def format_time_range(start_hour: float, end_hour: float) -> str:
     """
-    Format a time range from hour values.
+    Format a time range from hour values in 12-hour AM/PM format.
 
     Args:
         start_hour: Starting hour (can include .5 for 30 minutes)
         end_hour: Ending hour
 
     Returns:
-        Formatted string like "7:30-10:00" or "9-17"
+        Formatted string like "7:30 AM - 10:00 AM" or "9:00 AM - 5:00 PM"
     """
     start_h = int(start_hour)
     start_m = int((start_hour % 1) * 60)
     end_h = int(end_hour)
     end_m = int((end_hour % 1) * 60)
 
-    # Format without minutes if both are :00
-    if start_m == 0 and end_m == 0:
-        return f"{start_h}-{end_h}"
+    # Convert to 12-hour format with AM/PM
+    start_h12, start_period = _convert_to_12hour_format(start_h)
+    end_h12, end_period = _convert_to_12hour_format(end_h)
 
     # Format with minutes
-    start_str = f"{start_h}:{start_m:02d}" if start_m > 0 else str(start_h)
-    end_str = f"{end_h}:{end_m:02d}" if end_m > 0 else str(end_h)
+    start_str = f"{start_h12}:{start_m:02d} {start_period}"
+    end_str = f"{end_h12}:{end_m:02d} {end_period}"
 
-    return f"{start_str}-{end_str}"
+    return f"{start_str} - {end_str}"
+
+
+def calculate_user_overlap(user1: "CustomUser", user2: "CustomUser") -> list[float]:
+    """
+    Calculate overlapping availability slots between two individual users.
+
+    Args:
+        user1: First CustomUser instance
+        user2: Second CustomUser instance
+
+    Returns:
+        Sorted list of time slots where both users are available
+    """
+    slots, _ = calculate_overlap([user1, user2])
+    return slots

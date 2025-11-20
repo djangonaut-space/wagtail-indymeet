@@ -10,7 +10,11 @@ from home.views.surveys import (
     EditUserSurveyResponseView,
     UserSurveyResponseView,
 )
-from home.views.teams import DjangonautSurveyResponseView, TeamDetailView
+from home.views.teams import (
+    DjangonautSurveyResponseView,
+    TeamDetailView,
+    team_availability_fragment,
+)
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),
@@ -32,6 +36,11 @@ urlpatterns = [
         "sessions/<slug:session_slug>/teams/<int:pk>/",
         TeamDetailView.as_view(),
         name="team_detail",
+    ),
+    path(
+        "teams/<int:pk>/availability/",
+        team_availability_fragment,
+        name="team_availability_fragment",
     ),
     path(
         "sessions/<slug:session_slug>/djangonauts/<int:user_id>/survey-response/",
