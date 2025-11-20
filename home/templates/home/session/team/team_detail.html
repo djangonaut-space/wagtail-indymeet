@@ -79,6 +79,67 @@
       {% include 'home/session/team/availability_fragment.html' %}
     </div>
 
+    <!-- Team Members Section -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-extrabold">Team Members</h2>
+        <div class="flex items-center gap-3">
+          <a href="mailto:{% for m in captains %}{{ m.user.email }}{% if not forloop.last %},{% endif %}{% endfor %}{% if captains and navigators %},{% endif %}{% for m in navigators %}{{ m.user.email }}{% if not forloop.last %},{% endif %}{% endfor %}{% if navigators and djangonauts or captains and djangonauts %},{% endif %}{% for m in djangonauts %}{{ m.user.email }}{% if not forloop.last %},{% endif %}{% endfor %}"
+             class="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded transition-colors">
+            <i class="fas fa-envelope mr-1"></i>Email Team
+          </a>
+          {% if djangonauts %}
+          <a href="mailto:{% for m in djangonauts %}{{ m.user.email }}{% if not forloop.last %},{% endif %}{% endfor %}"
+             class="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded transition-colors">
+            <i class="fas fa-envelope mr-1"></i>Email Djangonauts
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Captains -->
+      {% if captains %}
+      <div class="mb-6">
+        <h3 class="text-lg font-extrabold mb-3">
+          <i class="fas fa-satellite-dish mr-2"></i>Captains
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {% for membership in captains %}
+            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Navigators -->
+      {% if navigators %}
+      <div class="mb-6">
+        <h3 class="text-lg font-extrabold mb-3">
+          <i class="fas fa-compass mr-2"></i>Navigators
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {% for membership in navigators %}
+            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=False %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Djangonauts -->
+      {% if djangonauts %}
+      <div>
+        <h3 class="text-lg font-extrabold mb-3">
+          <i class="fas fa-user-astronaut mr-2"></i>Djangonauts
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {% for membership in djangonauts %}
+            {% include 'home/includes/team_member_card.html' with membership=membership show_survey_link=show_survey_link %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
   </div>
 </main>
 
