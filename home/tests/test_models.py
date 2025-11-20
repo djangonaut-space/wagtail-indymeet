@@ -261,6 +261,56 @@ class UserQuestionResponseTests(TestCase):
             '<a href="https://example.com" target="_blank">https://example.com</a>',
         )
 
+    def test_non_sensitive_filter(self):
+        """Test that non_sensitive() queryset method filters out sensitive questions."""
+        # Create a mix of sensitive and non-sensitive questions
+        question1 = QuestionFactory.create(
+            survey=self.survey,
+            label="Non-sensitive Question 1",
+            ordering=1,
+            sensitive=False,
+        )
+        question2 = QuestionFactory.create(
+            survey=self.survey, label="Sensitive Question", ordering=2, sensitive=True
+        )
+        question3 = QuestionFactory.create(
+            survey=self.survey,
+            label="Non-sensitive Question 2",
+            ordering=3,
+            sensitive=False,
+        )
+
+        # Create responses for all questions
+        UserQuestionResponseFactory.create(
+            user_survey_response=self.user_survey_response,
+            question=question1,
+            value="Answer 1",
+        )
+        UserQuestionResponseFactory.create(
+            user_survey_response=self.user_survey_response,
+            question=question2,
+            value="Sensitive answer",
+        )
+        UserQuestionResponseFactory.create(
+            user_survey_response=self.user_survey_response,
+            question=question3,
+            value="Answer 3",
+        )
+
+        # Verify the queryset filtering using non_sensitive() method
+        question_responses = (
+            self.user_survey_response.userquestionresponse_set.non_sensitive()
+            .select_related("question")
+            .order_by("question__ordering")
+        )
+
+        # Should only contain non-sensitive questions
+        self.assertEqual(question_responses.count(), 2)
+        question_ids = [qr.question.id for qr in question_responses]
+        self.assertIn(question1.id, question_ids)
+        self.assertIn(question3.id, question_ids)
+        self.assertNotIn(question2.id, question_ids)
+
 
 class UserSurveyResponseTests(TestCase):
     @classmethod

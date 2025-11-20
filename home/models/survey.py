@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from accounts.models import UserAvailability
 from home import email
-from home.managers import UserSurveyResponseQuerySet
+from home.managers import UserQuestionResponseQuerySet, UserSurveyResponseQuerySet
 
 
 class BaseModel(models.Model):
@@ -101,6 +101,13 @@ class Question(BaseModel):
     required = models.BooleanField(
         default=True,
         help_text=_("If True, the user must provide an answer to this question."),
+    )
+    sensitive = models.BooleanField(
+        default=False,
+        help_text=_(
+            "If True, responses to this question will not be visible to team "
+            "captains and navigators."
+        ),
     )
     ordering = models.PositiveIntegerField(
         default=0, help_text=_("Defines the question order within the surveys.")
@@ -226,6 +233,8 @@ class UserQuestionResponse(BaseModel):
         UserSurveyResponse,
         on_delete=models.CASCADE,
     )
+
+    objects = models.Manager.from_queryset(UserQuestionResponseQuerySet)()
 
     class Meta:
         ordering = ["question__ordering"]

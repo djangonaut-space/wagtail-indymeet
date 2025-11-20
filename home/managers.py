@@ -4,6 +4,14 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 
 
+class UserQuestionResponseQuerySet(QuerySet):
+    """QuerySet for UserQuestionResponse with filtering methods."""
+
+    def non_sensitive(self):
+        """Filter to only responses for non-sensitive questions."""
+        return self.filter(question__sensitive=False)
+
+
 class EventQuerySet(QuerySet):
     def pending(self):
         return self.filter(status=self.model.PENDING)

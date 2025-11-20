@@ -159,10 +159,12 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
         context["team"] = self.djangonaut_membership.team
         context["djangonaut"] = self.djangonaut_membership.user
 
-        # Prefetch question responses
-        question_responses = survey_response.userquestionresponse_set.select_related(
-            "question"
-        ).order_by("question__ordering")
+        # Prefetch question responses, excluding sensitive questions
+        question_responses = (
+            survey_response.userquestionresponse_set.non_sensitive()
+            .select_related("question")
+            .order_by("question__ordering")
+        )
         context["question_responses"] = question_responses
 
         return context

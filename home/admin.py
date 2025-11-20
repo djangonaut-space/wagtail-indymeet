@@ -309,6 +309,7 @@ class QuestionInline(admin.StackedInline):
         "choices",
         "help_text",
         "required",
+        "sensitive",
         "ordering",
     )
     readonly_fields = ("key",)
