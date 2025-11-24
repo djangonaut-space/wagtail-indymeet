@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.db.models import Exists, F, Max, Count, OuterRef
@@ -99,6 +100,18 @@ class UserWithMembershipFilter(admin.SimpleListFilter):
 class SessionMembershipInline(admin.TabularInline):
     model = SessionMembership
     extra = 0
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Limit team choices to teams in the current session."""
+        if db_field.name == "team":
+            # Get the session from the parent object being edited
+            session_id = request.resolver_match.kwargs.get("object_id")
+            if session_id:
+                kwargs["queryset"] = Team.objects.filter(session_id=session_id)
+            else:
+                # No session determined (shouldn't happen in normal usage)
+                kwargs["queryset"] = Team.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class SessionProjectInline(admin.TabularInline):
