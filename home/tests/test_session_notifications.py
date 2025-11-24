@@ -27,7 +27,6 @@ from home.factories import (
     UserSurveyResponseFactory,
 )
 from home.models import SessionMembership, Waitlist
-from home.views.session_notifications import reject_waitlisted_user
 
 User = get_user_model()
 
@@ -125,8 +124,13 @@ class SessionResultsNotificationTests(TestCase):
         ENVIRONMENT="production",
         BASE_URL="https://djangonaut.space",
     )
-    def test_send_session_results_sends_emails(self):
-        """Test POST request sends emails to all applicants"""
+    @patch("home.views.session_notifications.tasks.send_rejected_email")
+    @patch("home.views.session_notifications.tasks.send_waitlisted_email")
+    @patch("home.views.session_notifications.tasks.send_accepted_email")
+    def test_send_session_results_enqueuess(
+        self, mock_accepted, mock_waitlisted, mock_rejected
+    ):
+        """Test POST request enqueues email tasks for all applicants"""
         url = reverse("admin:session_send_results", args=[self.session.id])
         response = self.client.post(
             url,
@@ -136,38 +140,14 @@ class SessionResultsNotificationTests(TestCase):
         # Should redirect to session changelist
         self.assertRedirects(response, reverse("admin:home_session_changelist"))
 
-        # Should send 6 emails total (2 accepted + 2 waitlisted + 2 rejected)
-        self.assertEqual(len(mail.outbox), 6)
+        # Should enqueue 2 accepted tasks (only Djangonauts)
+        self.assertEqual(mock_accepted.enqueue.call_count, 2)
 
-        # Check accepted emails
-        accepted_emails = [
-            m
-            for m in mail.outbox
-            if m.recipients()[0] in ["accepted1@example.com", "accepted2@example.com"]
-        ]
-        self.assertEqual(len(accepted_emails), 2)
-        for email in accepted_emails:
-            self.assertIn("accepted", email.subject.lower())
-            self.assertIn("accept", email.body.lower())
+        # Should enqueue 2 waitlisted tasks
+        self.assertEqual(mock_waitlisted.enqueue.call_count, 2)
 
-        # Check waitlisted emails
-        waitlisted_emails = [
-            m
-            for m in mail.outbox
-            if m.recipients()[0]
-            in ["waitlisted1@example.com", "waitlisted2@example.com"]
-        ]
-        self.assertEqual(len(waitlisted_emails), 2)
-        for email in waitlisted_emails:
-            self.assertIn("waitlist", email.subject.lower())
-
-        # Check rejected emails
-        rejected_emails = [
-            m
-            for m in mail.outbox
-            if m.recipients()[0] in ["rejected1@example.com", "rejected2@example.com"]
-        ]
-        self.assertEqual(len(rejected_emails), 2)
+        # Should enqueue 2 rejected tasks
+        self.assertEqual(mock_rejected.enqueue.call_count, 2)
 
         # Check that session was marked as sent
         self.session.refresh_from_db()
@@ -177,7 +157,12 @@ class SessionResultsNotificationTests(TestCase):
         ENVIRONMENT="production",
         BASE_URL="https://djangonaut.space",
     )
-    def test_send_session_results_sets_acceptance_deadline(self):
+    @patch("home.views.session_notifications.tasks.send_rejected_email")
+    @patch("home.views.session_notifications.tasks.send_waitlisted_email")
+    @patch("home.views.session_notifications.tasks.send_accepted_email")
+    def test_send_session_results_sets_acceptance_deadline(
+        self, mock_accepted, mock_waitlisted, mock_rejected
+    ):
         """Test that acceptance deadlines are set for Djangonaut memberships only"""
         url = reverse("admin:session_send_results", args=[self.session.id])
         self.client.post(
@@ -273,25 +258,27 @@ class AcceptanceReminderTests(TestCase):
         ENVIRONMENT="production",
         BASE_URL="https://djangonaut.space",
     )
-    def test_send_acceptance_reminders_sends_only_to_pending(self):
-        """Test POST request sends emails only to pending users"""
+    @patch("home.views.session_notifications.tasks.send_acceptance_reminder_email")
+    def test_send_acceptance_reminders_enqueuess(self, mock_reminder):
+        """Test POST request enqueues reminder tasks only for pending users"""
         url = reverse("admin:session_send_acceptance_reminders", args=[self.session.id])
         response = self.client.post(url, {"confirm": "yes"})
 
         # Should redirect
         self.assertRedirects(response, reverse("admin:home_session_changelist"))
 
-        # Should send 2 emails (only to pending users)
-        self.assertEqual(len(mail.outbox), 2)
+        # Should enqueue 2 reminder tasks (only for pending users)
+        self.assertEqual(mock_reminder.enqueue.call_count, 2)
 
-        # Check emails went to pending users
-        recipients = [m.recipients()[0] for m in mail.outbox]
-        self.assertIn("pending1@example.com", recipients)
-        self.assertIn("pending2@example.com", recipients)
-
-        # Check subject contains "reminder"
-        for email in mail.outbox:
-            self.assertIn("reminder", email.subject.lower())
+        # Verify the correct membership IDs were passed
+        enqueued_membership_ids = {
+            call.kwargs["membership_id"]
+            for call in mock_reminder.enqueue.call_args_list
+        }
+        self.assertEqual(
+            enqueued_membership_ids,
+            {self.pending_membership1.id, self.pending_membership2.id},
+        )
 
 
 class TeamWelcomeEmailTests(TestCase):
@@ -376,39 +363,23 @@ class TeamWelcomeEmailTests(TestCase):
         ENVIRONMENT="production",
         BASE_URL="https://djangonaut.space",
     )
-    def test_send_team_welcome_emails_sends_to_all_members(self):
-        """Test POST request sends group emails to teams"""
+    @patch("home.views.session_notifications.tasks.send_team_welcome_email")
+    def test_send_team_welcome_emails_enqueuess(self, mock_team_welcome):
+        """Test POST request enqueues team welcome email tasks"""
         url = reverse("admin:session_send_team_welcome_emails", args=[self.session.id])
         response = self.client.post(url, {"confirm": "yes"})
 
         # Should redirect
         self.assertRedirects(response, reverse("admin:home_session_changelist"))
 
-        # Should send 2 emails (one per team as group emails)
-        self.assertEqual(len(mail.outbox), 2)
+        # Should enqueue 2 tasks (one per team)
+        self.assertEqual(mock_team_welcome.enqueue.call_count, 2)
 
-        # Check that all team members are included as recipients in the emails
-        all_recipients = []
-        for email in mail.outbox:
-            all_recipients.extend(email.recipients())
-
-        self.assertIn("member1@example.com", all_recipients)
-        self.assertIn("member2@example.com", all_recipients)
-        self.assertIn("member3@example.com", all_recipients)
-
-        # Check subject contains "welcome"
-        for email in mail.outbox:
-            self.assertIn("welcome", email.subject.lower())
-
-        # Check email contains team information
-        team_alpha_email = next(
-            m
-            for m in mail.outbox
-            if "member1@example.com" in m.recipients()
-            and "member2@example.com" in m.recipients()
-        )
-        self.assertIn("Team Alpha", team_alpha_email.body)
-        self.assertIn("Django", team_alpha_email.body)
+        # Verify the correct team IDs were passed
+        enqueued_team_ids = {
+            call.kwargs["team_id"] for call in mock_team_welcome.enqueue.call_args_list
+        }
+        self.assertEqual(enqueued_team_ids, {self.team1.id, self.team2.id})
 
 
 class MembershipAcceptanceViewTests(TestCase):
@@ -623,52 +594,3 @@ class SessionMembershipModelAcceptanceFieldsTests(TestCase):
         membership.save()
         membership.refresh_from_db()
         self.assertFalse(membership.accepted)
-
-
-class RejectWaitlistedUserTests(TestCase):
-    """Tests for the reject_waitlisted_user function."""
-
-    def setUp(self):
-        """Set up test data."""
-        self.user = UserFactory.create(
-            email="test@example.com", first_name="Test", last_name="User"
-        )
-        self.session = SessionFactory.create(title="Test Session", slug="test-session")
-        self.waitlist_entry = Waitlist.objects.create(
-            user=self.user, session=self.session
-        )
-
-    @patch("home.views.session_notifications.email.send")
-    def test_reject_waitlisted_user_sends_email(self, mock_send):
-        """Test that rejecting a waitlisted user sends a rejection email."""
-        reject_waitlisted_user(self.waitlist_entry)
-
-        # Verify email was sent
-        mock_send.assert_called_once()
-        call_kwargs = mock_send.call_args[1]
-        self.assertEqual(call_kwargs["email_template"], "waitlist_rejection")
-        self.assertEqual(call_kwargs["recipient_list"], [self.user.email])
-        self.assertIn("user", call_kwargs["context"])
-        self.assertIn("session", call_kwargs["context"])
-
-    @patch("home.views.session_notifications.email.send")
-    def test_reject_waitlisted_user_removes_from_waitlist(self, mock_send):
-        """Test that rejecting a waitlisted user removes them from the waitlist."""
-        reject_waitlisted_user(self.waitlist_entry)
-
-        # Verify user was removed from waitlist
-        self.assertFalse(
-            Waitlist.objects.filter(user=self.user, session=self.session).exists()
-        )
-
-    @patch("home.views.session_notifications.email.send")
-    def test_reject_waitlisted_user_does_not_create_membership(self, mock_send):
-        """Test that rejecting a waitlisted user doesn't create a SessionMembership."""
-        reject_waitlisted_user(self.waitlist_entry)
-
-        # Verify no membership was created
-        self.assertFalse(
-            SessionMembership.objects.filter(
-                user=self.user, session=self.session
-            ).exists()
-        )

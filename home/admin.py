@@ -25,10 +25,9 @@ from .views.team_formation import (
     calculate_overlap_ajax,
     team_formation_view,
 )
+from . import tasks
 from .views.session_notifications import (
-    reject_waitlisted_user,
     send_acceptance_reminders_view,
-    send_membership_acceptance_emails,
     send_session_results_view,
     send_team_welcome_emails_view,
 )
@@ -134,14 +133,21 @@ class SessionMembershipAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         """
         Send acceptance emails to selected SessionMembership records.
 
-        This action sends acceptance notification emails to users with
+        This action enqueues acceptance notification emails to users with
         SessionMembership records, typically after team formation.
         """
-        sent_count = send_membership_acceptance_emails(queryset.djangonauts())
+        djangonauts = queryset.djangonauts()
+        queued_count = 0
+
+        for membership in djangonauts:
+            tasks.send_membership_acceptance_email.enqueue(
+                membership_id=membership.pk,
+            )
+            queued_count += 1
 
         self.message_user(
             request,
-            f"Successfully sent {sent_count} acceptance email(s).",
+            f"Successfully queued {queued_count} acceptance email(s).",
             messages.SUCCESS,
         )
 
@@ -284,18 +290,20 @@ class WaitlistAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         Reject selected users from the waitlist.
 
         This action will:
-        1. Send rejection notification emails
-        2. Remove them from the waitlist
+        1. Enqueue rejection notification emails
+        2. Remove them from the waitlist (handled by the task)
         """
-        rejected_count = 0
+        queued_count = 0
         for waitlist_entry in queryset:
-            reject_waitlisted_user(waitlist_entry)
-            rejected_count += 1
+            tasks.reject_waitlisted_user.enqueue(
+                waitlist_id=waitlist_entry.pk,
+            )
+            queued_count += 1
 
         self.message_user(
             request,
-            f"Successfully rejected {rejected_count} user(s) from the waitlist "
-            f"and sent rejection emails.",
+            f"Successfully queued {queued_count} rejection email(s). "
+            f"Users will be removed from the waitlist once emails are sent.",
             messages.SUCCESS,
         )
 

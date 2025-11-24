@@ -84,7 +84,8 @@ class Session(models.Model):
         blank=True,
         help_text=_(
             "Timestamp when application result notifications "
-            "(accepted/waitlist/rejected) were sent to applicants"
+            "(accepted/waitlist/rejected) were queued for delivery. "
+            "Note: This marks when tasks were enqueued, not when all emails completed."
         ),
     )
 

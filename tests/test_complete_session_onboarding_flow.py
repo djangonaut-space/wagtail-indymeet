@@ -795,7 +795,7 @@ class TestCompleteSessionOnboardingFlow:
         page.wait_for_load_state("networkidle")
 
         # Verify success message
-        expect(page.locator(".messagelist")).to_contain_text("Successfully sent")
+        expect(page.locator(".messagelist")).to_contain_text("Successfully queued")
 
         # Logout admin
         self.logout(page)
@@ -917,7 +917,7 @@ class TestCompleteSessionOnboardingFlow:
         page.wait_for_load_state("networkidle")
 
         # Verify success message
-        expect(page.locator(".messagelist")).to_contain_text("Successfully sent")
+        expect(page.locator(".messagelist")).to_contain_text("Successfully queued")
 
         # Logout admin
         self.logout(page)
@@ -962,7 +962,7 @@ class TestCompleteSessionOnboardingFlow:
         page.wait_for_load_state("networkidle")
 
         # Verify success message
-        expect(page.locator(".messagelist")).to_contain_text("Successfully sent")
+        expect(page.locator(".messagelist")).to_contain_text("Successfully queued")
 
         # Logout admin
         self.logout(page)

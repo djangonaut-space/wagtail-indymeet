@@ -5,303 +5,22 @@ Provides admin interfaces for:
 - Sending session result notifications (accepted/waitlist/rejected)
 - Sending acceptance reminder emails
 - Sending team welcome emails
+
+Email sending is handled asynchronously via background tasks.
 """
 
-import datetime
 from datetime import timedelta
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from home import email
+from home import tasks
 from home.forms import SendSessionResultsForm
-from home.models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
-
-
-# Email sending functions (to be moved to background tasks in the future)
-
-
-def send_accepted_emails(
-    session: Session, accepted_memberships: QuerySet[SessionMembership]
-) -> int:
-    """
-    Send acceptance emails to users with SessionMembership.
-
-    Args:
-        session: The session for which to send emails
-        accepted_memberships: QuerySet of SessionMembership objects
-
-    Returns:
-        Number of emails sent
-    """
-    sent_count = 0
-
-    for membership in accepted_memberships:
-        acceptance_url = settings.BASE_URL + reverse(
-            "accept_membership", kwargs={"slug": membership.session.slug}
-        )
-
-        context = {
-            "user": membership.user,
-            "name": membership.user.first_name or membership.user.email,
-            "session": session,
-            "membership": membership,
-            "acceptance_url": acceptance_url,
-            "cta_link": acceptance_url,
-        }
-
-        email.send(
-            email_template="session_accepted",
-            recipient_list=[membership.user.email],
-            context=context,
-        )
-        sent_count += 1
-
-    return sent_count
-
-
-def send_waitlisted_emails(
-    session: Session,
-    waitlisted_entries: QuerySet[Waitlist],
-    applicant_count: int,
-    accepted_count: int,
-) -> int:
-    """
-    Send waitlist emails to users on the Waitlist.
-
-    Args:
-        session: The session for which to send emails
-        waitlisted_entries: QuerySet of Waitlist objects
-        applicant_count: Total number of applicants
-        accepted_count: Number of accepted applicants
-
-    Returns:
-        Number of emails sent
-    """
-    sent_count = 0
-
-    for waitlist_entry in waitlisted_entries:
-        context = {
-            "user": waitlist_entry.user,
-            "session": session,
-            "applicant_count": applicant_count,
-            "accepted_count": accepted_count,
-        }
-
-        email.send(
-            email_template="session_waitlisted",
-            recipient_list=[waitlist_entry.user.email],
-            context=context,
-        )
-        sent_count += 1
-
-    return sent_count
-
-
-def send_rejected_emails(
-    session: Session,
-    rejected_user_ids: set[int],
-    applicant_responses: QuerySet[UserSurveyResponse],
-    applicant_count: int,
-    accepted_count: int,
-) -> int:
-    """
-    Send rejection emails to users who applied but were neither accepted nor waitlisted.
-
-    Args:
-        session: The session for which to send emails
-        rejected_user_ids: Set of user IDs who were rejected
-        applicant_responses: QuerySet of UserSurveyResponse objects
-        applicant_count: Total number of applicants
-        accepted_count: Number of accepted applicants
-
-    Returns:
-        Number of emails sent
-    """
-    sent_count = 0
-
-    for user_id in rejected_user_ids:
-        response = applicant_responses.get(user_id=user_id)
-        context = {
-            "user": response.user,
-            "session": session,
-            "applicant_count": applicant_count,
-            "accepted_count": accepted_count,
-        }
-
-        email.send(
-            email_template="session_rejected",
-            recipient_list=[response.user.email],
-            context=context,
-        )
-        sent_count += 1
-
-    return sent_count
-
-
-def send_acceptance_reminder_emails(
-    session: Session, pending_memberships: QuerySet[SessionMembership]
-) -> int:
-    """
-    Send acceptance reminder emails to users who haven't yet accepted.
-
-    Args:
-        session: The session for which to send emails
-        pending_memberships: QuerySet of SessionMembership objects with pending acceptance
-
-    Returns:
-        Number of emails sent
-    """
-    sent_count = 0
-
-    for membership in pending_memberships:
-        acceptance_url = settings.BASE_URL + reverse(
-            "accept_membership", kwargs={"slug": membership.session.slug}
-        )
-
-        context = {
-            "user": membership.user,
-            "name": membership.user.first_name or membership.user.email,
-            "session": session,
-            "membership": membership,
-            "acceptance_url": acceptance_url,
-            "cta_link": acceptance_url,
-        }
-
-        email.send(
-            email_template="acceptance_reminder",
-            recipient_list=[membership.user.email],
-            context=context,
-        )
-        sent_count += 1
-
-    return sent_count
-
-
-def send_team_welcome_emails(session: Session, teams: QuerySet[Team]) -> int:
-    """
-    Send group welcome emails to teams.
-
-    Each team receives a single email sent to all members (djangonauts, navigators, captains).
-
-    Args:
-        session: The session for which to send emails
-        teams: QuerySet of Team objects
-
-    Returns:
-        Number of emails sent
-    """
-    sent_count = 0
-
-    for team in teams:
-        # Get all team members for this team
-        team_members = (
-            SessionMembership.objects.filter(team=team)
-            .select_related("user")
-            .order_by("role", "user__first_name")
-        )
-
-        if not team_members.exists():
-            continue
-
-        # Separate members by role
-        djangonauts = [
-            m for m in team_members if m.role == SessionMembership.DJANGONAUT
-        ]
-        navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
-        captains = [m for m in team_members if m.role == SessionMembership.CAPTAIN]
-
-        # Collect all team member emails
-        recipient_list = [member.user.email for member in team_members]
-
-        context = {
-            "session": session,
-            "team": team,
-            "team_members": team_members,
-            "djangonauts": djangonauts,
-            "navigators": navigators,
-            "captains": captains,
-            "discord_invite_url": settings.DISCORD_INVITE_URL,
-        }
-
-        email.send(
-            email_template="team_welcome",
-            recipient_list=recipient_list,
-            context=context,
-        )
-        sent_count += 1
-
-    return sent_count
-
-
-def send_membership_acceptance_emails(
-    memberships: QuerySet[SessionMembership],
-) -> int:
-    """
-    Send acceptance emails to users with SessionMembership.
-
-    Args:
-        memberships: QuerySet of SessionMembership objects
-
-    Returns:
-        Number of emails sent
-    """
-    sent_count = 0
-
-    for membership in memberships:
-        acceptance_url = settings.BASE_URL + reverse(
-            "accept_membership", kwargs={"slug": membership.session.slug}
-        )
-
-        context = {
-            "user": membership.user,
-            "name": membership.user.first_name or membership.user.email,
-            "session": membership.session,
-            "membership": membership,
-            "acceptance_url": acceptance_url,
-            "cta_link": acceptance_url,
-        }
-
-        email.send(
-            email_template="session_accepted",
-            recipient_list=[membership.user.email],
-            context=context,
-        )
-        sent_count += 1
-
-    return sent_count
-
-
-def reject_waitlisted_user(waitlist_entry: Waitlist) -> None:
-    """
-    Reject a waitlisted user and send them a rejection email.
-
-    Sends a waitlist rejection notification email and removes the user
-    from the waitlist.
-
-    Args:
-        waitlist_entry: The Waitlist entry to reject
-    """
-    context = {
-        "user": waitlist_entry.user,
-        "session": waitlist_entry.session,
-    }
-
-    email.send(
-        email_template="waitlist_rejection",
-        recipient_list=[waitlist_entry.user.email],
-        context=context,
-    )
-
-    # Remove from waitlist
-    waitlist_entry.delete()
+from home.models import Session, SessionMembership, UserSurveyResponse, Waitlist
 
 
 @staff_member_required
@@ -310,7 +29,7 @@ def send_session_results_view(request: HttpRequest, session_id: int) -> HttpResp
     """
     Admin view to send session result notifications.
 
-    Sends three types of emails:
+    Sends three types of emails via background tasks:
     - Accepted: to users with SessionMembership
     - Waitlisted: to users on the Waitlist
     - Rejected: to users who applied but are neither accepted nor waitlisted
@@ -352,33 +71,31 @@ def send_session_results_view(request: HttpRequest, session_id: int) -> HttpResp
             djangonaut_memberships.filter(acceptance_deadline__isnull=True).update(
                 acceptance_deadline=acceptance_deadline
             )
-
-            # Send accepted emails (only to Djangonauts)
-            sent_accepted_count = send_accepted_emails(session, djangonaut_memberships)
-
-            # Send waitlisted emails
-            sent_waitlisted_count = send_waitlisted_emails(
-                session, waitlisted_entries, applicant_count, accepted_count
-            )
-
-            # Send rejected emails
-            sent_rejected_count = send_rejected_emails(
-                session,
-                rejected_user_ids,
-                applicant_responses,
-                applicant_count,
-                accepted_count,
-            )
-
-            # Mark notifications as sent
+            for membership in djangonaut_memberships:
+                tasks.send_accepted_email.enqueue(
+                    membership_id=membership.pk,
+                )
+            for waitlist_entry in waitlisted_entries:
+                tasks.send_waitlisted_email.enqueue(
+                    waitlist_id=waitlist_entry.pk,
+                    applicant_count=applicant_count,
+                    accepted_count=accepted_count,
+                )
+            for user_id in rejected_user_ids:
+                tasks.send_rejected_email.enqueue(
+                    user_id=user_id,
+                    session_id=session.pk,
+                    applicant_count=applicant_count,
+                    accepted_count=accepted_count,
+                )
             session.results_notifications_sent_at = timezone.now()
             session.save(update_fields=["results_notifications_sent_at"])
 
             messages.success(
                 request,
-                f"Successfully sent {sent_accepted_count} accepted, "
-                f"{sent_waitlisted_count} waitlisted, and "
-                f"{sent_rejected_count} rejected notifications for '{session.title}'.",
+                f"Successfully queued {accepted_count} accepted, "
+                f"{waitlisted_count} waitlisted, and "
+                f"{rejected_count} rejected notifications for '{session.title}'.",
             )
             return redirect("admin:home_session_changelist")
     else:
@@ -410,7 +127,7 @@ def send_acceptance_reminders_view(
     """
     Admin view to send acceptance reminder emails.
 
-    Sends reminder emails to users who:
+    Sends reminder emails via background tasks to users who:
     - Have been accepted (have SessionMembership)
     - Have not yet accepted (accepted field is None)
     - Have an acceptance_deadline set
@@ -429,11 +146,15 @@ def send_acceptance_reminders_view(
     )
 
     if request.method == "POST":
-        sent_count = send_acceptance_reminder_emails(session, pending_memberships)
+        pending_count = pending_memberships.count()
+        for membership in pending_memberships:
+            tasks.send_acceptance_reminder_email.enqueue(
+                membership_id=membership.pk,
+            )
 
         messages.success(
             request,
-            f"Successfully sent {sent_count} acceptance reminder(s) for '{session.title}'.",
+            f"Successfully queued {pending_count} acceptance reminder(s) for '{session.title}'.",
         )
         return redirect("admin:home_session_changelist")
 
@@ -458,8 +179,8 @@ def send_team_welcome_emails_view(
     """
     Admin view to send team welcome emails.
 
-    Sends group welcome emails to teams, with each email going to
-    all members (djangonauts, navigators, and captains) of that team.
+    Sends group welcome emails via background tasks to teams, with each email
+    going to all members (djangonauts, navigators, and captains) of that team.
     """
     session = get_object_or_404(Session, pk=session_id)
 
@@ -477,11 +198,13 @@ def send_team_welcome_emails_view(
     ).count()
 
     if request.method == "POST":
-        sent_count = send_team_welcome_emails(session, teams)
-
+        for team in teams:
+            tasks.send_team_welcome_email.enqueue(
+                team_id=team.pk,
+            )
         messages.success(
             request,
-            f"Successfully sent {sent_count} team welcome email(s) for '{session.title}'.",
+            f"Successfully queued {team_count} team welcome email(s) for '{session.title}'.",
         )
         return redirect("admin:home_session_changelist")
 

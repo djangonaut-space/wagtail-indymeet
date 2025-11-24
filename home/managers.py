@@ -130,7 +130,7 @@ class UserSurveyResponseQuerySet(QuerySet):
         - annotated_previous_application_count: Count of applications from previous surveys
         - annotated_previous_avg_score_value: Average score from previous applications
         """
-        from home.models import Session, UserSurveyResponse
+        from home.models import UserSurveyResponse
 
         # Subquery for previous application count
         # Only count surveys that are application_surveys for sessions

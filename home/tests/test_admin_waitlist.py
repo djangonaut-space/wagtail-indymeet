@@ -13,7 +13,6 @@ from accounts.factories import UserFactory
 from home.admin import WaitlistAdmin, SessionMembershipAdmin
 from home.factories import SessionFactory, SessionMembershipFactory
 from home.models import SessionMembership, Waitlist
-from home.views.session_notifications import send_membership_acceptance_emails
 
 
 class WaitlistAdminActionsTests(TestCase):
@@ -48,8 +47,8 @@ class WaitlistAdminActionsTests(TestCase):
 
         return request
 
-    @patch("home.views.session_notifications.email.send")
-    def test_reject_waitlisted_users_action(self, mock_send):
+    @patch("home.admin.tasks.reject_waitlisted_user")
+    def test_reject_waitlisted_users_action(self, mock_task):
         """Test the reject_waitlisted_users_action admin action."""
         # Create waitlisted users
         user1 = UserFactory.create(
@@ -66,20 +65,14 @@ class WaitlistAdminActionsTests(TestCase):
         queryset = Waitlist.objects.filter(id__in=[waitlist1.id, waitlist2.id])
         self.admin.reject_waitlisted_users_action(request, queryset)
 
-        # Verify no memberships were created
-        self.assertFalse(
-            SessionMembership.objects.filter(user=user1, session=self.session).exists()
-        )
-        self.assertFalse(
-            SessionMembership.objects.filter(user=user2, session=self.session).exists()
-        )
+        # Verify tasks were enqueued
+        self.assertEqual(mock_task.enqueue.call_count, 2)
 
-        # Verify users were removed from waitlist
-        self.assertFalse(Waitlist.objects.filter(user=user1).exists())
-        self.assertFalse(Waitlist.objects.filter(user=user2).exists())
-
-        # Verify emails were sent
-        self.assertEqual(mock_send.call_count, 2)
+        # Verify the correct waitlist IDs were passed
+        enqueued_waitlist_ids = {
+            call.kwargs["waitlist_id"] for call in mock_task.enqueue.call_args_list
+        }
+        self.assertEqual(enqueued_waitlist_ids, {waitlist1.id, waitlist2.id})
 
 
 class SessionMembershipAdminActionsTests(TestCase):
@@ -114,8 +107,8 @@ class SessionMembershipAdminActionsTests(TestCase):
 
         return request
 
-    @patch("home.views.session_notifications.email.send")
-    def test_send_acceptance_emails_action(self, mock_send):
+    @patch("home.admin.tasks.send_membership_acceptance_email")
+    def test_send_acceptance_emails_action(self, mock_task):
         """Test the send_acceptance_emails_action admin action."""
         # Create memberships
         user1 = UserFactory.create(
@@ -144,11 +137,17 @@ class SessionMembershipAdminActionsTests(TestCase):
         )
         self.admin.send_acceptance_emails_action(request, queryset)
 
-        # Verify emails were sent
-        self.assertEqual(mock_send.call_count, 2)
+        # Verify tasks were enqueued
+        self.assertEqual(mock_task.enqueue.call_count, 2)
 
-    @patch("home.views.session_notifications.email.send")
-    def test_send_acceptance_emails_action_filters_djangonauts_only(self, mock_send):
+        # Verify the correct membership IDs were passed
+        enqueued_membership_ids = {
+            call.kwargs["membership_id"] for call in mock_task.enqueue.call_args_list
+        }
+        self.assertEqual(enqueued_membership_ids, {membership1.id, membership2.id})
+
+    @patch("home.admin.tasks.send_membership_acceptance_email")
+    def test_send_acceptance_emails_action_filters_djangonauts_only(self, mock_task):
         """Test that only Djangonauts receive acceptance emails."""
         # Create different role memberships
         djangonaut = UserFactory.create(email="djangonaut@example.com")
@@ -185,5 +184,9 @@ class SessionMembershipAdminActionsTests(TestCase):
         )
         self.admin.send_acceptance_emails_action(request, queryset)
 
-        # Only one email should be sent (to the Djangonaut)
-        self.assertEqual(mock_send.call_count, 1)
+        # Only one task should be enqueued (for the Djangonaut)
+        self.assertEqual(mock_task.enqueue.call_count, 1)
+
+        # Verify it was the Djangonaut's membership
+        enqueued_membership_id = mock_task.enqueue.call_args.kwargs["membership_id"]
+        self.assertEqual(enqueued_membership_id, djangonaut_membership.id)
