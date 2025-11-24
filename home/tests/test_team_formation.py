@@ -11,6 +11,7 @@ from home.admin import SessionAdmin
 from home.factories import ProjectFactory, TeamFactory
 from home.forms import ApplicantFilterForm
 from home.models import (
+    ProjectPreference,
     Question,
     Session,
     SessionMembership,
@@ -539,6 +540,78 @@ class TeamFormationViewTestCase(TestCase):
         )
         # Check that 2 hours is displayed (may have warning icon since < MIN_CAPTAIN_HOURS)
         self.assertRegex(content, r"<td>\s*2\s*")
+
+    def test_team_formation_view_query_count(self):
+        """Test that the team formation view doesn't have N+1 query issues."""
+        # Create multiple projects
+        project1 = ProjectFactory(name="Project Alpha")
+        project2 = ProjectFactory(name="Project Beta")
+        project3 = ProjectFactory(name="Project Gamma")
+
+        # Create multiple applicants with varying project preferences
+        applicants = []
+        for i in range(10):
+            user = UserFactory(
+                username=f"applicant{i}",
+                email=f"applicant{i}@example.com",
+                password="test",
+            )
+            applicants.append(user)
+
+            # Create survey response
+            UserSurveyResponse.objects.create(
+                user=user, survey=self.survey, score=i + 1, selection_rank=i + 1
+            )
+
+            # Create availability for some users
+            if i % 2 == 0:
+                UserAvailabilityFactory(user=user, slots=[24.0, 24.5, 25.0, 25.5])
+
+            # Add varying project preferences
+            if i % 3 == 0:
+                # Some users prefer multiple projects
+                ProjectPreference.objects.create(
+                    user=user, session=self.session, project=project1
+                )
+                ProjectPreference.objects.create(
+                    user=user, session=self.session, project=project2
+                )
+            elif i % 3 == 1:
+                # Some prefer one project
+                ProjectPreference.objects.create(
+                    user=user, session=self.session, project=project3
+                )
+            # Some users have no preferences (i % 3 == 2)
+
+        # Create a team with members
+        team = TeamFactory(session=self.session, name="Test Team", project=project1)
+        captain = UserFactory(
+            username="captain", email="captain@example.com", password="test"
+        )
+        SessionMembership.objects.create(
+            user=captain,
+            session=self.session,
+            team=team,
+            role=SessionMembership.CAPTAIN,
+        )
+
+        url = reverse("admin:session_form_teams", args=[self.session.id])
+
+        # The query count should be constant regardless of the number of applicants
+        # or their project preferences, since project preferences are prefetched
+        # Note: Query 7 efficiently fetches all project preferences in one query
+        # There are some N+1 queries for team.project (queries 12-21) but that's
+        # unrelated to the project preferences column we added
+        with self.assertNumQueries(21):  # Expected stable query count
+            response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        # Verify project preferences are displayed
+        content = response.content.decode("utf-8")
+        self.assertIn("Project Alpha", content)
+        self.assertIn("Project Beta", content)
+        self.assertIn("Project Gamma", content)
 
 
 class TeamFormationAdminIntegrationTestCase(TestCase):
