@@ -271,15 +271,15 @@ class TeamAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
 @admin.register(Waitlist)
 class WaitlistAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
-    list_display = ("user", "session", "created_at")
-    list_filter = ("session", "created_at")
+    list_display = ("user", "session", "created_at", "notified_at")
+    list_filter = ("session", "created_at", "notified_at")
     search_fields = (
         "user__email",
         "user__first_name",
         "user__last_name",
         "session__title",
     )
-    readonly_fields = ("created_at",)
+    readonly_fields = ("created_at", "notified_at")
     raw_id_fields = ("user",)
     ordering = ("-created_at",)
     actions = ["reject_waitlisted_users_action"]
@@ -290,20 +290,20 @@ class WaitlistAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         Reject selected users from the waitlist.
 
         This action will:
-        1. Enqueue rejection notification emails
-        2. Remove them from the waitlist (handled by the task)
+        1. Enqueue rejection notification emails for users not yet notified
+        2. Mark them as notified (handled by the task)
+
+        Users who have already been notified (notified_at is set) will be filtered out.
         """
-        queued_count = 0
-        for waitlist_entry in queryset:
+        count = 0
+        for waitlist_entry in queryset.not_notified():
             tasks.reject_waitlisted_user.enqueue(
                 waitlist_id=waitlist_entry.pk,
             )
-            queued_count += 1
-
+            count += 1
         self.message_user(
             request,
-            f"Successfully queued {queued_count} rejection email(s). "
-            f"Users will be removed from the waitlist once emails are sent.",
+            f"Successfully queued {count} rejection email(s).",
             messages.SUCCESS,
         )
 

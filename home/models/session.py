@@ -330,6 +330,19 @@ class SessionMembership(models.Model):
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()
 
 
+class WaitlistQuerySet(models.QuerySet):
+    """Custom QuerySet for Waitlist model."""
+
+    def not_notified(self) -> "WaitlistQuerySet":
+        """
+        Filter to waitlist entries that have not yet been notified of rejection.
+
+        Returns:
+            QuerySet of Waitlist entries where notified_at is null
+        """
+        return self.filter(notified_at__isnull=True)
+
+
 class Waitlist(models.Model):
     """
     Represents users who are waitlisted for a session.
@@ -368,6 +381,16 @@ class Waitlist(models.Model):
         auto_now_add=True,
         help_text=_("When this user was added to the waitlist"),
     )
+    notified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "When this user was notified of their waitlist rejection. "
+            "If set, the user has been sent a rejection notification."
+        ),
+    )
+
+    objects = models.Manager.from_queryset(WaitlistQuerySet)()
 
     def __str__(self) -> str:
         return f"{self.user.get_full_name() or self.user.email} - {self.session.title}"

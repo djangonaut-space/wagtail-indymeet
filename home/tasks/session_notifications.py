@@ -231,15 +231,22 @@ def reject_waitlisted_user(waitlist_id: int) -> None:
     """
     Reject a waitlisted user and send them a rejection email.
 
-    Sends a waitlist rejection notification email and removes the user
-    from the waitlist.
+    Sends a waitlist rejection notification email and marks the user as notified
+    by setting the notified_at timestamp. If the user has already been notified
+    (notified_at is set), this task does nothing to prevent duplicate notifications.
 
     Args:
         waitlist_id: The ID of the Waitlist entry to reject
     """
+    from django.utils import timezone
+
     waitlist_entry = Waitlist.objects.select_related("user", "session").get(
         pk=waitlist_id
     )
+
+    # Skip if user has already been notified
+    if waitlist_entry.notified_at is not None:
+        return
 
     context = {
         "user": waitlist_entry.user,
@@ -252,5 +259,6 @@ def reject_waitlisted_user(waitlist_id: int) -> None:
         context=context,
     )
 
-    # Remove from waitlist
-    waitlist_entry.delete()
+    # Mark as notified instead of deleting
+    waitlist_entry.notified_at = timezone.now()
+    waitlist_entry.save(update_fields=["notified_at"])

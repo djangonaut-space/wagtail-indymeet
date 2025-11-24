@@ -74,6 +74,34 @@ class WaitlistAdminActionsTests(TestCase):
         }
         self.assertEqual(enqueued_waitlist_ids, {waitlist1.id, waitlist2.id})
 
+    @patch("home.admin.tasks.reject_waitlisted_user")
+    def test_reject_waitlisted_users_action_skips_already_notified(self, mock_task):
+        """Test that already notified users are skipped."""
+        # Create waitlisted users
+        user1 = UserFactory.create(
+            email="user1@example.com", first_name="User", last_name="One"
+        )
+        user2 = UserFactory.create(
+            email="user2@example.com", first_name="User", last_name="Two"
+        )
+        waitlist1 = Waitlist.objects.create(user=user1, session=self.session)
+        # Mark waitlist2 as already notified
+        waitlist2 = Waitlist.objects.create(
+            user=user2, session=self.session, notified_at=timezone.now()
+        )
+
+        # Execute the action
+        request = self._get_request()
+        queryset = Waitlist.objects.filter(id__in=[waitlist1.id, waitlist2.id])
+        self.admin.reject_waitlisted_users_action(request, queryset)
+
+        # Only one task should be enqueued (for waitlist1)
+        self.assertEqual(mock_task.enqueue.call_count, 1)
+
+        # Verify it was for the non-notified user
+        enqueued_waitlist_id = mock_task.enqueue.call_args.kwargs["waitlist_id"]
+        self.assertEqual(enqueued_waitlist_id, waitlist1.id)
+
 
 class SessionMembershipAdminActionsTests(TestCase):
     """Tests for SessionMembershipAdmin admin actions."""

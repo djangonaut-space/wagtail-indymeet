@@ -7,6 +7,7 @@ Tests that the task functions correctly send emails when executed.
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from accounts.factories import UserFactory
 from home.factories import (
@@ -257,8 +258,8 @@ class RejectWaitlistedUserTaskTests(TestCase):
         BASE_URL="https://djangonaut.space",
     )
     @patch("home.tasks.session_notifications.email.send")
-    def test_sends_rejection_email_and_removes_from_waitlist(self, mock_send):
-        """Test that task sends rejection email and removes user from waitlist."""
+    def test_sends_rejection_email_and_marks_as_notified(self, mock_send):
+        """Test that task sends rejection email and marks user as notified."""
         reject_waitlisted_user.call(waitlist_id=self.waitlist_entry.pk)
 
         # Verify email was sent
@@ -267,7 +268,18 @@ class RejectWaitlistedUserTaskTests(TestCase):
         self.assertEqual(call_kwargs["email_template"], "waitlist_rejection")
         self.assertEqual(call_kwargs["recipient_list"], ["waitlisted@example.com"])
 
-        # Verify user was removed from waitlist
-        self.assertFalse(
-            Waitlist.objects.filter(user=self.user, session=self.session).exists()
-        )
+        self.waitlist_entry.refresh_from_db()
+        self.assertIsNotNone(self.waitlist_entry.notified_at)
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.session_notifications.email.send")
+    def test_does_not_send_duplicate_rejection_email(self, mock_send):
+        """Test that task does not send email if user already notified."""
+        self.waitlist_entry.notified_at = timezone.now()
+        self.waitlist_entry.save()
+
+        reject_waitlisted_user.call(waitlist_id=self.waitlist_entry.pk)
+        mock_send.assert_not_called()
