@@ -150,6 +150,7 @@
                                 {% trans "Rank" %}
                             </th>
                             <th>{% trans "Team" %}</th>
+                            <th>{% trans "Project Preferences" %}</th>
                             <th class="sortable {% if sort_by == 'previous_application_count' %}sorted-{{ sort_order }}{% endif %}"
                                 data-sort="previous_application_count">
                                 {% trans "Prev Apps" %}
@@ -177,6 +178,15 @@
                                     Waitlisted
                                 {% else %}
                                     <span class="badge badge-unassigned">{% trans "Unassigned" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if applicant.project_preferences %}
+                                    {% for project in applicant.project_preferences|dictsort:"name" %}
+                                        {{ project.name }}<br>
+                                    {% endfor %}
+                                {% else %}
+                                    <em>{% trans "Any" %}</em>
                                 {% endif %}
                             </td>
                             <td>{{ applicant.previous_application_count }}</td>
