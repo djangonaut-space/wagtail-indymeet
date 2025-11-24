@@ -25,6 +25,7 @@ dependencies = [
     "dj-database-url",
     "gunicorn",
     "django-filter>=25.2",
+    "django-tasks",
 ]
 
 [project.optional-dependencies]

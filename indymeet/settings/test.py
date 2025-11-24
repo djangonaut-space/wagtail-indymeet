@@ -5,6 +5,13 @@ from .production import *
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
+
+# Use ImmediateBackend for tasks in tests so they run synchronously
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend",
+    }
+}
 # Disable ssl for testing on CI
 DATABASES["default"].setdefault("OPTIONS", {}).pop("sslmode", None)
 
