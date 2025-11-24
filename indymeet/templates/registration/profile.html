@@ -12,15 +12,23 @@
 {% block content %}
 <main class="section my-3 mx-5">
     <div class="section-container">
-        <h1 class="text-5xl">{% translate "Welcome," %} {{ user.first_name }} 👋</h1>
-        <div class="row pt-4 pb-4">
-          <div class="col">
-              <p>{% translate "We're so happy to have you here!" %}</p>
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h1 class="text-5xl mb-2">{% translate "Welcome," %} {{ user.first_name }} 👋</h1>
+            <p class="text-gray-600">{% translate "We're so happy to have you here!" %}</p>
+          </div>
+          <div>
+            <a href="{% url 'availability' %}"
+               class="inline-flex items-center px-5 py-2.5 bg-ds-purple text-white rounded-lg hover:bg-purple-500 transition-colors font-medium shadow-sm">
+              <i class="fa-solid fa-calendar-days mr-2"></i>
+              {% translate "Set Availability" %}
+            </a>
           </div>
         </div>
         <div class="row pt-4 pb-4">
             <div class="col">
-               <h2 class="text-3xl">{% translate "Profile Info" %}</h2>
+              <h2 class="text-3xl inline-block">{% translate "Profile Info" %}</h2>
+              <a href="{% url 'update_user' %}" class="ml-2">({% translate "Update" %})</a>
           </div>
         </div>
         <div class="row pb-4">
@@ -84,18 +92,15 @@
                         <td class="pt-4 pb-1 pr-6">{% translate "Weekly Availability" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                             {% if user.availability.slots %}
-                            <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Set" %}</span> ({{ user.availability.slots|length }} {% translate "slots" %})
+                              <span class="text-green-600"><i class="fa-solid fa-check"></i> {% translate "Set" %}</span> (
+                              {{ user.availability.slots|length }} {% translate "slots" %})
                             {% else %}
-                            <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "Not set" %}</span>
+                              <span class="text-red-600"><i class="fa-solid fa-x"></i> {% translate "Not set" %}</span>
                             {% endif %}
                         </td>
                     </tr>
                 </tbody>
             </table>
-            <div class="flex gap-4">
-                <a href="{% url 'update_user' %}" class="inline-block px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">{% translate "Update Profile" %}</a>
-                <a href="{% url 'availability' %}" class="inline-block px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">{% translate "Set Availability" %}</a>
-            </div>
           </div>
         </div>
 
@@ -119,11 +124,13 @@
                             {% endif %}
                         </div>
                         <div class="flex gap-2">
-                            <a href="{% url 'user_survey_response' slug=response.survey.slug %}" class="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                            <a href="{% url 'user_survey_response' slug=response.survey.slug %}"
+                               class="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">
                                 {% translate "View" %}
                             </a>
                             {% if response.is_editable %}
-                            <a href="{% url 'edit_user_survey_response' slug=response.survey.slug %}" class="px-4 py-2 text-sm bg-ds-purple text-white rounded hover:bg-purple-500">
+                            <a href="{% url 'edit_user_survey_response' slug=response.survey.slug %}"
+                               class="px-4 py-2 text-sm bg-ds-purple text-white rounded hover:bg-purple-500">
                                 {% translate "Edit" %}
                             </a>
                             {% endif %}
