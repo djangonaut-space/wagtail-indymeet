@@ -24,9 +24,13 @@
             <div class="flex justify-between items-start mb-4">
               <div>
                 <h2 class="text-2xl font-extrabold mb-2">
-                  <a href="{% url 'session_detail' slug=membership.session.slug %}">
+                  {% if membership.team and not membership.is_organizer %}
+                    <a href="{% url 'team_detail' session_slug=membership.session.slug pk=membership.team.pk %}">
+                      {{ membership.session.title }}
+                    </a>
+                  {% else %}
                     {{ membership.session.title }}
-                  </a>
+                  {% endif %}
                 </h2>
                 <div class="flex gap-2 mb-2">
                   {% if membership.session.status == 'current' %}
@@ -87,7 +91,7 @@
               {% endif %}
             </dl>
 
-            {% if membership.role == "Organizer" %}
+            {% if membership.is_organizer %}
             <div class="mt-4">
               <h4>All Teams</h4>
               <ul>

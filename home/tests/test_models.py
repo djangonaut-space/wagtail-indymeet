@@ -9,12 +9,13 @@ from home.factories import (
     ProjectFactory,
     QuestionFactory,
     SessionFactory,
+    SessionMembershipFactory,
     SurveyFactory,
     TeamFactory,
     UserQuestionResponseFactory,
     UserSurveyResponseFactory,
 )
-from home.models import TypeField
+from home.models import SessionMembership, TypeField
 
 
 class SessionTests(TestCase):
@@ -472,6 +473,17 @@ class UserSurveyResponseTests(TestCase):
         response.send_updated_notification()
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(response.get_full_url(), mail.outbox[0].body)
+
+
+class SessionMembershipTests(TestCase):
+    """Tests for SessionMembership model."""
+
+    def test_is_organizer(self):
+        """Test is_organizer() returns True only for Organizer role."""
+        organizer = SessionMembershipFactory.create(role=SessionMembership.ORGANIZER)
+        captain = SessionMembershipFactory.create(role=SessionMembership.CAPTAIN)
+        self.assertTrue(organizer.is_organizer())
+        self.assertFalse(captain.is_organizer())
 
 
 class TeamTests(TestCase):
