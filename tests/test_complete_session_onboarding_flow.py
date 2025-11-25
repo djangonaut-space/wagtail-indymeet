@@ -1039,9 +1039,7 @@ class TestCompleteSessionOnboardingFlow:
         - Toggle button exists and is clickable
         - HTMX is present and functional
         - Button text element is present
-
-        Note: This test is timezone-agnostic and works regardless of browser timezone.
-        It provides basic validation that the JS functionality is present.
+        - Individual member overlap times update when timezone is toggled
         """
         team_url = reverse(
             "team_detail",
@@ -1086,7 +1084,44 @@ class TestCompleteSessionOnboardingFlow:
         initial_timezone = timezone_span.text_content().strip()
         assert len(initial_timezone) > 0, "Timezone display should not be empty"
 
-        # Click the toggle button and verify it's clickable (basic interaction test)
+        # All test users have the same availability (Monday 9-10 AM UTC),
+        # so there should be overlap sections showing
+        overlap_times = page.locator(".member-overlap-times")
+        assert (
+            overlap_times.count() > 0
+        ), "Should have overlap sections for team members"
+
+        # Emulate browser timezone to Pacific/Kiritimati (UTC+14)
+        # This is in the Line Islands, one of the easternmost timezones
+        # and extremely unlikely to be anyone's actual timezone
+        # This uses Chrome DevTools Protocol to set timezone
+        cdp = page.context.new_cdp_session(page)
+        cdp.send("Emulation.setTimezoneOverride", {"timezoneId": "Pacific/Kiritimati"})
+
+        # Reload the page to pick up the new timezone
+        page.reload()
+        page.wait_for_load_state("networkidle")
+        page.wait_for_selector(
+            "#team-availability-section", state="visible", timeout=5000
+        )
+
+        # Re-get the toggle button and spans after reload
+        toggle_button = page.get_by_role("button").filter(has_text="Show in")
+        button_text_span = page.locator("#toggle-button-text")
+        timezone_span = page.locator("#team-availability-section span.font-bold")
+
+        # Get the timezone after reload (should now be Pacific/Kiritimati)
+        initial_timezone_local = timezone_span.text_content().strip()
+        assert (
+            "Pacific/Kiritimati" in initial_timezone_local
+        ), f"Expected timezone to be Pacific/Kiritimati, got: {initial_timezone_local}"
+
+        # Get initial overlap times in Pacific/Kiritimati timezone
+        # 9 AM UTC = 11 PM Pacific/Kiritimati (previous day due to +14 offset)
+        overlap_times = page.locator(".member-overlap-times")
+        initial_overlap_times_local = overlap_times.first.inner_text()
+
+        # Click the toggle button to switch to UTC
         toggle_button.click()
 
         # Wait for any HTMX requests to complete
@@ -1098,6 +1133,32 @@ class TestCompleteSessionOnboardingFlow:
         # Verify button is still visible after click (ensures page didn't error)
         expect(toggle_button).to_be_visible()
         expect(button_text_span).to_be_visible()
+
+        # Get the updated timezone display
+        updated_timezone = timezone_span.text_content().strip()
+        assert (
+            updated_timezone == "UTC"
+        ), f"After toggle, timezone should be UTC, got: {updated_timezone}"
+
+        # Check if individual member overlap times updated
+        # Re-query the overlap sections after the toggle
+        updated_overlap_times = page.locator(".member-overlap-times")
+        assert (
+            updated_overlap_times.count() > 0
+        ), "Should still have overlap sections after toggle"
+
+        updated_overlap_times_utc = updated_overlap_times.first.inner_text()
+
+        # The times MUST be different after switching from Pacific/Kiritimati to UTC
+        # With a 14-hour offset, times will definitely be different
+        # This will catch the bug where member cards don't update
+        assert initial_overlap_times_local != updated_overlap_times_utc, (
+            "Individual member overlap times MUST update when timezone changes "
+            f"from {initial_timezone_local} to {updated_timezone}. "
+            f"Local TZ times: {initial_overlap_times_local!r},"
+            f"UTC times: {updated_overlap_times_utc!r}. "
+            "This indicates the member cards are not being re-rendered on timezone toggle."
+        )
 
     @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)
     def test_complete_session_onboarding_flow(
@@ -1170,9 +1231,9 @@ class TestCompleteSessionOnboardingFlow:
         # PHASE 6: Test timezone toggle JavaScript functionality
         # ======================================================================
 
-        # Admin logged out in phase 5, so we need to log in again
+        # Login as navigator (who has availability and overlaps with team members)
         page.goto(reverse("login"))
-        page.locator("#id_username").fill("admin")
+        page.locator("#id_username").fill("navigator1")
         page.locator("#id_password").fill("testpass123")
         page.get_by_role("button", name="Login").click()
         page.wait_for_load_state("networkidle")
