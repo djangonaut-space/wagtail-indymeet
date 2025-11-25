@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static %}
+
+{% block title %}{% translate "Delete Account | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Delete Account | Djangonaut Space" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container max-w-3xl">
+        <h1 class="text-5xl mb-6 text-red-600">{% translate "Delete Account" %}</h1>
+
+        <!-- Red warning banner -->
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-medium text-red-800">
+                        {% translate "Warning: This action cannot be undone" %}
+                    </h3>
+                    <p class="mt-2 text-red-700">
+                        {% translate "Deleting your account is permanent and irreversible. All your data will be completely removed from our systems." %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- What will be deleted -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">{% translate "What will be deleted" %}</h2>
+            <ul class="space-y-2 mb-4">
+                <li class="flex items-start">
+                    <i class="fa-solid fa-xmark text-red-500 mt-1 mr-2"></i>
+                    <span>{% translate "Your profile information" %}</span>
+                </li>
+                {% if session_memberships_count > 0 %}
+                <li class="flex items-start">
+                    <i class="fa-solid fa-xmark text-red-500 mt-1 mr-2"></i>
+                    <span>{% translate "Your session memberships" %} ({{ session_memberships_count }})</span>
+                </li>
+                {% endif %}
+                <li class="flex items-start">
+                    <i class="fa-solid fa-xmark text-red-500 mt-1 mr-2"></i>
+                    <span>{% translate "Your survey responses and applications" %} ({{ survey_responses_count }})</span>
+                </li>
+            </ul>
+        </div>
+
+        <form method="post" class="bg-gray-50 rounded-lg p-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+                <ul class="text-red-700 text-sm">
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="mb-6">
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.password.label }} <span class="text-red-600">*</span>
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <div class="mt-1 text-sm text-red-600">
+                    {% for error in form.password.errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if form.password.help_text %}
+                <p class="mt-1 text-sm text-gray-500">
+                    {{ form.password.help_text }}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="flex gap-4">
+                <button
+                    type="submit"
+                    class="px-6 py-3 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                    {% translate "Delete My Account Permanently" %}
+                </button>
+                <a
+                    href="{% url 'profile' %}"
+                    class="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                >
+                    {% translate "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock content %}

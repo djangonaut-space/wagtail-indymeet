@@ -4,6 +4,7 @@ from django.urls import path
 
 from .views import ActivateAccountView
 from .views import CustomPasswordResetView
+from .views import DeleteAccountView
 from .views import profile
 from .views import ResendConfirmationEmailView
 from .views import SignUpView
@@ -45,5 +46,10 @@ urlpatterns = [
         "availability/",
         UpdateAvailabilityView.as_view(),
         name="availability",
+    ),
+    path(
+        "delete/",
+        DeleteAccountView.as_view(),
+        name="delete_account",
     ),
 ]
