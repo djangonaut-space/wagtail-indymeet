@@ -87,8 +87,12 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
             if membership.user != current_user:
                 overlap_slots = calculate_user_overlap(current_user, membership.user)
                 membership.overlap_slots = overlap_slots
+                membership.offset_hours = (
+                    0  # Default to UTC offset for initial page load
+                )
             else:
                 membership.overlap_slots = []
+                membership.offset_hours = 0
 
         context["captains"] = captains
         context["navigators"] = navigators
@@ -276,4 +280,4 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
         ),
     }
 
-    return render(request, "home/session/team/availability_fragment.html", context)
+    return render(request, "home/session/team/team_availability.html", context)

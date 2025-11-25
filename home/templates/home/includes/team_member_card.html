@@ -26,12 +26,12 @@
 
   <!-- Availability Section -->
   {% if membership.overlap_slots %}
-  <div class="mt-3 pt-3 border-t border-gray-200">
+  <div class="member-availability-overlap mt-3 pt-3 border-t border-gray-200">
     <div class="p-2 bg-green-50 border border-green-200 rounded">
       <p class="text-xs font-bold text-green-800 mb-1">
         <i class="fas fa-check-circle mr-1"></i>{% trans "Overlap with You" %} ({{ timezone }})
       </p>
-      <ul class="text-xs text-green-700 space-y-1">
+      <ul class="member-overlap-times text-xs text-green-700 space-y-1">
         {% format_slots_as_list membership.overlap_slots membership.offset_hours as ranges %}
         {% if ranges %}
           {% for range in ranges %}
