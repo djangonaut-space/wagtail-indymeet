@@ -332,6 +332,10 @@ class SessionMembership(models.Model):
     )
     objects = models.Manager.from_queryset(SessionMembershipQuerySet)()
 
+    def is_organizer(self) -> bool:
+        """Check if this membership has the Organizer role."""
+        return self.role == self.ORGANIZER
+
 
 class WaitlistQuerySet(models.QuerySet):
     """Custom QuerySet for Waitlist model."""
