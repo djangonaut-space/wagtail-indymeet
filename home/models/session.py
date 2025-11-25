@@ -91,6 +91,9 @@ class Session(models.Model):
 
     objects = models.Manager.from_queryset(SessionQuerySet)()
 
+    class Meta:
+        ordering = ["-start_date"]
+
     def __str__(self):
         return self.title
 
