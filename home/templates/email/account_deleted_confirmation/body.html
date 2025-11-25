@@ -1,0 +1,47 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}Account Deleted - Djangonaut Space{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello {{ user_name }},</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    This email confirms that your Djangonaut Space account has been permanently deleted as requested.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    All your personal data and associated records have been removed from our systems:
+  </p>
+
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;">Profile information</li>
+    <li style="margin-bottom: 8px;">Session memberships</li>
+    <li style="margin-bottom: 8px;">Survey responses</li>
+    <li style="margin-bottom: 8px;">Project preferences</li>
+    <li style="margin-bottom: 8px;">Availability data</li>
+    <li style="margin-bottom: 8px;">All related records</li>
+  </ul>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>This action is permanent and cannot be reversed.</strong>
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We're sorry to see you go! Thank you for being part of the Djangonaut Space community.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you did not request this deletion or have any concerns, please contact us immediately at <a href="mailto:hello@djangonaut.space" style="color: #5c0287;">hello@djangonaut.space</a>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Best regards,<br>
+    The Djangonaut Space Team
+  </p>
+{% endblock after_cta %}
