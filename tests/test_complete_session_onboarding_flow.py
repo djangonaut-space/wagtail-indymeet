@@ -611,6 +611,7 @@ class TestCompleteSessionOnboardingFlow:
             f"#id_field_survey_{question1.id}", "I want to learn Django and contribute"
         )
         page.fill(f"#id_field_survey_{question2.id}", "Beginner")
+        page.fill(f"#id_github_username", "djangonaut-a")
         page.get_by_role("button", name="Submit").click()
         page.wait_for_load_state("networkidle")
 
@@ -645,6 +646,7 @@ class TestCompleteSessionOnboardingFlow:
 
         page.fill(f"#id_field_survey_{question1.id}", "I love Python and want to help")
         page.fill(f"#id_field_survey_{question2.id}", "Intermediate")
+        page.fill(f"#id_github_username", "djangonaut-b")
         page.get_by_role("button", name="Submit").click()
         page.wait_for_load_state("networkidle")
 
@@ -681,6 +683,7 @@ class TestCompleteSessionOnboardingFlow:
             f"#id_field_survey_{question1.id}", "I want to be part of the community"
         )
         page.fill(f"#id_field_survey_{question2.id}", "Advanced")
+        page.fill(f"#id_github_username", "djangonaut-c")
         page.get_by_role("button", name="Submit").click()
         page.wait_for_load_state("networkidle")
 
