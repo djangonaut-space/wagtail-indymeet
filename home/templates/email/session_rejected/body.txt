@@ -1,0 +1,25 @@
+Hello,
+
+We sincerely appreciate the enthusiasm and motivation you demonstrated in your application to join Djangonaut Space and start on your contributing adventure. We received a remarkable {{ applicant_count }} applicants and only can accept {{ accepted_count }} of those, making the selection process incredibly challenging. After careful consideration, we regret to inform you that we cannot offer acceptance for your participation in {{ session.title }}.
+
+We invite you to re-apply in a few months when the next session opens for applications. We do not have any specifics on that session.
+
+Unfortunately we don't have the availability to respond with the exact reasons why folks were rejected. We'd still like to help you improve for next time! Here are some things for you to consider.
+
+- Complete Application: Be sure to complete the application in its entirety, including the Django Contribution Tutorial
+- Stand out: We have an average of 90 applicants per session, try to stand out
+- Community Connections: We favored people who have connections to the Django community over those that had none or few (join and participate on the Discord server and the forum)
+- Resilience Over Time: We favored people displaying resilience over a period of time (think weeks rather than a single day)
+- Django Experience: We favored folks who have some experience with Django over those with none
+- Authenticity: We favored answers that felt authentic rather than generated to match our ideals
+
+If you are feeling passionate and enthusiastic about contributing and connecting with the Django community but not sure where to start, we'd like to share some ideas: 🫸🫷
+
+- Django Discord: You can ask questions and connect with other folks in the django community and join live events, we even host some!
+- Contribute: You could also forge ahead to contribute to Django and ask questions of the folks in the Django server in #contributing-getting-started, people want to help! See the Django docs for more details: https://docs.djangoproject.com/en/dev/internals/contributing/
+- Community: Host meetings, give talks at meetups or conferences, write blog posts, or organize Django Girls events.
+
+There are many ways to contribute to the Django community and we hope that our inability to accept you into the program now will not deter you from continuing to be part of this wonderful Django community. 🤗
+
+Sincerely,
+Djangonaut Space Organizers

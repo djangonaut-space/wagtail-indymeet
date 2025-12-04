@@ -61,10 +61,13 @@ INSTALLED_APPS = [
     "django.forms",
     # other
     "django_filters",
+    "django_tasks",
+    "django_tasks.backends.database",
     "storages",
     "tailwind",
     "theme",
     "widget_tweaks",
+    "import_export",
 ]
 
 MIDDLEWARE = [
@@ -191,6 +194,9 @@ STATIC_URL = "/static/"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 MEDIA_URL = "/media/"
+
+# Tasks settings
+TASKS = {"default": {"BACKEND": "django_tasks.backends.database.DatabaseBackend"}}
 
 
 # Wagtail settings

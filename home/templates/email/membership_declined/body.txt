@@ -1,0 +1,19 @@
+Hello,
+
+{{ user.get_full_name }} has declined their membership invitation for {{ session.title }}.
+
+User Details:
+- Name: {{ user.get_full_name }}
+- Email: {{ user.email }}
+{% if membership.team %}- Team: {{ membership.team.name }}{% endif %}
+{% if membership.role %}- Role: {{ membership.get_role_display }}{% endif %}
+
+Session Details:
+- Session: {{ session.title }}
+- Start Date: {{ session.start_date|date:"F d, Y" }}
+- End Date: {{ session.end_date|date:"F d, Y" }}
+
+This spot can now be offered to someone on the waitlist.
+
+Best regards,
+Djangonaut Space System

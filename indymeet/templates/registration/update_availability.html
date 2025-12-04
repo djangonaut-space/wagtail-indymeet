@@ -38,7 +38,7 @@
     <div class="section-container max-w-6xl">
         <nav class="mb-4 text-sm" aria-label="breadcrumb">
             <ol class="flex items-center gap-2">
-                <li><a href="{% url 'profile' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% translate "Profile" %}</a></li>
+                <li><a href="{% url 'profile' %}">{% translate "Profile" %}</a></li>
                 <li class="text-gray-400">/</li>
                 <li class="text-gray-600">{% translate "Set Availability" %}</li>
             </ol>
@@ -46,10 +46,12 @@
 
         <h1 class="text-5xl mb-6">{% translate "Set Your Availability" %}</h1>
 
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
             <p class="text-sm">
                 <strong>{% translate "Instructions:" %}</strong>
-                {% translate "Click and drag to select time slots when you're generally available each week. To remove selections, click the cell. Times are shown in your local timezone." %}
+                {% blocktranslate %}
+                    Click and drag to select time slots when you're generally available each week. To remove selections, click the cell. Times are shown in your local timezone<span id="local-timezone"></span>.
+                {% endblocktranslate %}
             </p>
         </div>
 
@@ -112,6 +114,10 @@
         </form>
     </div>
 </main>
+
+<script>
+    document.getElementById("local-timezone").textContent = ` (${Intl.DateTimeFormat().resolvedOptions().timeZone})`
+</script>
 
 <script type="module">
     import SelectionArea from '{% static "js/viselect.mjs" %}';

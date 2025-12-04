@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}My Sessions | Djangonaut Space{% endblock %}
+{% block meta_title %}My Sessions | Djangonaut Space{% endblock %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+  <div class="section-container max-w-6xl mx-auto">
+    <nav class="mb-4 text-sm" aria-label="breadcrumb">
+      <ol class="flex items-center gap-2">
+        <li><a href="{% url 'profile' %}">{% trans "Profile" %}</a></li>
+        <li class="text-gray-400">/</li>
+        <li class="text-gray-600">{% trans "My Sessions" %}</li>
+      </ol>
+    </nav>
+
+    <h1 class="text-5xl mb-6">My Sessions</h1>
+
+    {% if memberships %}
+      <div class="space-y-6">
+        {% for membership in memberships %}
+          <div class="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <h2 class="text-2xl font-extrabold mb-2">
+                  {% if membership.team and not membership.is_organizer %}
+                    <a href="{% url 'team_detail' session_slug=membership.session.slug pk=membership.team.pk %}">
+                      {{ membership.session.title }}
+                    </a>
+                  {% else %}
+                    {{ membership.session.title }}
+                  {% endif %}
+                </h2>
+                <div class="flex gap-2 mb-2">
+                  {% if membership.session.status == 'current' %}
+                    <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">
+                      Current - Week {{ membership.session.current_week }}
+                    </span>
+                  {% elif membership.session.status == 'past' %}
+                    <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-bold">
+                      Completed
+                    </span>
+                  {% elif membership.session.status == 'upcoming' %}
+                    <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">
+                      Upcoming
+                    </span>
+                  {% endif %}
+
+                  <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">
+                    {% if membership.role == 'Captain' %}
+                      <i class="fas fa-satellite-dish mr-1"></i>Captain
+                    {% elif membership.role == 'Navigator' %}
+                      <i class="fas fa-compass mr-1"></i>Navigator
+                    {% elif membership.role == 'Djangonaut' %}
+                      <i class="fas fa-user-astronaut mr-1"></i>Djangonaut
+                    {% elif membership.role == 'Organizer' %}
+                      <i class="fas fa-crown mr-1"></i>Organizer
+                    {% endif %}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <dl class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <div>
+                <dt class="text-sm font-bold text-gray-700">Start Date:</dt>
+                <dd class="text-gray-900">{{ membership.session.start_date|date:"F d, Y" }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-bold text-gray-700">End Date:</dt>
+                <dd class="text-gray-900">{{ membership.session.end_date|date:"F d, Y" }}</dd>
+              </div>
+              {% if membership.team %}
+              <div>
+                <dt class="text-sm font-bold text-gray-700">Team:</dt>
+                <dd class="text-gray-900">
+                  <a href="{% url 'team_detail' session_slug=membership.session.slug pk=membership.team.pk %}">
+                    {{ membership.team.name }}
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-bold text-gray-700">Project:</dt>
+                <dd class="text-gray-900">
+                  <a href="{{ membership.team.project.url }}" target="_blank" rel="noopener noreferrer">
+                    {{ membership.team.project.name }}
+                  </a>
+                </dd>
+              </div>
+              {% endif %}
+            </dl>
+
+            {% if membership.is_organizer %}
+            <div class="mt-4">
+              <h4>All Teams</h4>
+              <ul>
+                {% for team in membership.session.teams.all %}
+                  <li>
+                    <a href="{% url 'team_detail' session_slug=membership.session.slug pk=team.pk %}">
+                      {{ team.name }}
+                    </a>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="bg-white shadow rounded-lg p-8 text-center">
+        <i class="fas fa-inbox text-gray-400 text-6xl mb-4"></i>
+        <p class="text-xl text-gray-600 mb-4">You haven't participated in any sessions yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</main>
+{% endblock content %}

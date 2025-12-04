@@ -135,3 +135,39 @@ class UserAvailabilityForm(forms.ModelForm):
     class Meta:
         model = UserAvailability
         fields = ("slots",)
+
+
+class DeleteAccountForm(forms.Form):
+    """Form for confirming permanent account deletion with password verification."""
+
+    password = forms.CharField(
+        required=True,
+        label="Confirm your password",
+        help_text="Enter your password to confirm account deletion.",
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "w-full px-3 py-2 border border-gray-300 rounded-md "
+                "focus:outline-none focus:ring-2 focus:ring-red-500",
+                "autocomplete": "current-password",
+            }
+        ),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        """Initialize form with user instance for validation."""
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_password(self):
+        """Validate password against user's actual password."""
+        password = self.cleaned_data.get("password")
+
+        if not self.user:
+            raise forms.ValidationError("User not found.")
+
+        if not self.user.check_password(password):
+            raise forms.ValidationError(
+                "Incorrect password. Account deletion cancelled."
+            )
+
+        return password

@@ -8,6 +8,7 @@ from accounts.models import CustomUser
 from accounts.models import Link
 from accounts.models import UserAvailability
 from accounts.models import UserProfile
+from indymeet.admin import DescriptiveSearchMixin
 
 
 class ExportCsvMixin:
@@ -44,20 +45,20 @@ class LinksInline(admin.StackedInline):
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(ExportCsvMixin, BaseUserAdmin):
+class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
     actions = ["export_as_csv"]
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(ExportCsvMixin, admin.ModelAdmin):
+class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin):
     inlines = (LinksInline,)
     model = UserProfile
     actions = ["export_as_csv"]
 
 
 @admin.register(UserAvailability)
-class UserAvailabilityAdmin(admin.ModelAdmin):
+class UserAvailabilityAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     """Admin interface for UserAvailability."""
 
     list_display = ("user", "slot_count", "updated_at")

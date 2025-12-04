@@ -20,7 +20,7 @@
         {# Full format for group results #}
         <strong>{{ title }}</strong> (Team: {{ team.name }})<br>
         {% if navigators %}
-            <em>{% trans "Navigators:" %} {% for nav in navigators %}{{ nav.get_full_name|default:nav.email }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
+            <em>{% trans "Navigators:" %} {% for nav in navigators %}{{ nav.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
         {% endif %}
         {% if selected_users %}
             <em>{% trans "Selected applicants:" %} {{ selected_users|length }}</em><br>

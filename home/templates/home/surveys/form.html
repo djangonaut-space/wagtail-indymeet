@@ -6,10 +6,10 @@
     <div class="section-container">
         <nav class="mb-4 text-sm" aria-label="breadcrumb">
             <ol class="flex items-center gap-2">
-                <li><a href="{% url 'profile' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% translate "Profile" %}</a></li>
+                <li><a href="{% url 'profile' %}">{% translate "Profile" %}</a></li>
                 <li class="text-gray-400">/ Survey /</li>
                 {% if is_editing %}
-                  <li><a href="{% url 'user_survey_response' slug=survey.slug %}" class="text-blue-600 hover:text-blue-800 hover:underline">{{ survey.name }}</a></li>
+                  <li><a href="{% url 'user_survey_response' slug=survey.slug %}">{{ survey.name }}</a></li>
                   <li class="text-gray-400">/</li>
                 {% else %}
                   <li class="text-gray-400">/ {{ survey.name }} /</li>

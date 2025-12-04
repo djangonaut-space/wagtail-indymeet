@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -7,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from accounts.models import UserAvailability
 from home import email
-from home.managers import UserSurveyResponseQuerySet
+from home.managers import UserQuestionResponseQuerySet, UserSurveyResponseQuerySet
 
 
 class BaseModel(models.Model):
@@ -101,6 +102,13 @@ class Question(BaseModel):
         default=True,
         help_text=_("If True, the user must provide an answer to this question."),
     )
+    sensitive = models.BooleanField(
+        default=False,
+        help_text=_(
+            "If True, responses to this question will not be visible to team "
+            "captains and navigators."
+        ),
+    )
     ordering = models.PositiveIntegerField(
         default=0, help_text=_("Defines the question order within the surveys.")
     )
@@ -164,11 +172,12 @@ class UserSurveyResponse(BaseModel):
 
     def is_editable(self):
         """Check if this response can be edited"""
-        # If survey has associated sessions, check if ANY session is still accepting applications
-        return any(
-            session.is_accepting_applications()
-            for session in self.survey.application_sessions.all()
-        )
+        # If survey has associated session, check if session is still accepting applications
+        # Use try/except for reverse OneToOne relation
+        try:
+            return self.survey.application_session.is_accepting_applications()
+        except ObjectDoesNotExist:
+            return False
 
     def get_absolute_url(self):
         return reverse("user_survey_response", kwargs={"slug": self.survey.slug})
@@ -180,9 +189,12 @@ class UserSurveyResponse(BaseModel):
         if session := self.survey.session:
             availability, _ = UserAvailability.objects.get_or_create(user=self.user)
             context = {
+                "user": self.user,
+                "name": self.user.first_name or self.user.email,
                 "availability": availability,
                 "response": self,
                 "session": session,
+                "cta_link": self.get_full_url(),
             }
             email.send(
                 email_template="application_created",
@@ -194,9 +206,12 @@ class UserSurveyResponse(BaseModel):
         if session := self.survey.session:
             availability, _ = UserAvailability.objects.get_or_create(user=self.user)
             context = {
+                "user": self.user,
+                "name": self.user.first_name or self.user.email,
                 "availability": availability,
                 "response": self,
                 "session": session,
+                "cta_link": self.get_full_url(),
             }
             email.send(
                 email_template="application_updated",
@@ -218,6 +233,8 @@ class UserQuestionResponse(BaseModel):
         UserSurveyResponse,
         on_delete=models.CASCADE,
     )
+
+    objects = models.Manager.from_queryset(UserQuestionResponseQuerySet)()
 
     class Meta:
         ordering = ["question__ordering"]

@@ -1,0 +1,56 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}Waitlist Status{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello 👋</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We sincerely appreciate the enthusiasm and motivation you demonstrated in your application to join Djangonaut Space and start on your contributing adventure. We received a remarkable <strong>{{ applicant_count }}</strong> applicants and only can accept <strong>{{ accepted_count }}</strong> of those, making the selection process incredibly challenging. After careful consideration, we regret to inform you that we cannot offer acceptance for your participation in <strong>{{ session.title }}</strong>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    However, we would like to add you to our waitlist. If one of the accepted applicants can't participate we would like to offer you their spot. We should be able to confirm this by the end of the week. <strong>Please respond if you agree to be placed on the waitlist.</strong>
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You're more than welcome to re-apply in a few months when the next session opens for applications. We do not have any specifics on that session.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you'd like to improve your application, here are some things for you to consider.
+  </p>
+
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Stand out:</strong> We have an average of 90 applicants per session, try to stand out</li>
+    <li style="margin-bottom: 8px;"><strong>Community Connections:</strong> We favored people who have connections to the Django community over those that had none or few (join and participate on the Discord server and the forum)</li>
+    <li style="margin-bottom: 8px;"><strong>Resilience Over Time:</strong> We favored people displaying resilience over a period of time (think weeks rather than a single day)</li>
+    <li style="margin-bottom: 8px;"><strong>Django Experience:</strong> We favored folks who have some experience with Django over those with none</li>
+    <li style="margin-bottom: 8px;"><strong>Authenticity:</strong> We favored answers that felt authentic rather than generated to match our ideals</li>
+  </ul>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Keep in mind there are many ways to stay involved with the community: 🫸🫷
+  </p>
+
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Django Discord:</strong> You can ask questions and connect with other folks in the django community and join live events, we even host some!</li>
+    <li style="margin-bottom: 8px;"><strong>Contribute:</strong> You could also forge ahead to contribute to Django and ask questions of the folks in Django Discord, people want to help!</li>
+    <li style="margin-bottom: 8px;"><strong>Community:</strong> Host meetings, give talks at meetups or conferences, write blog posts, or organize Django Girls events.</li>
+  </ul>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We hope that our inability to accept you into the program now will not deter you from continuing to be part of this wonderful Django community. 🤗
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Sincerely,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}

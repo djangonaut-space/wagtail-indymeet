@@ -15,6 +15,19 @@
         <br />
         <h6 class="text-lg">Starts</h6>
         <p>{{ session.start_date|date:"M d, Y" }}</p>
+        {% if session.prefetched_organizers %}
+        <br />
+        <h6 class="text-lg">Organizers</h6>
+        <ul class="text-gray-700 text-sm">
+          {% for membership in session.prefetched_organizers %}
+            <li>
+              <a href="mailto:{{ membership.user.email }}" class="text-purple-600 hover:text-purple-800">
+                {{ membership.user.get_full_name|default:membership.user.email }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
       </div>
       <div class="px-6 py-3 mb-2 card-footer">
         {% include 'home/includes/session_apply_btn.html' %}

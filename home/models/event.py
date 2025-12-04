@@ -1,9 +1,9 @@
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db import models
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+
+from home import email
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from taggit.managers import TaggableManager
@@ -83,17 +83,17 @@ class Event(ClusterableModel):
         if not user.email:
             return
 
-        email_dict = {
+        context = {
             "event": self,
             "user": user,
+            "name": user.first_name or user.email,
+            "cta_link": self.get_full_url(),
         }
 
-        send_mail(
+        email.send(
+            email_template="event_rsvp",
             recipient_list=[user.email],
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            subject="Djangonaut Space RSVP",
-            message=render_to_string("email/email_rsvp.txt", email_dict),
-            html_message=render_to_string("email/email_rsvp.html", email_dict),
+            context=context,
         )
 
     def remove_participant_email_verification(self, user):
@@ -101,17 +101,17 @@ class Event(ClusterableModel):
         if not user.email:
             return
 
-        email_dict = {
+        context = {
             "event": self,
             "user": user,
+            "name": user.first_name or user.email,
+            "cta_link": self.get_full_url(),
         }
 
-        send_mail(
+        email.send(
+            email_template="event_rsvp_cancel",
             recipient_list=[user.email],
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            subject="Djangonaut Space RSVP Cancelation",
-            message=render_to_string("email/email_rsvp_cancel.txt", email_dict),
-            html_message=render_to_string("email/email_rsvp_cancel.html", email_dict),
+            context=context,
         )
 
     def get_full_url(self):

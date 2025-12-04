@@ -67,6 +67,24 @@
                 <div class="toolbar-divider"></div>
 
                 <div class="toolbar-section">
+                    <form id="waitlist-form"
+                          method="post"
+                          action="{% url 'admin:session_add_to_waitlist' session.id %}?{% querystring %}"
+                          data-user-ids-id="{{ waitlist_form.user_ids.id_for_label }}"
+                    >
+                        {% csrf_token %}
+
+                        {% for field in waitlist_form %}
+                            {{ field }}
+                        {% endfor %}
+
+                        <button type="submit" class="button">{% trans "Add to Waitlist" %}</button>
+                    </form>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <div class="toolbar-section">
                     <form id="overlap-form"
                           hx-post="{% url 'admin:session_calculate_overlap' session.id %}"
                           hx-target="#overlap-results"
@@ -132,6 +150,7 @@
                                 {% trans "Rank" %}
                             </th>
                             <th>{% trans "Team" %}</th>
+                            <th>{% trans "Project Preferences" %}</th>
                             <th class="sortable {% if sort_by == 'previous_application_count' %}sorted-{{ sort_order }}{% endif %}"
                                 data-sort="previous_application_count">
                                 {% trans "Prev Apps" %}
@@ -144,7 +163,7 @@
                         <tr>
                             <td><input type="checkbox" class="applicant-checkbox" value="{{ applicant.user.id }}" /></td>
                             <td>
-                                <strong>{{ applicant.user.get_full_name|default:applicant.user.email }}</strong>
+                                <strong>{{ applicant.user.get_full_name }}</strong>
                                 <br>
                                 <a href="{% url 'admin:home_usersurveyresponse_change' applicant.response.id %}" target="_blank" class="application-link">
                                     {% trans "View Application" %} →
@@ -155,8 +174,19 @@
                             <td>
                                 {% if applicant.current_team %}
                                     {{ applicant.current_team.name }}
+                                {% elif applicant.is_waitlisted %}
+                                    Waitlisted
                                 {% else %}
                                     <span class="badge badge-unassigned">{% trans "Unassigned" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if applicant.project_preferences %}
+                                    {% for project in applicant.project_preferences|dictsort:"name" %}
+                                        {{ project.name }}<br>
+                                    {% endfor %}
+                                {% else %}
+                                    <em>{% trans "Any" %}</em>
                                 {% endif %}
                             </td>
                             <td>{{ applicant.previous_application_count }}</td>
@@ -220,11 +250,11 @@
                 {% for team_data in teams %}
                 <div class="team-card {% if team_data.is_valid %}valid{% else %}invalid{% endif %}">
                     <h3>{{ team_data.team.name }}</h3>
-                    <p><strong>{% trans "Project:" %}</strong> {{ team_data.team.project }}</p>
+                    <p><strong>{% trans "Project:" %}</strong> {{ team_data.team.project.name }}</p>
                     <p>
                         <strong>{% trans "Navigators:" %}</strong>
                         {% for navigator in team_data.navigators %}
-                            {{ navigator.get_full_name|default:navigator.email }}{% if not forloop.last %}, {% endif %}
+                            {{ navigator.get_full_name }}{% if not forloop.last %}, {% endif %}
                         {% empty %}
                             <em>{% trans "None" %}</em>
                         {% endfor %}
@@ -232,7 +262,7 @@
                     <p>
                         <strong>{% trans "Captain:" %}</strong>
                         {% if team_data.captain %}
-                            {{ team_data.captain.get_full_name|default:team_data.captain.email }}
+                            {{ team_data.captain.get_full_name }}
                         {% else %}
                             <em>{% trans "None" %}</em>
                         {% endif %}
@@ -266,7 +296,7 @@
                             <tbody>
                                 {% for djangonaut in team_data.djangonaut_details %}
                                 <tr>
-                                    <td>{{ djangonaut.user.get_full_name|default:djangonaut.user.email }}</td>
+                                    <td>{{ djangonaut.user.get_full_name }}</td>
                                     <td>{{ djangonaut.score|default:"—" }}</td>
                                     <td>{{ djangonaut.selection_rank|default:"—" }}</td>
                                     <td>
@@ -379,6 +409,23 @@ overlapForm?.addEventListener('submit', function(e) {
     }
 
     const userIdsField = document.getElementById(overlapForm.dataset.userIdsId);
+    userIdsField.value = selectedIds.join(',');
+});
+
+// Populate hidden user_ids field and validate before waitlist form submission
+const waitlistForm = document.getElementById('waitlist-form')
+waitlistForm?.addEventListener('submit', function(e) {
+    const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked'))
+        .map(cb => cb.value);
+    const userIdsField = document.getElementById(waitlistForm.dataset.userIdsId);
+
+    if (selectedIds.length === 0) {
+        e.preventDefault();
+        alert('{% trans "Please select at least one applicant." %}');
+        return false;
+    }
+
+    // Populate hidden field with comma-separated user IDs
     userIdsField.value = selectedIds.join(',');
 });
 </script>

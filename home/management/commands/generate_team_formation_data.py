@@ -32,14 +32,17 @@ class Command(BaseCommand):
         Faker.seed(42)  # Consistent data for testing
 
         try:
-            session = Session.objects.get(pk=session_id)
+            session = Session.objects.select_related("application_survey").get(
+                pk=session_id
+            )
         except Session.DoesNotExist:
             self.stdout.write(
                 self.style.ERROR(f"Session with ID {session_id} does not exist")
             )
             return
 
-        if not session.application_survey:
+        # Check application_survey_id first to avoid DB hit when not set
+        if not session.application_survey_id:
             self.stdout.write(
                 self.style.ERROR(
                     f"Session {session_id} does not have an application survey"

@@ -6,6 +6,7 @@ from django.utils import timezone
 from accounts.factories import UserFactory
 from home.models import (
     Event,
+    Project,
     Question,
     ResourceLink,
     Session,
@@ -15,6 +16,7 @@ from home.models import (
     TypeField,
     UserQuestionResponse,
     UserSurveyResponse,
+    Waitlist,
 )
 
 
@@ -50,6 +52,7 @@ class SessionFactory(factory.django.DjangoModelFactory):
     application_start_date = factory.Faker("date")
     application_end_date = factory.Faker("date")
     application_url = factory.Sequence(lambda n: "https://apply.session%d.com" % n)
+    discord_invite_url = "https://discord.gg/test"
 
     @classmethod
     def create_active(cls, survey) -> Session:
@@ -95,14 +98,21 @@ class UserQuestionResponseFactory(factory.django.DjangoModelFactory):
     user_survey_response = factory.SubFactory(UserSurveyResponseFactory)
 
 
+class ProjectFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Project
+
+    name = factory.Sequence(lambda n: "Project %d" % n)
+    url = factory.Sequence(lambda n: "https://github.com/project-%d" % n)
+
+
 class TeamFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Team
 
     session = factory.SubFactory(SessionFactory)
     name = factory.Sequence(lambda n: "Team %d" % n)
-    project = "Django"
-    project_url = "https://github.com/django/django"
+    project = factory.SubFactory(ProjectFactory)
 
 
 class SessionMembershipFactory(factory.django.DjangoModelFactory):
@@ -113,3 +123,11 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     session = factory.SubFactory(SessionFactory)
     team = factory.SubFactory(TeamFactory)
     role = SessionMembership.DJANGONAUT
+
+
+class WaitlistFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Waitlist
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
