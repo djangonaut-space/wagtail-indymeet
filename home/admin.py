@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from indymeet.admin import DescriptiveSearchMixin
-from . import preview_email
+from . import preview_email, tasks
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
 from .models import Event, Project, Team
 from .models import ResourceLink
@@ -21,12 +21,12 @@ from .models import Survey
 from .models import UserQuestionResponse
 from .models import UserSurveyResponse as UserSurveyResponseModel
 from .models import Waitlist
+from .team_allocation import allocate_teams_bounded_search, apply_allocation
 from .views.team_formation import (
     add_to_waitlist,
     calculate_overlap_ajax,
     team_formation_view,
 )
-from . import tasks
 from .views.session_notifications import (
     send_acceptance_reminders_view,
     send_session_results_view,
@@ -170,6 +170,7 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     inlines = [SessionMembershipInline, SessionProjectInline]
     actions = [
         "form_teams_action",
+        "auto_allocate_teams_action",
         "send_session_results_action",
         "send_acceptance_reminders_action",
         "send_team_welcome_emails_action",
@@ -229,6 +230,34 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         session = queryset.first()
         url = reverse("admin:session_form_teams", args=[session.id])
         return redirect(url)
+
+    @admin.action(description="Auto-allocate Djangonauts to teams")
+    def auto_allocate_teams_action(self, request, queryset):
+        """
+        Automatically allocate Djangonauts to teams using the allocation algorithm.
+
+        This action:
+        - Analyzes all eligible applicants (selection_rank <= 2, where lower is better)
+        - Finds optimal team assignments based on availability and preferences
+        - Creates SessionMembership records for allocated Djangonauts
+        """
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one session to auto-allocate teams.",
+                messages.ERROR,
+            )
+            return
+
+        session = queryset.first()
+        allocation = allocate_teams_bounded_search(session)
+        stats = apply_allocation(allocation, session)
+        self.message_user(
+            request,
+            f"Successfully allocated {stats['created']} Djangonauts to teams. "
+            f"{stats['complete_teams']} of {stats['total_teams']} teams are filled.",
+            messages.SUCCESS,
+        )
 
     @admin.action(description="Send session result notifications")
     def send_session_results_action(self, request, queryset):
