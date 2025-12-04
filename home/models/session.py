@@ -88,6 +88,17 @@ class Session(models.Model):
             "Note: This marks when tasks were enqueued, not when all emails completed."
         ),
     )
+    discord_invite_url = models.URLField(
+        blank=True,
+        help_text=_("This should be a newly generated invite to the Discord server."),
+    )
+    feedback_form_url = models.URLField(
+        blank=True,
+        help_text=_(
+            "This should be the Program Suggestion Box Google Form from the "
+            "session organizer drive folder."
+        ),
+    )
 
     objects = models.Manager.from_queryset(SessionQuerySet)()
 

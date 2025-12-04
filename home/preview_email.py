@@ -186,7 +186,6 @@ def team_welcome_email(recipient_email: str, session: Session) -> None:
         "djangonauts": djangonauts,
         "navigators": navigators,
         "captains": captains,
-        "discord_invite_url": settings.DISCORD_INVITE_URL,
     }
 
     email.send(

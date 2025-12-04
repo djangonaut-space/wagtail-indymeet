@@ -52,6 +52,7 @@ class SessionFactory(factory.django.DjangoModelFactory):
     application_start_date = factory.Faker("date")
     application_end_date = factory.Faker("date")
     application_url = factory.Sequence(lambda n: "https://apply.session%d.com" % n)
+    discord_invite_url = "https://discord.gg/test"
 
     @classmethod
     def create_active(cls, survey) -> Session:

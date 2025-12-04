@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{{ team.name }} - {{ team.session.title }} | Djangonaut Space{% endblock %}
-{% block meta_title %}{{ team.name }} - {{ team.session.title }} | Djangonaut Space{% endblock %}
+{% block title %}{{ team.name }} - {{ session.title }} | Djangonaut Space{% endblock %}
+{% block meta_title %}{{ team.name }} - {{ session.title }} | Djangonaut Space{% endblock %}
 
 {% block content %}
 <main class="section my-3 mx-5">
@@ -11,22 +11,22 @@
       <ol class="flex items-center gap-2">
         <li><a href="{% url 'user_sessions' %}">{% trans "My Sessions" %}</a></li>
         <li class="text-gray-400">/</li>
-        <li class="text-gray-600">{{ team.session.title }} - {{ team.name }}</li>
+        <li class="text-gray-600">{{ session.title }} - {{ team.name }}</li>
       </ol>
     </nav>
 
     <h1 class="text-5xl mb-4">{{ team.name }}</h1>
 
     <div class="mb-6">
-      {% if team.session.status == 'current' %}
+      {% if session.status == 'current' %}
         <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold ml-2">
-          Active - Week {{ team.session.current_week }}
+          Active - Week {{ session.current_week }}
         </span>
-      {% elif team.session.status == 'past' %}
+      {% elif session.status == 'past' %}
         <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-bold ml-2">
           Completed
         </span>
-      {% elif team.session.status == 'upcoming' %}
+      {% elif session.status == 'upcoming' %}
         <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold ml-2">
           Upcoming
         </span>
@@ -68,10 +68,18 @@
         {% endif %}
         <div class="flex items-center">
           <i class="fab fa-discord w-6 h-6 mr-2 text-purple-600 text-xl"></i>
-          <a href="{{ discord_invite_url }}" target="_blank" rel="noopener noreferrer" class="font-bold">
+          <a href="{{ session.discord_invite_url }}" target="_blank" rel="noopener noreferrer" class="font-bold">
             Join Discord Server
           </a>
         </div>
+        {% if session.feedback_form_url %}
+        <div class="flex items-center">
+          <i class="fas fa-comments w-6 h-6 mr-2 text-purple-600 text-xl"></i>
+          <a href="{{ session.feedback_form_url }}" target="_blank" rel="noopener noreferrer" class="font-bold">
+            Program Suggestion Box
+          </a>
+        </div>
+        {% endif %}
       </div>
     </div>
 
