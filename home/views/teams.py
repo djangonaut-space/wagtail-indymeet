@@ -120,6 +120,15 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
         )
         context["session"] = team.session
 
+        # Add organizers to context
+        organizers = (
+            SessionMembership.objects.organizers()
+            .for_session(team.session)
+            .select_related("user", "user__profile")
+            .order_by("user__first_name", "user__last_name")
+        )
+        context["organizers"] = organizers
+
         return context
 
 
@@ -258,6 +267,14 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
             membership.overlap_slots = []
             membership.offset_hours = offset_hours
 
+    # Get organizers for the session
+    organizers = (
+        SessionMembership.objects.organizers()
+        .for_session(team.session)
+        .select_related("user", "user__profile")
+        .order_by("user__first_name", "user__last_name")
+    )
+
     context = {
         "team": team,
         "timezone": timezone,
@@ -266,6 +283,7 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
         "captains": [m for m in team_members if m.role == SessionMembership.CAPTAIN],
         "navigators": navigators,
         "djangonauts": djangonauts,
+        "organizers": organizers,
         "show_survey_link": (
             team.session.is_current_or_upcoming()
             and team.session.application_survey_id

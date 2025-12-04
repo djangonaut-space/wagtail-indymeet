@@ -87,6 +87,24 @@
       {% include 'home/session/team/team_availability.html' %}
     </div>
 
+    <!-- Session Organizers -->
+    {% if organizers %}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <h2 class="text-2xl font-extrabold mb-4">Session Organizers</h2>
+      <ul class="space-y-2">
+        {% for membership in organizers %}
+        <li class="flex items-center">
+          <i class="fas fa-satellite mr-2 text-purple-600"></i>
+          <span class="font-semibold mr-2">{{ membership.user.get_full_name|default:membership.user.email }}</span>
+          <a href="mailto:{{ membership.user.email }}" class="text-purple-600 hover:text-purple-800 text-sm">
+            <i class="fas fa-envelope mr-1"></i>{{ membership.user.email }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
   </div>
 </main>
 
