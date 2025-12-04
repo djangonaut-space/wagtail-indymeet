@@ -3,7 +3,7 @@
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
@@ -35,6 +35,15 @@ class SessionListView(ListView):
         return (
             Session.objects.with_applications(user=self.request.user)
             .select_related("application_survey")
+            .prefetch_related(
+                Prefetch(
+                    "session_memberships",
+                    queryset=SessionMembership.objects.organizers().select_related(
+                        "user"
+                    ),
+                    to_attr="prefetched_organizers",
+                )
+            )
             .order_by("-end_date")
         )
 
