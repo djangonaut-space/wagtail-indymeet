@@ -218,7 +218,10 @@ class EditUserSurveyResponseViewTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.post(
             self.url,
-            data={f"field_survey_{self.question.id}": "Excellent"},
+            data={
+                f"field_survey_{self.question.id}": "Excellent",
+                "github_username": "testuser",
+            },
             follow=True,
         )
         self.assertContains(response, "Response updated!")

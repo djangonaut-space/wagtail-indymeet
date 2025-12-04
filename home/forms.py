@@ -181,6 +181,19 @@ class BaseSurveyForm(forms.Form):
                         required=False,
                     )
 
+                # Add GitHub username field for application sessions
+                self.fields["github_username"] = forms.CharField(
+                    max_length=39,
+                    label=_("GitHub Username"),
+                    help_text=_("Your GitHub username (required for participation)"),
+                    required=True,
+                    initial=(
+                        self.user.profile.github_username
+                        if hasattr(self.user, "profile")
+                        else ""
+                    ),
+                )
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -245,6 +258,11 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
                 for project_id in project_preferences
             ]
             ProjectPreference.objects.bulk_create(preferences, ignore_conflicts=True)
+
+        # Save GitHub username to user profile
+        if self.session and (github_username := cleaned_data.get("github_username")):
+            self.user.profile.github_username = github_username
+            self.user.profile.save(update_fields=["github_username"])
 
         return user_survey_response
 
@@ -319,6 +337,13 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
                 for project_id in project_preferences
             ]
             ProjectPreference.objects.bulk_create(preferences, ignore_conflicts=True)
+
+        # Update GitHub username in user profile
+        if self.session and (github_username := cleaned_data.get("github_username")):
+            self.user_survey_response.user.profile.github_username = github_username
+            self.user_survey_response.user.profile.save(
+                update_fields=["github_username"]
+            )
 
         return self.user_survey_response
 

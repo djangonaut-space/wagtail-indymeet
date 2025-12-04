@@ -230,6 +230,7 @@ class EditUserSurveyResponseFormTests(TestCase):
             instance=self.user_survey_response,
             data={
                 f"field_survey_{self.simple_survey_question.id}": "Yup",
+                "github_username": "testuser",
             },
         )
         self.assertTrue(form.is_valid())
@@ -268,6 +269,7 @@ class EditUserSurveyResponseFormTests(TestCase):
             instance=self.user_survey_response,
             data={
                 f"field_survey_{self.simple_survey_question.id}": "Updated response",
+                "github_username": "testuser",
             },
         )
         self.assertTrue(form.is_valid())
