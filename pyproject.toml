@@ -17,7 +17,7 @@ dependencies = [
     "django-extensions",
     "django-debug-toolbar",
     "typing-extensions",
-    "distlib",  # Required for django-tailwind
+    "distlib", # Required for django-tailwind
     "django-tailwind",
     "sentry-sdk[django]",
     "supervisor",
@@ -26,6 +26,7 @@ dependencies = [
     "gunicorn",
     "django-filter>=25.2",
     "django-tasks",
+    "django-import-export",
 ]
 
 [project.optional-dependencies]

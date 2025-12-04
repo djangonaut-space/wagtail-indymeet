@@ -8,6 +8,8 @@ from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from import_export import fields, resources
+from import_export.admin import ExportMixin
 
 from indymeet.admin import DescriptiveSearchMixin
 from . import preview_email, tasks
@@ -121,25 +123,129 @@ class SessionProjectInline(admin.TabularInline):
     verbose_name_plural = "Available Projects"
 
 
+class SessionMembershipResource(resources.ModelResource):
+    """Export resource for SessionMembership with related data."""
+
+    user_email = fields.Field(column_name="user_email", attribute="user__email")
+    user_first_name = fields.Field(
+        column_name="user_first_name", attribute="user__first_name"
+    )
+    user_last_name = fields.Field(
+        column_name="user_last_name", attribute="user__last_name"
+    )
+    session_title = fields.Field(
+        column_name="session_title", attribute="session__title"
+    )
+    team_name = fields.Field(column_name="team_name", attribute="team__name")
+    github_username = fields.Field(
+        column_name="github_username", attribute="user__profile__github_username"
+    )
+    navigator = fields.Field(column_name="navigator", readonly=True)
+    captain = fields.Field(column_name="captain", readonly=True)
+
+    class Meta:
+        model = SessionMembership
+        fields = (
+            "id",
+            "user_email",
+            "user_first_name",
+            "user_last_name",
+            "session_title",
+            "role",
+            "team_name",
+            "github_username",
+            "navigator",
+            "captain",
+            "accepted",
+            "acceptance_deadline",
+            "accepted_at",
+        )
+        export_order = fields
+
+    def dehydrate_navigator(self, membership: SessionMembership) -> str:
+        """Get navigator email(s) for the team."""
+        if not membership.team:
+            return ""
+        navigators = membership.team.session_memberships.navigators()
+        return ", ".join([n.user.email for n in navigators])
+
+    def dehydrate_captain(self, membership: SessionMembership) -> str:
+        """Get captain email(s) for the team."""
+        if not membership.team:
+            return ""
+        captains = membership.team.session_memberships.captains()
+        return ", ".join([c.user.email for c in captains])
+
+
 @admin.register(SessionMembership)
-class SessionMembershipAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdmin):
+    resource_class = SessionMembershipResource
+
     list_display = (
         "user",
+        "user_email",
         "session",
         "role",
         "team",
+        "navigator",
+        "captain",
+        "github_username",
         "accepted",
         "acceptance_deadline",
-        "created",
     )
     list_filter = ("session", "role", "accepted", UserWithMembershipFilter)
     search_fields = ("user__email", "user__first_name", "user__last_name")
-    readonly_fields = ("created", "accepted_at")
+    readonly_fields = ("accepted_at",)
     actions = [
         "send_acceptance_emails_action",
         preview_email.acceptance_email_action,
         preview_email.reminder_email_action,
     ]
+
+    @admin.display(description="User Email", ordering="user__email")
+    def user_email(self, obj: SessionMembership) -> str:
+        return obj.user.email
+
+    @admin.display(description="Navigator")
+    def navigator(self, obj: SessionMembership) -> str:
+        if not obj.team:
+            return "-"
+        # Do the filtering at the app level since we're prefetching
+        # all of the membership of the team to avoid N+1 queries.
+        emails = [
+            membership.user.email
+            for membership in obj.team.session_memberships.all()
+            if membership.role == SessionMembership.NAVIGATOR
+        ]
+        return ", ".join(emails) or "-"
+
+    @admin.display(description="Captain")
+    def captain(self, obj: SessionMembership) -> str:
+        if not obj.team:
+            return "-"
+        # Do the filtering at the app level since we're prefetching
+        # all of the membership of the team to avoid N+1 queries.
+        emails = [
+            membership.user.email
+            for membership in obj.team.session_memberships.all()
+            if membership.role == SessionMembership.CAPTAIN
+        ]
+        return ", ".join(emails) or "-"
+
+    @admin.display(description="GitHub", ordering="user__profile__github_username")
+    def github_username(self, obj: SessionMembership) -> str:
+        if hasattr(obj.user, "profile") and obj.user.profile.github_username:
+            return obj.user.profile.github_username
+        return "-"
+
+    def get_queryset(self, request):
+        """Optimize queryset to avoid N+1 queries."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("user__profile", "session", "team")
+            .prefetch_related("team__session_memberships__user")
+        )
 
     @admin.action(description="Send acceptance emails to selected members")
     def send_acceptance_emails_action(self, request, queryset):
