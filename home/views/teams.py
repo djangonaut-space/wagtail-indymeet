@@ -118,9 +118,7 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
                 SessionMembership.ORGANIZER,
             }
         )
-
-        # Add Discord invite URL from settings
-        context["discord_invite_url"] = settings.DISCORD_INVITE_URL
+        context["session"] = team.session
 
         return context
 

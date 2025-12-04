@@ -6,7 +6,7 @@ Welcome to Djangonaut Space!
 
 Your team, {{ team.name }}, will be working on {{ team.project.name }} with help from your navigator{{ navigators|pluralize }}, {% for navigator in navigators %}{{ navigator.user.get_full_name }}, {% endfor %}and your captain{{ captains|pluralize }}, {% for captain in captains %}{{ captain.user.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}. They are here to guide you and have been CCed in this email. They are also in discord waiting for you in your team's channel. You can also expect your Navigator/Captain to reach out soon to schedule your first meetings and get the ball rolling. 🗓️
 
-Now, it's prep time! Head over to our Discord ({{ discord_invite_url }}) to get started. Take a moment to do a quick self-introduction in the Introductions Channel- share your passion, experience, and what you hope to achieve during the program. You can also check out our other channels like Resources, Life, and your Team Channel. 💬
+Now, it's prep time! Head over to our Discord ({{ session.discord_invite_url }}) to get started. Take a moment to do a quick self-introduction in the Introductions Channel- share your passion, experience, and what you hope to achieve during the program. You can also check out our other channels like Resources, Life, and your Team Channel. 💬
 
 We will have two orientation/get to know each other meetings planned. You should try to attend one of them. You will find them in Discord under "Events".
 

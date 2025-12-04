@@ -199,7 +199,6 @@ class SendTeamWelcomeEmailTaskTests(TestCase):
     @override_settings(
         ENVIRONMENT="production",
         BASE_URL="https://djangonaut.space",
-        DISCORD_INVITE_URL="https://discord.gg/test",
     )
     @patch("home.tasks.session_notifications.email.send")
     def test_sends_team_welcome_email(self, mock_send):
@@ -216,9 +215,6 @@ class SendTeamWelcomeEmailTaskTests(TestCase):
         self.assertIn("navigator@example.com", call_kwargs["recipient_list"])
         # Context should include team info
         self.assertEqual(call_kwargs["context"]["team"], self.team)
-        self.assertEqual(
-            call_kwargs["context"]["discord_invite_url"], "https://discord.gg/test"
-        )
 
     @override_settings(
         ENVIRONMENT="production",
