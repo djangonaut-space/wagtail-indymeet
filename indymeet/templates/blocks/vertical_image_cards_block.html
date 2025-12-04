@@ -1,7 +1,7 @@
 {% load wagtailcore_tags wagtailimages_tags %}
-<div class="flex md:flex-wrap place-content-center">
+<div class="flex flex-wrap justify-center">
 {% for child in self %}
-<div class="max-w-sm flex-initial w-80 rounded overflow-hidden shadow-lg my-3 mx-3 ">
+  <div class="max-w-sm flex-initial w-80 rounded overflow-hidden shadow-lg my-3 mx-3 ">
     {% if child.value.link %}
         <a class="text-black" href="{{ child.value.link }}">
     {% endif %}
@@ -22,5 +22,4 @@
     </div>
   </div>
 {% endfor %}
-
 </div>
