@@ -119,6 +119,13 @@ class UserProfile(models.Model):
     receiving_newsletter = models.BooleanField(default=False)
     receiving_event_updates = models.BooleanField(default=False)
     receiving_program_updates = models.BooleanField(default=False)
+    github_username = models.CharField(
+        max_length=39,
+        blank=True,
+        null=False,
+        default="",
+        help_text="Your GitHub username (required for participation)",
+    )
 
     def __str__(self):
         return self.user.username
