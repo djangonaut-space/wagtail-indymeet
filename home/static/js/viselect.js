@@ -442,4 +442,4 @@ let P = T;
 export {
   P as default
 };
-//# sourceMappingURL=viselect.mjs.map
+//# sourceMappingURL=viselect.js.map

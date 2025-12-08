@@ -6,10 +6,14 @@ that navigators can meet with all team members simultaneously, and captains
 can meet with each djangonaut individually.
 """
 
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
+from django.urls import reverse
+
 from accounts.models import UserAvailability
-from home.models import Team
+from home.models import Team, Session, SessionMembership
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
@@ -18,6 +22,78 @@ if TYPE_CHECKING:
 SLOT_INCREMENT = 0.5  # Each slot represents 30 minutes
 FLOAT_COMPARISON_THRESHOLD = 0.01  # Threshold for float equality checks
 HOURS_PER_WEEK = 168  # Total hours in a week (7 days * 24 hours)
+
+
+@dataclass
+class AvailabilityWindow:
+    """
+    Represents a time window with user availability information.
+
+    Attributes:
+        slot_range: Tuple of (start_slot, end_slot) representing the time window
+        formatted_time: Human-readable time string (e.g., "Mon 2:00 PM - 3:00 PM")
+        available_users: List of users available during this window
+        unavailable_users: List of users not available during this window
+        role_counts: Optional dict mapping role names to counts
+    """
+
+    slot_range: tuple[float, float]
+    formatted_time: str
+    available_users: list["CustomUser"]
+    unavailable_users: list["CustomUser"]
+    role_counts: dict[str, int] = field(default_factory=dict)
+
+    @property
+    def total_available(self) -> int:
+        """Total count of available users."""
+        return len(self.available_users)
+
+    @property
+    def role_summary(self) -> str:
+        """Format role counts as a comma-separated string."""
+        role_parts = [
+            f"{role}: {count}" for role, count in self.role_counts.items() if count > 0
+        ]
+        return ", ".join(role_parts)
+
+    @property
+    def admin_unavailable_url(self) -> str | None:
+        """Build admin URL for filtering unavailable members."""
+        if not self.unavailable_users:
+            return None
+        ids_str = ",".join(str(id) for id in self.unavailable_users)
+        return (
+            reverse("admin:home_sessionmembership_changelist")
+            + f"?user_id__in={ids_str}"
+        )
+
+    @property
+    def start_datetime(self) -> datetime:
+        """
+        Return a datetime object representing the start of this window.
+
+        Uses a reference date (next Sunday from today) to create an actual
+        datetime that can be used with templatetags like time_is_link.
+
+        Returns:
+            UTC datetime for the start of this availability window
+        """
+        today = datetime.now().date()
+        days_until_sunday = (6 - today.weekday()) % 7
+        if days_until_sunday == 0:
+            days_until_sunday = 7
+        next_sunday = today + timedelta(days=days_until_sunday)
+
+        start_slot = self.slot_range[0]
+        day_offset = int(start_slot // 24)
+        hour_in_day = start_slot % 24
+        hours = int(hour_in_day)
+        minutes = int((hour_in_day % 1) * 60)
+
+        target_date = next_sunday + timedelta(days=day_offset)
+        return datetime.combine(target_date, datetime.min.time()).replace(
+            hour=hours, minute=minutes
+        )
 
 
 def _convert_to_12hour_format(hour_24: int) -> tuple[int, str]:
@@ -422,3 +498,92 @@ def calculate_user_overlap(user1: "CustomUser", user2: "CustomUser") -> list[flo
     """
     slots, _ = calculate_overlap([user1, user2])
     return slots
+
+
+def find_best_one_hour_windows(
+    users: list["CustomUser"], top_n: int = 5
+) -> list[AvailabilityWindow]:
+    """
+    Find top N one-hour time windows with most user availability.
+
+    Analyzes all possible 1-hour windows (335 total across a week) and returns
+    the windows with the most users available, ranked by availability.
+
+    Args:
+        users: List of CustomUser instances to analyze
+        top_n: Number of top windows to return (default 5)
+
+    Returns:
+        List of AvailabilityWindow instances sorted by availability (descending)
+    """
+    one_hour_windows = {}
+    total_possible_windows = int(HOURS_PER_WEEK / SLOT_INCREMENT) - 1
+
+    for i in range(total_possible_windows):
+        start_slot = i * SLOT_INCREMENT
+        end_slot = start_slot + SLOT_INCREMENT
+
+        available_users = []
+        unavailable_users = []
+
+        for user in users:
+            user_slots = get_user_slots(user)
+
+            if start_slot in user_slots and end_slot in user_slots:
+                available_users.append(user)
+            else:
+                unavailable_users.append(user)
+
+        if len(available_users) > 1:
+            start_time = format_slot_as_time(start_slot)
+            end_time = format_slot_as_time(end_slot + SLOT_INCREMENT)
+            end_time_only = end_time.split(" ", 1)[1]
+            formatted_time = f"{start_time} - {end_time_only}"
+
+            one_hour_windows[(start_slot, end_slot)] = AvailabilityWindow(
+                slot_range=(start_slot, end_slot),
+                formatted_time=formatted_time,
+                available_users=available_users,
+                unavailable_users=unavailable_users,
+            )
+
+    sorted_windows = sorted(
+        one_hour_windows.values(),
+        key=lambda x: x.total_available,
+        reverse=True,
+    )
+
+    return sorted_windows[:top_n]
+
+
+def find_best_one_hour_windows_with_roles(
+    user_roles: dict["CustomUser", str],
+    top_n: int = 5,
+) -> list[AvailabilityWindow]:
+    """
+    Find top N one-hour windows with availability and role information.
+
+    This is an extended version of find_best_one_hour_windows that includes
+    role-based counting and member ID tracking. Useful for SessionMembership
+    or similar use cases where users have roles.
+
+    Args:
+        user_roles: Maps each user to their role
+        top_n: Number of top windows to return (default 5)
+
+    Returns:
+        List of AvailabilityWindow instances with role_counts and
+        unavailable_member_ids populated
+    """
+    windows = find_best_one_hour_windows(list(user_roles.keys()), top_n)
+
+    for window in windows:
+        role_counts = {role: 0 for role, _ in SessionMembership.ROLES}
+
+        for user in window.available_users:
+            role = user_roles[user]
+            role_counts[role] += 1
+
+        window.role_counts = role_counts
+        window.unavailable_member_ids = [user.id for user in window.unavailable_users]
+    return windows

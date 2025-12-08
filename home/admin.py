@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.db.models import Exists, F, Max, Count, OuterRef
 from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -13,6 +14,7 @@ from import_export.admin import ExportMixin
 
 from indymeet.admin import DescriptiveSearchMixin
 from . import preview_email, tasks
+from .availability import AvailabilityWindow, find_best_one_hour_windows_with_roles
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
 from .models import Event, Project, Team
 from .models import ResourceLink
@@ -198,6 +200,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
     readonly_fields = ("accepted_at",)
     actions = [
         "send_acceptance_emails_action",
+        "find_best_availability_overlaps_action",
         preview_email.acceptance_email_action,
         preview_email.reminder_email_action,
     ]
@@ -269,6 +272,46 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
             f"Successfully queued {queued_count} acceptance email(s).",
             messages.SUCCESS,
         )
+
+    @admin.action(description="Find overlapping availability time slots")
+    def find_best_availability_overlaps_action(self, request, queryset):
+        """
+        Find and display top 5 one-hour time slots with most member availability.
+
+        For each time slot, shows:
+        - Total count of available members
+        - Count by role (Djangonaut, Captain, Navigator, Organizer)
+        - Link to view members who are NOT available during that time
+        """
+        if queryset.count() < 2:
+            self.message_user(
+                request,
+                "Please select at least 2 members to find overlapping availability.",
+                messages.ERROR,
+            )
+            return
+
+        queryset = queryset.select_related("user").prefetch_related(
+            "user__availability"
+        )
+        user_roles = {m.user: m.role for m in queryset}
+        results = find_best_one_hour_windows_with_roles(
+            user_roles=user_roles,
+            top_n=10,
+        )
+
+        if not results:
+            self.message_user(
+                request,
+                "No overlapping 1-hour availability found among selected members.",
+                messages.WARNING,
+            )
+            return
+        message = render_to_string(
+            "admin/availability_overlap_message.html",
+            {"results": results, "total_members": len(user_roles)},
+        )
+        self.message_user(request, mark_safe(message))
 
 
 @admin.register(Session)
