@@ -600,9 +600,9 @@ class TeamFormationViewTestCase(TestCase):
         # The query count should be constant regardless of the number of applicants
         # or their project preferences, since project preferences are prefetched
         # Note: Query 7 efficiently fetches all project preferences in one query
-        # There are some N+1 queries for team.project (queries 12-21) but that's
+        # There are some N+1 queries for team.project (queries 13-22) but that's
         # unrelated to the project preferences column we added
-        with self.assertNumQueries(21):  # Expected stable query count
+        with self.assertNumQueries(22):  # Expected stable query count
             response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)

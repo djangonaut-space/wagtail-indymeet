@@ -82,7 +82,7 @@ class CreateUserSurveyResponseFormView(
         if form.is_valid():
             user_survey_response = form.save()
             user_survey_response.send_created_notification()
-            messages.success(self.request, gettext("Response sent!"))
+            messages.success(self.request, gettext(f"Survey successfully saved!"))
             return self.form_valid(form)
         else:
             messages.error(self.request, gettext("Something went wrong."))

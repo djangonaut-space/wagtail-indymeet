@@ -322,6 +322,7 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
+    list_display = ("title", "start_date", "end_date")
 
     def get_urls(self):
         """Add custom URLs for team formation and notifications"""

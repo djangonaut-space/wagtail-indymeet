@@ -10,3 +10,18 @@
         </div>
     {% endfor %}
 {% endif %}
+{% if user_needs_to_set_availability %}
+    <div class="my-2 mx-2 px-4 py-3 rounded relative border
+                bg-red-100 border-red-400 text-red-700"
+        role="alert">
+        Your availability is unset. Please <a href="{% url 'availability' %}" target="_blank">set your availability</a>
+        so that we can consider you for the upcoming session of Djangonaut Space.
+    </div>
+{% elif user_needs_to_update_availability %}
+    <div class="my-2 mx-2 px-4 py-3 rounded relative border
+                bg-orange-100 border-orange-400 text-orange-700"
+        role="alert">
+        Your availability may be outdated. Please <a href="{% url 'availability' %}" target="_blank">resave your availability</a>
+        so that we can consider you for the upcoming session of Djangonaut Space.
+    </div>
+{% endif %}
