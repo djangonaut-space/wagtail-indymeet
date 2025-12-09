@@ -75,7 +75,10 @@ class CustomUser(AbstractUser):
     objects = CustomUserManager()
 
     def __str__(self):
-        return f"{self.get_full_name()} ({self.username})"
+        full_name = self.get_full_name()
+        if full_name:
+            return f"{self.get_full_name()} ({self.username})"
+        return self.username
 
 
 class UserProfile(models.Model):
