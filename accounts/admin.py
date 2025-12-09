@@ -48,6 +48,7 @@ class LinksInline(admin.StackedInline):
 class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
     actions = ["export_as_csv"]
+    search_fields = ["first_name", "last_name", "username", "profile__github_username"]
 
 
 @admin.register(UserProfile)
