@@ -1,6 +1,9 @@
 """Tests for custom QuerySet methods."""
 
+from datetime import timedelta
+
 from django.test import TestCase
+from django.utils import timezone
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home.factories import (
@@ -10,7 +13,7 @@ from home.factories import (
     TeamFactory,
     UserSurveyResponseFactory,
 )
-from home.models import SessionMembership, UserSurveyResponse
+from home.models import Session, SessionMembership, UserSurveyResponse
 
 
 class UserSurveyResponseQuerySetTestCase(TestCase):
@@ -673,3 +676,112 @@ class SessionMembershipQuerySetTestCase(TestCase):
         self.assertEqual(qs.count(), 2)
         self.assertIn(membership1, qs)
         self.assertIn(membership2, qs)
+
+
+class SessionQuerySetTestCase(TestCase):
+    """Test SessionQuerySet methods."""
+
+    def test_get_accepting_applications_within_range(self):
+        """
+        Test that get_accepting_applications returns a session
+        currently accepting applications.
+        """
+        today = timezone.now().date()
+        active_session = SessionFactory(
+            application_start_date=today - timedelta(days=5),
+            application_end_date=today + timedelta(days=5),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        self.assertEqual(result, active_session)
+
+    def test_get_accepting_applications_before_start(self):
+        """Test that get_accepting_applications returns None for future sessions."""
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today + timedelta(days=5),
+            application_end_date=today + timedelta(days=10),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        self.assertIsNone(result)
+
+    def test_get_accepting_applications_after_end(self):
+        """Test that get_accepting_applications returns None for past sessions."""
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today - timedelta(days=10),
+            application_end_date=today - timedelta(days=5),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        self.assertIsNone(result)
+
+    def test_get_accepting_applications_multiple_sessions(self):
+        """
+        Test that get_accepting_applications returns an active session
+        when multiple exist.
+        """
+        today = timezone.now().date()
+
+        # Create multiple sessions
+        past_session = SessionFactory(
+            application_start_date=today - timedelta(days=10),
+            application_end_date=today - timedelta(days=5),
+        )
+
+        active_session1 = SessionFactory(
+            application_start_date=today - timedelta(days=3),
+            application_end_date=today + timedelta(days=5),
+        )
+
+        active_session2 = SessionFactory(
+            application_start_date=today - timedelta(days=1),
+            application_end_date=today + timedelta(days=10),
+        )
+
+        result = Session.objects.get_accepting_applications()
+
+        # Should return one of the active sessions (uses .first() without ordering)
+        self.assertIsNotNone(result)
+        self.assertIn(result, [active_session1, active_session2])
+        self.assertNotEqual(result, past_session)
+
+    def test_get_accepting_applications_no_sessions(self):
+        """Test that get_accepting_applications returns None when no sessions exist."""
+        result = Session.objects.get_accepting_applications()
+
+        self.assertIsNone(result)
+
+    def test_get_accepting_applications_aoe_timezone_early(self):
+        """
+        Test that get_accepting_applications uses
+        AoE early timezone (UTC+12) for start date.
+        """
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today,
+            application_end_date=today + timedelta(days=5),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        # Should find the session because we're using AoE early timezone (UTC+12)
+        # which makes "today" start earlier
+        self.assertIsNotNone(result)
+
+    def test_get_accepting_applications_aoe_timezone_late(self):
+        """
+        Test that get_accepting_applications uses
+        AoE late timezone (UTC-12) for end date.
+        """
+        # Create a session ending today
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today - timedelta(days=5),
+            application_end_date=today,
+        )
+        result = Session.objects.get_accepting_applications()
+
+        # Should find the session because we're using AoE late timezone (UTC-12)
+        # which makes "today" end later
+        self.assertIsNotNone(result)

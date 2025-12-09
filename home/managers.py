@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+import datetime
+from typing import Optional
+
 from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Subquery, Value, Q
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
@@ -48,6 +53,18 @@ class SessionQuerySet(QuerySet):
                 ).values("id")[:1]
             )
         )
+
+    def get_accepting_applications(self) -> Session | None:
+        aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
+        aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
+        return self.filter(
+            application_start_date__lte=timezone.now()
+            .astimezone(aoe_early_timezone)
+            .date(),
+            application_end_date__gte=timezone.now()
+            .astimezone(aoe_late_timezone)
+            .date(),
+        ).first()
 
 
 class SessionMembershipQuerySet(QuerySet):

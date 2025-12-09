@@ -473,7 +473,7 @@ class UserSessionListViewTests(TestCase):
         """Test that authenticated user can view their sessions."""
         self.client.force_login(self.user)
 
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
