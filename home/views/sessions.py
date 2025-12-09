@@ -35,15 +35,6 @@ class SessionListView(ListView):
         return (
             Session.objects.with_applications(user=self.request.user)
             .select_related("application_survey")
-            .prefetch_related(
-                Prefetch(
-                    "session_memberships",
-                    queryset=SessionMembership.objects.organizers().select_related(
-                        "user"
-                    ),
-                    to_attr="prefetched_organizers",
-                )
-            )
             .order_by("-end_date")
         )
 
