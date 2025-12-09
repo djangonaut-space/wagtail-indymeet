@@ -13,7 +13,12 @@ from accounts.fields import DefaultOneToOneField
 
 
 class CustomUser(AbstractUser):
-    pass
+    github_username = models.CharField(
+        max_length=39,  # GitHub max username length
+        blank=True,
+        null=True,
+        help_text="GitHub username (without @)",
+    )
 
 
 class UserProfile(models.Model):
