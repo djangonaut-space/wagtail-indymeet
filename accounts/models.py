@@ -74,6 +74,9 @@ class CustomUserManager(UserManager.from_queryset(CustomUserQuerySet)):
 class CustomUser(AbstractUser):
     objects = CustomUserManager()
 
+    def __str__(self):
+        return f"{self.get_full_name()} ({self.username})"
+
 
 class UserProfile(models.Model):
     PARTICIPANT = "Participant"

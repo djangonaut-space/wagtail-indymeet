@@ -103,6 +103,7 @@ class UserWithMembershipFilter(admin.SimpleListFilter):
 
 class SessionMembershipInline(admin.TabularInline):
     model = SessionMembership
+    autocomplete_fields = ["user"]
     extra = 0
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
