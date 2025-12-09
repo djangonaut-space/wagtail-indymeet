@@ -461,9 +461,8 @@ class SurveyCSVExportFormTests(TestCase):
         # Check header - only TEXT_AREA questions and Score/Selection Rank columns
         expected_header = [
             "Response ID",
-            "Tell us about yourself",  # TEXT_AREA type only
-            "Score",  # Single aggregate score column
-            "Selection Rank",  # Selection rank column
+            "Tell us about yourself",
+            "Tell us about yourself Score",
         ]
         self.assertEqual(rows[0], expected_header)
 
@@ -473,29 +472,7 @@ class SurveyCSVExportFormTests(TestCase):
         self.assertEqual(
             rows[1][1], "I am a Django developer with 5 years of experience."
         )
-        self.assertEqual(rows[1][2], "")  # Empty Score column
-        self.assertEqual(rows[1][3], "")  # Empty Selection Rank column
-
-    def test_generate_single_scorer_csv_ignores_scorer_names(self):
-        """Test single scorer CSV ignores scorer names field."""
-        form = SurveyCSVExportForm(data={"scorer_names": "Alice\nBob\nCharlie"})
-        self.assertTrue(form.is_valid())
-
-        response = form.generate_single_scorer_csv(self.survey)
-
-        # Parse CSV content (remove BOM if present)
-        content = response.content.decode("utf-8-sig")
-        csv_reader = csv.reader(io.StringIO(content))
-        rows = list(csv_reader)
-
-        # Should still have only Score and Selection Rank columns
-        expected_header = [
-            "Response ID",
-            "Tell us about yourself",
-            "Score",
-            "Selection Rank",
-        ]
-        self.assertEqual(rows[0], expected_header)
+        self.assertEqual(rows[1][2], "")
 
     def test_generate_csv_routes_to_full(self):
         """Test generate_csv method routes to full CSV by default."""

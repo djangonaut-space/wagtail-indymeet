@@ -481,34 +481,21 @@ class SurveyCSVExportForm(forms.Form):
         response.write("\ufeff")
 
         writer = csv.writer(response)
-
-        # Write header row - only Response ID and TEXT_AREA questions
         header = ["Response ID"]
-        # Add question labels as columns
-        header.extend([q.label for q in questions])
-        # Add Score and Selection Rank columns (no individual scorer columns)
-        header.append("Score")
-        header.append("Selection Rank")
+        for question in questions:
+            header.extend([question.label, f"{question.label} Score"])
         writer.writerow(header)
 
         # Write data rows
         for response_obj in responses:
             row = [response_obj.id]
-
-            # Get all question responses for this survey response
-            question_responses = {
+            response_map = {
                 qr.question_id: qr.value
                 for qr in response_obj.userquestionresponse_set.all()
             }
-
-            # Add only TEXT_AREA question responses in order
             for question in questions:
-                row.append(question_responses.get(question.id, ""))
-
-            # Add empty Score and Selection Rank columns
-            row.append("")
-            row.append("")
-
+                # Add the response and an empty cell for the score.
+                row.extend([response_map.get(question.id, ""), ""])
             writer.writerow(row)
 
         return response
