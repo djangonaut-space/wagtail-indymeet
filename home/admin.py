@@ -119,13 +119,6 @@ class SessionMembershipInline(admin.TabularInline):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class SessionProjectInline(admin.TabularInline):
-    model = Session.available_projects.through
-    extra = 0
-    verbose_name = "Available Project"
-    verbose_name_plural = "Available Projects"
-
-
 class SessionMembershipResource(resources.ModelResource):
     """Export resource for SessionMembership with related data."""
 
@@ -317,7 +310,8 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
 
 @admin.register(Session)
 class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
-    inlines = [SessionMembershipInline, SessionProjectInline]
+    inlines = [SessionMembershipInline]
+    filter_horizontal = ("available_projects",)
     actions = [
         "form_teams_action",
         "auto_allocate_teams_action",
