@@ -313,16 +313,37 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     inlines = [SessionMembershipInline]
     filter_horizontal = ("available_projects",)
     actions = [
-        "form_teams_action",
         "auto_allocate_teams_action",
-        "send_session_results_action",
-        "send_acceptance_reminders_action",
-        "send_team_welcome_emails_action",
         preview_email.rejection_email_action,
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
-    list_display = ("title", "start_date", "end_date")
+    list_display = ("title", "start_date", "end_date", "form_teams", "email_actions")
+
+    @admin.display(description="Form Teams")
+    def form_teams(self, obj):
+        href = reverse("admin:session_form_teams", kwargs={"session_id": obj.id})
+        return mark_safe(f'<a href="{href}">Form Teams</a>')
+
+    @admin.display(description="Email Actions")
+    def email_actions(self, obj):
+        actions = [
+            (
+                "Send application results",
+                reverse("admin:session_send_results", args=[obj.id]),
+            ),
+            (
+                "Send acceptance reminder emails",
+                reverse("admin:session_send_acceptance_reminders", args=[obj.id]),
+            ),
+            (
+                "Send team welcome emails",
+                reverse("admin:session_send_team_welcome_emails", args=[obj.id]),
+            ),
+        ]
+        return mark_safe(
+            "<br />".join([f"<a href={href}>{action}</a>" for action, href in actions])
+        )
 
     def get_urls(self):
         """Add custom URLs for team formation and notifications"""
@@ -361,21 +382,6 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    @admin.action(description="Form teams for this session")
-    def form_teams_action(self, request, queryset):
-        """Redirect to team formation interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to form teams.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_form_teams", args=[session.id])
-        return redirect(url)
-
     @admin.action(description="Auto-allocate Djangonauts to teams")
     def auto_allocate_teams_action(self, request, queryset):
         """
@@ -403,51 +409,6 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             f"{stats['complete_teams']} of {stats['total_teams']} teams are filled.",
             messages.SUCCESS,
         )
-
-    @admin.action(description="Send session result notifications")
-    def send_session_results_action(self, request, queryset):
-        """Redirect to send session results interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to send results.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_send_results", args=[session.id])
-        return redirect(url)
-
-    @admin.action(description="Send acceptance reminder emails")
-    def send_acceptance_reminders_action(self, request, queryset):
-        """Redirect to send acceptance reminders interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to send reminders.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_send_acceptance_reminders", args=[session.id])
-        return redirect(url)
-
-    @admin.action(description="Send team welcome emails")
-    def send_team_welcome_emails_action(self, request, queryset):
-        """Redirect to send team welcome emails interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to send welcome emails.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_send_team_welcome_emails", args=[session.id])
-        return redirect(url)
 
 
 @admin.register(Team)
