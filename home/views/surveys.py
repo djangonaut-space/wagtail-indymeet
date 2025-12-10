@@ -156,7 +156,7 @@ class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView)
         if form.is_valid():
             user_survey_response = form.save()
             user_survey_response.send_updated_notification()
-            messages.success(self.request, gettext("Response updated!"))
+            messages.success(self.request, gettext("Survey successfully updated!"))
             return redirect(self.get_success_url())
         else:
             messages.error(self.request, gettext("Something went wrong."))

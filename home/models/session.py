@@ -22,6 +22,11 @@ class Project(models.Model):
         unique=True,
         help_text=_("The name of the project (e.g., 'Django', 'Wagtail')"),
     )
+    description = models.TextField(
+        null=False,
+        default="",
+        help_text=_("A description or helpful context for prospective contributors."),
+    )
     url = models.URLField(
         help_text=_("The URL for the project repository or website"),
     )

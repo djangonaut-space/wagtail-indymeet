@@ -10,6 +10,7 @@ from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import CustomUser
@@ -166,7 +167,13 @@ class BaseSurveyForm(forms.Form):
 
                 # Add project preference field if session has available projects
                 project_choices = [
-                    (project.id, project.name)
+                    (
+                        project.id,
+                        mark_safe(
+                            f'<div><a href="{project.url}" target="_blank">{project.name}</a>'
+                            f"<p>{project.description}</p></div>"
+                        ),
+                    )
                     for project in self.session.available_projects.all()
                 ]
                 if project_choices:

@@ -224,7 +224,7 @@ class EditUserSurveyResponseViewTests(TestCase):
             },
             follow=True,
         )
-        self.assertContains(response, "Response updated!")
+        self.assertContains(response, "Survey successfully updated!")
         self.assertRedirects(response, reverse("profile"))
         updated_response = UserQuestionResponse.objects.get(
             user_survey_response=self.survey_response, question=self.question

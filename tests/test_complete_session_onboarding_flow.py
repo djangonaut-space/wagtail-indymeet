@@ -194,7 +194,9 @@ class TestCompleteSessionOnboardingFlow:
         page.get_by_role("button", name="Log in").click()
         page.wait_for_load_state("networkidle")
 
-    def admin_create_project(self, page: Page, name: str, url: str) -> int:
+    def admin_create_project(
+        self, page: Page, name: str, url: str, description: str
+    ) -> int:
         """
         Helper to create a Project via Django admin.
 
@@ -207,6 +209,7 @@ class TestCompleteSessionOnboardingFlow:
         # Fill in the form
         page.locator("#id_name").fill(name)
         page.locator("#id_url").fill(url)
+        page.locator("#id_description").fill(description)
 
         # Save
         page.get_by_role("button", name="Save", exact=True).click()
@@ -524,6 +527,7 @@ class TestCompleteSessionOnboardingFlow:
             page,
             name="Django",
             url="https://github.com/django/django",
+            description="This is the main Django project.",
         )
 
         # Create team via admin
