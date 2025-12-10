@@ -461,12 +461,12 @@ class QuestionInline(admin.StackedInline):
     extra = 0
     fields = (
         "label",
+        "ordering",
+        "required",
+        "sensitive",
         "type_field",
         "choices",
         "help_text",
-        "required",
-        "sensitive",
-        "ordering",
     )
     readonly_fields = ("key",)
 
@@ -485,6 +485,16 @@ class QuestionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     search_fields = ["label", "survey__name", "key"]
     list_editable = ["ordering"]
     ordering = ["survey", "ordering"]
+    fields = (
+        "label",
+        "ordering",
+        "required",
+        "sensitive",
+        "type_field",
+        "choices",
+        "help_text",
+    )
+    readonly_fields = ("key",)
 
 
 @admin.register(Survey)
