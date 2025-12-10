@@ -24,6 +24,7 @@ dependencies = [
     "dj-database-url",
     "gunicorn",
     "django-filter>=25.2",
+    "pygithub>=2.8.1",
 ]
 
 [project.optional-dependencies]

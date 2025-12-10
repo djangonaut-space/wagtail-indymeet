@@ -48,6 +48,13 @@ class CustomUserAdmin(ExportCsvMixin, BaseUserAdmin):
     model = CustomUser
     actions = ["export_as_csv"]
 
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ("GitHub Integration", {"fields": ("github_username",)}),
+    )
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        ("GitHub Integration", {"fields": ("github_username",)}),
+    )
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(ExportCsvMixin, admin.ModelAdmin):

@@ -1,0 +1,165 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+    /* Simple, Clean Admin Styles */
+
+    .stats-summary {
+        background: #fff;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .stats-summary h2 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        color: #333;
+        border-bottom: none;
+    }
+
+    .stats-counts {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 10px;
+    }
+
+    .stat {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat span {
+        font-size: 13px;
+        color: #666;
+        text-transform: uppercase;
+    }
+
+    .stat strong {
+        font-size: 24px;
+        font-weight: normal;
+        color: #333;
+    }
+
+    /* Activity Sections */
+    h3 {
+        font-size: 14px;
+        text-transform: uppercase;
+        color: #666;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 5px;
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+
+    .merged-prs h3 {
+        color: #28a745;
+    }
+
+    .open-prs h3 {
+        color: #007bff;
+    }
+
+    .open-issues h3 {
+        color: #fd7e14;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    li {
+        background: #fff;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    li strong {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .meta-row {
+        font-size: 12px;
+        color: #666;
+        margin: 3px 0;
+    }
+
+    .repo {
+        color: #444;
+        font-weight: bold;
+    }
+
+    .download-actions {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        background: #f8f8f8;
+        padding: 15px;
+    }
+
+    /* Standard Admin Button Styles */
+    .button,
+    button.button {
+        background: #79aec8;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        display: inline-block;
+    }
+
+    .button:hover,
+    button.button:hover {
+        background: #609ab6;
+    }
+
+    .button.back {
+        background: #999;
+    }
+
+    .button.back:hover {
+        background: #888;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url 'admin:home_session_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {% trans 'GitHub Stats Results' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Stats Results for "{{ session.title }}"</h1>
+
+    <!-- Rendered HTML Report -->
+    {{ report_html|safe }}
+
+    <div class="download-actions">
+        <h3>Download Report</h3>
+        <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            <button type="submit" name="download" value="csv" class="button"
+                style="border: none; cursor: pointer;">Download CSV</button>
+            <button type="submit" name="download" value="txt" class="button"
+                style="border: none; cursor: pointer;">Download Text</button>
+        </form>
+        <a href="{% url 'admin:home_session_changelist' %}" class="button back">Back to
+            Sessions</a>
+    </div>
+</div>
+{% endblock %}

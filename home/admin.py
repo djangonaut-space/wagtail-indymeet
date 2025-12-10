@@ -55,7 +55,7 @@ class SessionMembershipAdmin(admin.ModelAdmin):
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
     inlines = [SessionMembershipInline]
-    actions = ["form_teams_action"]
+    actions = ["form_teams_action", "collect_djangonaut_stats_action"]
 
     def get_urls(self):
         """Add custom URLs for team formation"""
@@ -71,8 +71,19 @@ class SessionAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(calculate_overlap_ajax),
                 name="session_calculate_overlap",
             ),
+            path(
+                "<int:session_id>/collect-stats/",
+                self.admin_site.admin_view(self.collect_stats_view),
+                name="session_collect_stats",
+            ),
         ]
         return custom_urls + urls
+
+    def collect_stats_view(self, request, session_id):
+        """Handle GitHub stats collection for a session."""
+        from .views.sessions import collect_stats_view
+
+        return collect_stats_view(request, session_id)
 
     @admin.action(description="Form teams for this session")
     def form_teams_action(self, request, queryset):
@@ -87,6 +98,21 @@ class SessionAdmin(admin.ModelAdmin):
 
         session = queryset.first()
         url = reverse("admin:session_form_teams", args=[session.id])
+        return redirect(url)
+
+    @admin.action(description="Collect Djangonaut GitHub stats")
+    def collect_djangonaut_stats_action(self, request, queryset):
+        """Redirect to GitHub stats collection view for selected session"""
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one session to collect stats.",
+                messages.ERROR,
+            )
+            return
+
+        session = queryset.first()
+        url = reverse("admin:session_collect_stats", args=[session.id])
         return redirect(url)
 
 

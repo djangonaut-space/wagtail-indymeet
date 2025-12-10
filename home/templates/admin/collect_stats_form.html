@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url 'admin:home_session_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; {% trans 'Collect GitHub Stats' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Collect GitHub Stats for "{{ session.title }}"</h1>
+
+    <div class="module">
+        <h2>{% trans "Configuration" %}</h2>
+        <p>
+            {% blocktrans with count=djangonauts_count %}
+                Found {{ count }} Djangonauts with configured GitHub usernames.
+            {% endblocktrans %}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <fieldset class="module aligned">
+                <div class="form-row">
+                    <label for="start_date">{% trans "Start Date:" %}</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
+                    <p class="help">{% trans "Defaults to session start date or 7 days ago." %}</p>
+                </div>
+
+                <div class="form-row">
+                    <label for="end_date">{% trans "End Date:" %}</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ end_date|date:'Y-m-d' }}" required>
+                    <p class="help">{% trans "Defaults to session end date or today." %}</p>
+                </div>
+
+                <div class="form-row">
+                    <label>{% trans "Tracking Users:" %}</label>
+                    <div class="readonly">
+                        {{ github_usernames|join:", " }}
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="submit-row">
+                <input type="submit" value="{% trans 'Collect Stats' %}" class="default" name="collect">
+                <a href="{% url 'admin:home_session_changelist' %}" class="button" style="float: right;">{% trans "Cancel" %}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
