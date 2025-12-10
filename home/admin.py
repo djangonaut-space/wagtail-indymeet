@@ -3,6 +3,7 @@ from datetime import timedelta
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.db.models import Exists, F, Max, Count, OuterRef
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
@@ -244,6 +245,22 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
             .prefetch_related("team__session_memberships__user")
         )
 
+    def save_model(self, request, obj: SessionMembership, form, change: bool) -> None:
+        """Show reminder for superuser organizers to review group permissions."""
+        super().save_model(request, obj, form, change)
+
+        # When creating a session organizer
+        if obj.role == SessionMembership.ORGANIZER and request.user.is_superuser:
+            group = Group.objects.filter(name="Session Organizers").first()
+            if group:
+                group_url = reverse("admin:auth_group_change", args=[group.pk])
+                message = mark_safe(
+                    f'Review the <a href="{group_url}" target="_blank">'
+                    "Session Organizers group</a> to remove those who shouldn't "
+                    "have access anymore."
+                )
+                self.message_user(request, message, messages.INFO)
+
     @admin.action(description="Send acceptance emails to selected members")
     def send_acceptance_emails_action(self, request, queryset):
         """
@@ -409,6 +426,31 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             f"{stats['complete_teams']} of {stats['total_teams']} teams are filled.",
             messages.SUCCESS,
         )
+
+    def save_related(self, request, form, formsets, change) -> None:
+        """Show reminder for superuser organizers to review group permissions."""
+        current_organizer_count = set(
+            form.instance.session_memberships.organizers().values_list("id", flat=True)
+        )
+        super().save_related(request, form, formsets, change)
+        updated_organizer_count = set(
+            form.instance.session_memberships.organizers().values_list("id", flat=True)
+        )
+        # If there is change to the session organizers, notify a super admin to update
+        # the Session Organizers group membership.
+        if (
+            request.user.is_superuser
+            and updated_organizer_count != current_organizer_count
+        ):
+            group = Group.objects.filter(name="Session Organizers").first()
+            if group:
+                group_url = reverse("admin:auth_group_change", args=[group.pk])
+                message = mark_safe(
+                    f'Review the <a href="{group_url}" target="_blank">'
+                    "Session Organizers group</a> to remove those who shouldn't "
+                    "have access anymore."
+                )
+                self.message_user(request, message, messages.INFO)
 
 
 @admin.register(Team)
