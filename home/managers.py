@@ -16,6 +16,23 @@ class UserQuestionResponseQuerySet(QuerySet):
         """Filter to only responses for non-sensitive questions."""
         return self.filter(question__sensitive=False)
 
+    def for_admin_site(self, user):
+        """Filter to only responses for surveys in sessions the user organizes."""
+        if user.is_superuser:
+            return self
+
+        from home.models import SessionMembership
+
+        return self.filter(
+            Exists(
+                SessionMembership.objects.filter(
+                    session=OuterRef("user_survey_response__survey__session"),
+                    user=user,
+                    role=SessionMembership.ORGANIZER,
+                )
+            )
+        )
+
 
 class EventQuerySet(QuerySet):
     def pending(self):
@@ -41,6 +58,21 @@ class EventQuerySet(QuerySet):
 
 
 class SessionQuerySet(QuerySet):
+    def for_admin_site(self, user):
+        """Filter to only sessions the user organizes."""
+        if user.is_superuser:
+            return self
+
+        from home.models import SessionMembership
+
+        return self.filter(
+            Exists(
+                SessionMembership.objects.filter(
+                    session=OuterRef("pk"), user=user, role=SessionMembership.ORGANIZER
+                )
+            )
+        )
+
     def with_applications(self, user):
         from home.models import UserSurveyResponse
 
@@ -68,6 +100,19 @@ class SessionQuerySet(QuerySet):
 
 
 class SessionMembershipQuerySet(QuerySet):
+    def for_admin_site(self, user):
+        """Filter to only memberships for sessions the user organizes."""
+        if user.is_superuser:
+            return self
+
+        return self.filter(
+            Exists(
+                self.model.objects.filter(
+                    session=OuterRef("session"), user=user, role=self.model.ORGANIZER
+                )
+            )
+        )
+
     def for_session(self, session):
         """Filter memberships for a specific session."""
         return self.filter(session=session)
@@ -134,6 +179,23 @@ class SessionMembershipQuerySet(QuerySet):
 
 class UserSurveyResponseQuerySet(QuerySet):
     """QuerySet for UserSurveyResponse with team formation filtering."""
+
+    def for_admin_site(self, user):
+        """Filter to only responses for surveys in sessions the user organizes."""
+        if user.is_superuser:
+            return self
+
+        from home.models import SessionMembership
+
+        return self.filter(
+            Exists(
+                SessionMembership.objects.filter(
+                    session=OuterRef("survey__session"),
+                    user=user,
+                    role=SessionMembership.ORGANIZER,
+                )
+            )
+        )
 
     def for_survey(self, survey):
         """Filter responses for a specific survey."""
@@ -338,4 +400,46 @@ class UserSurveyResponseQuerySet(QuerySet):
             .with_session_memberships(session)
             .with_waitlisted(session)
             .prefetch_related(project_prefs_prefetch)
+        )
+
+
+class TeamQuerySet(QuerySet):
+    """QuerySet for Team with admin filtering."""
+
+    def for_admin_site(self, user):
+        """Filter to only teams for sessions the user organizes."""
+        if user.is_superuser:
+            return self
+
+        from home.models import SessionMembership
+
+        return self.filter(
+            Exists(
+                SessionMembership.objects.filter(
+                    session=OuterRef("session"),
+                    user=user,
+                    role=SessionMembership.ORGANIZER,
+                )
+            )
+        )
+
+
+class SurveyQuerySet(QuerySet):
+    """QuerySet for Survey with admin filtering."""
+
+    def for_admin_site(self, user):
+        """Filter to only surveys for sessions the user organizes."""
+        if user.is_superuser:
+            return self
+
+        from home.models import SessionMembership
+
+        return self.filter(
+            Exists(
+                SessionMembership.objects.filter(
+                    session=OuterRef("session"),
+                    user=user,
+                    role=SessionMembership.ORGANIZER,
+                )
+            )
         )
