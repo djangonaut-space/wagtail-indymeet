@@ -29,7 +29,7 @@ class Command(BaseCommand):
         permissions_to_add = [
             (CustomUser, ["view"]),
             (ResourceLink, ["view", "add"]),
-            (Session, ["view", "add"]),
+            (Session, ["view", "add", "change"]),
             (Survey, ["view", "add"]),
             (UserQuestionResponse, ["view", "add"]),
             (UserSurveyResponse, ["view", "add"]),
