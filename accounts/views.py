@@ -82,6 +82,12 @@ class SignUpView(CreateView):
     form_class = CustomUserCreationForm
     template_name = "registration/signup.html"
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class=form_class)
+        if settings.LOAD_TESTING:
+            form.fields.pop("captcha")
+        return form
+
     def get_success_url(self):
         messages.add_message(
             self.request,
