@@ -107,6 +107,10 @@ class SessionMembershipInline(admin.TabularInline):
     autocomplete_fields = ["user"]
     extra = 0
 
+    def get_queryset(self, request):
+        """Filter memberships to only those for organized sessions."""
+        return super().get_queryset(request).for_admin_site(request.user)
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Limit team choices to teams in the current session."""
         if db_field.name == "team":
@@ -237,12 +241,13 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         return "-"
 
     def get_queryset(self, request):
-        """Optimize queryset to avoid N+1 queries."""
+        """Optimize queryset and filter to organized sessions."""
         return (
             super()
             .get_queryset(request)
             .select_related("user__profile", "session", "team")
             .prefetch_related("team__session_memberships__user")
+            .for_admin_site(request.user)
         )
 
     def save_model(self, request, obj: SessionMembership, form, change: bool) -> None:
@@ -452,11 +457,19 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 )
                 self.message_user(request, message, messages.INFO)
 
+    def get_queryset(self, request):
+        """Filter sessions to only those the user organizes."""
+        return super().get_queryset(request).for_admin_site(request.user)
+
 
 @admin.register(Team)
 class TeamAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = ("name", "project", "session")
     list_filter = ("session",)
+
+    def get_queryset(self, request):
+        """Filter teams to only those in organized sessions."""
+        return super().get_queryset(request).for_admin_site(request.user)
 
 
 @admin.register(Waitlist)
@@ -473,6 +486,10 @@ class WaitlistAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     raw_id_fields = ("user",)
     ordering = ("-created_at",)
     actions = ["reject_waitlisted_users_action"]
+
+    def get_queryset(self, request):
+        """Filter waitlist entries to only those for organized sessions."""
+        return super().get_queryset(request).for_admin_site(request.user)
 
     @admin.action(description="Reject waitlisted users and send rejection emails")
     def reject_waitlisted_users_action(self, request, queryset):
@@ -579,6 +596,7 @@ class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 annotated_latest_response=Max("usersurveyresponse__created_at"),
                 annotated_question_count=Count("questions", distinct=True),
             )
+            .for_admin_site(request.user)
         )
 
     def link(self, obj):
@@ -756,6 +774,7 @@ class UserQuestionResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 annotated_question_label=F("question__label"),
                 annotated_user_email=F("user_survey_response__user__email"),
             )
+            .for_admin_site(request.user)
         )
 
     def survey_name(self, obj):
@@ -887,6 +906,7 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 annotated_survey_name=F("survey__name"),
                 annotated_user_email=F("user__email"),
             )
+            .for_admin_site(request.user)
         )
 
     def survey_name(self, obj):

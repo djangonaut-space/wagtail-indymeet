@@ -6,7 +6,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from home.managers import SessionMembershipQuerySet, SessionQuerySet
+from home.managers import (
+    SessionMembershipQuerySet,
+    SessionQuerySet,
+    TeamQuerySet,
+)
 
 
 class Project(models.Model):
@@ -189,6 +193,8 @@ class Team(models.Model):
     MIN_NAVIGATOR_MEETING_HOURS = 5
     MIN_CAPTAIN_OVERLAP_HOURS = 3
 
+    objects = models.Manager.from_queryset(TeamQuerySet)()
+
     class Meta:
         permissions = [
             ("form_team", "Can form teams from the pool of applicants."),
@@ -355,6 +361,21 @@ class SessionMembership(models.Model):
 
 class WaitlistQuerySet(models.QuerySet):
     """Custom QuerySet for Waitlist model."""
+
+    def for_admin_site(self, user):
+        """Filter to only waitlist entries for sessions the user organizes."""
+        if user.is_superuser:
+            return self
+
+        return self.filter(
+            models.Exists(
+                SessionMembership.objects.filter(
+                    session=models.OuterRef("session"),
+                    user=user,
+                    role=SessionMembership.ORGANIZER,
+                )
+            )
+        )
 
     def not_notified(self) -> "WaitlistQuerySet":
         """

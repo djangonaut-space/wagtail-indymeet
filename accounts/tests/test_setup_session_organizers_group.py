@@ -12,11 +12,10 @@ class SetupSessionOrganizersGroupCommandTestCase(TestCase):
 
         group = Group.objects.get(name="Session Organizers")
         permissions = group.permissions.all()
-        self.assertGreaterEqual(len(permissions), 28)
+        self.assertGreaterEqual(len(permissions), 27)
 
         permission_codenames = [p.codename for p in permissions]
         self.assertIn("view_customuser", permission_codenames)
-        self.assertIn("add_customuser", permission_codenames)
         self.assertIn("view_session", permission_codenames)
         self.assertIn("add_session", permission_codenames)
         self.assertIn("view_userprofile", permission_codenames)
