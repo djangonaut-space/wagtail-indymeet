@@ -28,7 +28,7 @@ from home.availability import (
 )
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["GET", "POST"])
 def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -41,7 +41,10 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     - Current teams with statistics
     """
     session = get_object_or_404(
-        Session.objects.select_related("application_survey"), pk=session_id
+        Session.objects.select_related("application_survey").for_admin_site(
+            request.user
+        ),
+        pk=session_id,
     )
 
     # Handle bulk team assignment
@@ -108,7 +111,7 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     return render(request, "admin/team_formation.html", context)
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["POST"])
 def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -119,7 +122,9 @@ def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
     On success, redirects with success message and preserves querystring.
     On validation error, redirects with error messages and preserves querystring.
     """
-    session = get_object_or_404(Session, pk=session_id)
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user), pk=session_id
+    )
 
     waitlist_form = BulkWaitlistForm(request.POST, session=session)
     if waitlist_form.is_valid():
@@ -143,7 +148,7 @@ def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
     return redirect(redirect_url)
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["POST"])
 def calculate_overlap_ajax(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -152,7 +157,9 @@ def calculate_overlap_ajax(request: HttpRequest, session_id: int) -> HttpRespons
 
     Returns HTML fragment showing overlap analysis results.
     """
-    session = get_object_or_404(Session, pk=session_id)
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user), pk=session_id
+    )
     # Validate form
     form = OverlapAnalysisForm(request.POST, session=session)
     if form.is_valid():
