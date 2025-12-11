@@ -1,4 +1,5 @@
 # Create your views here.
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login
@@ -103,15 +104,27 @@ class SignUpView(CreateView):
         user.profile.receiving_event_updates = form.cleaned_data[
             "receive_event_updates"
         ]
-        user.profile.save(
-            update_fields=[
-                "accepted_coc",
-                "receiving_newsletter",
-                "receiving_program_updates",
-                "receiving_event_updates",
-            ]
-        )
-        send_user_confirmation_email(self.request, user)
+        if settings.LOAD_TESTING:
+            user.profile.email_confirmed = True
+            user.profile.save(
+                update_fields=[
+                    "email_confirmed",
+                    "accepted_coc",
+                    "receiving_newsletter",
+                    "receiving_program_updates",
+                    "receiving_event_updates",
+                ]
+            )
+        else:
+            user.profile.save(
+                update_fields=[
+                    "accepted_coc",
+                    "receiving_newsletter",
+                    "receiving_program_updates",
+                    "receiving_event_updates",
+                ]
+            )
+            send_user_confirmation_email(self.request, user)
         return super().form_valid(form)
 
 

@@ -280,3 +280,7 @@ ALLOWED_EMAILS_FOR_TESTING = [
     for email in (os.environ.get("ALLOWED_EMAILS_FOR_TESTING") or "").split(";")
     if email
 ]
+
+# When running load tests, it's helpful to remove some functionality
+# such as confirmation emails.
+LOAD_TESTING = os.environ.get("LOAD_TESTING", False)
