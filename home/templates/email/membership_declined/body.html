@@ -34,7 +34,7 @@
     <h3 style="font-family: Helvetica, sans-serif; font-size: 18px; font-weight: bold; margin: 0 0 12px 0;">Session Details</h3>
     <dl style="margin: 0;">
       <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Session:</dt>
-      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">{{ session.title }}</dd>
+      <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;"><a href="{% url "admin:home_session_change" session.pk %}">{{ session.title }}</a></dd>
       <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">Start Date:</dt>
       <dd style="margin-left: 0; margin-bottom: 10px; font-family: Helvetica, sans-serif; font-size: 16px;"><a href="{{ session.start_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.start_date|date:"F d, Y" }}</a></dd>
       <dt style="font-weight: bold; margin-top: 10px; font-family: Helvetica, sans-serif; font-size: 16px;">End Date:</dt>
