@@ -119,6 +119,7 @@ def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
     Handle adding users to the waitlist.
 
     POST endpoint for bulk adding applicants to the session waitlist.
+    If users have SessionMembership records, they will be removed from teams.
     On success, redirects with success message and preserves querystring.
     On validation error, redirects with error messages and preserves querystring.
     """
@@ -128,11 +129,24 @@ def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
 
     waitlist_form = BulkWaitlistForm(request.POST, session=session)
     if waitlist_form.is_valid():
-        waitlisted_count = waitlist_form.save()
-        messages.success(
-            request,
-            f"Successfully added {waitlisted_count} user(s) to the waitlist.",
+        users_with_memberships = waitlist_form.cleaned_data.get(
+            "users_with_memberships", []
         )
+
+        waitlisted_count = waitlist_form.save()
+        removed_count = len(users_with_memberships)
+
+        if removed_count > 0:
+            messages.success(
+                request,
+                f"Successfully removed {removed_count} user(s) from their teams and "
+                f"added {waitlisted_count} user(s) to the waitlist.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Successfully added {waitlisted_count} user(s) to the waitlist.",
+            )
     else:
         # Add form errors as messages
         for field, errors in waitlist_form.errors.items():
