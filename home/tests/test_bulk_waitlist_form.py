@@ -65,10 +65,10 @@ class BulkWaitlistFormTestCase(TestCase):
         self.assertIn("user_ids", form.errors)
         self.assertIn("do not exist", form.errors["user_ids"][0])
 
-    def test_cannot_waitlist_existing_session_member(self):
-        """Test that users who are already session members cannot be waitlisted."""
+    def test_can_waitlist_existing_session_member(self):
+        """Test that users who are session members can be waitlisted."""
         # Make user1 a session member
-        SessionMembership.objects.create(
+        membership = SessionMembership.objects.create(
             user=self.user1, session=self.session, role=SessionMembership.DJANGONAUT
         )
 
@@ -79,19 +79,23 @@ class BulkWaitlistFormTestCase(TestCase):
             session=self.session,
         )
 
-        self.assertFalse(form.is_valid())
-        self.assertIn("__all__", form.errors)
-        error_message = form.errors["__all__"][0]
-        self.assertIn(self.user1.get_full_name(), error_message)
-        self.assertIn("already session members", error_message)
+        self.assertTrue(form.is_valid(), form.errors)
+        count = form.save()
+        self.assertEqual(count, 1)
 
-    def test_mixed_valid_and_invalid_users(self):
-        """Test validation when some users are session members (invalid)."""
-        # Make user1 a session member
-        SessionMembership.objects.create(
-            user=self.user1, session=self.session, role=SessionMembership.DJANGONAUT
+        # Verify SessionMembership was deleted
+        self.assertFalse(SessionMembership.objects.filter(id=membership.id).exists())
+        # Verify user is now on waitlist
+        self.assertTrue(
+            Waitlist.objects.filter(user=self.user1, session=self.session).exists()
         )
 
+    def test_mixed_session_members_and_regular_users(self):
+        """Test that mixed scenarios with session members are handled correctly."""
+        # Make user1 a session member
+        membership = SessionMembership.objects.create(
+            user=self.user1, session=self.session, role=SessionMembership.DJANGONAUT
+        )
         # User2 is already on waitlist (valid - idempotent operation)
         Waitlist.objects.create(user=self.user2, session=self.session)
 
@@ -102,10 +106,19 @@ class BulkWaitlistFormTestCase(TestCase):
             session=self.session,
         )
 
-        self.assertFalse(form.is_valid())
-        self.assertIn("__all__", form.errors)
+        self.assertTrue(form.is_valid(), form.errors)
+        count = form.save()
+        self.assertEqual(count, 3)
 
-        # Only error for session members, not for already waitlisted
-        error_messages = "".join(form.errors["__all__"])
-        self.assertIn(self.user1.get_full_name(), error_messages)
-        self.assertIn("already session members", error_messages)
+        # Verify user1's SessionMembership was deleted
+        self.assertFalse(SessionMembership.objects.filter(id=membership.id).exists())
+        # Verify all users are on waitlist
+        self.assertTrue(
+            Waitlist.objects.filter(user=self.user1, session=self.session).exists()
+        )
+        self.assertTrue(
+            Waitlist.objects.filter(user=self.user2, session=self.session).exists()
+        )
+        self.assertTrue(
+            Waitlist.objects.filter(user=self.user3, session=self.session).exists()
+        )

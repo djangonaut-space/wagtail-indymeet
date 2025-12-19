@@ -1057,45 +1057,26 @@ class BulkWaitlistForm(BaseTeamForm):
 
     prefix = "bulk_waitlist"
 
-    def clean(self):
-        """Validate that users are not already in the session or waitlist."""
-        cleaned_data = super().clean()
-
-        # Only validate if we have user_ids
-        if "user_ids" not in cleaned_data:
-            return cleaned_data
-
-        user_ids = cleaned_data["user_ids"]
-
-        # Check if any users are already session members
-        existing_members = SessionMembership.objects.filter(
-            user_id__in=user_ids, session=self.session
-        ).select_related("user")
-
-        if existing_members.exists():
-            member_names = ", ".join(
-                member.user.get_full_name() or member.user.email
-                for member in existing_members
-            )
-            self.add_error(
-                None,
-                _(
-                    f"The following users are already session members: {member_names}. "
-                    "Please remove them from selection."
-                ),
-            )
-
-        return cleaned_data
-
     @transaction.atomic
     def save(self) -> int:
         """
         Add selected users to the waitlist.
 
+        If any users have existing SessionMembership records, those will be deleted
+        before adding them to the waitlist.
+
         Returns:
             Number of users successfully added to waitlist
         """
         user_ids = self.cleaned_data["user_ids"]
+        existing_member_ids = list(
+            SessionMembership.objects.for_session(self.session)
+            .filter(user_id__in=user_ids)
+            .values_list("id", flat=True)
+        )
+        # Delete SessionMembership records for users being waitlisted
+        if existing_member_ids:
+            SessionMembership.objects.filter(id__in=existing_member_ids).delete()
 
         waitlist_entries = [
             Waitlist(user_id=user_id, session=self.session) for user_id in user_ids
