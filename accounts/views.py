@@ -1,7 +1,7 @@
 # Create your views here.
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -95,7 +95,10 @@ class SignUpView(CreateView):
             "Your registration was successful. Please check "
             "your email provided for a confirmation link.",
         )
-        return reverse("signup")
+        return self.request.POST.get(
+            REDIRECT_FIELD_NAME,
+            self.request.GET.get(REDIRECT_FIELD_NAME, reverse("profile")),
+        )
 
     def form_valid(self, form):
         """sends a link for a user to activate their account after signup"""
