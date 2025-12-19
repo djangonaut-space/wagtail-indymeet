@@ -54,14 +54,14 @@
                 </li>
                 {% if "login" not in request.path %}
                 <li>
-                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" href="{% url 'login' %}?next={{request.path}}">
+                    <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" href="{% url 'login' %}?next={{ next|default_if_none:request.path}}">
                       {% trans "Login" %}
                     </a>
                 </li>
                 {% endif %}
                 {% if "signup" not in request.path %}
                 <li>
-                <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" href="{% url 'signup' %}">
+                <a class="outline-link text-gray-700 transition hover:text-ds-purple cursor-pointer" href="{% url 'signup' %}?next={{ next }}">
                       {% trans "Sign Up" %}
                     </a>
                 </li>
