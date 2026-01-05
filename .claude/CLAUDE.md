@@ -35,13 +35,20 @@ wagtail-indymeet/
 ├── theme/             # Tailwind CSS theme app
 ├── docs/              # Project documentation (currently sparse)
 ├── tests/             # Project-level tests
-└── scripts/           # Utility scripts (e.g., local.sh)
+├── scripts/           # Utility scripts (e.g., local.sh)
+├── talks/             # Talks app
+│   ├── models.py         # Talk w/ GIS PointField
+│   ├── serializers.py    # GeoJSON REST API serializer
+│   ├── views.py          # TemplateView + ListAPIView
+│   ├── urls.py           # /map/ + /api/geojson/
+│   ├── static/           # Three.js globe and markers + Earth texture (CC BY 4.0) + Theme
+└── └── templates/        # Importmap for Three.js
 ```
 
 ## Technology Stack
 
-- **Backend:** Django 5.2, Wagtail CMS, PostgreSQL
-- **Frontend:** Tailwind CSS, Alpine.js
+- **Backend:** Django 5.2, Wagtail CMS, PostgreSQL + PostGIS (GIS extension), Django REST Framework + GeoJSON APIs
+- **Frontend:** Tailwind CSS, Alpine.js, Three.js (3D globe), Leaflet.js (admin geo-widget)
 - **Package Management:** uv (fast Python package installer)
 - **Deployment:** Dokku (Heroku buildpacks)
 - **Testing:** pytest, pytest-django, playwright

@@ -1,0 +1,47 @@
+{% load i18n static wagtailcore_tags wagtailuserbar wagtailimages_tags tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Djangonaut's Talk Map</title>
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/talks_map.css' %}" />
+    <script type="importmap">
+    {
+        "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@v0.182.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.182.0/examples/jsm/"
+        }
+    }
+</script>
+</head>
+
+<body>
+    <script type="module" src="{% static 'js/three_globe_map.js' %}"></script>
+    <div id="map-title">
+        <h1>Djangonaut Space Talks</h1>
+        <p>✨ Member presentations worldwide ✨</p>
+    </div>
+    <a href="/" class="project-logo" aria-label="Djangonaut Space Homepage">
+        <img src="{% static 'img/main-white-transparent.png' %}"
+             alt="Djangonaut Space logo"
+             width="140"
+             height="auto"
+             loading="lazy">
+    </a>
+    <div id="map-container">
+        <div id="map"></div>
+        <div id="markerPopup" style="display:none;"></div>
+    </div>
+    <div id="map-license-attribution">
+        <small>
+            <a href="https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg" target="_blank" rel="noopener noreferrer">
+                Earth texture
+            </a> by Solar System Scope
+            (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>)
+        </small>
+    </div>
+</body>
+</html>
