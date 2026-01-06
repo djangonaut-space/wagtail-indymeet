@@ -1100,14 +1100,19 @@ class TestCompleteSessionOnboardingFlow:
         button_text_span = page.locator("#toggle-button-text")
         timezone_span = page.locator("#team-availability-section span.font-bold")
 
-        # Get the timezone after reload (should now be Pacific/Kiritimati)
+        # Get the timezone after reload -> get the user's timezone regardless where they are
+        # Detects user's real timezone ("Pacific/Kiritimati" local, "UTC" in CI)
+        # if a user is in UTC, they'll see in their timezone indicator: 'Timezone: UTC'
+        # and the button to toggle will also have the text 'Show in UTC'
         initial_timezone_local = timezone_span.text_content().strip()
+        current_tz_indicator = page.locator("#team-availability-section span.text-sm")
+        indicator_text = current_tz_indicator.text_content().strip()
         assert (
-            "Pacific/Kiritimati" in initial_timezone_local
-        ), f"Expected timezone to be Pacific/Kiritimati, got: {initial_timezone_local}"
+            indicator_text == f"Timezone: {initial_timezone_local}"
+        ), f"Indication should show current user's timezone, but got: {indicator_text}"
 
         # Get initial overlap times in Pacific/Kiritimati timezone
-        # 9 AM UTC = 11 PM Pacific/Kiritimati (previous day due to +14 offset)
+        # For local tests -> 9 AM UTC = 11 PM Pacific/Kiritimati (previous day due to +14 offset)
         overlap_times = page.locator(".member-overlap-times")
         initial_overlap_times_local = overlap_times.first.inner_text()
 
