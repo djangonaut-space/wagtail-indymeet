@@ -1,7 +1,14 @@
 import csv
 
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib import messages
+from django.contrib.auth.admin import (
+    UserAdmin as BaseUserAdmin,
+    GroupAdmin as BaseGroupAdmin,
+)
+from django.contrib.auth.models import Group
+from django.contrib import admin as django_admin
+from django.core.management import call_command
 from django.http import HttpResponse
 
 from accounts.models import CustomUser
@@ -48,6 +55,7 @@ class LinksInline(admin.StackedInline):
 class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
     actions = ["export_as_csv"]
+    search_fields = ["first_name", "last_name", "username", "profile__github_username"]
 
 
 @admin.register(UserProfile)
@@ -75,3 +83,32 @@ class UserAvailabilityAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def slot_count(self, obj: UserAvailability) -> int:
         """Display the number of availability slots."""
         return len(obj.slots)
+
+
+class UserModelInline(admin.TabularInline):
+    extra = 1
+    model = CustomUser.groups.through
+    autocomplete_fields = ["customuser"]
+
+
+# Unregister default GroupAdmin and register custom version
+django_admin.site.unregister(Group)
+
+
+@admin.register(Group)
+class CustomGroupAdmin(BaseGroupAdmin):
+    """Custom Group admin with Session Organizers management action."""
+
+    inlines = [UserModelInline]
+
+    @admin.action(description="Recreate Session Organizers group permissions")
+    def recreate_session_organizers_group(self, request, queryset) -> None:
+        """Recreate the Session Organizers group with up-to-date permissions."""
+        call_command("setup_session_organizers_group")
+        self.message_user(
+            request,
+            "Successfully recreated Session Organizers group permissions.",
+            messages.SUCCESS,
+        )
+
+    actions = ["recreate_session_organizers_group"]

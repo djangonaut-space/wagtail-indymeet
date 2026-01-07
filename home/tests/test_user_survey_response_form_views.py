@@ -93,7 +93,7 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
             follow=True,
         )
 
-        self.assertContains(response, "Response sent!")
+        self.assertContains(response, "Survey successfully saved!")
         self.assertRedirects(response, reverse("session_list"))
         user_response = UserSurveyResponse.objects.get(
             user=self.user, survey=self.survey
@@ -224,7 +224,7 @@ class EditUserSurveyResponseViewTests(TestCase):
             },
             follow=True,
         )
-        self.assertContains(response, "Response updated!")
+        self.assertContains(response, "Survey successfully updated!")
         self.assertRedirects(response, reverse("profile"))
         updated_response = UserQuestionResponse.objects.get(
             user_survey_response=self.survey_response, question=self.question

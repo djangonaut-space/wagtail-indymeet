@@ -161,7 +161,13 @@
                     <tbody>
                         {% for applicant in page_obj %}
                         <tr>
-                            <td><input type="checkbox" class="applicant-checkbox" value="{{ applicant.user.id }}" /></td>
+                            <td>
+                              <input type="checkbox"
+                                     class="applicant-checkbox"
+                                     value="{{ applicant.user.id }}"
+                                     data-has-membership="{% if applicant.current_team %}true{% else %}false{% endif %}"
+                              />
+                            </td>
                             <td>
                                 <strong>{{ applicant.user.get_full_name }}</strong>
                                 <br>
@@ -415,14 +421,22 @@ overlapForm?.addEventListener('submit', function(e) {
 // Populate hidden user_ids field and validate before waitlist form submission
 const waitlistForm = document.getElementById('waitlist-form')
 waitlistForm?.addEventListener('submit', function(e) {
-    const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked'))
-        .map(cb => cb.value);
+    const selectedCheckboxes = Array.from(document.querySelectorAll('.applicant-checkbox:checked'));
+    const selectedIds = selectedCheckboxes.map(cb => cb.value);
     const userIdsField = document.getElementById(waitlistForm.dataset.userIdsId);
 
     if (selectedIds.length === 0) {
         e.preventDefault();
         alert('{% trans "Please select at least one applicant." %}');
         return false;
+    }
+    const usersWithMemberships = selectedCheckboxes.filter(cb => cb.dataset.hasMembership === 'true');
+    if (usersWithMemberships.length > 0) {
+        const message = "{% trans "The selected users are currently on teams and will be removed. Continue?" %}";
+        if (!confirm(message)) {
+            e.preventDefault();
+            return false;
+        }
     }
 
     // Populate hidden field with comma-separated user IDs

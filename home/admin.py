@@ -3,6 +3,7 @@ from datetime import timedelta
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.db.models import Exists, F, Max, Count, OuterRef
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
@@ -103,7 +104,12 @@ class UserWithMembershipFilter(admin.SimpleListFilter):
 
 class SessionMembershipInline(admin.TabularInline):
     model = SessionMembership
+    autocomplete_fields = ["user"]
     extra = 0
+
+    def get_queryset(self, request):
+        """Filter memberships to only those for organized sessions."""
+        return super().get_queryset(request).for_admin_site(request.user)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Limit team choices to teams in the current session."""
@@ -116,13 +122,6 @@ class SessionMembershipInline(admin.TabularInline):
                 # No session determined (shouldn't happen in normal usage)
                 kwargs["queryset"] = Team.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-
-class SessionProjectInline(admin.TabularInline):
-    model = Session.available_projects.through
-    extra = 0
-    verbose_name = "Available Project"
-    verbose_name_plural = "Available Projects"
 
 
 class SessionMembershipResource(resources.ModelResource):
@@ -242,13 +241,30 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         return "-"
 
     def get_queryset(self, request):
-        """Optimize queryset to avoid N+1 queries."""
+        """Optimize queryset and filter to organized sessions."""
         return (
             super()
             .get_queryset(request)
             .select_related("user__profile", "session", "team")
             .prefetch_related("team__session_memberships__user")
+            .for_admin_site(request.user)
         )
+
+    def save_model(self, request, obj: SessionMembership, form, change: bool) -> None:
+        """Show reminder for superuser organizers to review group permissions."""
+        super().save_model(request, obj, form, change)
+
+        # When creating a session organizer
+        if obj.role == SessionMembership.ORGANIZER and request.user.is_superuser:
+            group = Group.objects.filter(name="Session Organizers").first()
+            if group:
+                group_url = reverse("admin:auth_group_change", args=[group.pk])
+                message = mark_safe(
+                    f'Review the <a href="{group_url}" target="_blank">'
+                    "Session Organizers group</a> to remove those who shouldn't "
+                    "have access anymore."
+                )
+                self.message_user(request, message, messages.INFO)
 
     @admin.action(description="Send acceptance emails to selected members")
     def send_acceptance_emails_action(self, request, queryset):
@@ -316,17 +332,40 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
 
 @admin.register(Session)
 class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
-    inlines = [SessionMembershipInline, SessionProjectInline]
+    inlines = [SessionMembershipInline]
+    filter_horizontal = ("available_projects",)
     actions = [
-        "form_teams_action",
         "auto_allocate_teams_action",
-        "send_session_results_action",
-        "send_acceptance_reminders_action",
-        "send_team_welcome_emails_action",
         preview_email.rejection_email_action,
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
+    list_display = ("title", "start_date", "end_date", "form_teams", "email_actions")
+
+    @admin.display(description="Form Teams")
+    def form_teams(self, obj):
+        href = reverse("admin:session_form_teams", kwargs={"session_id": obj.id})
+        return mark_safe(f'<a href="{href}">Form Teams</a>')
+
+    @admin.display(description="Email Actions")
+    def email_actions(self, obj):
+        actions = [
+            (
+                "Send application results",
+                reverse("admin:session_send_results", args=[obj.id]),
+            ),
+            (
+                "Send acceptance reminder emails",
+                reverse("admin:session_send_acceptance_reminders", args=[obj.id]),
+            ),
+            (
+                "Send team welcome emails",
+                reverse("admin:session_send_team_welcome_emails", args=[obj.id]),
+            ),
+        ]
+        return mark_safe(
+            "<br />".join([f"<a href={href}>{action}</a>" for action, href in actions])
+        )
 
     def get_urls(self):
         """Add custom URLs for team formation and notifications"""
@@ -365,21 +404,6 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    @admin.action(description="Form teams for this session")
-    def form_teams_action(self, request, queryset):
-        """Redirect to team formation interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to form teams.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_form_teams", args=[session.id])
-        return redirect(url)
-
     @admin.action(description="Auto-allocate Djangonauts to teams")
     def auto_allocate_teams_action(self, request, queryset):
         """
@@ -408,56 +432,44 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             messages.SUCCESS,
         )
 
-    @admin.action(description="Send session result notifications")
-    def send_session_results_action(self, request, queryset):
-        """Redirect to send session results interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to send results.",
-                messages.ERROR,
-            )
-            return
+    def save_related(self, request, form, formsets, change) -> None:
+        """Show reminder for superuser organizers to review group permissions."""
+        current_organizer_count = set(
+            form.instance.session_memberships.organizers().values_list("id", flat=True)
+        )
+        super().save_related(request, form, formsets, change)
+        updated_organizer_count = set(
+            form.instance.session_memberships.organizers().values_list("id", flat=True)
+        )
+        # If there is change to the session organizers, notify a super admin to update
+        # the Session Organizers group membership.
+        if (
+            request.user.is_superuser
+            and updated_organizer_count != current_organizer_count
+        ):
+            group = Group.objects.filter(name="Session Organizers").first()
+            if group:
+                group_url = reverse("admin:auth_group_change", args=[group.pk])
+                message = mark_safe(
+                    f'Review the <a href="{group_url}" target="_blank">'
+                    "Session Organizers group</a> to remove those who shouldn't "
+                    "have access anymore."
+                )
+                self.message_user(request, message, messages.INFO)
 
-        session = queryset.first()
-        url = reverse("admin:session_send_results", args=[session.id])
-        return redirect(url)
-
-    @admin.action(description="Send acceptance reminder emails")
-    def send_acceptance_reminders_action(self, request, queryset):
-        """Redirect to send acceptance reminders interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to send reminders.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_send_acceptance_reminders", args=[session.id])
-        return redirect(url)
-
-    @admin.action(description="Send team welcome emails")
-    def send_team_welcome_emails_action(self, request, queryset):
-        """Redirect to send team welcome emails interface for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to send welcome emails.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_send_team_welcome_emails", args=[session.id])
-        return redirect(url)
+    def get_queryset(self, request):
+        """Filter sessions to only those the user organizes."""
+        return super().get_queryset(request).for_admin_site(request.user)
 
 
 @admin.register(Team)
 class TeamAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = ("name", "project", "session")
     list_filter = ("session",)
+
+    def get_queryset(self, request):
+        """Filter teams to only those in organized sessions."""
+        return super().get_queryset(request).for_admin_site(request.user)
 
 
 @admin.register(Waitlist)
@@ -474,6 +486,10 @@ class WaitlistAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     raw_id_fields = ("user",)
     ordering = ("-created_at",)
     actions = ["reject_waitlisted_users_action"]
+
+    def get_queryset(self, request):
+        """Filter waitlist entries to only those for organized sessions."""
+        return super().get_queryset(request).for_admin_site(request.user)
 
     @admin.action(description="Reject waitlisted users and send rejection emails")
     def reject_waitlisted_users_action(self, request, queryset):
@@ -504,12 +520,12 @@ class QuestionInline(admin.StackedInline):
     extra = 0
     fields = (
         "label",
+        "ordering",
+        "required",
+        "sensitive",
         "type_field",
         "choices",
         "help_text",
-        "required",
-        "sensitive",
-        "ordering",
     )
     readonly_fields = ("key",)
 
@@ -528,6 +544,16 @@ class QuestionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     search_fields = ["label", "survey__name", "key"]
     list_editable = ["ordering"]
     ordering = ["survey", "ordering"]
+    fields = (
+        "label",
+        "ordering",
+        "required",
+        "sensitive",
+        "type_field",
+        "choices",
+        "help_text",
+    )
+    readonly_fields = ("key",)
 
 
 @admin.register(Survey)
@@ -570,6 +596,7 @@ class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 annotated_latest_response=Max("usersurveyresponse__created_at"),
                 annotated_question_count=Count("questions", distinct=True),
             )
+            .for_admin_site(request.user)
         )
 
     def link(self, obj):
@@ -747,6 +774,7 @@ class UserQuestionResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 annotated_question_label=F("question__label"),
                 annotated_user_email=F("user_survey_response__user__email"),
             )
+            .for_admin_site(request.user)
         )
 
     def survey_name(self, obj):
@@ -878,6 +906,7 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 annotated_survey_name=F("survey__name"),
                 annotated_user_email=F("user__email"),
             )
+            .for_admin_site(request.user)
         )
 
     def survey_name(self, obj):

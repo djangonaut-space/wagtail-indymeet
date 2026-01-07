@@ -194,7 +194,9 @@ class TestCompleteSessionOnboardingFlow:
         page.get_by_role("button", name="Log in").click()
         page.wait_for_load_state("networkidle")
 
-    def admin_create_project(self, page: Page, name: str, url: str) -> int:
+    def admin_create_project(
+        self, page: Page, name: str, url: str, description: str
+    ) -> int:
         """
         Helper to create a Project via Django admin.
 
@@ -207,6 +209,7 @@ class TestCompleteSessionOnboardingFlow:
         # Fill in the form
         page.locator("#id_name").fill(name)
         page.locator("#id_url").fill(url)
+        page.locator("#id_description").fill(description)
 
         # Save
         page.get_by_role("button", name="Save", exact=True).click()
@@ -524,6 +527,7 @@ class TestCompleteSessionOnboardingFlow:
             page,
             name="Django",
             url="https://github.com/django/django",
+            description="This is the main Django project.",
         )
 
         # Create team via admin
@@ -706,22 +710,15 @@ class TestCompleteSessionOnboardingFlow:
         # Login as admin
         self.admin_login(page, superuser)
 
-        # Navigate to session admin and use form teams action
+        # Navigate to session admin and click the Form Teams link
         page.goto("/django-admin/home/session/")
         page.wait_for_load_state("networkidle")
 
-        # Select the session checkbox
-        session_checkbox = page.locator(
-            f'input[name="_selected_action"][value="{session.id}"]'
-        )
-        session_checkbox.check()
-
-        # Select "Form teams for this session" action
-        action_select = page.locator('select[name="action"]')
-        action_select.select_option(label="Form teams for this session")
-
-        # Click "Go" button
-        page.get_by_role("button", name="Go").click()
+        # Click the "Form Teams" link on the session row
+        # Find the link within the row for this specific session
+        session_row = page.locator(f'tr:has(input[value="{session.id}"])')
+        form_teams_link = session_row.get_by_role("link", name="Form Teams")
+        form_teams_link.click()
         page.wait_for_load_state("networkidle")
 
         # Verify we're on the team formation page
@@ -769,18 +766,13 @@ class TestCompleteSessionOnboardingFlow:
         page.goto("/django-admin/home/session/")
         page.wait_for_load_state("networkidle")
 
-        # Select the session checkbox
-        session_checkbox = page.locator(
-            f'input[name="_selected_action"][value="{session.id}"]'
+        # Click the "Send application results" link on the session row
+        # Find the link within the row for this specific session
+        session_row = page.locator(f'tr:has(input[value="{session.id}"])')
+        send_results_link = session_row.get_by_role(
+            "link", name="Send application results"
         )
-        session_checkbox.check()
-
-        # Select "Send session result notifications" action
-        action_select = page.locator('select[name="action"]')
-        action_select.select_option(label="Send session result notifications")
-
-        # Click "Go" button
-        page.get_by_role("button", name="Go").click()
+        send_results_link.click()
         page.wait_for_load_state("networkidle")
 
         # Verify we're on the send results page
@@ -940,18 +932,13 @@ class TestCompleteSessionOnboardingFlow:
         page.goto("/django-admin/home/session/")
         page.wait_for_load_state("networkidle")
 
-        # Select the session checkbox
-        session_checkbox = page.locator(
-            f'input[name="_selected_action"][value="{session.id}"]'
+        # Click the "Send team welcome emails" link on the session row
+        # Find the link within the row for this specific session
+        session_row = page.locator(f'tr:has(input[value="{session.id}"])')
+        send_welcome_link = session_row.get_by_role(
+            "link", name="Send team welcome emails"
         )
-        session_checkbox.check()
-
-        # Select "Send team welcome emails" action
-        action_select = page.locator('select[name="action"]')
-        action_select.select_option(label="Send team welcome emails")
-
-        # Click "Go" button
-        page.get_by_role("button", name="Go").click()
+        send_welcome_link.click()
         page.wait_for_load_state("networkidle")
 
         # Verify we're on the send welcome emails page

@@ -1,18 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(uv *)",
-      "Bash(uv run python manage.py migrate*)",
-      "Bash(uv run python manage.py makemigrations*)",
+      "Bash(uv:*)",
+      "Bash(uv run python manage.py migrate:*)",
+      "Bash(uv run python manage.py makemigrations:*)",
       "Bash(uv run python manage.py tailwind:*)",
-      "Bash(uv run python manage.py runserver*)",
-      "Bash(uv run pytest*)",
-      "Bash(uv run pre-commit*)",
-      "Bash(git status*)",
-      "Bash(git diff*)",
-      "Bash(git log*)",
-      "Bash(git branch*)",
-      "Bash(npm run *)",
+      "Bash(uv run python manage.py runserver:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run pre-commit:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(npm run:*)",
       "Bash(./scripts/local.sh)"
     ],
     "deny": [
@@ -25,13 +25,13 @@
       "Read(./secrets/**)",
       "Edit(./secrets/**)",
       "Write(./secrets/**)",
-      "Bash(git push --force*)",
-      "Bash(git reset --hard*)",
-      "Bash(rm -rf*)",
-      "Bash(python manage.py flush*)",
-      "Bash(python manage.py dbshell*)",
-      "Bash(uv run python manage.py flush*)",
-      "Bash(uv run python manage.py dbshell*)"
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)",
+      "Bash(python manage.py flush:*)",
+      "Bash(python manage.py dbshell:*)",
+      "Bash(uv run python manage.py flush:*)",
+      "Bash(uv run python manage.py dbshell:*)"
     ]
   },
   "env": {

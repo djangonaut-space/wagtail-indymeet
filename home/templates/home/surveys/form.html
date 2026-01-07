@@ -39,9 +39,9 @@
                     <p class="text-sm text-gray-500">{{ field.help_text|linebreaksbr|urlize }}</p>
                     <div class="mt-1">
                         {% if field.field.widget.input_type == 'radio' or field.field.widget.input_type == 'checkbox' %}
-                            {{ field|addclass:'read-only:text-slate-700' }}
+                            {{ field|addclass:'read-only:text-slate-700 mt-1 rounded' }}
                         {% else %}
-                            {{ field|addclass:'w-full p-4 pr-12 text-sm border-gray-500 rounded-lg shadow-sm disabled:bg-slate-50 disabled:text-slate-700 disabled:border-slate-200' }}
+                            {{ field|addclass:'w-full p-4 pr-12 text-sm border-gray-500 rounded shadow-sm disabled:bg-slate-50 disabled:text-slate-700 disabled:border-slate-200' }}
                         {% endif %}
                     </div>
                     <span class="text-sm text-red-400">{{ field.errors }}</span>

@@ -8,7 +8,11 @@ from django.utils.translation import gettext_lazy as _
 
 from accounts.models import UserAvailability
 from home import email
-from home.managers import UserQuestionResponseQuerySet, UserSurveyResponseQuerySet
+from home.managers import (
+    SurveyQuerySet,
+    UserQuestionResponseQuerySet,
+    UserSurveyResponseQuerySet,
+)
 
 
 class BaseModel(models.Model):
@@ -32,6 +36,8 @@ class Survey(BaseModel):
     session = models.ForeignKey(
         "home.Session", on_delete=models.SET_NULL, null=True, blank=True
     )
+
+    objects = models.Manager.from_queryset(SurveyQuerySet)()
 
     def __str__(self):
         return self.name

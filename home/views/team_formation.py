@@ -28,7 +28,7 @@ from home.availability import (
 )
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["GET", "POST"])
 def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -41,7 +41,10 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     - Current teams with statistics
     """
     session = get_object_or_404(
-        Session.objects.select_related("application_survey"), pk=session_id
+        Session.objects.select_related("application_survey").for_admin_site(
+            request.user
+        ),
+        pk=session_id,
     )
 
     # Handle bulk team assignment
@@ -108,7 +111,7 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     return render(request, "admin/team_formation.html", context)
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["POST"])
 def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -116,18 +119,34 @@ def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
     Handle adding users to the waitlist.
 
     POST endpoint for bulk adding applicants to the session waitlist.
+    If users have SessionMembership records, they will be removed from teams.
     On success, redirects with success message and preserves querystring.
     On validation error, redirects with error messages and preserves querystring.
     """
-    session = get_object_or_404(Session, pk=session_id)
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user), pk=session_id
+    )
 
     waitlist_form = BulkWaitlistForm(request.POST, session=session)
     if waitlist_form.is_valid():
-        waitlisted_count = waitlist_form.save()
-        messages.success(
-            request,
-            f"Successfully added {waitlisted_count} user(s) to the waitlist.",
+        users_with_memberships = waitlist_form.cleaned_data.get(
+            "users_with_memberships", []
         )
+
+        waitlisted_count = waitlist_form.save()
+        removed_count = len(users_with_memberships)
+
+        if removed_count > 0:
+            messages.success(
+                request,
+                f"Successfully removed {removed_count} user(s) from their teams and "
+                f"added {waitlisted_count} user(s) to the waitlist.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Successfully added {waitlisted_count} user(s) to the waitlist.",
+            )
     else:
         # Add form errors as messages
         for field, errors in waitlist_form.errors.items():
@@ -143,7 +162,7 @@ def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
     return redirect(redirect_url)
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["POST"])
 def calculate_overlap_ajax(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -152,7 +171,9 @@ def calculate_overlap_ajax(request: HttpRequest, session_id: int) -> HttpRespons
 
     Returns HTML fragment showing overlap analysis results.
     """
-    session = get_object_or_404(Session, pk=session_id)
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user), pk=session_id
+    )
     # Validate form
     form = OverlapAnalysisForm(request.POST, session=session)
     if form.is_valid():

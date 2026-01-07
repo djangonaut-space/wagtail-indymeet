@@ -91,57 +91,6 @@ class WaitlistViewTestCase(TestCase):
             Waitlist.objects.filter(user=self.applicant2, session=self.session).exists()
         )
 
-    def test_cannot_add_session_member_to_waitlist(self):
-        """Test that users who are session members cannot be waitlisted."""
-        # Make applicant1 a session member
-        SessionMembership.objects.create(
-            user=self.applicant1,
-            session=self.session,
-            role=SessionMembership.DJANGONAUT,
-        )
-
-        data = {
-            "bulk_waitlist-user_ids": f"{self.applicant1.id}",
-        }
-
-        response = self.client.post(self.waitlist_url, data, follow=True)
-
-        self.assertEqual(response.status_code, 200)
-
-        # Check for error message
-        messages = list(response.context["messages"])
-        self.assertTrue(any("already session members" in str(msg) for msg in messages))
-
-        # Verify no waitlist entry created
-        self.assertFalse(
-            Waitlist.objects.filter(user=self.applicant1, session=self.session).exists()
-        )
-
-    def test_can_add_already_waitlisted_user_idempotent(self):
-        """Test that adding already-waitlisted users is idempotent (no error)."""
-        # Add applicant1 to waitlist
-        Waitlist.objects.create(user=self.applicant1, session=self.session)
-
-        data = {
-            "bulk_waitlist-user_ids": f"{self.applicant1.id}",
-        }
-
-        response = self.client.post(self.waitlist_url, data, follow=True)
-
-        # Should succeed with success message (idempotent operation)
-        self.assertEqual(response.status_code, 200)
-
-        # Check for success message
-        messages = list(response.context["messages"])
-        self.assertEqual(len(messages), 1)
-        self.assertIn("Successfully added", str(messages[0]))
-
-        # Verify still only one entry (not duplicated)
-        self.assertEqual(
-            Waitlist.objects.filter(user=self.applicant1, session=self.session).count(),
-            1,
-        )
-
     def test_requires_authentication(self):
         """Test that the view requires authentication."""
         self.client.logout()

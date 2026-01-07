@@ -101,6 +101,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "home.context_processors.alert_about_status",
             ],
         },
     },
@@ -279,3 +280,7 @@ ALLOWED_EMAILS_FOR_TESTING = [
     for email in (os.environ.get("ALLOWED_EMAILS_FOR_TESTING") or "").split(";")
     if email
 ]
+
+# When running load tests, it's helpful to remove some functionality
+# such as confirmation emails.
+LOAD_TESTING = os.environ.get("LOAD_TESTING", False)

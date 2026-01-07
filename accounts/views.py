@@ -1,6 +1,7 @@
 # Create your views here.
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -81,6 +82,12 @@ class SignUpView(CreateView):
     form_class = CustomUserCreationForm
     template_name = "registration/signup.html"
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class=form_class)
+        if settings.LOAD_TESTING:
+            form.fields.pop("captcha")
+        return form
+
     def get_success_url(self):
         messages.add_message(
             self.request,
@@ -88,7 +95,10 @@ class SignUpView(CreateView):
             "Your registration was successful. Please check "
             "your email provided for a confirmation link.",
         )
-        return reverse("signup")
+        return self.request.POST.get(
+            REDIRECT_FIELD_NAME,
+            self.request.GET.get(REDIRECT_FIELD_NAME, reverse("profile")),
+        )
 
     def form_valid(self, form):
         """sends a link for a user to activate their account after signup"""
@@ -103,15 +113,27 @@ class SignUpView(CreateView):
         user.profile.receiving_event_updates = form.cleaned_data[
             "receive_event_updates"
         ]
-        user.profile.save(
-            update_fields=[
-                "accepted_coc",
-                "receiving_newsletter",
-                "receiving_program_updates",
-                "receiving_event_updates",
-            ]
-        )
-        send_user_confirmation_email(self.request, user)
+        if settings.LOAD_TESTING:
+            user.profile.email_confirmed = True
+            user.profile.save(
+                update_fields=[
+                    "email_confirmed",
+                    "accepted_coc",
+                    "receiving_newsletter",
+                    "receiving_program_updates",
+                    "receiving_event_updates",
+                ]
+            )
+        else:
+            user.profile.save(
+                update_fields=[
+                    "accepted_coc",
+                    "receiving_newsletter",
+                    "receiving_program_updates",
+                    "receiving_event_updates",
+                ]
+            )
+            send_user_confirmation_email(self.request, user)
         return super().form_valid(form)
 
 

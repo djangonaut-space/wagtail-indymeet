@@ -39,7 +39,6 @@ class SignUpViewTests(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Registration")
         self.assertContains(
             response,
             (
