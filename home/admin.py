@@ -340,12 +340,24 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
-    list_display = ("title", "start_date", "end_date", "form_teams", "email_actions")
+    list_display = (
+        "title",
+        "start_date",
+        "end_date",
+        "form_teams",
+        "collect_stats",
+        "email_actions",
+    )
 
     @admin.display(description="Form Teams")
     def form_teams(self, obj):
         href = reverse("admin:session_form_teams", kwargs={"session_id": obj.id})
         return mark_safe(f'<a href="{href}">Form Teams</a>')
+
+    @admin.display(description="GitHub Stats")
+    def collect_stats(self, obj):
+        href = reverse("admin:session_collect_stats", args=[obj.id])
+        return mark_safe(f'<a href="{href}">Collect Stats</a>')
 
     @admin.display(description="Email Actions")
     def email_actions(self, obj):
@@ -387,6 +399,11 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 name="session_calculate_overlap",
             ),
             path(
+                "<int:session_id>/collect-stats/",
+                self.admin_site.admin_view(self.collect_stats_view),
+                name="session_collect_stats",
+            ),
+            path(
                 "<int:session_id>/send-session-results/",
                 self.admin_site.admin_view(send_session_results_view),
                 name="session_send_results",
@@ -403,6 +420,12 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             ),
         ]
         return custom_urls + urls
+
+    def collect_stats_view(self, request, session_id):
+        """Handle GitHub stats collection for a session."""
+        from .views.sessions import collect_stats_view
+
+        return collect_stats_view(request, session_id)
 
     @admin.action(description="Auto-allocate Djangonauts to teams")
     def auto_allocate_teams_action(self, request, queryset):
