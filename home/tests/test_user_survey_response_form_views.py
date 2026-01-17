@@ -275,7 +275,7 @@ class EditUserSurveyResponseViewTests(TestCase):
             data={f"field_survey_{self.question.id}": "Excellent"},
             follow=True,
         )
-        self.assertContains(response, "You are no longer able to edit this.")
+        self.assertContains(response, "This application is closed.")
 
     def test_can_edit_session_application_within_deadline(self):
         # Create a session with active application period
