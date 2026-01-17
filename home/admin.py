@@ -336,17 +336,28 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     filter_horizontal = ("available_projects",)
     actions = [
         "auto_allocate_teams_action",
-        "collect_djangonaut_stats_action",
         preview_email.rejection_email_action,
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
-    list_display = ("title", "start_date", "end_date", "form_teams", "email_actions")
+    list_display = (
+        "title",
+        "start_date",
+        "end_date",
+        "form_teams",
+        "collect_stats",
+        "email_actions",
+    )
 
     @admin.display(description="Form Teams")
     def form_teams(self, obj):
         href = reverse("admin:session_form_teams", kwargs={"session_id": obj.id})
         return mark_safe(f'<a href="{href}">Form Teams</a>')
+
+    @admin.display(description="GitHub Stats")
+    def collect_stats(self, obj):
+        href = reverse("admin:session_collect_stats", args=[obj.id])
+        return mark_safe(f'<a href="{href}">Collect Stats</a>')
 
     @admin.display(description="Email Actions")
     def email_actions(self, obj):
@@ -472,21 +483,6 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         """Filter sessions to only those the user organizes."""
         return super().get_queryset(request).for_admin_site(request.user)
-
-    @admin.action(description="Collect Djangonaut GitHub stats")
-    def collect_djangonaut_stats_action(self, request, queryset):
-        """Redirect to GitHub stats collection view for selected session"""
-        if queryset.count() != 1:
-            self.message_user(
-                request,
-                "Please select exactly one session to collect stats.",
-                messages.ERROR,
-            )
-            return
-
-        session = queryset.first()
-        url = reverse("admin:session_collect_stats", args=[session.id])
-        return redirect(url)
 
 
 @admin.register(Team)

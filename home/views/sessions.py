@@ -1,13 +1,21 @@
 """Session-related views."""
 
+from datetime import date, timedelta
 from typing import Any
 
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Prefetch, QuerySet
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
 from home.models import Session, SessionMembership
+from home.services.github_stats import GitHubStatsCollector
+from home.services.report_formatter import ReportFormatter
 
 
 class SessionDetailView(DetailView):
@@ -73,32 +81,28 @@ class UserSessionListView(LoginRequiredMixin, ListView):
         return context
 
 
-# GitHub Stats Collection View (Issue #615)
-
-from datetime import date, timedelta
-
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
-
-from home.services.github_stats import GitHubStatsCollector
-from home.services.report_formatter import ReportFormatter
+def _create_download_response(
+    content: str,
+    content_type: str,
+    session_id: int,
+    start_date: date,
+    end_date: date,
+    ext: str,
+) -> HttpResponse:
+    """Create an HTTP response for file download."""
+    response = HttpResponse(content, content_type=content_type)
+    response["Content-Disposition"] = (
+        f'attachment; filename="djangonaut_stats_{session_id}_{start_date}_{end_date}.{ext}"'
+    )
+    return response
 
 
 @staff_member_required
-def collect_stats_view(request, session_id):
+def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     """
     Collect and display GitHub stats for Djangonauts in a session.
+
     Protected by staff_member_required to ensure admin-only access.
-
-    Args:
-        request: HTTP request
-        session_id: ID of the session to collect stats for
-
-    Returns:
-        Rendered template with stats or form
     """
     session = get_object_or_404(Session, id=session_id)
 
@@ -132,17 +136,29 @@ def collect_stats_view(request, session_id):
         except (ValueError, TypeError):
             messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
             return redirect(request.path)
+
+        # Validate dates are not in the future
+        today = date.today()
+        if start_date > today:
+            messages.error(
+                request,
+                f"Start date ({start_date}) cannot be in the future. Today is {today}.",
+            )
+            return redirect(request.path)
+        if end_date > today:
+            end_date = today  # Silently cap end_date to today
     else:
         # Use session dates or default to last 7 days
-        if hasattr(session, "start_date") and session.start_date:
+        today = date.today()
+        if session.start_date and session.start_date <= today:
             start_date = session.start_date
         else:
-            start_date = date.today() - timedelta(days=7)
+            start_date = today - timedelta(days=7)
 
-        if hasattr(session, "end_date") and session.end_date:
-            end_date = session.end_date
+        if session.end_date:
+            end_date = min(session.end_date, today)
         else:
-            end_date = date.today()
+            end_date = today
 
     # Check if we should collect stats or just show the form
     if request.method == "GET" and "collect" not in request.GET:
@@ -157,6 +173,25 @@ def collect_stats_view(request, session_id):
             "has_view_permission": True,
         }
         return render(request, "admin/collect_stats_form.html", context)
+
+    # Check for download request with cached data
+    download_format = request.GET.get("download") or request.POST.get("download")
+    cache_key = f"github_stats_{session_id}"
+
+    if download_format and cache_key in request.session:
+        # Use cached report for download
+        cached = request.session[cache_key]
+        if cached.get("start_date") == str(start_date) and cached.get(
+            "end_date"
+        ) == str(end_date):
+            if download_format == "csv":
+                return _create_download_response(
+                    cached["csv"], "text/csv", session.id, start_date, end_date, "csv"
+                )
+            if download_format == "txt":
+                return _create_download_response(
+                    cached["txt"], "text/plain", session.id, start_date, end_date, "txt"
+                )
 
     # Collect stats
     try:
@@ -180,25 +215,25 @@ def collect_stats_view(request, session_id):
             end_date=end_date,
         )
 
-        # Handle download requests
-        download_format = request.GET.get("download") or request.POST.get("download")
+        # Cache the formatted reports for download
+        request.session[cache_key] = {
+            "start_date": str(start_date),
+            "end_date": str(end_date),
+            "csv": ReportFormatter.format_csv(report),
+            "txt": ReportFormatter.format_text(report),
+        }
+
+        # Handle immediate download request
         if download_format:
+            cached = request.session[cache_key]
             if download_format == "csv":
-                content = ReportFormatter.format_csv(report)
-                response = HttpResponse(content, content_type="text/csv")
-                response["Content-Disposition"] = (
-                    f"attachment; "
-                    f'filename="djangonaut_stats_{session.id}_{start_date}_{end_date}.csv"'
+                return _create_download_response(
+                    cached["csv"], "text/csv", session.id, start_date, end_date, "csv"
                 )
-                return response
-            elif download_format == "txt":
-                content = ReportFormatter.format_text(report)
-                response = HttpResponse(content, content_type="text/plain")
-                response["Content-Disposition"] = (
-                    f"attachment; "
-                    f'filename="djangonaut_stats_{session.id}_{start_date}_{end_date}.txt"'
+            if download_format == "txt":
+                return _create_download_response(
+                    cached["txt"], "text/plain", session.id, start_date, end_date, "txt"
                 )
-                return response
 
         # Format report as HTML
         report_html = ReportFormatter.format_html(report)
