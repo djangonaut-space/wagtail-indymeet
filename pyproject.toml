@@ -40,6 +40,7 @@ test = [
     "pytest-playwright",
     "factory_boy",
     "unittest_parametrize",
+    "faker",
 ]
 dev = [
     "pre-commit",
