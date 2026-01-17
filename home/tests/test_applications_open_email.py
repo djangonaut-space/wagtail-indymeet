@@ -76,7 +76,7 @@ class ApplicationOpenTests(TestCase):
         )
         self.assertEqual(
             {mail.outbox[0].subject, mail.outbox[1].subject},
-            {"Djangonaut Space Program Applications Open"},
+            {"Applications Open - Test Session"},
         )
         # Check the contents of an email
         self.assertIn(

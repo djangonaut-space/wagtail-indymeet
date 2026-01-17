@@ -1,0 +1,60 @@
+{% extends "email/base.html" %}
+{% load email_tags %}
+
+{% block preheader %}You've been selected for the Djangonaut Program!{% endblock preheader %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Congratulations! You've been selected to join the Djangonaut Program! 🎊 You will be working on the <strong>{{ membership.team.project.name }}</strong> project.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We are excited by your desire to help contribute back to Django and we want to rocket launch your success! 🚀
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We hope you are as excited as we are and can commit to join this program! Please confirm your acceptance by <strong>{{ membership.acceptance_deadline|date:"F d, Y" }}</strong> (<a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">12:00 UTC</a>).
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}Accept Your Spot{% endblock cta_button_text %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The Djangonaut Program aims to level up the Django code contributions from our community and to help you become a future leader of Django. 💪 This is an 8 week group mentoring program with an emphasis on sustainability and longevity.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The duration of this program is <strong><a href="{{ session.start_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.start_date|date:"F d, Y" }}</a> - <a href="{{ session.end_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.end_date|date:"F d, Y" }}</a></strong>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you choose to join this cohort, you will be supported by experienced members of the community working to ensure your success on the program. This includes:
+  </p>
+
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Captains</strong>, community managers who embody Django's supportive culture and will reach out for personal check-ins throughout the program 🤝</li>
+    <li style="margin-bottom: 8px;"><strong>Navigators</strong>, experienced open source contributors who will guide you through the process of resolving tickets and facilitating change 👩‍💻</li>
+  </ul>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You will also be supported by your fellow Djangonauts who you will be encouraged to work together with when tackling issues. 🫸🫷
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    As a rough guide, we expect the time commitment of a Djangonaut to be around <strong>4 hours per week</strong>. This may be more or less depending on your own constraints and motivation.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    To learn more about the program you can read our documentation here: <a href="https://github.com/djangonaut-space/program" style="color: #5c0287;">https://github.com/djangonaut-space/program</a>
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Not sure about the program? Please let us know what questions you have.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    All the best,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}

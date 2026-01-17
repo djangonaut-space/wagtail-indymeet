@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Send Acceptance Reminders - {{ session.title }}</h1>
+
+<div class="module">
+    <h2>Summary</h2>
+    <p>This will send reminder emails to <strong>{{ pending_count }}</strong> user(s) who have been accepted but have not yet confirmed their acceptance.</p>
+
+    {% if pending_memberships %}
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Team</th>
+                <th>Deadline</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for membership in pending_memberships %}
+            <tr>
+                <td>{{ membership.user.get_full_name }}</td>
+                <td>{{ membership.user.email }}</td>
+                <td>{{ membership.get_role_display }}</td>
+                <td>{{ membership.team.name|default:"-" }}</td>
+                <td>{{ membership.acceptance_deadline|date:"F d, Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+{% if pending_count == 0 %}
+<div class="messagelist">
+    <div class="info">
+        No pending acceptances found. All users have either confirmed or declined their membership.
+    </div>
+</div>
+<p><a href="{% url 'admin:home_session_changelist' %}" class="button">Back to Session List</a></p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+    <p><strong>Are you sure you want to send these reminder emails?</strong></p>
+    <div class="submit-row">
+        <input type="submit" value="Send Reminders" class="default" />
+        <a href="{% url 'admin:home_session_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}

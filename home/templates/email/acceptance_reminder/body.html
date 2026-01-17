@@ -1,0 +1,38 @@
+{% extends "email/base.html" %}
+{% load email_tags %}
+
+{% block preheader %}Reminder: Confirm your spot in the Djangonaut Program{% endblock preheader %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We emailed you an invitation to join the Djangonaut Program and it's not too late to confirm your place as a Djangonaut! ⏰
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Please confirm your acceptance by <strong>{{ membership.acceptance_deadline|date:"l F jS" }}</strong> (<a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">12:00 UTC</a>).
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Otherwise, we may not be able to accommodate you this round.
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}Confirm Your Spot{% endblock cta_button_text %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The duration of this program is <strong><a href="{{ session.start_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.start_date|date:"F d, Y" }}</a> - <a href="{{ session.end_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.end_date|date:"F d, Y" }}</a></strong>.<br>
+    To learn more about the program you can read our documentation here: <a href="https://github.com/djangonaut-space/program" style="color: #5c0287;">https://github.com/djangonaut-space/program</a>
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Don't worry if this is not of interest to you or we have reached you at a bad time. We'd appreciate you letting us know. ❤️
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    All the best,<br><br>
+    Djangonaut Organisation Team 🚀<br>
+    ✉️ <a href="mailto:contact@djangonaut.space" style="color: #5c0287;">contact@djangonaut.space</a><br>
+    📄 <a href="https://github.com/djangonaut-space/program" style="color: #5c0287;">https://github.com/djangonaut-space/program</a>
+  </p>
+{% endblock after_cta %}

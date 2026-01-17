@@ -1,10 +1,18 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.urls import reverse
 
 
 def send(email_template, recipient_list, context=None, from_email=None):
-    if settings.ENVIRONMENT != "production":
+    # Only allow emails when:
+    # - in production environments
+    # - in non-prod environments when the recipient is in allowed emails
+    # - when the backend is sent to the console.
+    if (
+        settings.ENVIRONMENT != "production"
+        and settings.EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend"
+    ):
         # When sending emails in a non-production environment, only
         # allow them to be sent to people approved testing emails.
         recipient_list = [
@@ -15,9 +23,14 @@ def send(email_template, recipient_list, context=None, from_email=None):
         if not recipient_list:
             return
 
-    email_context = context.copy()
+    email_context = context.copy() if context else {}
+    email_context["unsubscribe_link"] = settings.BASE_URL + reverse(
+        "email_subscriptions"
+    )
     # Strip the newline character that our formatter is likely to add in.
-    subject = render_to_string(f"email/{email_template}/subject.txt").strip()
+    subject = render_to_string(
+        f"email/{email_template}/subject.txt", email_context
+    ).strip()
     if settings.ENVIRONMENT != "production":
         subject = f"[{settings.ENVIRONMENT}] " + subject
     text = render_to_string(f"email/{email_template}/body.txt", email_context)

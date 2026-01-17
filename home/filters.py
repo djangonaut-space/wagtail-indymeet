@@ -6,9 +6,10 @@ from typing import Optional
 
 import django_filters
 from django import forms
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Exists, OuterRef
 
-from home.models import Team, UserSurveyResponse
+from accounts.models import CustomUser
+from home.models import Project, Team, UserSurveyResponse, Waitlist
 
 
 class BooleanFilter(django_filters.BooleanFilter):
@@ -42,6 +43,18 @@ class ApplicantFilterSet(django_filters.FilterSet):
     show_unassigned_only = BooleanFilter(
         method="filter_unassigned",
         label="Show only unassigned applicants",
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+    )
+
+    exclude_waitlisted = BooleanFilter(
+        method="filter_exclude_waitlisted",
+        label="Hide waitlisted applicants",
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+    )
+
+    show_waitlisted_only = BooleanFilter(
+        method="filter_waitlisted_only",
+        label="Show only waitlisted applicants",
         widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
     )
 
@@ -103,4 +116,52 @@ class ApplicantFilterSet(django_filters.FilterSet):
         """Filter applicants by availability overlap with team captain."""
         if value and self.session:
             return queryset.with_captain_overlap(value)
+        return queryset
+
+    def filter_exclude_waitlisted(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Exclude waitlisted applicants from results."""
+        if value is True and self.session:
+            # Get user IDs that are waitlisted for this session
+            waitlisted_user_ids = Waitlist.objects.filter(
+                session=self.session
+            ).values_list("user_id", flat=True)
+            return queryset.exclude(user_id__in=waitlisted_user_ids)
+        return queryset
+
+    def filter_waitlisted_only(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Show only waitlisted applicants."""
+        if value is True and self.session:
+            # Get user IDs that are waitlisted for this session
+            waitlisted_user_ids = Waitlist.objects.filter(
+                session=self.session
+            ).values_list("user_id", flat=True)
+            return queryset.filter(user_id__in=waitlisted_user_ids)
+        return queryset
+
+    def filter_exclude_waitlisted(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Exclude waitlisted applicants from results."""
+        if value is True and self.session:
+            # Get user IDs that are waitlisted for this session
+            waitlisted_user_ids = Waitlist.objects.filter(
+                session=self.session
+            ).values_list("user_id", flat=True)
+            return queryset.exclude(user_id__in=waitlisted_user_ids)
+        return queryset
+
+    def filter_waitlisted_only(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Show only waitlisted applicants."""
+        if value is True and self.session:
+            # Get user IDs that are waitlisted for this session
+            waitlisted_user_ids = Waitlist.objects.filter(
+                session=self.session
+            ).values_list("user_id", flat=True)
+            return queryset.filter(user_id__in=waitlisted_user_ids)
         return queryset

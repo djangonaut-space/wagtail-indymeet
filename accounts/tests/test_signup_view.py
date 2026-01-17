@@ -39,7 +39,6 @@ class SignUpViewTests(TestCase):
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Registration")
         self.assertContains(
             response,
             (
@@ -48,7 +47,7 @@ class SignUpViewTests(TestCase):
             ),
         )
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, "Djangonaut Space Email Confirmation")
+        self.assertEqual(mail.outbox[0].subject, "Verify your email - Djangonaut Space")
         self.assertIn(
             "Thank you for signing up to Djangonaut Space! Click the link to verify your email:",
             mail.outbox[0].body,

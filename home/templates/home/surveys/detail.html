@@ -6,7 +6,7 @@
     <div class="section-container">
         <nav class="mb-4 text-sm" aria-label="breadcrumb">
             <ol class="flex items-center gap-2">
-                <li><a href="{% url 'profile' %}" class="text-blue-600 hover:text-blue-800 hover:underline">{% translate "Profile" %}</a></li>
+                <li><a href="{% url 'profile' %}">{% translate "Profile" %}</a></li>
                 <li class="text-gray-400">/</li>
                 <li class="text-gray-600">Survey / {{ survey.name }}</li>
             </ol>
@@ -29,17 +29,7 @@
         </div>
 
         <div class="space-y-6 mt-6">
-            {% for response in responses %}
-                <div class="p-8 space-y-4 rounded-lg shadow-md border border-gray-200 bg-white">
-                    <label class="text-base font-medium">{{ response.question.label|linebreaksbr|urlize }}</label>
-                    {% if response.question.help_text %}
-                    <p class="text-sm text-gray-500">{{ response.question.help_text|linebreaksbr|urlize }}</p>
-                    {% endif %}
-                    <div class="mt-2 p-4 bg-gray-50 rounded border border-gray-200">
-                        {{ response.get_value|linebreaksbr }}
-                    </div>
-                </div>
-            {% endfor %}
+          {% include "home/includes/survey_question_responses.html" with responses=responses %}
         </div>
     </div>
 </main>

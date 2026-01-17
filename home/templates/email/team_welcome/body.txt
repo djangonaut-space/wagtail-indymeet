@@ -1,0 +1,19 @@
+Hello {% for djangonaut in djangonauts %}{{ djangonaut.user.first_name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} and {% else %}, {% endif %}{% endif %}{% endfor %},
+
+Welcome to Djangonaut Space!
+
+✨ Congratulations on joining this exciting journey! We are thrilled to have you on board and can't wait to see the incredible contributions you'll make to the Django community. ✨
+
+Your team, {{ team.name }}, will be working on {{ team.project.name }} with help from your navigator{{ navigators|pluralize }}, {% for navigator in navigators %}{{ navigator.user.get_full_name }}, {% endfor %}and your captain{{ captains|pluralize }}, {% for captain in captains %}{{ captain.user.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}. They are here to guide you and have been CCed in this email. They are also in discord waiting for you in your team's channel. You can also expect your Navigator/Captain to reach out soon to schedule your first meetings and get the ball rolling. 🗓️
+
+Now, it's prep time! Head over to our Discord ({{ session.discord_invite_url }}) to get started. Take a moment to do a quick self-introduction in the Introductions Channel- share your passion, experience, and what you hope to achieve during the program. You can also check out our other channels like Resources, Life, and your Team Channel. 💬
+
+We will have two orientation/get to know each other meetings planned. You should try to attend one of them. You will find them in Discord under "Events".
+
+To help you navigate smoothly, we've prepared some workbooks. They are in your team folder{% if team.google_drive_folder %} {{ team.google_drive_folder }}{% endif %}, so please find the appropriate workbook with your name. Be sure to go over "Week 0 - Prep Week" for follow-up steps. If you have any problems accessing your workbook, please let us know immediately. 📝
+
+If you have any questions along the way, feel free to reach out to any organizer or an officer via email or in the discord for assistance.
+
+We're looking forward to an exciting and stellar experience with you! 🌟
+
+Best regards,

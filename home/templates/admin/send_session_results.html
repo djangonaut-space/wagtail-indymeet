@@ -1,0 +1,77 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Send Session Result Notifications - {{ session.title }}</h1>
+
+{% if already_sent %}
+<div class="messagelist">
+    <div class="warning">
+        Results notifications were already sent on {{ sent_at|date:"F d, Y \a\t g:i A" }}.
+        Sending again will result in duplicate emails.
+    </div>
+</div>
+{% endif %}
+
+<div class="module">
+    <h2>Summary</h2>
+    <p>This will send notification emails to the following groups:</p>
+    <ul>
+        <li><strong>Accepted:</strong> {{ accepted_count }} user(s) with session memberships</li>
+        <li><strong>Waitlisted:</strong> {{ waitlisted_count }} user(s) on the waitlist</li>
+        <li><strong>Rejected:</strong> {{ rejected_count }} user(s) who applied but were not accepted or waitlisted</li>
+    </ul>
+    <p><strong>Total applicants:</strong> {{ applicant_count }}</p>
+</div>
+
+{% if accepted_count == 0 and waitlisted_count == 0 and rejected_count == 0 %}
+<div class="messagelist">
+    <div class="error">
+        No emails will be sent. Please ensure you have:
+        <ul>
+            <li>Created SessionMembership records for accepted applicants</li>
+            <li>Created Waitlist entries for waitlisted applicants</li>
+            <li>An application survey configured for this session</li>
+        </ul>
+    </div>
+</div>
+<p><a href="{% url 'admin:home_session_changelist' %}" class="button">Back to Session List</a></p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="messagelist">
+        <div class="error">
+            {{ form.non_field_errors }}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="form-row{% if form.deadline_days.errors %} errors{% endif %}">
+        <div>
+            <label for="{{ form.deadline_days.id_for_label }}">{{ form.deadline_days.label }}:</label>
+            {{ form.deadline_days }}
+            {% if form.deadline_days.help_text %}
+            <p class="help">{{ form.deadline_days.help_text }}</p>
+            {% endif %}
+            {% if form.deadline_days.errors %}
+            <ul class="errorlist">
+                {% for error in form.deadline_days.errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <p><strong>Are you sure you want to send these notifications?</strong></p>
+
+    <div class="submit-row">
+        <input type="submit" value="Send Notifications" class="default" />
+        <a href="{% url 'admin:home_session_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}

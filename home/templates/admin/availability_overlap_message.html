@@ -1,0 +1,18 @@
+{% load email_tags %}
+<strong>Top {{ results|length }} availability overlap(s) for {{ total_members }} selected member(s):</strong>
+<ol>
+    {% for window in results %}
+    <li>
+        <strong><a href="{{ window.start_datetime|time_is_link }}" target="_blank">{{ window.formatted_time }} UTC</a></strong>:
+        {{ window.total_available }} member(s) available ({{ window.role_summary }})
+        <br>
+        {% if window.unavailable_member_ids %}
+          <a href="{{ window.admin_unavailable_url }}" target="_blank">
+              View {{ window.unavailable_member_ids|length }} unavailable member(s). Re-run this action with those {{ window.unavailable_member_ids|length }} users selected to find an optimal second time.
+          </a>
+        {% else %}
+          All members available!
+        {% endif %}
+    </li>
+    {% endfor %}
+</ol>

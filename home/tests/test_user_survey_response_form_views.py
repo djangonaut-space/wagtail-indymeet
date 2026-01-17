@@ -34,14 +34,27 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
         self.user.profile.email_confirmed = False
         self.user.profile.save()
         self.client.force_login(self.user)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url, follow=True)
+        self.assertRedirects(response, reverse("profile"))
+        messages = list(response.context["messages"])
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            "Please confirm your email address before submitting a survey response.",
+        )
+        self.assertEqual(messages[0].level_tag, "warning")
 
     def test_only_one_per_user(self):
         self.client.force_login(self.user)
         UserSurveyResponseFactory(survey=self.survey, user=self.user)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url, follow=True)
+        self.assertRedirects(response, reverse("session_list"))
+        messages = list(response.context["messages"])
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), "You have already submitted a response to this survey."
+        )
+        self.assertEqual(messages[0].level_tag, "warning")
 
     def test_success_get(self):
         self.client.force_login(self.user)
@@ -80,7 +93,7 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
             follow=True,
         )
 
-        self.assertContains(response, "Response sent!")
+        self.assertContains(response, "Survey successfully saved!")
         self.assertRedirects(response, reverse("session_list"))
         user_response = UserSurveyResponse.objects.get(
             user=self.user, survey=self.survey
@@ -205,10 +218,13 @@ class EditUserSurveyResponseViewTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.post(
             self.url,
-            data={f"field_survey_{self.question.id}": "Excellent"},
+            data={
+                f"field_survey_{self.question.id}": "Excellent",
+                "github_username": "testuser",
+            },
             follow=True,
         )
-        self.assertContains(response, "Response updated!")
+        self.assertContains(response, "Survey successfully updated!")
         self.assertRedirects(response, reverse("profile"))
         updated_response = UserQuestionResponse.objects.get(
             user_survey_response=self.survey_response, question=self.question

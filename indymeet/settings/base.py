@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "wagtail",
     # puput support
     "wagtail.contrib.legacy.richtext",
+    "wagtail.contrib.search_promotions",
     "wagtail.contrib.sitemaps",
     "wagtail.contrib.routable_page",
     "puput",
@@ -61,10 +62,13 @@ INSTALLED_APPS = [
     "django.forms",
     # other
     "django_filters",
+    "django_tasks",
+    "django_tasks.backends.database",
     "storages",
     "tailwind",
     "theme",
     "widget_tweaks",
+    "import_export",
 ]
 
 MIDDLEWARE = [
@@ -98,6 +102,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "home.context_processors.alert_about_status",
             ],
         },
     },
@@ -205,6 +210,9 @@ STATIC_URL = "/static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 MEDIA_URL = "/media/"
 
+# Tasks settings
+TASKS = {"default": {"BACKEND": "django_tasks.backends.database.DatabaseBackend"}}
+
 
 # Wagtail settings
 
@@ -286,3 +294,7 @@ ALLOWED_EMAILS_FOR_TESTING = [
     for email in (os.environ.get("ALLOWED_EMAILS_FOR_TESTING") or "").split(";")
     if email
 ]
+
+# When running load tests, it's helpful to remove some functionality
+# such as confirmation emails.
+LOAD_TESTING = os.environ.get("LOAD_TESTING", False)

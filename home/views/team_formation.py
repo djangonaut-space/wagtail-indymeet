@@ -15,19 +15,20 @@ from django.core.paginator import Paginator
 from django.db.models import Prefetch
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from home.dataclasses import ApplicantData, DjangonautDetail, TeamStatistics
 from home.filters import ApplicantFilterSet
-from home.forms import BulkTeamAssignmentForm, OverlapAnalysisForm
-from home.models import Session, SessionMembership, Team, UserSurveyResponse
+from home.forms import BulkTeamAssignmentForm, BulkWaitlistForm, OverlapAnalysisForm
+from home.models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
 from home.availability import (
     calculate_team_overlap,
     format_availability_by_day,
 )
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["GET", "POST"])
 def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -39,7 +40,12 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     - Quick team assignment actions
     - Current teams with statistics
     """
-    session = get_object_or_404(Session, pk=session_id)
+    session = get_object_or_404(
+        Session.objects.select_related("application_survey").for_admin_site(
+            request.user
+        ),
+        pk=session_id,
+    )
 
     # Handle bulk team assignment
     if request.method == "POST":
@@ -55,6 +61,9 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
         # If form is invalid, errors will be displayed in the template
     else:
         bulk_form = BulkTeamAssignmentForm(session=session)
+
+    # Initialize waitlist form
+    waitlist_form = BulkWaitlistForm(session=session)
 
     # Get sorting parameters
     sort_by = request.GET.get("sort", "selection_rank")
@@ -81,6 +90,7 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
         "filter_form": filterset.form,  # Use the form from the filterset
         "overlap_form": overlap_form,
         "bulk_form": bulk_form,
+        "waitlist_form": waitlist_form,
         "page_obj": page_obj,
         "teams": teams_data,
         "sort_by": sort_by,
@@ -101,7 +111,58 @@ def team_formation_view(request: HttpRequest, session_id: int) -> HttpResponse:
     return render(request, "admin/team_formation.html", context)
 
 
-@permission_required("Team.form_team")
+@permission_required("home.form_team")
+@staff_member_required
+@require_http_methods(["POST"])
+def add_to_waitlist(request: HttpRequest, session_id: int) -> HttpResponse:
+    """
+    Handle adding users to the waitlist.
+
+    POST endpoint for bulk adding applicants to the session waitlist.
+    If users have SessionMembership records, they will be removed from teams.
+    On success, redirects with success message and preserves querystring.
+    On validation error, redirects with error messages and preserves querystring.
+    """
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user), pk=session_id
+    )
+
+    waitlist_form = BulkWaitlistForm(request.POST, session=session)
+    if waitlist_form.is_valid():
+        users_with_memberships = waitlist_form.cleaned_data.get(
+            "users_with_memberships", []
+        )
+
+        waitlisted_count = waitlist_form.save()
+        removed_count = len(users_with_memberships)
+
+        if removed_count > 0:
+            messages.success(
+                request,
+                f"Successfully removed {removed_count} user(s) from their teams and "
+                f"added {waitlisted_count} user(s) to the waitlist.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Successfully added {waitlisted_count} user(s) to the waitlist.",
+            )
+    else:
+        # Add form errors as messages
+        for field, errors in waitlist_form.errors.items():
+            for error in errors:
+                messages.error(request, error)
+
+    # Preserve querystring when redirecting
+    redirect_url = reverse("admin:session_form_teams", args=[session.id])
+    querystring = request.GET.urlencode()
+    if querystring:
+        redirect_url = f"{redirect_url}?{querystring}"
+
+    return redirect(redirect_url)
+
+
+@permission_required("home.form_team")
 @staff_member_required
 @require_http_methods(["POST"])
 def calculate_overlap_ajax(request: HttpRequest, session_id: int) -> HttpResponse:
@@ -110,7 +171,9 @@ def calculate_overlap_ajax(request: HttpRequest, session_id: int) -> HttpRespons
 
     Returns HTML fragment showing overlap analysis results.
     """
-    session = get_object_or_404(Session, pk=session_id)
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user), pk=session_id
+    )
     # Validate form
     form = OverlapAnalysisForm(request.POST, session=session)
     if form.is_valid():
@@ -142,7 +205,8 @@ def get_filtered_applicants(
 
     This function uses QuerySet methods to avoid N+1 queries.
     """
-    if not session.application_survey:
+    # Check application_survey_id first to avoid DB hit when not set
+    if not session.application_survey_id:
         # Return empty list and an unbound filterset
         filterset = ApplicantFilterSet(
             data=None,
@@ -205,6 +269,11 @@ def get_filtered_applicants(
         if prev_avg_score is not None:
             prev_avg_score = round(prev_avg_score, 1)
 
+        # Get project preferences for this user/session
+        project_preferences = [
+            pref.project for pref in getattr(user, "prefetched_project_preferences", [])
+        ]
+
         applicants.append(
             ApplicantData(
                 user=user,
@@ -213,10 +282,12 @@ def get_filtered_applicants(
                 selection_rank=response.selection_rank,
                 current_team=current_team,
                 current_role=current_role,
+                is_waitlisted=response.annotated_is_waitlisted,
                 previous_application_count=response.annotated_previous_application_count,
                 previous_avg_score=prev_avg_score,
                 has_availability=has_availability,
                 availability_by_day=availability_by_day,
+                project_preferences=project_preferences,
             )
         )
 

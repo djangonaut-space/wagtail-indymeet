@@ -13,6 +13,7 @@ mediafiles/*
 media/*
 .env
 dist/
+.coverage
 
 staticfiles/*
 mediafiles/*

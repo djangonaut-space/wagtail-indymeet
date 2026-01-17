@@ -1,0 +1,1 @@
+Waitlist Status for {{ session.title }}

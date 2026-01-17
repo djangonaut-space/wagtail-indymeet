@@ -1,6 +1,9 @@
 """Tests for custom QuerySet methods."""
 
+from datetime import timedelta
+
 from django.test import TestCase
+from django.utils import timezone
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home.factories import (
@@ -10,7 +13,7 @@ from home.factories import (
     TeamFactory,
     UserSurveyResponseFactory,
 )
-from home.models import SessionMembership, UserSurveyResponse
+from home.models import Session, SessionMembership, UserSurveyResponse
 
 
 class UserSurveyResponseQuerySetTestCase(TestCase):
@@ -340,3 +343,445 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         qs = UserSurveyResponse.objects.with_full_team_formation_data(session_no_survey)
 
         self.assertEqual(qs.count(), 0)
+
+
+class SessionMembershipQuerySetTestCase(TestCase):
+    """Test SessionMembershipQuerySet methods."""
+
+    def setUp(self):
+        """Create test data using factories."""
+        self.session = SessionFactory()
+        self.team = TeamFactory(session=self.session)
+
+        # Create users with different roles
+        self.djangonaut_user = UserFactory()
+        self.captain_user = UserFactory()
+        self.navigator_user = UserFactory()
+        self.organizer_user = UserFactory()
+
+    def test_accepted_filters_djangonauts_with_accepted_true(self):
+        """Test that accepted() only includes Djangonauts with accepted=True."""
+        # Create Djangonaut memberships with different accepted statuses
+        djangonaut_accepted = SessionMembershipFactory.create(
+            user=self.djangonaut_user,
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+        SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+            accepted=None,  # Pending
+        )
+        SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+            accepted=False,  # Declined
+        )
+
+        qs = SessionMembership.objects.djangonauts().accepted()
+
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first(), djangonaut_accepted)
+
+    def test_accepted_includes_all_captains(self):
+        """Test that accepted() includes Captains regardless of accepted status."""
+        captain_none = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.CAPTAIN,
+            accepted=None,
+        )
+        captain_true = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.CAPTAIN,
+            accepted=True,
+        )
+        captain_false = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.CAPTAIN,
+            accepted=False,
+        )
+
+        qs = SessionMembership.objects.captains().accepted()
+
+        self.assertEqual(qs.count(), 3)
+        self.assertIn(captain_none, qs)
+        self.assertIn(captain_true, qs)
+        self.assertIn(captain_false, qs)
+
+    def test_accepted_includes_all_navigators(self):
+        """Test that accepted() includes Navigators regardless of accepted status."""
+        navigator_none = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.NAVIGATOR,
+            accepted=None,
+        )
+        navigator_true = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.NAVIGATOR,
+            accepted=True,
+        )
+        navigator_false = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.NAVIGATOR,
+            accepted=False,
+        )
+
+        qs = SessionMembership.objects.navigators().accepted()
+
+        self.assertEqual(qs.count(), 3)
+        self.assertIn(navigator_none, qs)
+        self.assertIn(navigator_true, qs)
+        self.assertIn(navigator_false, qs)
+
+    def test_accepted_includes_all_organizers(self):
+        """Test that accepted() includes Organizers regardless of accepted status."""
+        organizer_none = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            role=SessionMembership.ORGANIZER,
+            accepted=None,
+        )
+        organizer_true = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            role=SessionMembership.ORGANIZER,
+            accepted=True,
+        )
+        organizer_false = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            role=SessionMembership.ORGANIZER,
+            accepted=False,
+        )
+
+        qs = SessionMembership.objects.organizers().accepted()
+
+        self.assertEqual(qs.count(), 3)
+        self.assertIn(organizer_none, qs)
+        self.assertIn(organizer_true, qs)
+        self.assertIn(organizer_false, qs)
+
+    def test_accepted_mixed_roles(self):
+        """Test accepted() with a mix of different roles."""
+        # Accepted Djangonaut
+        djangonaut_accepted = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+        # Pending Djangonaut (should not be included)
+        SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+            accepted=None,
+        )
+        # Captain with accepted=None (should be included)
+        captain = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.CAPTAIN,
+            accepted=None,
+        )
+        # Navigator with accepted=False (should be included)
+        navigator = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.NAVIGATOR,
+            accepted=False,
+        )
+        # Organizer with accepted=True (should be included)
+        organizer = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            role=SessionMembership.ORGANIZER,
+            accepted=True,
+        )
+
+        qs = SessionMembership.objects.accepted()
+
+        self.assertEqual(qs.count(), 4)
+        self.assertIn(djangonaut_accepted, qs)
+        self.assertIn(captain, qs)
+        self.assertIn(navigator, qs)
+        self.assertIn(organizer, qs)
+
+    def test_for_user_with_djangonaut(self):
+        """Test for_user() filters correctly for Djangonaut users."""
+        user = UserFactory()
+
+        # Create accepted membership
+        accepted_membership = SessionMembershipFactory.create(
+            user=user,
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+
+        # Create pending membership in different session
+        pending_session = SessionFactory()
+        SessionMembershipFactory.create(
+            user=user,
+            session=pending_session,
+            role=SessionMembership.DJANGONAUT,
+            accepted=None,
+        )
+
+        qs = SessionMembership.objects.for_user(user)
+
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first(), accepted_membership)
+
+    def test_for_user_with_non_djangonaut_roles(self):
+        """Test for_user() returns all memberships for non-Djangonaut roles."""
+        user = UserFactory()
+
+        # Create memberships with different roles and accepted statuses
+        captain_membership = SessionMembershipFactory.create(
+            user=user,
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.CAPTAIN,
+            accepted=None,  # Not accepted, but should still be included
+        )
+        navigator_membership = SessionMembershipFactory.create(
+            user=user,
+            session=SessionFactory(),
+            role=SessionMembership.NAVIGATOR,
+            accepted=False,  # Declined, but should still be included
+        )
+
+        qs = SessionMembership.objects.for_user(user)
+
+        self.assertEqual(qs.count(), 2)
+        self.assertIn(captain_membership, qs)
+        self.assertIn(navigator_membership, qs)
+
+    def test_for_user_mixed_roles(self):
+        """Test for_user() with mixed roles for same user."""
+        user = UserFactory()
+
+        # Accepted Djangonaut
+        djangonaut_accepted = SessionMembershipFactory.create(
+            user=user,
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+
+        # Pending Djangonaut (should not be included)
+        SessionMembershipFactory.create(
+            user=user,
+            session=SessionFactory(),
+            role=SessionMembership.DJANGONAUT,
+            accepted=None,
+        )
+
+        # Captain with no acceptance (should be included)
+        captain = SessionMembershipFactory.create(
+            user=user,
+            session=SessionFactory(),
+            role=SessionMembership.CAPTAIN,
+            accepted=None,
+        )
+
+        qs = SessionMembership.objects.for_user(user)
+
+        self.assertEqual(qs.count(), 2)
+        self.assertIn(djangonaut_accepted, qs)
+        self.assertIn(captain, qs)
+
+    def test_for_user_excludes_other_users(self):
+        """Test for_user() only returns memberships for the specified user."""
+        user1 = UserFactory()
+        user2 = UserFactory()
+
+        membership1 = SessionMembershipFactory.create(
+            user=user1,
+            session=self.session,
+            role=SessionMembership.CAPTAIN,
+        )
+        SessionMembershipFactory.create(
+            user=user2,
+            session=self.session,
+            role=SessionMembership.CAPTAIN,
+        )
+
+        qs = SessionMembership.objects.for_user(user1)
+
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first(), membership1)
+
+    def test_for_team(self):
+        """Test for_team() filters memberships for a specific team."""
+        team2 = TeamFactory(session=self.session)
+
+        # Create memberships for the first team
+        membership1 = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        membership2 = SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=self.team,
+            role=SessionMembership.CAPTAIN,
+        )
+
+        # Create membership for the second team
+        SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=team2,
+            role=SessionMembership.DJANGONAUT,
+        )
+
+        # Create membership without a team
+        SessionMembershipFactory.create(
+            user=UserFactory(),
+            session=self.session,
+            team=None,
+            role=SessionMembership.ORGANIZER,
+        )
+
+        qs = SessionMembership.objects.for_team(self.team)
+
+        self.assertEqual(qs.count(), 2)
+        self.assertIn(membership1, qs)
+        self.assertIn(membership2, qs)
+
+
+class SessionQuerySetTestCase(TestCase):
+    """Test SessionQuerySet methods."""
+
+    def test_get_accepting_applications_within_range(self):
+        """
+        Test that get_accepting_applications returns a session
+        currently accepting applications.
+        """
+        today = timezone.now().date()
+        active_session = SessionFactory(
+            application_start_date=today - timedelta(days=5),
+            application_end_date=today + timedelta(days=5),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        self.assertEqual(result, active_session)
+
+    def test_get_accepting_applications_before_start(self):
+        """Test that get_accepting_applications returns None for future sessions."""
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today + timedelta(days=5),
+            application_end_date=today + timedelta(days=10),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        self.assertIsNone(result)
+
+    def test_get_accepting_applications_after_end(self):
+        """Test that get_accepting_applications returns None for past sessions."""
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today - timedelta(days=10),
+            application_end_date=today - timedelta(days=5),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        self.assertIsNone(result)
+
+    def test_get_accepting_applications_multiple_sessions(self):
+        """
+        Test that get_accepting_applications returns an active session
+        when multiple exist.
+        """
+        today = timezone.now().date()
+
+        # Create multiple sessions
+        past_session = SessionFactory(
+            application_start_date=today - timedelta(days=10),
+            application_end_date=today - timedelta(days=5),
+        )
+
+        active_session1 = SessionFactory(
+            application_start_date=today - timedelta(days=3),
+            application_end_date=today + timedelta(days=5),
+        )
+
+        active_session2 = SessionFactory(
+            application_start_date=today - timedelta(days=1),
+            application_end_date=today + timedelta(days=10),
+        )
+
+        result = Session.objects.get_accepting_applications()
+
+        # Should return one of the active sessions (uses .first() without ordering)
+        self.assertIsNotNone(result)
+        self.assertIn(result, [active_session1, active_session2])
+        self.assertNotEqual(result, past_session)
+
+    def test_get_accepting_applications_no_sessions(self):
+        """Test that get_accepting_applications returns None when no sessions exist."""
+        result = Session.objects.get_accepting_applications()
+
+        self.assertIsNone(result)
+
+    def test_get_accepting_applications_aoe_timezone_early(self):
+        """
+        Test that get_accepting_applications uses
+        AoE early timezone (UTC+12) for start date.
+        """
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today,
+            application_end_date=today + timedelta(days=5),
+        )
+        result = Session.objects.get_accepting_applications()
+
+        # Should find the session because we're using AoE early timezone (UTC+12)
+        # which makes "today" start earlier
+        self.assertIsNotNone(result)
+
+    def test_get_accepting_applications_aoe_timezone_late(self):
+        """
+        Test that get_accepting_applications uses
+        AoE late timezone (UTC-12) for end date.
+        """
+        # Create a session ending today
+        today = timezone.now().date()
+        SessionFactory(
+            application_start_date=today - timedelta(days=5),
+            application_end_date=today,
+        )
+        result = Session.objects.get_accepting_applications()
+
+        # Should find the session because we're using AoE late timezone (UTC-12)
+        # which makes "today" end later
+        self.assertIsNotNone(result)

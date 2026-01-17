@@ -55,6 +55,7 @@ class SurveyAdminCopyTest(TestCase):
             label="Email question",
             type_field=TypeField.EMAIL,
             ordering=1,
+            sensitive=False,
         )
         Question.objects.create(
             survey=cls.survey,
@@ -62,6 +63,7 @@ class SurveyAdminCopyTest(TestCase):
             type_field=TypeField.RATING,
             choices="5",
             ordering=2,
+            sensitive=True,
         )
 
     def setUp(self):
