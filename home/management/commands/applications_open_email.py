@@ -1,11 +1,10 @@
 from django.conf import settings
-from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import CustomUser
+from home.email import send
 from home.models import Session
 
 
@@ -37,7 +36,7 @@ class Command(BaseCommand):
             )
             .iterator()
         ):
-            email_data = {
+            email_context = {
                 "title": applications_starting_today.title,
                 "detail_url": applications_starting_today.get_full_url(),
                 "start_date": applications_starting_today.start_date.strftime(
@@ -49,17 +48,11 @@ class Command(BaseCommand):
                 ),
                 "cta_link": applications_starting_today.get_application_url(),
                 "name": user.get_full_name(),
-                "unsubscribe_link": settings.BASE_URL + reverse("email_subscriptions"),
             }
-            send_mail(
-                "Djangonaut Space Program Applications Open",
-                render_to_string("emails/application_open.txt", email_data),
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=render_to_string(
-                    "emails/application_open.html", email_data
-                ),
-                fail_silently=False,
+            send(
+                email_template="application_open",
+                recipient_list=[user.email],
+                context=email_context,
             )
             emails_sent += 1
         self.stdout.write(

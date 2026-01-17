@@ -43,9 +43,9 @@ class SessionViewTests(TestCase):
     def test_session_list(self):
         response = self.client.get(reverse("session_list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_list.html")
+        self.assertTemplateUsed("home/session/session_list.html")
         self.assertContains(response, self.session_application_open.application_url)
-        self.assertNotContains(response, self.survey_url)
+        self.assertContains(response, self.survey_url)
         self.assertNotContains(
             response, self.session_application_closed.application_url
         )
@@ -57,7 +57,7 @@ class SessionViewTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse("session_list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_list.html")
+        self.assertTemplateUsed("home/session/session_list.html")
         self.assertContains(response, self.session_application_open.application_url)
         self.assertNotContains(response, self.survey_url)
         self.assertNotContains(
@@ -71,7 +71,7 @@ class SessionViewTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse("session_list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_list.html")
+        self.assertTemplateUsed("home/session/session_list.html")
         self.assertContains(response, self.session_application_open.application_url)
         self.assertContains(response, self.survey_url)
         self.assertNotContains(
@@ -86,7 +86,7 @@ class SessionViewTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse("session_list"))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_list.html")
+        self.assertTemplateUsed("home/session/session_list.html")
         self.assertContains(response, self.session_application_open.application_url)
         self.assertNotContains(response, self.survey_url)
         self.assertNotContains(
@@ -106,7 +106,7 @@ class SessionViewTests(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_detail.html")
+        self.assertTemplateUsed("home/session/session_detail.html")
         self.assertContains(response, self.session_application_open.application_url)
         self.assertIn(
             "You have 11 hours, 59 minutes to submit your application",
@@ -126,7 +126,7 @@ class SessionViewTests(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_detail.html")
+        self.assertTemplateUsed("home/session/session_detail.html")
         self.assertNotContains(response, self.survey_url)
         self.assertIn(
             "You have 11 hours, 59 minutes to submit your application",
@@ -146,7 +146,7 @@ class SessionViewTests(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_detail.html")
+        self.assertTemplateUsed("home/session/session_detail.html")
         self.assertContains(response, self.survey_url)
         self.assertIn(
             "You have 11 hours, 59 minutes to submit your application",
@@ -169,7 +169,7 @@ class SessionViewTests(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_detail.html")
+        self.assertTemplateUsed("home/session/session_detail.html")
         self.assertNotContains(response, self.survey_url)
         self.assertNotIn(
             "You have 11 hours, 59 minutes to submit your application",
@@ -186,7 +186,7 @@ class SessionViewTests(TestCase):
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed("home/session_detail.html")
+        self.assertTemplateUsed("home/session/session_detail.html")
         self.assertNotContains(
             response, self.session_application_closed.application_url
         )

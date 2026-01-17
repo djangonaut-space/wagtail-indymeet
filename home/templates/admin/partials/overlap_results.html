@@ -22,9 +22,9 @@
 {% elif analysis_type == 'overlap-captain' %}
     <div class="overlap-result">
         <strong>{% trans "Captain Overlap" %}</strong> (Team: {{ team.name }})<br>
-        <em>{% trans "Captain:" %} {{ captain.get_full_name|default:captain.email }}</em>
+        <em>{% trans "Captain:" %} {{ captain.get_full_name }}</em>
     </div>
     {% for result in results %}
-        {% include "admin/partials/overlap_result_item.html" with is_sufficient=result.is_sufficient title=result.user.get_full_name|default:result.user.email hour_blocks=result.hour_blocks time_ranges=result.time_ranges is_nested=True %}
+        {% include "admin/partials/overlap_result_item.html" with is_sufficient=result.is_sufficient title=result.user.get_full_name hour_blocks=result.hour_blocks time_ranges=result.time_ranges is_nested=True %}
     {% endfor %}
 {% endif %}

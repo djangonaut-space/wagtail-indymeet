@@ -22,7 +22,13 @@ from playwright.sync_api import Page
 
 from accounts.factories import UserFactory
 from accounts.models import CustomUser
-from home.factories import SessionFactory, SurveyFactory, UserSurveyResponseFactory
+from home.factories import (
+    ProjectFactory,
+    SessionFactory,
+    SurveyFactory,
+    TeamFactory,
+    UserSurveyResponseFactory,
+)
 from home.models import Session, SessionMembership, Survey, Team, UserSurveyResponse
 
 logger = getLogger(__name__)
@@ -645,9 +651,13 @@ class TestTeamFormation:
         session.application_survey = survey
         session.save()
 
-        # Create teams
-        team_alpha = Team.objects.create(session=session, name="Team Alpha")
-        team_beta = Team.objects.create(session=session, name="Team Beta")
+        # Create teams (TeamFactory automatically creates a project)
+        team_alpha = TeamFactory(
+            session=session, name="Team Alpha", project__name="Django"
+        )
+        team_beta = TeamFactory(
+            session=session, name="Team Beta", project=team_alpha.project
+        )
 
         # Create applicants (users with survey responses)
         users = UserFactory.create_batch(
@@ -675,6 +685,33 @@ class TestTeamFormation:
                 team=team_alpha,
                 role=SessionMembership.DJANGONAUT,
             )
+
+        # Create navigators for both teams
+        navigator_alpha = UserFactory(
+            username="navigator_alpha",
+            email="navigator_alpha@test.com",
+            first_name="Navigator",
+            last_name="Alpha",
+        )
+        SessionMembership.objects.create(
+            session=session,
+            user=navigator_alpha,
+            team=team_alpha,
+            role=SessionMembership.NAVIGATOR,
+        )
+
+        navigator_beta = UserFactory(
+            username="navigator_beta",
+            email="navigator_beta@test.com",
+            first_name="Navigator",
+            last_name="Beta",
+        )
+        SessionMembership.objects.create(
+            session=session,
+            user=navigator_beta,
+            team=team_beta,
+            role=SessionMembership.NAVIGATOR,
+        )
 
         return TeamFormationTestData(
             session=session,
@@ -726,7 +763,8 @@ class TestTeamFormation:
         5. Bulk team assignment
         6. HTMX overlap calculation
         7. Sorting functionality
-        8. Pagination
+        8. Teams panel visibility
+        9. Waitlist functionality
         """
         data = setup_team_formation_data
 
@@ -866,3 +904,20 @@ class TestTeamFormation:
 
         # Verify Team Alpha heading shows (team card is visible)
         expect(team_page.get_by_role("heading", name="Team Alpha")).to_be_visible()
+
+        # Test 9: Waitlist functionality
+        # Select an unassigned applicant for waitlist (nth(2) should be unassigned)
+        checkboxes = team_page.locator(".applicant-checkbox")  # Re-query
+        checkboxes.nth(2).check()
+
+        # Click add to waitlist button
+        team_page.get_by_role("button", name="Add to Waitlist").click()
+
+        # Wait for page reload
+        team_page.wait_for_load_state("networkidle")
+
+        # Verify success message appears
+        expect(team_page.locator(".messagelist").first).to_contain_text(
+            "Successfully added"
+        )
+        expect(team_page.locator(".messagelist").first).to_contain_text("waitlist")

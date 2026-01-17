@@ -5,6 +5,13 @@ from .production import *
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
+
+# Use ImmediateBackend for tasks in tests so they run synchronously
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend",
+    }
+}
 # Disable ssl for testing on CI
 DATABASES["default"].setdefault("OPTIONS", {}).pop("sslmode", None)
 
@@ -13,3 +20,9 @@ DATABASES["default"].setdefault("OPTIONS", {}).pop("sslmode", None)
 STORAGES["staticfiles"][
     "BACKEND"
 ] = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+# Use locmem backend for email in tests
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
+# Set ENVIRONMENT to production so email sending is not restricted in tests
+ENVIRONMENT = "production"

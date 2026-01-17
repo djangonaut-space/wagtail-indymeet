@@ -1,21 +1,30 @@
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Application Submitted</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Availability Submitted</h1>
-            <p>Hello {{ user.first_name }},</p>
+{% extends "email/base.html" %}
 
-            <p>You have successfully submitted your application for {{ session.title }}. You view and edit your responses at <a href="{{ response.get_fulL_url }}">{{ response.get_full_url }}</a>.</p>
+{% block preheader %}Application Submitted Successfully{% endblock preheader %}
 
-            <p>Please be sure to set your availability at <a href="{{ availability.get_fulL_url }}">{{ availability.get_full_url }}</a> too!</p>
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello {{ user.first_name }} 👋</p>
+{% endblock greeting %}
 
-            <p>Thank you,</p>
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You have successfully submitted your application for <strong>{{ session.title }}</strong>. 🎉
+  </p>
 
-            <p>Djangonaut Space</p>
-        </div>
-    </body>
-</html>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You can view and edit your responses at any time by clicking the button below:
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}View Your Application{% endblock cta_button_text %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>Don't forget!</strong> Please be sure to set your availability at <a href="{{ availability.get_full_url }}" style="color: #5c0287;">{{ availability.get_full_url }}</a> too!
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Thank you,<br>
+    Djangonaut Space
+  </p>
+{% endblock after_cta %}

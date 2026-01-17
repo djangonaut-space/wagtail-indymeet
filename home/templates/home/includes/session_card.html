@@ -2,9 +2,11 @@
 <div class="col">
     <div class="max-w-sm rounded overflow-hidden shadow-lg card">
       <div class="px-6 py-4 card-body">
-        <h5 class="font-bold text-xl mb-1 card-title">{{ session.title }}</h5>
+        <h5 class="font-bold text-xl mb-1 card-title">
+          <a href="{{ session.get_absolute_url }}">{{ session.title }}</a>
+        </h5>
         <p class="text-gray-700 text-base card-text">
-          {{ session.description|linebreaksbr|urlizetrunc:25|truncatewords_html:60 }}
+          {{ session.description|default_if_none:""|linebreaksbr|urlizetrunc:25|truncatewords_html:60 }}
         </p>
         <br />
         <h6 class="text-lg">Applications Open</h6>
@@ -18,7 +20,6 @@
       </div>
       <div class="px-6 py-3 mb-2 card-footer">
         {% include 'home/includes/session_apply_btn.html' %}
-        <a href="{{ session.get_absolute_url }}" class="card-link px-2">Details</a>
       </div>
     </div>
 </div>

@@ -1,0 +1,45 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Send Team Welcome Emails - {{ session.title }}</h1>
+
+<div class="module">
+    <h2>Summary</h2>
+    <p>This will send welcome emails to all team members in this session.</p>
+    <ul>
+        <li><strong>Teams:</strong> {{ team_count }}</li>
+        <li><strong>Members with teams:</strong> {{ member_count }}</li>
+    </ul>
+    <p>Each member will receive an email containing:</p>
+    <ul>
+        <li>Their team name and project</li>
+        <li>Their role in the team</li>
+        <li>List of all team members with contact information</li>
+        <li>Next steps for getting started</li>
+    </ul>
+</div>
+
+{% if member_count == 0 %}
+<div class="messagelist">
+    <div class="error">
+        No team members found. Please ensure you have:
+        <ul>
+            <li>Created teams for this session</li>
+            <li>Assigned session members to teams</li>
+        </ul>
+    </div>
+</div>
+<p><a href="{% url 'admin:home_session_changelist' %}" class="button">Back to Session List</a></p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+    <p><strong>Are you sure you want to send welcome emails to all {{ member_count }} team member(s)?</strong></p>
+    <div class="submit-row">
+        <input type="submit" value="Send Welcome Emails" class="default" />
+        <a href="{% url 'admin:home_session_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}

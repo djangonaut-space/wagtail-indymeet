@@ -104,14 +104,14 @@ class AvailabilityUtilsTestCase(TestCase):
 
     def test_format_slot_as_time(self):
         """Test time formatting."""
-        # Sunday 00:00
-        self.assertEqual(format_slot_as_time(0.0), "Sun 00:00")
+        # Sunday 00:00 (12:00 AM)
+        self.assertEqual(format_slot_as_time(0.0), "Sun 12:00 AM")
 
-        # Monday 14:30
-        self.assertEqual(format_slot_as_time(38.5), "Mon 14:30")
+        # Monday 14:30 (2:30 PM)
+        self.assertEqual(format_slot_as_time(38.5), "Mon 2:30 PM")
 
-        # Saturday 23:30
-        self.assertEqual(format_slot_as_time(167.5), "Sat 23:30")
+        # Saturday 23:30 (11:30 PM)
+        self.assertEqual(format_slot_as_time(167.5), "Sat 11:30 PM")
 
     def test_format_slots_as_ranges(self):
         """Test formatting slots as time ranges."""

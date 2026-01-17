@@ -1,0 +1,41 @@
+{% extends "email/base.html" %}
+{% load email_tags %}
+
+{% block preheader %}Waitlist Update{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello {{ user.first_name }} 👋</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Thank you for your interest in <strong>{{ session.title }}</strong>. We're writing to update you on the status of our waitlist.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Unfortunately, we are unable to offer you a spot for this session. All available positions have been filled, and we will not be accepting additional participants from the waitlist.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>Session Details:</strong>
+  </p>
+
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Start Date:</strong> <a href="{{ session.start_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.start_date|date:"F d, Y" }}</a></li>
+    <li style="margin-bottom: 8px;"><strong>End Date:</strong> <a href="{{ session.end_date|time_is_link:'1200' }}" style="color: #5c0287;">{{ session.end_date|date:"F d, Y" }}</a></li>
+  </ul>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We encourage you to apply again in future cohorts. Many successful participants applied multiple times before being accepted. You can stay updated on upcoming sessions by visiting our website.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Thank you for your interest in Djangonaut Space!<br><br>
+    Best regards,<br>
+    The Djangonaut Space Team
+  </p>
+{% endblock after_cta %}

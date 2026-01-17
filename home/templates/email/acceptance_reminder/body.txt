@@ -1,0 +1,18 @@
+Hello,
+
+We emailed you an invitation to join the Djangonaut Program and it's not too late to confirm your place as a Djangonaut! ⏰
+
+Please confirm your acceptance by visiting {{ acceptance_url }} and let us know whether you can be one of our Djangonauts by {{ membership.acceptance_deadline|date:"l F jS" }} (12:00 UTC).
+
+Otherwise, we may not be able to accommodate you this round.
+
+The duration of this program is {{ session.start_date|date:"F d, Y" }} - {{ session.end_date|date:"F d, Y" }}.
+To learn more about the program you can read our documentation here: https://github.com/djangonaut-space/program
+
+Don't worry if this is not of interest to you or we have reached you at a bad time. We'd appreciate you letting us know. ❤️
+
+All the best,
+
+Djangonaut Organisation Team 🚀
+✉️ contact@djangonaut.space
+📄 https://github.com/djangonaut-space/program

@@ -3,17 +3,20 @@ import io
 
 from django import forms
 from django.core import validators
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
+from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import CustomUser
 from home.constants import DATE_INPUT_FORMAT
 from home.constants import SURVEY_FIELD_VALIDATORS
-from home.models import Question, Team, SessionMembership
+from home.models import Question, Team, SessionMembership, ProjectPreference, Waitlist
 from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
@@ -64,6 +67,7 @@ class BaseSurveyForm(forms.Form):
         self.questions = self.survey.questions.all().order_by("ordering")
         super().__init__(*args, **kwargs)
 
+        # Add all question fields first
         for question in self.questions:
             # to generate field name
             field_name = to_field_name(question)
@@ -151,6 +155,52 @@ class BaseSurveyForm(forms.Form):
             self.fields[field_name].help_text = question.help_text
             self.field_names.append(field_name)
 
+        # Add project preference field if survey is associated with a session
+        self.session = None
+        try:
+            app_session = self.survey.application_session
+        except ObjectDoesNotExist:
+            pass
+        else:
+            if app_session.is_accepting_applications():
+                self.session = app_session
+
+                # Add project preference field if session has available projects
+                project_choices = [
+                    (
+                        project.id,
+                        mark_safe(
+                            f'<div><a href="{project.url}" target="_blank">{project.name}</a>'
+                            f"<p>{project.description}</p></div>"
+                        ),
+                    )
+                    for project in self.session.available_projects.all()
+                ]
+                if project_choices:
+                    self.fields["project_preferences"] = forms.MultipleChoiceField(
+                        choices=project_choices,
+                        label=_("Project Preferences"),
+                        help_text=_(
+                            "Select the projects you would like to work on. "
+                            "Leave blank if you're okay with any project."
+                        ),
+                        widget=CheckboxSelectMultipleSurvey,
+                        required=False,
+                    )
+
+                # Add GitHub username field for application sessions
+                self.fields["github_username"] = forms.CharField(
+                    max_length=39,
+                    label=_("GitHub Username"),
+                    help_text=_("Your GitHub username (required for participation)"),
+                    required=True,
+                    initial=(
+                        self.user.profile.github_username
+                        if hasattr(self.user, "profile")
+                        else ""
+                    ),
+                )
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -201,17 +251,37 @@ class CreateUserSurveyResponseForm(BaseSurveyForm):
             update_fields=("value",),
             unique_fields=("question", "user_survey_response"),
         )
+
+        # Save project preferences if provided and session exists
+        if self.session and (
+            project_preferences := cleaned_data.get("project_preferences")
+        ):
+            preferences = [
+                ProjectPreference(
+                    user=self.user,
+                    session=self.session,
+                    project_id=project_id,
+                )
+                for project_id in project_preferences
+            ]
+            ProjectPreference.objects.bulk_create(preferences, ignore_conflicts=True)
+
+        # Save GitHub username to user profile
+        if self.session and (github_username := cleaned_data.get("github_username")):
+            self.user.profile.github_username = github_username
+            self.user.profile.save(update_fields=["github_username"])
+
         return user_survey_response
 
 
 class EditUserSurveyResponseForm(BaseSurveyForm):
-    def __init__(self, *args, instance, **kwargs):
-        self.survey = instance.survey
+    def __init__(self, *args, instance: UserSurveyResponse, **kwargs):
         self.user_survey_response = instance
-        super().__init__(*args, survey=self.survey, user=instance.user, **kwargs)
+        super().__init__(*args, survey=instance.survey, user=instance.user, **kwargs)
         self._set_initial_data()
 
     def _set_initial_data(self):
+
         question_responses = self.user_survey_response.userquestionresponse_set.all()
 
         for question_response in question_responses:
@@ -220,6 +290,13 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
                 self.fields[field_name].initial = question_response.value.split(",")
             else:
                 self.fields[field_name].initial = question_response.value
+
+        # Set initial data for project preferences
+        if self.session and "project_preferences" in self.fields:
+            existing_prefs = ProjectPreference.objects.for_user_session(
+                user=self.user_survey_response.user, session=self.session
+            ).values_list("project_id", flat=True)
+            self.fields["project_preferences"].initial = list(existing_prefs)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -247,6 +324,34 @@ class EditUserSurveyResponseForm(BaseSurveyForm):
             update_fields=("value",),
             unique_fields=("question", "user_survey_response"),
         )
+
+        # Update project preferences if session exists
+        if self.session and (
+            project_preferences := cleaned_data.get("project_preferences")
+        ):
+            # Delete existing preferences for this user/session
+            ProjectPreference.objects.for_user_session(
+                user=self.user_survey_response.user, session=self.session
+            ).exclude(project_id__in=project_preferences).delete()
+
+            # Create new preferences if projects were selected
+            preferences = [
+                ProjectPreference(
+                    user=self.user_survey_response.user,
+                    session=self.session,
+                    project_id=project_id,
+                )
+                for project_id in project_preferences
+            ]
+            ProjectPreference.objects.bulk_create(preferences, ignore_conflicts=True)
+
+        # Update GitHub username in user profile
+        if self.session and (github_username := cleaned_data.get("github_username")):
+            self.user_survey_response.user.profile.github_username = github_username
+            self.user_survey_response.user.profile.save(
+                update_fields=["github_username"]
+            )
+
         return self.user_survey_response
 
 
@@ -383,34 +488,21 @@ class SurveyCSVExportForm(forms.Form):
         response.write("\ufeff")
 
         writer = csv.writer(response)
-
-        # Write header row - only Response ID and TEXT_AREA questions
         header = ["Response ID"]
-        # Add question labels as columns
-        header.extend([q.label for q in questions])
-        # Add Score and Selection Rank columns (no individual scorer columns)
-        header.append("Score")
-        header.append("Selection Rank")
+        for question in questions:
+            header.extend([question.label, f"{question.label} Score"])
         writer.writerow(header)
 
         # Write data rows
         for response_obj in responses:
             row = [response_obj.id]
-
-            # Get all question responses for this survey response
-            question_responses = {
+            response_map = {
                 qr.question_id: qr.value
                 for qr in response_obj.userquestionresponse_set.all()
             }
-
-            # Add only TEXT_AREA question responses in order
             for question in questions:
-                row.append(question_responses.get(question.id, ""))
-
-            # Add empty Score and Selection Rank columns
-            row.append("")
-            row.append("")
-
+                # Add the response and an empty cell for the score.
+                row.extend([response_map.get(question.id, ""), ""])
             writer.writerow(row)
 
         return response
@@ -660,47 +752,30 @@ class ApplicantFilterForm(forms.Form):
             self.fields["overlap_with_captain"].queryset = team_queryset
 
 
-class OverlapAnalysisForm(forms.Form):
-    """Form for analyzing availability overlap between selected users and team members."""
+class BaseTeamForm(forms.Form):
+    """
+    Base class for forms that require a session context
+    and accept a comma-delimited list of user IDs.
 
-    prefix = "overlap"
+    Provides:
+    - user_ids field (hidden input)
+    - clean_user_ids method with validation
+    - get_selected_users method to retrieve user objects
+    """
 
     user_ids = forms.CharField(
         widget=forms.HiddenInput(),
         required=True,
-        help_text=_("Comma-separated list of user IDs to analyze"),
+        help_text=_("Comma-separated list of user IDs"),
     )
 
-    team = forms.ModelChoiceField(
-        label=_("Team"),
-        queryset=None,
-        required=True,
-        help_text=_("Team whose navigators/captain will be included in analysis"),
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
-
-    analysis_type = forms.ChoiceField(
-        label=_("Analysis Type"),
-        choices=[
-            ("overlap-navigator", _("Check Navigator Overlap")),
-            ("overlap-captain", _("Check Captain Overlap")),
-        ],
-        initial="overlap-navigator",
-        widget=forms.RadioSelect(attrs={"class": "form-radio"}),
-    )
-
-    def __init__(self, *args, session=None, **kwargs):
-        """Initialize form with session context for team queryset."""
+    def __init__(self, *args, session, **kwargs):
+        """Initialize form with session context."""
         super().__init__(*args, **kwargs)
         self.session = session
-        if session:
-            self.fields["team"].queryset = Team.objects.filter(
-                session=session
-            ).order_by("name")
 
     def clean_user_ids(self) -> list[int]:
-        """Parse and validate user IDs."""
-
+        """Parse and validate comma-delimited user IDs."""
         user_ids_str = self.cleaned_data.get("user_ids", "")
         if not user_ids_str:
             raise forms.ValidationError(_("No users selected"))
@@ -734,6 +809,35 @@ class OverlapAnalysisForm(forms.Form):
             CustomUser.objects.filter(id__in=user_ids).prefetch_related("availability")
         )
 
+
+class OverlapAnalysisForm(BaseTeamForm):
+    """Form for analyzing availability overlap between selected users and team members."""
+
+    prefix = "overlap"
+
+    team = forms.ModelChoiceField(
+        label=_("Team"),
+        queryset=None,
+        required=True,
+        help_text=_("Team whose navigators/captain will be included in analysis"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    analysis_type = forms.ChoiceField(
+        label=_("Analysis Type"),
+        choices=[
+            ("overlap-navigator", _("Check Navigator Overlap")),
+            ("overlap-captain", _("Check Captain Overlap")),
+        ],
+        initial="overlap-navigator",
+        widget=forms.RadioSelect(attrs={"class": "form-radio"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Initialize form with session context for team queryset."""
+        super().__init__(*args, **kwargs)
+        self.fields["team"].queryset = self.session.teams.order_by("name")
+
     def get_team_navigators(self) -> list[CustomUser]:
         """
         Get navigators from the selected team.
@@ -746,9 +850,8 @@ class OverlapAnalysisForm(forms.Form):
         """
         team = self.cleaned_data["team"]
         navigator_memberships = (
-            SessionMembership.objects.filter(
-                team=team, role=SessionMembership.NAVIGATOR
-            )
+            SessionMembership.objects.for_team(team)
+            .navigators()
             .select_related("user")
             .prefetch_related("user__availability")
         )
@@ -774,7 +877,8 @@ class OverlapAnalysisForm(forms.Form):
         """
         team = self.cleaned_data["team"]
         captain_memberships = (
-            SessionMembership.objects.filter(team=team, role=SessionMembership.CAPTAIN)
+            SessionMembership.objects.for_team(team)
+            .captains()
             .select_related("user")
             .prefetch_related("user__availability")
         )
@@ -862,16 +966,10 @@ class OverlapAnalysisForm(forms.Form):
             return self.calculate_captain_overlap_context()
 
 
-class BulkTeamAssignmentForm(forms.Form):
+class BulkTeamAssignmentForm(BaseTeamForm):
     """Form for bulk assignment of users to a team."""
 
     prefix = "bulk_assign"
-
-    user_ids = forms.CharField(
-        widget=forms.HiddenInput(),
-        required=True,
-        help_text=_("Comma-separated list of user IDs to assign"),
-    )
 
     team = forms.ModelChoiceField(
         label=_("Team"),
@@ -882,39 +980,45 @@ class BulkTeamAssignmentForm(forms.Form):
         help_text=_("Select the team to assign selected users to"),
     )
 
-    def __init__(self, *args, session=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Initialize form with session context for team queryset."""
         super().__init__(*args, **kwargs)
-        self.session = session
-        if session:
+        self.fields["team"].queryset = self.session.teams.order_by("name")
 
-            self.fields["team"].queryset = Team.objects.filter(
-                session=session
-            ).order_by("name")
+    def clean(self):
+        """Validate that users' project preferences match the team's project."""
+        cleaned_data = super().clean()
 
-    def clean_user_ids(self) -> list[int]:
-        """Parse and validate user IDs."""
+        # Only validate if we have both user_ids and team
+        if "user_ids" not in cleaned_data or "team" not in cleaned_data:
+            return cleaned_data
 
-        user_ids_str = self.cleaned_data.get("user_ids", "")
-        if not user_ids_str:
-            raise forms.ValidationError(_("No users selected"))
+        user_ids = cleaned_data["user_ids"]
+        team = cleaned_data["team"]
 
-        try:
-            user_ids = [
-                int(uid.strip()) for uid in user_ids_str.split(",") if uid.strip()
-            ]
-        except ValueError:
-            raise forms.ValidationError(_("Invalid user ID format"))
+        # Get users who have invalid/conflicting project preferences
+        users_with_invalid_pref = CustomUser.objects.filter(
+            id__in=user_ids
+        ).with_invalid_project_preference(
+            project=team.project,
+            session=self.session,
+        )
 
-        if not user_ids:
-            raise forms.ValidationError(_("No users selected"))
+        # Build error message if any users have mismatched preferences
+        user_list = ", ".join(
+            user.get_full_name() or user.email for user in users_with_invalid_pref
+        )
+        if user_list:
+            self.add_error(
+                "team",
+                _(
+                    f"The following users have not selected '{team.project.name}'"
+                    f"as a preference: {user_list}. Users with no preferences can "
+                    "be assigned to any project."
+                ),
+            )
 
-        # Verify users exist
-        existing_count = CustomUser.objects.filter(id__in=user_ids).count()
-        if existing_count != len(user_ids):
-            raise forms.ValidationError(_("Some selected users do not exist"))
-
-        return user_ids
+        return cleaned_data
 
     @transaction.atomic
     def save(self) -> int:
@@ -932,19 +1036,145 @@ class BulkTeamAssignmentForm(forms.Form):
         team = self.cleaned_data["team"]
 
         assigned_count = 0
-        for user_id in user_ids:
-            try:
-                user = CustomUser.objects.get(pk=user_id)
-                membership, created = SessionMembership.objects.get_or_create(
-                    user=user,
-                    session=self.session,
-                    defaults={"role": SessionMembership.DJANGONAUT},
-                )
-                membership.team = team
-                # Don't change role - keep whatever it was
-                membership.save()
-                assigned_count += 1
-            except CustomUser.DoesNotExist:
-                continue
+        for user in CustomUser.objects.filter(id__in=user_ids):
+            membership, created = SessionMembership.objects.get_or_create(
+                user=user,
+                session=self.session,
+                defaults={"role": SessionMembership.DJANGONAUT},
+            )
+            membership.team = team
+            # Don't change role - keep whatever it was
+            membership.save()
+            assigned_count += 1
+
+        Waitlist.objects.filter(session=self.session, user__id__in=user_ids).delete()
 
         return assigned_count
+
+
+class BulkWaitlistForm(BaseTeamForm):
+    """Form for bulk adding users to the session waitlist."""
+
+    prefix = "bulk_waitlist"
+
+    @transaction.atomic
+    def save(self) -> int:
+        """
+        Add selected users to the waitlist.
+
+        If any users have existing SessionMembership records, those will be deleted
+        before adding them to the waitlist.
+
+        Returns:
+            Number of users successfully added to waitlist
+        """
+        user_ids = self.cleaned_data["user_ids"]
+        existing_member_ids = list(
+            SessionMembership.objects.for_session(self.session)
+            .filter(user_id__in=user_ids)
+            .values_list("id", flat=True)
+        )
+        # Delete SessionMembership records for users being waitlisted
+        if existing_member_ids:
+            SessionMembership.objects.filter(id__in=existing_member_ids).delete()
+
+        waitlist_entries = [
+            Waitlist(user_id=user_id, session=self.session) for user_id in user_ids
+        ]
+
+        # Use bulk_create with ignore_conflicts to handle race conditions
+        Waitlist.objects.bulk_create(waitlist_entries, ignore_conflicts=True)
+
+        # Return count of actually created entries
+        return len(waitlist_entries)
+
+
+class SendSessionResultsForm(forms.Form):
+    """Form for sending session result notifications."""
+
+    deadline_days = forms.IntegerField(
+        initial=7,
+        validators=[MinValueValidator(1)],
+        help_text=_("Number of days from now for the acceptance deadline"),
+        widget=forms.NumberInput(attrs={"min": 1, "class": "form-control"}),
+    )
+
+
+class MembershipAcceptanceForm(forms.Form):
+    """Form for users to accept or decline their session membership."""
+
+    ACTION_ACCEPT = "accept"
+    ACTION_DECLINE = "decline"
+
+    ACTION_CHOICES = (
+        (ACTION_ACCEPT, _("Accept Membership")),
+        (ACTION_DECLINE, _("Decline Membership")),
+    )
+
+    action = forms.ChoiceField(
+        choices=ACTION_CHOICES,
+        widget=forms.HiddenInput(),
+        required=True,
+    )
+
+    def __init__(self, *args, membership: SessionMembership, **kwargs):
+        """Initialize form with membership context."""
+        super().__init__(*args, **kwargs)
+        self.membership = membership
+
+    def clean(self):
+        """Validate that user hasn't already responded and deadline hasn't passed."""
+        cleaned_data = super().clean()
+
+        if self.membership.accepted is not None:
+            raise forms.ValidationError(
+                _("You have already responded to this invitation.")
+            )
+
+        # Check if deadline has passed
+        if self.membership.acceptance_deadline:
+            if timezone.now().date() > self.membership.acceptance_deadline:
+                deadline_str = self.membership.acceptance_deadline.strftime("%B %d, %Y")
+                raise forms.ValidationError(
+                    _(
+                        f"The acceptance deadline ({deadline_str}) has passed. "
+                        "Please contact the organizers if you still wish to "
+                        "participate."
+                    )
+                )
+
+        return cleaned_data
+
+    def save(self) -> bool:
+        """
+        Save the acceptance/decline decision.
+
+        Returns:
+            True if accepted, False if declined
+        """
+        from home.email import send
+
+        action = self.cleaned_data["action"]
+        is_accepted = action == self.ACTION_ACCEPT
+
+        self.membership.accepted = is_accepted
+        self.membership.accepted_at = timezone.now()
+        self.membership.save(update_fields=["accepted", "accepted_at"])
+
+        # Send notification email to organizers if declined
+        if not is_accepted:
+            context = {
+                "user": self.membership.user,
+                "session": self.membership.session,
+                "membership": self.membership,
+            }
+            send(
+                email_template="membership_declined",
+                recipient_list=[
+                    "contact@djangonaut.space",
+                    "session@djangonaut.space",
+                ],
+                context=context,
+            )
+
+        return is_accepted
