@@ -192,12 +192,18 @@ class UserSurveyResponse(BaseModel):
         return settings.BASE_URL + self.get_absolute_url()
 
     def send_created_notification(self):
-        from home.tasks.survey_notifications import send_application_created_notification
+        from home.tasks.survey_notifications import (
+            send_application_created_notification,
+        )
+
         if session := self.survey.session:
             send_application_created_notification(self, session)
 
     def send_updated_notification(self):
-        from home.tasks.survey_notifications import send_application_updated_notification
+        from home.tasks.survey_notifications import (
+            send_application_updated_notification,
+        )
+
         if session := self.survey.session:
             send_application_updated_notification(self, session)
 
