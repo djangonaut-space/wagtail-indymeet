@@ -192,38 +192,20 @@ class UserSurveyResponse(BaseModel):
         return settings.BASE_URL + self.get_absolute_url()
 
     def send_created_notification(self):
+        from home.tasks.survey_notifications import (
+            send_application_created_notification,
+        )
+
         if session := self.survey.session:
-            availability, _ = UserAvailability.objects.get_or_create(user=self.user)
-            context = {
-                "user": self.user,
-                "name": self.user.first_name or self.user.email,
-                "availability": availability,
-                "response": self,
-                "session": session,
-                "cta_link": self.get_full_url(),
-            }
-            email.send(
-                email_template="application_created",
-                recipient_list=[self.user.email],
-                context=context,
-            )
+            send_application_created_notification(self, session)
 
     def send_updated_notification(self):
+        from home.tasks.survey_notifications import (
+            send_application_updated_notification,
+        )
+
         if session := self.survey.session:
-            availability, _ = UserAvailability.objects.get_or_create(user=self.user)
-            context = {
-                "user": self.user,
-                "name": self.user.first_name or self.user.email,
-                "availability": availability,
-                "response": self,
-                "session": session,
-                "cta_link": self.get_full_url(),
-            }
-            email.send(
-                email_template="application_updated",
-                recipient_list=[self.user.email],
-                context=context,
-            )
+            send_application_updated_notification(self, session)
 
 
 class UserQuestionResponse(BaseModel):
