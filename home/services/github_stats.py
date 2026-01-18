@@ -163,47 +163,39 @@ class GitHubStatsCollector:
         """
         prs = []
 
-        try:
-            # Use Search API for each username - much faster than iterating all PRs
-            for username in usernames:
-                query = (
-                    f"repo:{owner}/{repo_name} "
-                    f"type:pr "
-                    f"author:{username} "
-                    f"created:{start_date}..{end_date}"
+        # Use Search API for each username - much faster than iterating all PRs
+        for username in usernames:
+            query = (
+                f"repo:{owner}/{repo_name} "
+                f"type:pr "
+                f"author:{username} "
+                f"created:{start_date}..{end_date}"
+            )
+            logger.debug("Searching: %s", query)
+
+            results = self.github.search_issues(query)
+
+            for item in results:
+                author = Author(
+                    github_username=item.user.login,
+                    name=item.user.name or item.user.login,
                 )
-                logger.debug("Searching: %s", query)
 
-                results = self.github.search_issues(query)
+                # Get the actual PR to check merged status
+                pr_created = self._parse_date(item.created_at)
 
-                for item in results:
-                    author = Author(
-                        github_username=item.user.login,
-                        name=item.user.name or item.user.login,
-                    )
-
-                    # Get the actual PR to check merged status
-                    pr_created = self._parse_date(item.created_at)
-
-                    pr = PR(
-                        title=item.title,
-                        number=item.number,
-                        url=item.html_url,
-                        author=author,
-                        created_at=pr_created,
-                        merged_at=None,  # Search API doesn't return this directly
-                        state="open" if item.state == "open" else "closed",
-                        repo=f"{owner}/{repo_name}",
-                    )
-                    prs.append(pr)
-                    logger.debug("Found PR #%d by %s", item.number, item.user.login)
-
-        except GithubException as e:
-            logger.error(f"GitHub API error for {owner}/{repo_name}: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Error collecting PRs from {owner}/{repo_name}: {e}")
-            raise
+                pr = PR(
+                    title=item.title,
+                    number=item.number,
+                    url=item.html_url,
+                    author=author,
+                    created_at=pr_created,
+                    merged_at=None,  # Search API doesn't return this directly
+                    state="open" if item.state == "open" else "closed",
+                    repo=f"{owner}/{repo_name}",
+                )
+                prs.append(pr)
+                logger.debug("Found PR #%d by %s", item.number, item.user.login)
 
         return prs
 
@@ -230,43 +222,35 @@ class GitHubStatsCollector:
         """
         issues_list = []
 
-        try:
-            # Use Search API for each username - much faster than iterating all issues
-            for username in usernames:
-                query = (
-                    f"repo:{owner}/{repo_name} "
-                    f"type:issue "
-                    f"author:{username} "
-                    f"created:{start_date}..{end_date}"
+        # Use Search API for each username - much faster than iterating all issues
+        for username in usernames:
+            query = (
+                f"repo:{owner}/{repo_name} "
+                f"type:issue "
+                f"author:{username} "
+                f"created:{start_date}..{end_date}"
+            )
+            logger.debug("Searching: %s", query)
+
+            results = self.github.search_issues(query)
+
+            for item in results:
+                author = Author(
+                    github_username=item.user.login,
+                    name=item.user.name or item.user.login,
                 )
-                logger.debug("Searching: %s", query)
 
-                results = self.github.search_issues(query)
-
-                for item in results:
-                    author = Author(
-                        github_username=item.user.login,
-                        name=item.user.name or item.user.login,
-                    )
-
-                    issue_obj = Issue(
-                        title=item.title,
-                        number=item.number,
-                        url=item.html_url,
-                        author=author,
-                        created_at=self._parse_date(item.created_at),
-                        state="open" if item.state == "open" else "closed",
-                        repo=f"{owner}/{repo_name}",
-                    )
-                    issues_list.append(issue_obj)
-                    logger.debug("Found issue #%d by %s", item.number, item.user.login)
-
-        except GithubException as e:
-            logger.error(f"GitHub API error for {owner}/{repo_name}: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Error collecting issues from {owner}/{repo_name}: {e}")
-            raise
+                issue_obj = Issue(
+                    title=item.title,
+                    number=item.number,
+                    url=item.html_url,
+                    author=author,
+                    created_at=self._parse_date(item.created_at),
+                    state="open" if item.state == "open" else "closed",
+                    repo=f"{owner}/{repo_name}",
+                )
+                issues_list.append(issue_obj)
+                logger.debug("Found issue #%d by %s", item.number, item.user.login)
 
         return issues_list
 
@@ -282,17 +266,13 @@ class GitHubStatsCollector:
             List of repository names
         """
         if repos == ["*"]:
-            try:
-                logger.info("Resolving wildcard repositories for %s", owner)
-                org = self.github.get_organization(owner)
-                # Fetch only sources, not forks, to avoid noise
-                # and limit to public repos usually, though 'all' is default
-                repo_names = [repo.name for repo in org.get_repos(type="sources")]
-                logger.info("Found %d repos for %s", len(repo_names), owner)
-                return repo_names
-            except GithubException as e:
-                logger.error("Failed to resolve wildcard for %s: %s", owner, e)
-                return []
+            logger.info("Resolving wildcard repositories for %s", owner)
+            org = self.github.get_organization(owner)
+            # Fetch only sources, not forks, to avoid noise
+            # and limit to public repos usually, though 'all' is default
+            repo_names = [repo.name for repo in org.get_repos(type="sources")]
+            logger.info("Found %d repos for %s", len(repo_names), owner)
+            return repo_names
         return repos
 
     def collect_all_stats(
@@ -338,63 +318,56 @@ class GitHubStatsCollector:
 
         # Search for each user's PRs and issues (only 2 API calls per user!)
         for username in usernames:
-            try:
-                # Search for PRs
-                pr_query = f"type:pr author:{username} created:{start_date}..{end_date}"
-                logger.debug("Searching PRs: %s", pr_query)
+            # Search for PRs
+            pr_query = f"type:pr author:{username} created:{start_date}..{end_date}"
+            logger.debug("Searching PRs: %s", pr_query)
 
-                pr_results = self.github.search_issues(pr_query)
-                for item in pr_results:
-                    repo_full_name = item.repository.full_name.lower()
-                    if repo_full_name in allowed_repos:
-                        author = Author(
-                            github_username=item.user.login,
-                            name=item.user.name or item.user.login,
-                        )
-                        pr = PR(
-                            title=item.title,
-                            number=item.number,
-                            url=item.html_url,
-                            author=author,
-                            created_at=self._parse_date(item.created_at),
-                            merged_at=None,
-                            state="open" if item.state == "open" else "closed",
-                            repo=item.repository.full_name,
-                        )
-                        report.prs.append(pr)
-                        logger.debug("Found PR #%d in %s", item.number, repo_full_name)
+            pr_results = self.github.search_issues(pr_query)
+            for item in pr_results:
+                repo_full_name = item.repository.full_name.lower()
+                if repo_full_name in allowed_repos:
+                    author = Author(
+                        github_username=item.user.login,
+                        name=item.user.name or item.user.login,
+                    )
+                    pr = PR(
+                        title=item.title,
+                        number=item.number,
+                        url=item.html_url,
+                        author=author,
+                        created_at=self._parse_date(item.created_at),
+                        merged_at=None,
+                        state="open" if item.state == "open" else "closed",
+                        repo=item.repository.full_name,
+                    )
+                    report.prs.append(pr)
+                    logger.debug("Found PR #%d in %s", item.number, repo_full_name)
 
-                # Search for issues
-                issue_query = (
-                    f"type:issue author:{username} created:{start_date}..{end_date}"
-                )
-                logger.debug("Searching issues: %s", issue_query)
+            # Search for issues
+            issue_query = (
+                f"type:issue author:{username} created:{start_date}..{end_date}"
+            )
+            logger.debug("Searching issues: %s", issue_query)
 
-                issue_results = self.github.search_issues(issue_query)
-                for item in issue_results:
-                    repo_full_name = item.repository.full_name.lower()
-                    if repo_full_name in allowed_repos:
-                        author = Author(
-                            github_username=item.user.login,
-                            name=item.user.name or item.user.login,
-                        )
-                        issue = Issue(
-                            title=item.title,
-                            number=item.number,
-                            url=item.html_url,
-                            author=author,
-                            created_at=self._parse_date(item.created_at),
-                            state="open" if item.state == "open" else "closed",
-                            repo=item.repository.full_name,
-                        )
-                        report.issues.append(issue)
-                        logger.debug(
-                            "Found issue #%d in %s", item.number, repo_full_name
-                        )
-
-            except GithubException as e:
-                logger.error("Failed to search for %s: %s", username, e)
-                continue
+            issue_results = self.github.search_issues(issue_query)
+            for item in issue_results:
+                repo_full_name = item.repository.full_name.lower()
+                if repo_full_name in allowed_repos:
+                    author = Author(
+                        github_username=item.user.login,
+                        name=item.user.name or item.user.login,
+                    )
+                    issue = Issue(
+                        title=item.title,
+                        number=item.number,
+                        url=item.html_url,
+                        author=author,
+                        created_at=self._parse_date(item.created_at),
+                        state="open" if item.state == "open" else "closed",
+                        repo=item.repository.full_name,
+                    )
+                    report.issues.append(issue)
+                    logger.debug("Found issue #%d in %s", item.number, repo_full_name)
 
         logger.info(
             "Collection complete: %d PRs, %d issues",

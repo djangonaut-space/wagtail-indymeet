@@ -81,22 +81,6 @@ class UserSessionListView(LoginRequiredMixin, ListView):
         return context
 
 
-def _create_download_response(
-    content: str,
-    content_type: str,
-    session_id: int,
-    start_date: date,
-    end_date: date,
-    ext: str,
-) -> HttpResponse:
-    """Create an HTTP response for file download."""
-    response = HttpResponse(content, content_type=content_type)
-    response["Content-Disposition"] = (
-        f'attachment; filename="djangonaut_stats_{session_id}_{start_date}_{end_date}.{ext}"'
-    )
-    return response
-
-
 @staff_member_required
 def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     """
@@ -174,93 +158,46 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
         }
         return render(request, "admin/collect_stats_form.html", context)
 
-    # Check for download request with cached data
-    download_format = request.GET.get("download") or request.POST.get("download")
-    cache_key = f"github_stats_{session_id}"
-
-    if download_format and cache_key in request.session:
-        # Use cached report for download
-        cached = request.session[cache_key]
-        if cached.get("start_date") == str(start_date) and cached.get(
-            "end_date"
-        ) == str(end_date):
-            if download_format == "csv":
-                return _create_download_response(
-                    cached["csv"], "text/csv", session.id, start_date, end_date, "csv"
-                )
-            if download_format == "txt":
-                return _create_download_response(
-                    cached["txt"], "text/plain", session.id, start_date, end_date, "txt"
-                )
-
     # Collect stats
-    try:
-        collector = GitHubStatsCollector()
+    collector = GitHubStatsCollector()
 
-        # Get repository configuration from settings
-        repos = getattr(settings, "DJANGONAUT_MONITORED_REPOS", [])
+    # Get repository configuration from settings
+    repos = getattr(settings, "DJANGONAUT_MONITORED_REPOS", [])
 
-        if not repos:
-            messages.error(
-                request,
-                "No repositories configured. Please set DJANGONAUT_MONITORED_REPOS in settings.",
-            )
-            return redirect("admin:home_session_changelist")
-
-        # Collect the stats
-        report = collector.collect_all_stats(
-            repos=repos,
-            usernames=github_usernames,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        # Cache the formatted reports for download
-        request.session[cache_key] = {
-            "start_date": str(start_date),
-            "end_date": str(end_date),
-            "csv": ReportFormatter.format_csv(report),
-            "txt": ReportFormatter.format_text(report),
-        }
-
-        # Handle immediate download request
-        if download_format:
-            cached = request.session[cache_key]
-            if download_format == "csv":
-                return _create_download_response(
-                    cached["csv"], "text/csv", session.id, start_date, end_date, "csv"
-                )
-            if download_format == "txt":
-                return _create_download_response(
-                    cached["txt"], "text/plain", session.id, start_date, end_date, "txt"
-                )
-
-        # Format report as HTML
-        report_html = ReportFormatter.format_html(report)
-
-        # Success message
-        messages.success(
+    if not repos:
+        messages.error(
             request,
-            f"Successfully collected stats for {len(github_usernames)} Djangonauts. "
-            f"Found {report.count_open_prs()} open PRs, {report.count_merged_prs()} merged PRs, "
-            f"and {report.count_open_issues()} issues.",
+            "No repositories configured. Please set DJANGONAUT_MONITORED_REPOS in settings.",
         )
-
-        context = {
-            "session": session,
-            "report": report,
-            "report_html": report_html,
-            "start_date": start_date,
-            "end_date": end_date,
-            "djangonauts_count": len(djangonauts_with_github),
-            "opts": Session._meta,
-            "has_view_permission": True,
-        }
-        return render(request, "admin/collect_stats_results.html", context)
-
-    except ValueError as e:
-        messages.error(request, f"Configuration error: {str(e)}")
         return redirect("admin:home_session_changelist")
-    except Exception as e:
-        messages.error(request, f"Error collecting stats: {str(e)}")
-        return redirect("admin:home_session_changelist")
+
+    # Collect the stats
+    report = collector.collect_all_stats(
+        repos=repos,
+        usernames=github_usernames,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    # Format report as HTML
+    report_html = ReportFormatter.format_html(report)
+
+    # Success message
+    messages.success(
+        request,
+        f"Successfully collected stats for {len(github_usernames)} Djangonauts. "
+        f"Found {report.count_open_prs()} open PRs, {report.count_merged_prs()} merged PRs, "
+        f"and {report.count_open_issues()} issues.",
+    )
+
+    context = {
+        "session": session,
+        "report": report,
+        "report_html": report_html,
+        "start_date": start_date,
+        "end_date": end_date,
+        "djangonauts_count": len(djangonauts_with_github),
+        "opts": Session._meta,
+        "has_view_permission": True,
+    }
+    return render(request, "admin/collect_stats_results.html", context)

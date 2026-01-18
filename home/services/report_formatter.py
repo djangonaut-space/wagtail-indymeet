@@ -1,90 +1,17 @@
 """
 Report formatting for GitHub stats.
 
-Formats StatsReport data into various output formats (HTML, CSV, plain text).
+Formats StatsReport data into HTML for admin display.
 """
 
-from datetime import date
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .github_stats import StatsReport, PR, Issue
+    from .github_stats import StatsReport
 
 
 class ReportFormatter:
-    """Formats GitHub stats reports in various formats."""
-
-    @staticmethod
-    def format_text(report: "StatsReport") -> str:
-        """
-        Format report as plain text (matching original djangonauts-stats library).
-        """
-        output = []
-
-        # Header
-        output.append(
-            f"\n=== Djangonauts Report ({report.start_date} → {report.end_date}) ==="
-        )
-        output.append(
-            f"Open PRs: {report.count_open_prs()}, "
-            f"Merged: {report.count_merged_prs()}, "
-            f"Issue: {report.count_open_issues()}"
-        )
-
-        # Authors
-        authors = report.get_authors()
-        author_names = [author.name for author in authors] if authors else []
-        output.append(f"Djangonaut Authors: {', '.join(author_names)}")
-
-        # Merged PRs
-        merged_prs = report.get_merged_prs()
-        if merged_prs:
-            output.append("\n--Merged--")
-            items = []
-            for pr in merged_prs:
-                items.append(f"🎉 {pr.title}\n{pr.author.name}\n{pr.url}")
-            output.append("\n\n".join(items))
-        else:
-            output.append("\n\nNo merged PRs")
-
-        # Open PRs
-        open_prs = report.get_open_prs()
-        if open_prs:
-            output.append("\n\n--Opened--")
-            items = []
-            for pr in open_prs:
-                items.append(f"✨ {pr.title}\n{pr.author.name} \n{pr.url}")
-            output.append("\n\n".join(items))
-        else:
-            output.append("\n\nNo opened PRs")
-
-        # Issues (Reference script treats Issues slightly differently, usually just
-        # --Issue-- or similar if present, but looking at reference output:
-        # "Issue: 0 ... --No Issue--"
-        # Reference code: "load_issues" loop adds to self.results.issues.
-        # Reference export: if nr_open_issue -> "\n\n--Issue--\n" (inferred vs variable
-        # names? wait, let's check generator.py snippet again)
-        # generator.py snippet ends at `No opened PRs`. It cuts off!
-        # Chunk 0 ended at line 68 equivalent. It didn't show Issue printing logic fully!
-        # But I can infer it. I will keep my logic for issues but match standard style.
-        # Actually I saw "Issue: {nr_open_issue}" in header.
-        # I will assume standard format for issues.
-
-        open_issues = report.get_open_issues()
-        if open_issues:
-            output.append("\n\n--Issue--")
-            items = []
-            for issue in open_issues:
-                # Reference likely uses no emoji or specific emoji?
-                # Chunk skipped it. I'll use simple format similar to PRs.
-                items.append(f"✏️ {issue.title}\n{issue.author.name}\n{issue.url}")
-            output.append("\n\n".join(items))
-        else:
-            output.append("\n\n--No Issue--")
-
-        output.append("\n" + "=" * 40)
-
-        return "\n".join(output)
+    """Formats GitHub stats reports for admin display."""
 
     @staticmethod
     def format_html(report: "StatsReport") -> str:
@@ -214,36 +141,3 @@ class ReportFormatter:
             )
 
         return "\n".join(html_parts)
-
-    @staticmethod
-    def format_csv(report: "StatsReport") -> str:
-        """
-        Format report as CSV for download.
-
-        Args:
-            report: StatsReport to format
-
-        Returns:
-            CSV string
-        """
-        lines = []
-
-        # Header
-        lines.append("Type,Title,Number,Author,Date,Status,Repository,URL")
-
-        # PRs
-        for pr in report.prs:
-            status = "Merged" if pr.is_merged else "Open"
-            date_str = str(pr.merged_at) if pr.is_merged else str(pr.created_at)
-            lines.append(
-                f'PR,"{pr.title}",{pr.number},{pr.author.name},{date_str},{status},{pr.repo},{pr.url}'
-            )
-
-        # Issues
-        for issue in report.issues:
-            status = "Open" if issue.is_open else "Closed"
-            lines.append(
-                f'Issue,"{issue.title}",{issue.number},{issue.author.name},{issue.created_at},{status},{issue.repo},{issue.url}'
-            )
-
-        return "\n".join(lines)

@@ -93,17 +93,14 @@
         font-weight: bold;
     }
 
-    .download-actions {
+    .back-actions {
         margin-top: 30px;
         padding-top: 20px;
         border-top: 1px solid #eee;
-        background: #f8f8f8;
-        padding: 15px;
     }
 
     /* Standard Admin Button Styles */
-    .button,
-    button.button {
+    .button {
         background: #79aec8;
         padding: 10px 15px;
         border: none;
@@ -114,10 +111,10 @@
         letter-spacing: 0.5px;
         cursor: pointer;
         display: inline-block;
+        text-decoration: none;
     }
 
-    .button:hover,
-    button.button:hover {
+    .button:hover {
         background: #609ab6;
     }
 
@@ -147,19 +144,8 @@
     <!-- Rendered HTML Report -->
     {{ report_html|safe }}
 
-    <div class="download-actions">
-        <h3>Download Report</h3>
-        <form method="post" style="display: inline;">
-            {% csrf_token %}
-            <input type="hidden" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
-            <input type="hidden" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
-            <button type="submit" name="download" value="csv" class="button"
-                style="border: none; cursor: pointer;">Download CSV</button>
-            <button type="submit" name="download" value="txt" class="button"
-                style="border: none; cursor: pointer;">Download Text</button>
-        </form>
-        <a href="{% url 'admin:home_session_changelist' %}" class="button back">Back to
-            Sessions</a>
+    <div class="back-actions">
+        <a href="{% url 'admin:home_session_changelist' %}" class="button back">Back to Sessions</a>
     </div>
 </div>
 {% endblock %}
