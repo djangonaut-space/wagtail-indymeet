@@ -23,6 +23,7 @@ from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
 
 from home.email import send
+from home.models import Testimonial
 
 from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
@@ -139,8 +140,14 @@ class SignUpView(CreateView):
 
 @login_required(login_url="/accounts/login")
 def profile(request):
+    testimonials = None
+    if request.user.session_memberships.exists():
+        testimonials = Testimonial.objects.for_user(request.user).select_related(
+            "session"
+        )
     context = {
-        "user_responses": request.user.usersurveyresponse_set.select_related("survey")
+        "user_responses": request.user.usersurveyresponse_set.select_related("survey"),
+        "user_testimonials": testimonials,
     }
     return render(request, "registration/profile.html", context)
 

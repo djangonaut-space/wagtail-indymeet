@@ -1,0 +1,26 @@
+Hello,
+
+A {% if is_new %}new{% else %}updated{% endif %} testimonial has been submitted and requires your review.
+
+Author: {{ author.get_full_name|default:author.email }}
+Session: {{ session.title }}
+Title: {{ testimonial.title }}
+
+Testimonial:
+{{ testimonial.text }}
+
+{% if not is_new and changes %}
+Changes Made:
+{% for change in changes %}
+- {{ change.field }}:
+  Old: {{ change.old }}
+  New: {{ change.new }}
+{% endfor %}
+{% endif %}
+
+To review and publish this testimonial, visit the admin page:
+{{ admin_url }}
+
+Thank you,
+
+Djangonaut Space

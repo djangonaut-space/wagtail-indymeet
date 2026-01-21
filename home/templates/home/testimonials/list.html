@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}Testimonials | Djangonaut Space{% endblock %}
+{% block meta_title %}Testimonials | Djangonaut Space{% endblock %}
+{% block meta_description %}Read testimonials from Djangonaut Space participants about their experiences in the program.{% endblock %}
+
+{% block social_share %}
+<meta property="og:title" content="Testimonials - Djangonaut Space">
+<meta property="og:description" content="Read testimonials from Djangonaut Space participants about their experiences in the program.">
+<meta property="og:image" content="{% static 'img/main-white-purple-background.png' %}">
+{% endblock social_share %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container">
+        <header class="flex flex-wrap justify-between items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-5xl mb-2">{% translate "Testimonials" %}</h1>
+                <p class="text-gray-600">{% translate "Hear from our Djangonauts about their experiences" %}</p>
+            </div>
+            {% if can_create_testimonial %}
+            <a href="{% url 'testimonial_create' %}" class="inline-flex items-center px-5 py-2.5 bg-ds-purple text-white rounded-lg hover:bg-purple-500 transition-colors font-medium">
+                {% translate "Share Your Experience" %}
+            </a>
+            {% endif %}
+        </header>
+
+        {% if testimonials %}
+        <section class="space-y-4">
+            {% for testimonial in testimonials %}
+            <article id="{{ testimonial.slug }}"
+                     class="grid grid-cols-4 gap-6 p-6 bg-white rounded-lg border border-gray-200 scroll-mt-24">
+                <figure>
+                    {% if testimonial.image %}
+                    <img src="{{ testimonial.image.url }}"
+                         alt="{{ testimonial.image_description }}"
+                         class="w-full max-h-48 rounded object-cover mb-3">
+                    {% endif %}
+                    <figcaption>
+                        <h5 class="text-xl font-semibold text-gray-800">{{ testimonial.author.get_full_name|default:testimonial.author.email }}</h5>
+                        <small class="text-sm text-gray-500">Participant of {{ testimonial.session.title }}</small>
+                    </figcaption>
+                </figure>
+                <div class="col-span-3 flex flex-col">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3">{{ testimonial.title }}</h2>
+                    <blockquote class="relative bg-purple-50 border-l-4 border-ds-purple rounded-r-lg p-5">
+                        <i class="fa-solid fa-quote-left absolute -top-2 left-2 text-3xl text-purple-400" aria-hidden="true"></i>
+                        <p class="text-gray-700 italic pl-6">
+                            {{ testimonial.text|linebreaksbr|urlizetrunc:25 }}
+                        </p>
+                        <i class="fa-solid fa-quote-right absolute -bottom-2 right-3 text-3xl text-purple-400" aria-hidden="true"></i>
+                    </blockquote>
+                </div>
+            </article>
+            {% endfor %}
+        </section>
+        {% else %}
+        <section class="text-center py-12 bg-white rounded-lg border border-gray-200">
+            <i class="fa-solid fa-comment-dots text-5xl text-gray-300 mb-4"></i>
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">{% translate "No testimonials yet" %}</h2>
+            <p class="text-gray-500 mb-4">{% translate "Be the first to share your experience!" %}</p>
+            {% if can_create_testimonial %}
+            <a href="{% url 'testimonial_create' %}" class="inline-flex items-center px-5 py-2.5 bg-ds-purple text-white rounded-lg hover:bg-purple-500 transition-colors font-medium">
+                {% translate "Share Your Experience" %}
+            </a>
+            {% endif %}
+        </section>
+        {% endif %}
+    </div>
+</main>
+{% endblock content %}

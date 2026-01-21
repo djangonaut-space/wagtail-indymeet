@@ -13,6 +13,7 @@ from home.models import (
     SessionMembership,
     Survey,
     Team,
+    Testimonial,
     TypeField,
     UserQuestionResponse,
     UserSurveyResponse,
@@ -131,3 +132,17 @@ class WaitlistFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
+
+
+class TestimonialFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Testimonial
+
+    title = factory.Sequence(lambda n: "Testimonial Title %d" % n)
+    text = factory.Sequence(
+        lambda n: "This is my testimonial text for my experience during the program. "
+        "It was a great learning experience! %d" % n
+    )
+    author = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    is_published = False
