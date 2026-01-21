@@ -1,6 +1,8 @@
 """Tests for the testimonial feature."""
 
-from django.test import Client, TestCase
+from unittest.mock import patch
+
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.factories import UserFactory
@@ -11,6 +13,7 @@ from home.factories import (
 )
 from home.forms import TestimonialForm
 from home.models import SessionMembership, Testimonial
+from home.tasks.testimonial_notifications import send_testimonial_notification
 
 
 class TestimonialModelTests(TestCase):
@@ -457,3 +460,179 @@ class ProfileTestimonialsSectionTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, reverse("testimonial_create"))
+
+
+class SendTestimonialNotificationTaskTests(TestCase):
+    """Tests for the send_testimonial_notification task."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = UserFactory.create(
+            is_superuser=True, is_active=True, email="admin@example.com"
+        )
+        cls.session = SessionFactory.create(title="Test Session 2024")
+        cls.author = UserFactory.create(
+            email="author@example.com", first_name="TestAuthor"
+        )
+        cls.testimonial = TestimonialFactory.create(
+            title="Great Experience",
+            text="This was an amazing program!",
+            author=cls.author,
+            session=cls.session,
+        )
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.testimonial_notifications.email.send")
+    def test_sends_notification_for_new_testimonial(self, mock_send):
+        """Test that task sends notification email for a new testimonial."""
+        send_testimonial_notification.call(
+            testimonial_id=self.testimonial.pk,
+            is_new=True,
+        )
+
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        self.assertEqual(call_kwargs["email_template"], "testimonial_notification")
+        self.assertEqual(call_kwargs["recipient_list"], ["admin@example.com"])
+        self.assertEqual(call_kwargs["context"]["testimonial"], self.testimonial)
+        self.assertEqual(call_kwargs["context"]["author"], self.author)
+        self.assertEqual(call_kwargs["context"]["session"], self.session)
+        self.assertTrue(call_kwargs["context"]["is_new"])
+        self.assertIn("admin_url", call_kwargs["context"])
+        self.assertIn("cta_link", call_kwargs["context"])
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.testimonial_notifications.email.send")
+    def test_sends_notification_for_updated_testimonial(self, mock_send):
+        """Test that task sends notification email for an updated testimonial."""
+        old_values = {
+            "title": "Old Title",
+            "text": "Old text content",
+            "session_id": self.session.pk,
+        }
+
+        send_testimonial_notification.call(
+            testimonial_id=self.testimonial.pk,
+            is_new=False,
+            old_values=old_values,
+        )
+
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        self.assertEqual(call_kwargs["email_template"], "testimonial_notification")
+        self.assertFalse(call_kwargs["context"]["is_new"])
+        # Should include changes for title and text
+        changes = call_kwargs["context"]["changes"]
+        self.assertEqual(len(changes), 2)
+        title_change = next(c for c in changes if c["field"] == "Title")
+        self.assertEqual(title_change["old"], "Old Title")
+        self.assertEqual(title_change["new"], "Great Experience")
+        text_change = next(c for c in changes if c["field"] == "Text")
+        self.assertEqual(text_change["old"], "Old text content")
+        self.assertEqual(text_change["new"], "This was an amazing program!")
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.testimonial_notifications.email.send")
+    def test_sends_notification_with_session_change(self, mock_send):
+        """Test that task includes session change in notification."""
+        old_session = SessionFactory.create(title="Old Session 2023")
+        old_values = {
+            "title": self.testimonial.title,
+            "text": self.testimonial.text,
+            "session_id": old_session.pk,
+        }
+
+        send_testimonial_notification.call(
+            testimonial_id=self.testimonial.pk,
+            is_new=False,
+            old_values=old_values,
+        )
+
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        changes = call_kwargs["context"]["changes"]
+        self.assertEqual(len(changes), 1)
+        session_change = changes[0]
+        self.assertEqual(session_change["field"], "Session")
+        self.assertEqual(session_change["old"], "Old Session 2023")
+        self.assertEqual(session_change["new"], "Test Session 2024")
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.testimonial_notifications.email.send")
+    def test_does_not_send_email_when_no_superusers(self, mock_send):
+        """Test that task does not send email if no superusers exist."""
+        # Deactivate the superuser
+        self.superuser.is_active = False
+        self.superuser.save()
+
+        try:
+            send_testimonial_notification.call(
+                testimonial_id=self.testimonial.pk,
+                is_new=True,
+            )
+            mock_send.assert_not_called()
+        finally:
+            # Restore superuser for other tests
+            self.superuser.is_active = True
+            self.superuser.save()
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.testimonial_notifications.email.send")
+    def test_sends_to_multiple_superusers(self, mock_send):
+        """Test that task sends email to all superusers."""
+        second_superuser = UserFactory.create(
+            is_superuser=True, is_active=True, email="admin2@example.com"
+        )
+
+        try:
+            send_testimonial_notification.call(
+                testimonial_id=self.testimonial.pk,
+                is_new=True,
+            )
+
+            mock_send.assert_called_once()
+            call_kwargs = mock_send.call_args[1]
+            self.assertIn("admin@example.com", call_kwargs["recipient_list"])
+            self.assertIn("admin2@example.com", call_kwargs["recipient_list"])
+        finally:
+            second_superuser.delete()
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.testimonial_notifications.email.send")
+    def test_handles_deleted_old_session(self, mock_send):
+        """Test that task handles case where old session no longer exists."""
+        old_values = {
+            "title": self.testimonial.title,
+            "text": self.testimonial.text,
+            "session_id": 99999,  # Non-existent session ID
+        }
+
+        send_testimonial_notification.call(
+            testimonial_id=self.testimonial.pk,
+            is_new=False,
+            old_values=old_values,
+        )
+
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        changes = call_kwargs["context"]["changes"]
+        session_change = changes[0]
+        self.assertEqual(session_change["old"], "Unknown")
