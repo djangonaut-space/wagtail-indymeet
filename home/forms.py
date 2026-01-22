@@ -3,11 +3,13 @@ import io
 
 from django import forms
 from django.core import validators
+from django.forms.renderers import DjangoTemplates
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
 from django.core.validators import MinValueValidator
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -16,7 +18,15 @@ from django.utils.translation import gettext_lazy as _
 from accounts.models import CustomUser
 from home.constants import DATE_INPUT_FORMAT
 from home.constants import SURVEY_FIELD_VALIDATORS
-from home.models import Question, Team, SessionMembership, ProjectPreference, Waitlist
+from home.models import (
+    Question,
+    Team,
+    SessionMembership,
+    ProjectPreference,
+    Waitlist,
+    Testimonial,
+    Session,
+)
 from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
@@ -1178,3 +1188,61 @@ class MembershipAcceptanceForm(forms.Form):
             )
 
         return is_accepted
+
+
+class TestimonialFormRenderer(DjangoTemplates):
+    field_template_name = "home/testimonials/field.html"
+
+
+class TestimonialForm(forms.ModelForm):
+    default_renderer = TestimonialFormRenderer
+
+    class Meta:
+        model = Testimonial
+        fields = ["title", "text", "image", "image_description", "session"]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-input"}),
+            "text": forms.Textarea(attrs={"class": "form-textarea", "rows": 6}),
+            "image_description": forms.TextInput(attrs={"class": "form-input"}),
+            "session": forms.Select(attrs={"class": "form-select"}),
+        }
+        help_texts = {
+            "title": _("A brief title for your testimonial"),
+            "text": _(
+                "Share your experience from this session (minimum 50 characters)"
+            ),
+            "image": _(
+                "Optional: Add an image to accompany your testimonial "
+                "(recommended size: 600x400 pixels)"
+            ),
+            "image_description": _(
+                "Brief description of the image for screen readers "
+                "(e.g., 'Team photo of two at DjangoCon. They are "
+                "both wearing Djangonaut Space shirts and in front "
+                "of a building.')"
+            ),
+            "session": _("Select the session this testimonial is about"),
+        }
+
+    def __init__(self, *args, user, **kwargs):
+        """Initialize form with user context to filter session choices."""
+        super().__init__(*args, **kwargs)
+        self.user = user
+        # Filter sessions to those the user participated in
+        self.fields["session"].queryset = Session.objects.filter(
+            Exists(
+                SessionMembership.objects.for_user(self.user).filter(
+                    session_id=OuterRef("id")
+                )
+            )
+        )
+        self.fields["session"].empty_label = None
+
+    def clean_text(self):
+        """Validate testimonial text has minimum length."""
+        text = self.cleaned_data.get("text", "")
+        if len(text) < 50:
+            raise forms.ValidationError(
+                _("Your testimonial must be at least 50 characters long.")
+            )
+        return text

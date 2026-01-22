@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Delete Testimonial" %} | Djangonaut Space{% endblock %}
+{% block meta_title %}{% translate "Delete Testimonial" %} | Djangonaut Space{% endblock %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container max-w-xl mx-auto">
+        <nav class="mb-4 text-sm" aria-label="breadcrumb">
+            <ol class="flex items-center gap-2">
+                <li><a href="{% url 'profile' %}" class="text-ds-purple hover:underline">{% translate "Profile" %}</a></li>
+                <li class="text-gray-400">/</li>
+                <li><a href="{% url 'testimonial_list' %}" class="text-ds-purple hover:underline">{% translate "Testimonials" %}</a></li>
+                <li class="text-gray-400">/</li>
+                <li class="text-gray-600">{% translate "Delete" %}</li>
+            </ol>
+        </nav>
+
+        <div class="bg-white rounded-lg shadow-md p-8 border border-gray-200">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+                    <i class="fa-solid fa-trash text-2xl text-red-600"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">{% translate "Delete Testimonial" %}</h1>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h2 class="font-semibold text-gray-800 mb-2">{{ object.title }}</h2>
+                <p class="text-gray-600 text-sm mb-2">{{ object.text|truncatewords:30 }}</p>
+                <p class="text-sm text-gray-500">
+                    <span class="font-medium">{% translate "Session:" %}</span> {{ object.session.title }}
+                </p>
+            </div>
+
+            <p class="text-gray-600 text-center mb-6">
+                {% translate "Are you sure you want to delete this testimonial? This action cannot be undone." %}
+            </p>
+
+            <form method="post" class="flex gap-4">
+                {% csrf_token %}
+                <a href="{% url 'profile' %}"
+                   class="flex-1 py-3 px-6 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-center">
+                    {% translate "Cancel" %}
+                </a>
+                <button type="submit"
+                        class="flex-1 py-3 px-6 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                    {% translate "Delete" %}
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock content %}

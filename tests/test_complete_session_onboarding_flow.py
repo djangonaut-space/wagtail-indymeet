@@ -1035,27 +1035,18 @@ class TestCompleteSessionOnboardingFlow:
             "team_detail",
             kwargs={"session_slug": session.slug, "pk": team.pk},
         )
-
         # Navigate to team detail page (should already be logged in as admin)
-        page.goto(team_url)
+        # Override the user timezone to Pacific/Kiritimati (UTC+14)
+        # This is in the Line Islands, one of the easternmost timezones
+        # and hopefully is unlikely to be a developer's timezone
+        page.goto(f"{team_url}?override-timezone=Pacific/Kiritimati:14")
         page.wait_for_load_state("networkidle")
-
-        # Verify the timezone toggle JavaScript function exists
-        toggle_function_exists = page.evaluate(
-            "typeof window.toggleTimezone === 'function'"
-        )
-        assert toggle_function_exists, "toggleTimezone function should be defined"
-
-        # Verify HTMX is loaded
-        htmx_loaded = page.evaluate("typeof htmx !== 'undefined'")
-        assert htmx_loaded, "HTMX should be loaded"
 
         # Wait for initial HTMX load to complete - availability section should always be present
         # since all test users have availability set
         page.wait_for_selector(
             "#team-availability-section", state="visible", timeout=5000
         )
-
         # Verify the toggle button exists
         toggle_button = page.get_by_role("button").filter(has_text="Show in")
         expect(toggle_button).to_be_visible()
@@ -1080,20 +1071,6 @@ class TestCompleteSessionOnboardingFlow:
         assert (
             overlap_times.count() > 0
         ), "Should have overlap sections for team members"
-
-        # Emulate browser timezone to Pacific/Kiritimati (UTC+14)
-        # This is in the Line Islands, one of the easternmost timezones
-        # and extremely unlikely to be anyone's actual timezone
-        # This uses Chrome DevTools Protocol to set timezone
-        cdp = page.context.new_cdp_session(page)
-        cdp.send("Emulation.setTimezoneOverride", {"timezoneId": "Pacific/Kiritimati"})
-
-        # Reload the page to pick up the new timezone
-        page.reload()
-        page.wait_for_load_state("networkidle")
-        page.wait_for_selector(
-            "#team-availability-section", state="visible", timeout=5000
-        )
 
         # Re-get the toggle button and spans after reload
         toggle_button = page.get_by_role("button").filter(has_text="Show in")
