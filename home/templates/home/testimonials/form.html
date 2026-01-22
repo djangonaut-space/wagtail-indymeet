@@ -5,123 +5,77 @@
 {% block meta_title %}{{ page_title }} | Djangonaut Space{% endblock %}
 
 {% block content %}
-<main class="section my-3 mx-5">
+  <main class="section my-3 mx-5">
     <div class="section-container max-w-2xl mx-auto">
-        <nav class="mb-4 text-sm" aria-label="breadcrumb">
-            <ol class="flex items-center gap-2">
-                <li><a href="{% url 'profile' %}" class="text-ds-purple hover:underline">{% translate "Profile" %}</a></li>
-                <li class="text-gray-400">/</li>
-                <li><a href="{% url 'testimonial_list' %}" class="text-ds-purple hover:underline">{% translate "Testimonials" %}</a></li>
-                <li class="text-gray-400">/</li>
-                <li class="text-gray-600">{{ page_title }}</li>
-            </ol>
-        </nav>
+      <nav class="mb-4 text-sm" aria-label="breadcrumb">
+        <ol class="flex items-center gap-2">
+          <li><a href="{% url 'profile' %}" class="text-ds-purple hover:underline">{% translate "Profile" %}</a></li>
+          <li class="text-gray-400">/</li>
+          <li><a href="{% url 'testimonial_list' %}"
+                 class="text-ds-purple hover:underline">{% translate "Testimonials" %}</a></li>
+          <li class="text-gray-400">/</li>
+          <li class="text-gray-600">{{ page_title }}</li>
+        </ol>
+      </nav>
 
-        <h1 class="text-4xl font-bold mb-2">{{ page_title }}</h1>
-        <p class="text-gray-600 mb-6">
-            {% translate "Share your experience from participating in a Djangonaut Space session. Your testimonial will be reviewed before being published." %}
-        </p>
+      <h1 class="text-4xl font-bold mb-2">{{ page_title }}</h1>
+      <p class="text-gray-600 mb-6">
+        {% translate "Share your experience from participating in a Djangonaut Space session. Your testimonial will be reviewed before being published." %}
+      </p>
 
-        {% if form.non_field_errors %}
+      {% if form.non_field_errors %}
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
-            {{ form.non_field_errors }}
+          {{ form.non_field_errors }}
         </div>
-        {% endif %}
+      {% endif %}
 
-        <form method="post" enctype="multipart/form-data" class="space-y-6">
-            {% csrf_token %}
+      <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
 
-            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                <div class="space-y-6">
-                    <div>
-                        <label for="{{ form.session.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ form.session.label }}
-                            {% if form.session.field.required %}<span class="text-red-500">*</span>{% endif %}
-                        </label>
-                        {% if form.session.help_text %}
-                        <p class="text-sm text-gray-500 mb-2">{{ form.session.help_text }}</p>
-                        {% endif %}
-                        {{ form.session|add_class:"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" }}
-                        {% if form.session.errors %}
-                        <p class="text-sm text-red-500 mt-1">{{ form.session.errors }}</p>
-                        {% endif %}
-                    </div>
+        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div class="space-y-6">
+            {{ form.session.as_field_group }}
+            {{ form.title.as_field_group }}
+            {{ form.text.as_field_group }}
 
-                    <div>
-                        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ form.title.label }}
-                            {% if form.title.field.required %}<span class="text-red-500">*</span>{% endif %}
-                        </label>
-                        {% if form.title.help_text %}
-                        <p class="text-sm text-gray-500 mb-2">{{ form.title.help_text }}</p>
-                        {% endif %}
-                        {{ form.title|add_class:"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" }}
-                        {% if form.title.errors %}
-                        <p class="text-sm text-red-500 mt-1">{{ form.title.errors }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.text.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ form.text.label }}
-                            {% if form.text.field.required %}<span class="text-red-500">*</span>{% endif %}
-                        </label>
-                        {% if form.text.help_text %}
-                        <p class="text-sm text-gray-500 mb-2">{{ form.text.help_text }}</p>
-                        {% endif %}
-                        {{ form.text|add_class:"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" }}
-                        {% if form.text.errors %}
-                        <p class="text-sm text-red-500 mt-1">{{ form.text.errors }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ form.image.label }}
-                        </label>
-                        {% if form.image.help_text %}
-                        <p class="text-sm text-gray-500 mb-2">{{ form.image.help_text }}</p>
-                        {% endif %}
-                        <div class="mt-1">
-                            {{ form.image|add_class:"block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-ds-purple hover:file:bg-purple-100" }}
-                        </div>
-                        {% if form.instance.image %}
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500">{% translate "Current image:" %}</p>
-                            <img src="{{ form.instance.image.url }}" alt="{% translate 'Current testimonial image' %}" class="mt-1 w-32 h-32 object-cover rounded-lg">
-                        </div>
-                        {% endif %}
-                        {% if form.image.errors %}
-                        <p class="text-sm text-red-500 mt-1">{{ form.image.errors }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.image_description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ form.image_description.label }}
-                        </label>
-                        {% if form.image_description.help_text %}
-                        <p class="text-sm text-gray-500 mb-2">{{ form.image_description.help_text }}</p>
-                        {% endif %}
-                        {{ form.image_description|add_class:"w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" }}
-                        {% if form.image_description.errors %}
-                        <p class="text-sm text-red-500 mt-1">{{ form.image_description.errors }}</p>
-                        {% endif %}
-                    </div>
+            {# Image field has custom styling for file input and preview #}
+            <div>
+              <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                {{ form.image.label }}
+              </label>
+              {% if form.image.help_text %}
+                <p class="text-sm text-gray-500 mb-2">{{ form.image.help_text }}</p>
+              {% endif %}
+              <div class="mt-1">
+                {{ form.image|add_class:"block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-ds-purple hover:file:bg-purple-100" }}
+              </div>
+              {% if form.instance.image %}
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500">{% translate "Current image:" %}</p>
+                  <img src="{{ form.instance.image.url }}" alt="{% translate 'Current testimonial image' %}"
+                       class="mt-1 w-32 h-32 object-cover rounded-lg">
                 </div>
+              {% endif %}
+              {% if form.image.errors %}
+                <p class="text-sm text-red-500 mt-1">{{ form.image.errors }}</p>
+              {% endif %}
             </div>
 
-            <div class="flex gap-4">
-                <button type="submit"
-                        class="flex-1 py-3 px-6 bg-ds-purple text-white font-medium rounded-lg hover:bg-purple-500 transition-colors shadow-sm">
-                    {{ submit_text }}
-                </button>
-                <a href="{% url 'profile' %}"
-                   class="py-3 px-6 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                    {% translate "Cancel" %}
-                </a>
-            </div>
-        </form>
+            {{ form.image_description.as_field_group }}
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <button type="submit"
+                  class="flex-1 py-3 px-6 bg-ds-purple text-white font-medium rounded-lg hover:bg-purple-500 transition-colors shadow-sm">
+            {{ submit_text }}
+          </button>
+          <a href="{% url 'profile' %}"
+             class="py-3 px-6 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+            {% translate "Cancel" %}
+          </a>
+        </div>
+      </form>
     </div>
-</main>
+  </main>
 {% endblock content %}

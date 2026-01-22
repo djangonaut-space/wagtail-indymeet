@@ -3,6 +3,7 @@ import io
 
 from django import forms
 from django.core import validators
+from django.forms.renderers import DjangoTemplates
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
@@ -1189,7 +1190,13 @@ class MembershipAcceptanceForm(forms.Form):
         return is_accepted
 
 
+class TestimonialFormRenderer(DjangoTemplates):
+    field_template_name = "home/testimonials/field.html"
+
+
 class TestimonialForm(forms.ModelForm):
+    default_renderer = TestimonialFormRenderer
+
     class Meta:
         model = Testimonial
         fields = ["title", "text", "image", "image_description", "session"]
