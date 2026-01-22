@@ -443,3 +443,37 @@ class SurveyQuerySet(QuerySet):
                 )
             )
         )
+
+
+class TestimonialQuerySet(QuerySet):
+    """QuerySet for Testimonial with filtering methods."""
+
+    def published(self):
+        """Filter to only published testimonials."""
+        return self.filter(is_published=True)
+
+    def for_user(self, user):
+        """Filter testimonials for a specific user (author)."""
+        return self.filter(author=user)
+
+    def for_admin_site(self, user):
+        """
+        Filter testimonials for admin access.
+
+        Superusers see all testimonials.
+        Session organizers see testimonials for their sessions.
+        """
+        if user.is_superuser:
+            return self
+
+        from home.models import SessionMembership
+
+        return self.filter(
+            Exists(
+                SessionMembership.objects.filter(
+                    session=OuterRef("session"),
+                    user=user,
+                    role=SessionMembership.ORGANIZER,
+                )
+            )
+        )

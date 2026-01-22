@@ -1,0 +1,64 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}{% if is_new %}New{% else %}Updated{% endif %} Testimonial Requires Review{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello,</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    A {% if is_new %}<strong>new</strong>{% else %}<strong>updated</strong>{% endif %} testimonial has been submitted and requires your review.
+  </p>
+
+  <table style="border-collapse: collapse; width: 100%; margin-bottom: 16px; border: 1px solid #e0e0e0;">
+    <tr style="background-color: #f5f5f5;">
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; border-bottom: 1px solid #e0e0e0;"><strong>Author</strong></td>
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; border-bottom: 1px solid #e0e0e0;">{{ author.get_full_name|default:author.email }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; border-bottom: 1px solid #e0e0e0;"><strong>Session</strong></td>
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; border-bottom: 1px solid #e0e0e0;">{{ session.title }}</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px;"><strong>Title</strong></td>
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px;">{{ testimonial.title }}</td>
+    </tr>
+  </table>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 14px; font-weight: bold; margin: 0; margin-bottom: 8px;">Testimonial:</p>
+  <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #5c0287; margin-bottom: 16px; font-family: Helvetica, sans-serif; font-size: 14px;">
+    {{ testimonial.text|linebreaks }}
+  </div>
+
+  {% if not is_new and changes %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 14px; font-weight: bold; margin: 0; margin-bottom: 8px;">Changes Made:</p>
+  <table style="border-collapse: collapse; width: 100%; margin-bottom: 16px; border: 1px solid #e0e0e0;">
+    <tr style="background-color: #f5f5f5;">
+      <th style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; text-align: left; border-bottom: 1px solid #e0e0e0;">Field</th>
+      <th style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; text-align: left; border-bottom: 1px solid #e0e0e0;">Old Value</th>
+      <th style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; text-align: left; border-bottom: 1px solid #e0e0e0;">New Value</th>
+    </tr>
+    {% for change in changes %}
+    <tr>
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; border-bottom: 1px solid #e0e0e0;"><strong>{{ change.field }}</strong></td>
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; border-bottom: 1px solid #e0e0e0; color: #dc3545;">{{ change.old|truncatechars:100 }}</td>
+      <td style="padding: 10px; font-family: Helvetica, sans-serif; font-size: 14px; border-bottom: 1px solid #e0e0e0; color: #28a745;">{{ change.new|truncatechars:100 }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Click the button below to review and publish this testimonial:
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}Review Testimonial{% endblock cta_button_text %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Thank you,<br>
+    Djangonaut Space
+  </p>
+{% endblock after_cta %}

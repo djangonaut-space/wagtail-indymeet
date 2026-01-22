@@ -15,6 +15,12 @@ from home.views.teams import (
     TeamDetailView,
     team_availability_fragment,
 )
+from home.views.testimonials import (
+    TestimonialCreateView,
+    TestimonialDeleteView,
+    TestimonialListView,
+    TestimonialUpdateView,
+)
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),
@@ -69,5 +75,21 @@ urlpatterns = [
             template_name="home/opportunities.html", extra_context={"blog_page": True}
         ),
         name="opportunities",
+    ),
+    path("testimonials/", TestimonialListView.as_view(), name="testimonial_list"),
+    path(
+        "testimonials/create/",
+        TestimonialCreateView.as_view(),
+        name="testimonial_create",
+    ),
+    path(
+        "testimonials/<slug:slug>/edit/",
+        TestimonialUpdateView.as_view(),
+        name="testimonial_edit",
+    ),
+    path(
+        "testimonials/<slug:slug>/delete/",
+        TestimonialDeleteView.as_view(),
+        name="testimonial_delete",
     ),
 ]
