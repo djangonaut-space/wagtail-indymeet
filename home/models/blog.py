@@ -18,7 +18,6 @@ from home import blocks as blog_blocks
 from home.blocks import BaseStreamBlock
 from home.models.event import Event
 
-
 # BLOG PUPUT IMPORTS
 
 

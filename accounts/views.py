@@ -34,7 +34,6 @@ from .models import UserAvailability
 from .tasks import delete_user_account
 from .tokens import account_activation_token
 
-
 User = get_user_model()
 
 
