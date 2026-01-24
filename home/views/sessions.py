@@ -187,7 +187,7 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
         request,
         f"Successfully collected stats for {len(github_usernames)} Djangonauts. "
         f"Found {report.count_open_prs()} open PRs, {report.count_merged_prs()} merged PRs, "
-        f"and {report.count_open_issues()} issues.",
+        f"{report.count_closed_prs()} closed PRs, and {report.count_open_issues()} issues.",
     )
 
     context = {

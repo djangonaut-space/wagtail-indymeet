@@ -48,6 +48,11 @@ class PR:
         """Check if PR was merged."""
         return self.merged_at is not None
 
+    @property
+    def is_closed(self) -> bool:
+        """Check if PR was closed without merging."""
+        return self.state == "closed" and self.merged_at is None
+
 
 @dataclass
 class Issue:
@@ -84,6 +89,10 @@ class StatsReport:
         """Get all merged PRs."""
         return [pr for pr in self.prs if pr.is_merged]
 
+    def get_closed_prs(self) -> list[PR]:
+        """Get all closed PRs (closed without merging)."""
+        return [pr for pr in self.prs if pr.is_closed]
+
     def get_open_issues(self) -> list[Issue]:
         """Get all open issues."""
         return [issue for issue in self.issues if issue.is_open]
@@ -104,6 +113,10 @@ class StatsReport:
     def count_merged_prs(self) -> int:
         """Count merged PRs."""
         return len(self.get_merged_prs())
+
+    def count_closed_prs(self) -> int:
+        """Count closed PRs (closed without merging)."""
+        return len(self.get_closed_prs())
 
     def count_open_issues(self) -> int:
         """Count open issues."""

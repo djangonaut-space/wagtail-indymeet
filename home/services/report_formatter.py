@@ -40,6 +40,10 @@ class ReportFormatter:
             f"<strong>{report.count_merged_prs()}</strong></div>"
         )
         html_parts.append(
+            f'<div class="stat"><span>Closed PRs</span>'
+            f"<strong>{report.count_closed_prs()}</strong></div>"
+        )
+        html_parts.append(
             f'<div class="stat"><span>Issues</span>'
             f"<strong>{report.count_open_issues()}</strong></div>"
         )
@@ -73,6 +77,29 @@ class ReportFormatter:
                 html_parts.append(f'<span class="repo">{pr.repo}</span>')
                 html_parts.append(f'<span class="author">by {pr.author.name}</span>')
                 html_parts.append(f'<span class="date">on {pr.merged_at}</span>')
+                html_parts.append("</div>")
+                html_parts.append(
+                    f'<a href="{pr.url}" target="_blank" '
+                    f'style="font-size:0.85em; text-decoration:underline;">'
+                    f"View on GitHub &rarr;</a>"
+                )
+                html_parts.append("</li>")
+            html_parts.append("</ul>")
+            html_parts.append("</div>")
+
+        # Closed PRs
+        closed_prs = report.get_closed_prs()
+        if closed_prs:
+            html_parts.append('<div class="closed-prs">')
+            html_parts.append("<h3>🚧 Closed Pull Requests</h3>")
+            html_parts.append("<ul>")
+            for pr in closed_prs:
+                html_parts.append(f"<li>")
+                html_parts.append(f"<strong>{pr.title}</strong>")
+                html_parts.append('<div class="meta-row">')
+                html_parts.append(f'<span class="repo">{pr.repo}</span>')
+                html_parts.append(f'<span class="author">by {pr.author.name}</span>')
+                html_parts.append(f'<span class="date">created {pr.created_at}</span>')
                 html_parts.append("</div>")
                 html_parts.append(
                     f'<a href="{pr.url}" target="_blank" '
@@ -132,7 +159,7 @@ class ReportFormatter:
             html_parts.append("</div>")
 
         # No activity message
-        if not (merged_prs or open_prs or open_issues):
+        if not (merged_prs or closed_prs or open_prs or open_issues):
             html_parts.append(
                 '<div style="text-align:center; padding:50px; color:#666; '
                 'background:#f9f9f9; border-radius:8px;">'
