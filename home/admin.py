@@ -17,7 +17,7 @@ from indymeet.admin import DescriptiveSearchMixin
 from . import preview_email, tasks
 from .availability import AvailabilityWindow, find_best_one_hour_windows_with_roles
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
-from .models import Event, Project, Team
+from .models import Event, Project, Team, Testimonial
 from .models import ResourceLink
 from .models import Question
 from .models import Session
@@ -511,6 +511,68 @@ class WaitlistAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         self.message_user(
             request,
             f"Successfully queued {count} rejection email(s).",
+            messages.SUCCESS,
+        )
+
+
+@admin.register(Testimonial)
+class TestimonialAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+    """Admin interface for managing testimonials."""
+
+    list_display = (
+        "title",
+        "author",
+        "session",
+        "is_published",
+        "created_at",
+    )
+    list_filter = ("is_published", "session", "created_at")
+    search_fields = (
+        "title",
+        "text",
+        "author__email",
+        "author__first_name",
+        "author__last_name",
+        "session__title",
+    )
+    readonly_fields = ("slug", "created_at", "updated_at")
+    raw_id_fields = ("author",)
+    ordering = ("-created_at",)
+    actions = ["publish_testimonials", "unpublish_testimonials"]
+
+    fieldsets = (
+        (None, {"fields": ("title", "text", "image", "image_description")}),
+        ("Relationships", {"fields": ("session", "author")}),
+        ("Status", {"fields": ("is_published",)}),
+        ("Metadata", {"fields": ("slug", "created_at", "updated_at")}),
+    )
+
+    def get_queryset(self, request):
+        """Filter testimonials to only those for organized sessions."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("author", "session")
+            .for_admin_site(request.user)
+        )
+
+    @admin.action(description="Publish selected testimonials")
+    def publish_testimonials(self, request, queryset):
+        """Publish selected testimonials."""
+        updated = queryset.update(is_published=True)
+        self.message_user(
+            request,
+            f"Successfully published {updated} testimonial(s).",
+            messages.SUCCESS,
+        )
+
+    @admin.action(description="Unpublish selected testimonials")
+    def unpublish_testimonials(self, request, queryset):
+        """Unpublish selected testimonials."""
+        updated = queryset.update(is_published=False)
+        self.message_user(
+            request,
+            f"Successfully unpublished {updated} testimonial(s).",
             messages.SUCCESS,
         )
 

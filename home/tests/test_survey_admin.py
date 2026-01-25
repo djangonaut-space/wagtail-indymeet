@@ -21,7 +21,6 @@ from home.models import (
 )
 from home.models.survey import TypeField
 
-
 User = get_user_model()
 
 

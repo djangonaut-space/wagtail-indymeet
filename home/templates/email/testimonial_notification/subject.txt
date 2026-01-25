@@ -1,0 +1,1 @@
+{% if is_new %}New{% else %}Updated{% endif %} Testimonial from {{ author.get_full_name|default:author.email }}

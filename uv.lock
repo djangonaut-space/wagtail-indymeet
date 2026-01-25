@@ -532,6 +532,7 @@ dev = [
 ]
 test = [
     { name = "factory-boy" },
+    { name = "faker" },
     { name = "freezegun" },
     { name = "playwright" },
     { name = "pytest" },
@@ -560,6 +561,7 @@ requires-dist = [
     { name = "django-widget-tweaks" },
     { name = "djangorestframework-gis", specifier = ">=1.2.0" },
     { name = "factory-boy", marker = "extra == 'test'" },
+    { name = "faker", marker = "extra == 'test'" },
     { name = "freezegun", marker = "extra == 'test'" },
     { name = "gdal", specifier = "==3.6.2" },
     { name = "gunicorn" },

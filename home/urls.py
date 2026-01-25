@@ -16,6 +16,12 @@ from home.views.teams import (
     TeamDetailView,
     team_availability_fragment,
 )
+from home.views.testimonials import (
+    TestimonialCreateView,
+    TestimonialDeleteView,
+    TestimonialListView,
+    TestimonialUpdateView,
+)
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),
@@ -73,4 +79,20 @@ urlpatterns = [
     ),
     path("talks/api/geojson/", TalkGeoJSONView.as_view(), name="talks_geojson"),
     path("talks/map/", TalkMapView.as_view(), name="talks_map"),
+    path("testimonials/", TestimonialListView.as_view(), name="testimonial_list"),
+    path(
+        "testimonials/create/",
+        TestimonialCreateView.as_view(),
+        name="testimonial_create",
+    ),
+    path(
+        "testimonials/<slug:slug>/edit/",
+        TestimonialUpdateView.as_view(),
+        name="testimonial_edit",
+    ),
+    path(
+        "testimonials/<slug:slug>/delete/",
+        TestimonialDeleteView.as_view(),
+        name="testimonial_delete",
+    ),
 ]
