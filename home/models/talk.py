@@ -74,16 +74,14 @@ class Talk(ClusterableModel):
         ),
         MultiFieldPanel(
             [
-                HelpPanel(
-                    """
+                HelpPanel("""
                         <strong>📍 Location Tips:</strong><br>
                         • → <strong>Type address</strong> and hit <kbd>Enter</kbd>
                         (wait auto-sets marker and save)<br>
                         • Dragging marker <strong>won't</strong> update address
                         (not recommended)<br>
                         • For no map location, leave address field empty and save.
-                    """
-                ),
+                    """),
                 GeoAddressPanel("address"),
                 LeafletPanel("location", address_field="address"),
             ],
