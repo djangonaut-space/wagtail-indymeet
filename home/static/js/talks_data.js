@@ -81,25 +81,8 @@ export async function loadAndUpdateTalks(earth) {
 
 const popup = document.getElementById('markerPopup');
 
-function capitalizeFirstLetter(str) {
-    if (!str) return '';
-    str = str.toLowerCase(); // make all letters lowercase
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 function showPopup(marker, event) {
-    const title = capitalizeFirstLetter(marker.title);
-    const year = marker.date.slice(0, 4);  // e.g. "2025"
-    const videoHtml = marker.video_link ? `<a href="${marker.video_link}" target="_blank" aria-label="Watch talk recording">
-        <span aria-hidden="true">📹</span> Talk recording
-    </a>` : '';
-
-    popup.innerHTML = `
-        <strong>${title}</strong><br/>
-        <b>${marker.event_name}</b> - ${year}<br>
-        ${marker.speakers_list}<br>
-        ${videoHtml}
-    `;
+    popup.innerHTML = marker.popup_html;
     popup.style.display = 'block';
     popup.classList.add('hovered');
 }

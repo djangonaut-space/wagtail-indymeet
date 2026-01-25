@@ -25,6 +25,8 @@ from modelcluster.models import ClusterableModel
 
 from wagtail.models import Orderable
 
+from home.constants import NULL_ISLAND, SRID_WGS84
+
 
 @register_snippet
 class Talk(ClusterableModel):
@@ -39,7 +41,6 @@ class Talk(ClusterableModel):
         _("description"),
         blank=True,
         help_text=_("Provide a brief summary of the talk."),
-        max_length=255,
     )
     date = DateField()
     talk_type = CharField(
@@ -54,9 +55,9 @@ class Talk(ClusterableModel):
         max_length=255,
         help_text="Please provide the name of the event where the talk was held.",
     )
-    video_link = URLField(_("video Link"), blank=True, default="")
+    video_link = URLField(_("video Link"), blank=True, default="", max_length=1024)
     address = CharField(max_length=250, blank=True, null=True)
-    location = PointField(srid=4326, blank=True, null=True)
+    location = PointField(srid=SRID_WGS84, blank=True, null=True)
 
     panels = [
         MultiFieldPanel(
@@ -94,7 +95,21 @@ class Talk(ClusterableModel):
         return f"{self.title} - {self.event_name} - {self.date.year} - {self.get_speakers_names()}"
 
     def get_speakers_names(self):
-        return ", ".join([s.speaker.username for s in self.speakers.all()])
+        """Get comma-separated list of speaker names.
+
+        Returns:
+            str: "Jane Doe, John Smith" from all TalkSpeaker.speaker CustomUser instances
+
+        Note:
+            self.speakers.all() returns TalkSpeaker instances (not CustomUser).
+            Access speaker names via s.speaker.get_full_name() or s.speaker.username.
+        """
+        return ", ".join(
+            [
+                s.speaker.get_full_name() or s.speaker.username
+                for s in self.speakers.all()
+            ]
+        )
 
     def clean(self):
         super().clean()
@@ -102,7 +117,7 @@ class Talk(ClusterableModel):
             raise ValidationError({"address": "Address required for on-site talks."})
 
         if not self.address:
-            self.location = Point(0, 0, srid=4326)
+            self.location = NULL_ISLAND
 
     def save(self, *args, **kwargs):
         self.full_clean()

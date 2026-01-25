@@ -22,6 +22,13 @@ wagtail-indymeet/
 │   │   ├── session.py     # Session and SessionMembership models
 │   │   ├── event.py       # Event models
 │   │   └── resource.py    # Resource models
+│   │   └── talk.py        # Talk w/ GIS PointField
+│   ├── serializers/
+│   │   └── talks.py       # GeoJSON REST API serializer
+│   ├── views/
+│   │   └── talks.py       # TemplateView + ListAPIView
+│   ├── templates/
+│   │   └── home/talks/    # Importmap for Three.js
 │   ├── management/
 │   │   └── commands/      # Django management commands
 │   └── puput_migrations/  # Blog-specific migrations
@@ -35,14 +42,7 @@ wagtail-indymeet/
 ├── theme/             # Tailwind CSS theme app
 ├── docs/              # Project documentation (currently sparse)
 ├── tests/             # Project-level tests
-├── scripts/           # Utility scripts (e.g., local.sh)
-├── talks/             # Talks app
-│   ├── models.py         # Talk w/ GIS PointField
-│   ├── serializers.py    # GeoJSON REST API serializer
-│   ├── views.py          # TemplateView + ListAPIView
-│   ├── urls.py           # /map/ + /api/geojson/
-│   ├── static/           # Three.js globe and markers + Earth texture (CC BY 4.0) + Theme
-└── └── templates/        # Importmap for Three.js
+└── scripts/           # Utility scripts (e.g., local.sh)
 ```
 
 ## Technology Stack

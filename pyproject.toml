@@ -28,7 +28,6 @@ dependencies = [
     "django-tasks",
     "django-import-export",
     "gdal==3.6.2",
-    "psycopg2-binary>=2.9.11",
     "wagtailgeowidget>=9.1.0",
     "djangorestframework-gis>=1.2.0",
 ]

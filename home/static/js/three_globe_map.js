@@ -32,7 +32,8 @@ scene.add(earthSystem);
 
 // EARTH
 const textureLoader = new THREE.TextureLoader();
-const earthtexture = textureLoader.load('../../static/img/2k_earth_daymap.jpg');
+const config = JSON.parse(document.getElementById("earth-config").textContent);
+const earthtexture = textureLoader.load(config.earthTextureUrl);
 
 const earthgeometry = new THREE.SphereGeometry(1, 64, 64);
 const earthMaterial = new THREE.MeshPhongMaterial({ map: earthtexture, shininess: 10 });

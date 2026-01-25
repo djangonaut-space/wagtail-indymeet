@@ -9,16 +9,19 @@
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/talks_map.css' %}" />
     <script type="importmap">
-    {
-        "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@v0.182.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.182.0/examples/jsm/"
+        {
+            "imports": {
+                "three": "{% static 'js/three/three.module.js' %}",
+                "three/addons/": "{% static 'js/three/' %}"
+            }
         }
-    }
-</script>
+    </script>
 </head>
 
 <body>
+    <script id="earth-config" type="application/json">
+        {"earthTextureUrl": "{% static 'images/2k_earth_daymap.jpg' %}"}
+    </script>
     <script type="module" src="{% static 'js/three_globe_map.js' %}"></script>
     <div id="map-title">
         <h1>Djangonaut Space Talks</h1>

@@ -9,7 +9,7 @@ After pulling the branch with the map page, follow these steps if you have **exi
 - **docker-compose.yml**: Database image changed from `postgres:17` to `postgis/postgis:17-3.5` (include PostGIS binaries) -
 **Image change doesn't touch your data, your volume mount stays identical**
 - **`.env.template.local`, `.env.template`, `.env.template.docker`**: Have the `DATABASE_URL` changed from `postgres://` to **`postgis://`**
-- **Django migrations**: `talks/migrations/0001_initial.py` automatically runs `CREATE EXTENSION IF NOT EXISTS postgis;` during `python manage.py migrate` - **no manual psql command needed**
+- **Django migrations**: `home/migrations/0048_talk_talkspeaker.py` automatically runs `CREATE EXTENSION IF NOT EXISTS postgis;` during `python manage.py migrate` - **no manual psql command needed**
 
 Note: The postgres:// → postgis:// change was updated across ALL active config files (`.env` templates, `.github/workflows/tests.yml`, etc.) except `docs/archive/hetzner-migration.md` (archived doc).
 
