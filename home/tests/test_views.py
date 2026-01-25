@@ -61,12 +61,10 @@ class TalkMapViewTests(TalksBaseData):
             "talk_type": "on_site",
             "speakers_list": "Jane Doe, speAKer",
             "video_link": "",
-            "popup_html": " ".join(
-                """
+            "popup_html": " ".join("""
                     <strong>Test on-site Talk</strong><br/>
                     <b>Test Event</b> - 2026<br> Jane Doe, speAKer<br>
-                """.split()
-            ),
+                """.split()),
         }
 
         properties = data["features"][0]["properties"]

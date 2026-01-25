@@ -35,11 +35,9 @@ class TalkGeoSerializer(GeoFeatureModelSerializer):
             if obj.video_link
             else ""
         )
-        return mark_safe(
-            f"""
+        return mark_safe(f"""
             <strong>{obj.title}</strong><br/>
             <b>{obj.event_name}</b> - {obj.date.year}<br>
             {obj.get_speakers_names()}<br>
             {video_html}
-        """
-        )
+        """)

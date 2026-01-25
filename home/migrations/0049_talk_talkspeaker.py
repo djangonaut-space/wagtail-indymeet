@@ -11,7 +11,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("home", "0047_project_description"),
+        ("home", "0048_create_testimonial_model"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
