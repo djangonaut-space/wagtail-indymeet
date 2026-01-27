@@ -27,6 +27,9 @@ dependencies = [
     "django-filter>=25.2",
     "django-tasks",
     "django-import-export",
+    "gdal==3.6.2",
+    "wagtailgeowidget>=9.1.0",
+    "djangorestframework-gis>=1.2.0",
 ]
 
 [project.optional-dependencies]

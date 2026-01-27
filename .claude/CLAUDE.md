@@ -22,6 +22,13 @@ wagtail-indymeet/
 │   │   ├── session.py     # Session and SessionMembership models
 │   │   ├── event.py       # Event models
 │   │   └── resource.py    # Resource models
+│   │   └── talk.py        # Talk w/ GIS PointField
+│   ├── serializers/
+│   │   └── talks.py       # GeoJSON REST API serializer
+│   ├── views/
+│   │   └── talks.py       # TemplateView + ListAPIView
+│   ├── templates/
+│   │   └── home/talks/    # Importmap for Three.js
 │   ├── management/
 │   │   └── commands/      # Django management commands
 │   └── puput_migrations/  # Blog-specific migrations
@@ -40,8 +47,8 @@ wagtail-indymeet/
 
 ## Technology Stack
 
-- **Backend:** Django 5.2, Wagtail CMS, PostgreSQL
-- **Frontend:** Tailwind CSS, Alpine.js
+- **Backend:** Django 5.2, Wagtail CMS, PostgreSQL + PostGIS (GIS extension), Django REST Framework + GeoJSON APIs
+- **Frontend:** Tailwind CSS, Alpine.js, Three.js (3D globe), Leaflet.js (admin geo-widget)
 - **Package Management:** uv (fast Python package installer)
 - **Deployment:** Dokku (Heroku buildpacks)
 - **Testing:** pytest, pytest-django, playwright

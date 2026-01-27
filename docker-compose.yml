@@ -29,9 +29,9 @@ services:
 
   db:
     restart: always
-    image: postgres:17
+    image: postgis/postgis:17-3.5
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data
     env_file:
       - ./.env.template.docker
     ports:
