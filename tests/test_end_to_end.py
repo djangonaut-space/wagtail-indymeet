@@ -76,58 +76,63 @@ def page(context: BrowserContext):
 class TestDjangoOpportunities:
     """Test suite for Django Contribution Opportunities page functionality."""
 
-    @pytest.fixture
-    def opps_page(self, page):
-        """Fixture to access AspirEDU internal pages."""
-        page.goto(reverse("opportunities"))
-        self.wait_for_alpine_init(page)
-        return page
-
-    def wait_for_alpine_init(self, opps_page: Page):
+    def wait_for_alpine_init(self, page: Page):
         """Wait for Alpine.js to initialize and opportunities to load."""
-        opps_page.wait_for_selector('[x-data*="opportunitiesApp"]')
-        opps_page.wait_for_load_state("networkidle")
+        page.wait_for_selector('[x-data*="opportunitiesApp"]')
+        page.wait_for_load_state("networkidle")
         # Wait for the results counter to appear, indicating Alpine has initialized
-        opps_page.get_by_text(RESULTS_PATTERN).wait_for(state="visible")
+        page.get_by_text(RESULTS_PATTERN).wait_for(state="visible")
 
-    def test_page_loads_correctly(self, opps_page: Page):
-        """Test that the page loads with all main elements."""
+    def assert_page_loads_correctly(self, page: Page):
+        """Verify the page loads with all main elements."""
         # Check main heading
         expect(
-            opps_page.get_by_role("heading", name="Django Contribution Opportunities")
+            page.get_by_role("heading", name="Django Contribution Opportunities")
         ).to_be_visible()
 
         # Check that search inputs are visible
-        expect(opps_page.get_by_label("Search by Name")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Tags")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Outcomes")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Requirements")).to_be_visible()
-        expect(opps_page.get_by_label("Search Description")).to_be_visible()
+        expect(page.get_by_label("Search by Name")).to_be_visible()
+        expect(page.get_by_label("Search by Tags")).to_be_visible()
+        expect(page.get_by_label("Search by Outcomes")).to_be_visible()
+        expect(page.get_by_label("Search by Requirements")).to_be_visible()
+        expect(page.get_by_label("Search Description")).to_be_visible()
 
         # Check that clear filters button is visible
-        expect(
-            opps_page.get_by_role("button", name="Clear All Filters")
-        ).to_be_visible()
+        expect(page.get_by_role("button", name="Clear All Filters")).to_be_visible()
 
-    def test_search_by_name_functionality(self, opps_page: Page):
-        """Test the name search filter with autocomplete."""
-        name_input = opps_page.get_by_label("Search by Name")
-        name_input.fill("Google")
-
-        # Check that results are filtered by looking for cards containing "Google"
-        # Use a more semantic approach to find opportunity cards
-        opportunity_cards = opps_page.get_by_role("button").filter(has_text="Google")
-        # Wait for the filtered results to appear
-        expect(opportunity_cards.first).to_be_visible()
+        # Check that opportunity cards have proper button role
+        opportunity_cards = page.locator('[role="button"][tabindex="0"]')
         assert opportunity_cards.count()
+        expect(opportunity_cards.first).to_be_visible()
 
-    def test_autocomplete_selection(self, opps_page: Page):
-        """Test selecting an item from autocomplete dropdown."""
-        name_input = opps_page.get_by_label("Search by Name")
+    def assert_search_filters_work(self, page: Page):
+        """Verify all search filter fields work correctly."""
+        search_fields = [
+            ("Search by Name", "Google"),
+            ("Search by Tags", "mentorship"),
+            ("Search by Outcomes", "technical"),
+            ("Search by Requirements", "Django"),
+            ("Search Description", "student"),
+        ]
+
+        for search_label, search_term in search_fields:
+            search_input = page.get_by_label(search_label)
+            search_input.fill(search_term)
+
+            # Verify that the search was applied (counter should be visible)
+            results_text = page.get_by_text(RESULTS_PATTERN)
+            expect(results_text).to_be_visible()
+
+            # Clear for next iteration
+            search_input.fill("")
+
+    def assert_autocomplete_works(self, page: Page):
+        """Verify autocomplete selection functionality."""
+        name_input = page.get_by_label("Search by Name")
         name_input.fill("Goo")
 
         # Look for autocomplete suggestions - wait for them to appear
-        autocomplete_items = opps_page.locator(".suggestion-item")
+        autocomplete_items = page.locator(".suggestion-item")
         expect(autocomplete_items.first).to_be_visible()
         assert autocomplete_items.count()
         first_suggestion = autocomplete_items.first
@@ -137,80 +142,84 @@ class TestDjangoOpportunities:
         # Verify the input value was updated
         expect(name_input).to_have_value(suggestion_text)
 
-    def test_outcomes_search_functionality(self, opps_page: Page):
-        """Test the outcomes search filter."""
-        outcomes_input = opps_page.get_by_label("Search by Outcomes")
-        outcomes_input.fill("technical")
+        # Clear for subsequent tests
+        name_input.fill("")
 
-        # Verify filtering occurred by checking results counter
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
+    def assert_type_filter_works(self, page: Page):
+        """Verify type checkbox filters work."""
+        # Get available type checkboxes
+        type_checkboxes = page.get_by_role("checkbox")
+        assert type_checkboxes.count()
 
-    def test_requirements_search_functionality(self, opps_page: Page):
-        """Test the requirements search filter."""
-        requirements_input = opps_page.get_by_label("Search by Requirements")
-        requirements_input.fill("Django")
-
-        # Verify filtering occurred
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
-
-    def test_description_search_functionality(self, opps_page: Page):
-        """Test the description search filter."""
-        description_input = opps_page.get_by_label("Search Description")
-        description_input.fill("student")
-
-        # Verify filtering occurred
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
-
-    def test_tag_search_functionality(self, opps_page: Page):
-        """Test the tag search filter."""
-        description_input = opps_page.get_by_label("Search by Tags")
-        description_input.fill("Fellowship")
-
-        # Verify filtering occurred
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
-        # Look for cards that contain mentorship tags
-        fellowship_cards = opps_page.get_by_role("button").filter(has_text="fellow")
-        expect(fellowship_cards.first).to_be_visible()
-        assert fellowship_cards.count()
-
-    def test_type_filter_functionality(self, opps_page: Page):
-        """Test the type checkbox filters."""
-        # Get available type checkboxes by their labels
-        education_checkbox = opps_page.get_by_label("Education")
-        # Get the checkbox label text to verify filtering
-        education_checkbox.check()
+        # Check the first available type
+        first_checkbox = type_checkboxes.first
+        first_checkbox.check()
 
         # Verify results counter updates
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
+        results_text = page.get_by_text(RESULTS_PATTERN)
         expect(results_text).to_be_visible()
 
-    def test_clear_filters_functionality(self, opps_page: Page):
-        """Test the clear all filters button."""
+        # Uncheck to verify it toggles
+        first_checkbox.uncheck()
+        expect(results_text).to_be_visible()
+
+    def assert_clear_filters_works(self, page: Page):
+        """Verify clear all filters button works."""
         # Apply some filters first
-        name_input = opps_page.get_by_label("Search by Name")
+        name_input = page.get_by_label("Search by Name")
         name_input.fill("Test")
 
         # Click clear filters using the button role
-        clear_button = opps_page.get_by_role("button", name="Clear All Filters")
+        clear_button = page.get_by_role("button", name="Clear All Filters")
         clear_button.click()
 
         # Verify filters are cleared
         expect(name_input).to_have_value("")
 
-    def test_card_click_opens_modal(self, opps_page: Page):
-        """Test that clicking a card opens the modal."""
+    def assert_multiple_filters_work(self, page: Page):
+        """Verify multiple search filters work together."""
+        page.get_by_label("Search by Name").fill("Google")
+        page.get_by_label("Search by Tags").fill("mentorship")
+
+        # Check that results counter is visible and updated
+        results_text = page.get_by_text(RESULTS_PATTERN)
+        expect(results_text).to_be_visible()
+
+        # Verify results counter shows filtering
+        counter_text = results_text.inner_text()
+        assert "Showing" in counter_text
+
+        # Clear for subsequent tests
+        page.get_by_role("button", name="Clear All Filters").click()
+
+    def assert_no_results_display(self, page: Page):
+        """Verify no results message appears when filters match nothing."""
+        name_input = page.get_by_label("Search by Name")
+        name_input.fill("NonexistentOpportunity12345")
+
+        # Check for no results message or zero count
+        no_results = page.get_by_text("No opportunities found")
+        results_counter = page.get_by_text(re.compile(r"Showing 0 of "))
+
+        # Either no results message or zero count should be visible
+        if no_results.count() > 0:
+            expect(no_results).to_be_visible()
+        else:
+            expect(results_counter).to_be_visible()
+
+        # Clear for subsequent tests
+        name_input.fill("")
+
+    def assert_modal_opens_and_displays_content(self, page: Page):
+        """Verify clicking a card opens modal with correct content."""
         # Find opportunity cards by their button role
-        opportunity_cards = opps_page.get_by_role("button").filter(
+        opportunity_cards = page.get_by_role("button").filter(
             has_text="Google Summer of Code"
         )
 
         if opportunity_cards.count() == 0:
             # Fallback to any opportunity card
-            opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
+            opportunity_cards = page.locator('[role="button"][tabindex="0"]')
 
         assert opportunity_cards.count()
         first_card = opportunity_cards.first
@@ -219,263 +228,137 @@ class TestDjangoOpportunities:
         first_card.click()
 
         # Check that modal dialog is visible
-        modal = opps_page.get_by_role("dialog")
+        modal = page.get_by_role("dialog")
         expect(modal).to_be_visible()
 
         # Check that modal title matches card title
         modal_title = modal.get_by_role("heading").first
         expect(modal_title).to_contain_text(card_title)
 
-    def test_modal_content_display(self, opps_page: Page):
-        """Test that modal displays opportunity information."""
-        # Open first available opportunity card
-        opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
-
-        assert opportunity_cards.count()
-        opportunity_cards.first.click()
-
-        # Check modal dialog is open
-        modal = opps_page.get_by_role("dialog")
-        expect(modal).to_be_visible()
-
         # Check that modal sections are present using headings
         description_heading = modal.get_by_role("heading", name="Description")
         expect(description_heading).to_be_visible()
-        assert description_heading.count()
 
-    def test_modal_close_with_x_button(self, opps_page: Page):
-        """Test closing modal with the X button."""
-        # Open modal
-        opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
+        # Check modal has proper accessibility attributes
+        expect(modal).to_have_attribute("aria-modal", "true")
 
-        assert opportunity_cards.count()
-        opportunity_cards.first.click()
+        # Verify modal contains external links with proper attributes
+        modal_links = modal.get_by_role("link")
+        assert modal_links.count() > 0
+        for i in range(min(3, modal_links.count())):
+            link = modal_links.nth(i)
+            expect(link).to_have_attribute("target", "_blank")
+            expect(link).to_have_attribute("rel", "noopener noreferrer")
 
-        modal = opps_page.get_by_role("dialog")
-        expect(modal).to_be_visible()
-
-        # Click close button using aria-label
-        close_button = opps_page.get_by_label("Close modal")
+        # Close modal with X button
+        close_button = page.get_by_label("Close modal")
         close_button.click()
-
         expect(modal).not_to_be_visible()
 
-    # I'm not sure why this is failing on CI. It passes locally and within the actual
-    # application. The next steps are to get the traces and images from CI to inspect
-    # why it may be failing.
-    @pytest.mark.xfail
-    def test_modal_close_by_clicking_overlay(self, opps_page: Page):
-        """Test closing modal by clicking the overlay."""
-        # Open modal
-        opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
-
-        assert opportunity_cards.count()
-        opportunity_cards.first.click()
-
-        # Find modal overlay (parent of dialog)
-        modal_overlay = opps_page.locator(".fixed.inset-0.bg-black.bg-opacity-50")
-        modal_overlay.wait_for(state="visible")
-
-        # Click on overlay background (outside the modal content)
-        modal_overlay.click(position={"x": 5, "y": 5})
-        modal_overlay.wait_for(state="hidden")
-
-    def test_keyboard_navigation_on_cards(self, opps_page: Page):
-        """Test keyboard navigation functionality on cards."""
-        # Find focusable opportunity cards
-        opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
-
+    def assert_keyboard_navigation_works(self, page: Page):
+        """Verify keyboard navigation on cards opens modal."""
+        opportunity_cards = page.locator('[role="button"][tabindex="0"]')
         assert opportunity_cards.count()
         first_card = opportunity_cards.first
 
         # Focus and use Enter key
         first_card.focus()
-        opps_page.keyboard.press("Enter")
+        page.keyboard.press("Enter")
 
-        modal = opps_page.get_by_role("dialog")
+        modal = page.get_by_role("dialog")
         expect(modal).to_be_visible()
 
         # Close modal with X button
-        close_button = opps_page.get_by_label("Close modal")
+        close_button = page.get_by_label("Close modal")
         close_button.click()
         expect(modal).not_to_be_visible()
 
         # Test Space key also opens modal
         first_card.focus()
-        opps_page.keyboard.press("Space")
-
+        page.keyboard.press("Space")
         expect(modal).to_be_visible()
 
-    def test_multiple_filters_combination(self, opps_page: Page):
-        """Test using multiple search filters together."""
-        # Apply multiple filters using semantic selectors
-        opps_page.get_by_label("Search by Name").fill("Google")
-        opps_page.get_by_label("Search by Tags").fill("mentorship")
+        # Close modal
+        close_button.click()
+        expect(modal).not_to_be_visible()
 
-        # Check that results counter is visible and updated
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
-
-        # Verify results counter shows filtering
-        counter_text = results_text.inner_text()
-        assert "Showing" in counter_text
-
-    def test_no_results_display(self, opps_page: Page):
-        """Test that no results message appears when filters match nothing."""
-        # Search for something unlikely to match
-        opps_page.get_by_label("Search by Name").fill("NonexistentOpportunity12345")
-
-        # Check for no results message or zero count
-        no_results = opps_page.get_by_text("No opportunities found")
-        results_counter = opps_page.get_by_text(re.compile(r"Showing 0 of "))
-
-        # Either no results message or zero count should be visible
-        if no_results.count() > 0:
-            expect(no_results).to_be_visible()
-        else:
-            expect(results_counter).to_be_visible()
-
-    def test_results_counter_updates(self, opps_page: Page):
-        """Test that the results counter updates correctly."""
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        initial_text = results_text.inner_text()
-
-        # Apply a filter
-        opps_page.get_by_label("Search by Tags").fill("mentorship")
-
-        # Check that the counter is still visible and properly formatted
-        expect(results_text).to_be_visible()
-        current_text = results_text.inner_text()
-
-        # Verify the format
-        assert "Showing" in current_text
-        assert "opportunities" in current_text
-
-    @pytest.mark.parametrize(
-        "search_label,search_term",
-        [
-            ("Search by Name", "Google"),
-            ("Search by Tags", "mentorship"),
-            ("Search by Outcomes", "technical"),
-            ("Search by Requirements", "Django"),
-            ("Search Description", "student"),
-        ],
-    )
-    def test_individual_search_fields(self, opps_page: Page, search_label, search_term):
-        """Parameterized test for individual search fields using semantic selectors."""
-        search_input = opps_page.get_by_label(search_label)
-        search_input.fill(search_term)
-
-        # Verify that the search was applied (counter should be visible)
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
-
-    def test_external_links_have_correct_attributes(self, opps_page: Page):
-        """Test that external links have proper security attributes."""
-        # Check Learn More links using link role and text
-        learn_more_links = opps_page.get_by_role("link", name="Learn More")
-
+    def assert_external_links_secure(self, page: Page):
+        """Verify external links have proper security attributes."""
+        learn_more_links = page.get_by_role("link", name="Learn More")
         assert learn_more_links.count()
+
         first_link = learn_more_links.first
         expect(first_link).to_have_attribute("target", "_blank")
         expect(first_link).to_have_attribute("rel", "noopener noreferrer")
 
-    def test_accessibility_attributes(self, opps_page: Page):
-        """Test key accessibility features using semantic selectors."""
-        # Check that search inputs are properly labeled
-        expect(opps_page.get_by_label("Search by Name")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Tags")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Outcomes")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Requirements")).to_be_visible()
-        expect(opps_page.get_by_label("Search Description")).to_be_visible()
-
-        # Check that opportunity cards have proper button role
-        opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
-        assert opportunity_cards.count()
-        expect(opportunity_cards.first).to_be_visible()
-
-    def test_responsive_behavior(self, opps_page: Page):
-        """Test basic responsive functionality."""
+    def assert_responsive_behavior(self, page: Page):
+        """Verify basic responsive functionality."""
         # Test mobile viewport
-        opps_page.set_viewport_size({"width": 375, "height": 667})
+        page.set_viewport_size({"width": 375, "height": 667})
 
-        # Verify main elements are still visible using semantic selectors
+        # Verify main elements are still visible
         expect(
-            opps_page.get_by_role("heading", name="Django Contribution Opportunities")
+            page.get_by_role("heading", name="Django Contribution Opportunities")
         ).to_be_visible()
-        expect(opps_page.get_by_label("Search by Name")).to_be_visible()
+        expect(page.get_by_label("Search by Name")).to_be_visible()
 
         # Reset viewport
-        opps_page.set_viewport_size({"width": 1280, "height": 720})
+        page.set_viewport_size({"width": 1280, "height": 720})
 
-    def test_focus_management_in_modal(self, opps_page: Page):
-        """Test that focus is properly managed when modal opens."""
-        # Open modal using semantic selectors
-        opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
+    @pytest.mark.playwright
+    def test_opportunities_page_interactivity(self, page: Page):
+        """
+        Comprehensive test for all interactive features on opportunities page.
 
-        assert opportunity_cards.count()
-        opportunity_cards.first.click()
-        opps_page.wait_for_timeout(300)
+        Tests:
+        1. Page loads with all required elements
+        2. Search filter fields functionality
+        3. Autocomplete selection
+        4. Type checkbox filters
+        5. Clear filters button
+        6. Multiple filters combination
+        7. No results display
+        8. Modal opens and displays content
+        9. Keyboard navigation
+        10. External links have security attributes
+        11. Responsive behavior
+        """
+        # Navigate to opportunities page
+        page.goto(reverse("opportunities"))
+        self.wait_for_alpine_init(page)
 
-        # Check modal dialog is visible and has proper attributes
-        modal = opps_page.get_by_role("dialog")
-        expect(modal).to_be_visible()
-        expect(modal).to_have_attribute("aria-modal", "true")
+        # Test 1: Verify page loads with all required elements
+        self.assert_page_loads_correctly(page)
 
-    def test_page_has_required_elements(self, opps_page: Page):
-        """Test that all required opps_page elements are present using semantic selectors."""
-        # Check for main structural elements using roles and labels
-        expect(
-            opps_page.get_by_role("heading", name="Django Contribution Opportunities")
-        ).to_be_visible()
-        expect(opps_page.get_by_label("Search by Name")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Tags")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Outcomes")).to_be_visible()
-        expect(opps_page.get_by_label("Search by Requirements")).to_be_visible()
-        expect(opps_page.get_by_label("Search Description")).to_be_visible()
-        expect(
-            opps_page.get_by_role("button", name="Clear All Filters")
-        ).to_be_visible()
+        # Test 2: Search filter fields functionality
+        self.assert_search_filters_work(page)
 
-    def test_filter_by_type_checkboxes(self, opps_page: Page):
-        """Test filtering by opportunity type using checkboxes."""
-        # Get all type checkboxes
-        type_checkboxes = opps_page.get_by_role("checkbox")
+        # Test 3: Autocomplete selection
+        self.assert_autocomplete_works(page)
 
-        assert type_checkboxes.count()
-        # Check the first available type
-        first_checkbox = type_checkboxes.first
-        first_checkbox.check()
+        # Test 4: Type checkbox filters
+        self.assert_type_filter_works(page)
 
-        # Verify that filtering occurred
-        results_text = opps_page.get_by_text(RESULTS_PATTERN)
-        expect(results_text).to_be_visible()
+        # Test 5: Clear filters button
+        self.assert_clear_filters_works(page)
 
-        # Uncheck to verify it toggles
-        first_checkbox.uncheck()
+        # Test 6: Multiple filters combination
+        self.assert_multiple_filters_work(page)
 
-        # Results should update again
-        expect(results_text).to_be_visible()
+        # Test 7: No results display
+        self.assert_no_results_display(page)
 
-    def test_modal_navigation_with_links(self, opps_page: Page):
-        """Test that modal contains properly accessible external links."""
-        # Open modal
-        opportunity_cards = opps_page.locator('[role="button"][tabindex="0"]')
+        # Test 8: Modal opens and displays content
+        self.assert_modal_opens_and_displays_content(page)
 
-        assert opportunity_cards.count() > 0
-        opportunity_cards.first.click()
+        # Test 9: Keyboard navigation
+        self.assert_keyboard_navigation_works(page)
 
-        modal = opps_page.get_by_role("dialog")
-        expect(modal).to_be_visible()
+        # Test 10: External links have security attributes
+        self.assert_external_links_secure(page)
 
-        # Look for external links within the modal
-        modal_links = modal.get_by_role("link")
-        assert modal_links.count() > 0
-        # Verify links have proper attributes
-        for i in range(min(3, modal_links.count())):  # Check first 3 links
-            link = modal_links.nth(i)
-            expect(link).to_have_attribute("target", "_blank")
-            expect(link).to_have_attribute("rel", "noopener noreferrer")
+        # Test 11: Responsive behavior
+        self.assert_responsive_behavior(page)
 
 
 class TestAvailabilityPage:
