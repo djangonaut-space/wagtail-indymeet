@@ -54,9 +54,16 @@ jobs:
         run: uv run pytest --cov --cov-branch --cov-report=xml --cov-report=term
 
       - name: Run playwright tests
-        run: uv run pytest -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
+        run: uv run pytest --tracing retain-on-failure -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        name: Upload playwright traces
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-traces
+          path: test-results/
