@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Exists, F, Max, Count, OuterRef
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import path, reverse
@@ -200,6 +201,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
     actions = [
         "send_acceptance_emails_action",
         "find_best_availability_overlaps_action",
+        "compare_availability_action",
         preview_email.acceptance_email_action,
         preview_email.reminder_email_action,
     ]
@@ -328,6 +330,34 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
             {"results": results, "total_members": len(user_roles)},
         )
         self.message_user(request, mark_safe(message))
+
+    @admin.action(description="Compare availability (visual calendar)")
+    def compare_availability_action(
+        self, request, queryset
+    ) -> HttpResponseRedirect | None:
+        """Redirect to compare availability page with selected membership user IDs."""
+        queryset = queryset.select_related("session")
+
+        # Get unique user IDs from the selected memberships
+        user_ids = list(queryset.values_list("user_id", flat=True).distinct())
+        if not user_ids:
+            self.message_user(
+                request,
+                "Please select at least one member.",
+                messages.ERROR,
+            )
+            return None
+
+        # Get session ID if all selected memberships are from the same session
+        session_ids = list(queryset.values_list("session_id", flat=True).distinct())
+
+        url = reverse("compare_availability")
+        params = f"users={','.join(map(str, user_ids))}"
+
+        if len(session_ids) == 1:
+            params += f"&session={session_ids[0]}"
+
+        return HttpResponseRedirect(f"{url}?{params}")
 
 
 @admin.register(Session)

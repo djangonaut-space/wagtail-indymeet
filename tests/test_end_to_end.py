@@ -804,3 +804,184 @@ class TestTeamFormation:
             "Successfully added"
         )
         expect(team_page.locator(".messagelist").first).to_contain_text("waitlist")
+
+
+class TestCompareAvailability:
+    """Test suite for compare availability page functionality."""
+
+    @pytest.fixture
+    def setup_compare_data(self, db):
+        """Create users with different availability patterns for testing."""
+        from accounts.factories import UserAvailabilityFactory, UserFactory
+        from home.factories import OrganizerFactory
+
+        organizer_membership = OrganizerFactory.create()
+        organizer = organizer_membership.user
+        organizer.set_password("testpass123")
+        organizer.save()
+
+        # User A: available at slots 0.0, 0.5 (Sunday 00:00, 00:30)
+        user_a = UserFactory.create(first_name="Alice", last_name="Available")
+        UserAvailabilityFactory.create(user=user_a, slots=[0.0, 0.5])
+
+        # User B: available at slot 0.0 only (Sunday 00:00)
+        user_b = UserFactory.create(first_name="Bob", last_name="Busy")
+        UserAvailabilityFactory.create(user=user_b, slots=[0.0])
+
+        return {
+            "organizer": organizer,
+            "user_a": user_a,
+            "user_b": user_b,
+        }
+
+    def login_as_organizer(self, page: Page, organizer: CustomUser):
+        page.goto(reverse("login"))
+        page.get_by_label("Username").fill(organizer.username)
+        page.get_by_label("Password").fill("testpass123")
+        page.get_by_role("button", name="Login").click()
+        page.wait_for_load_state("networkidle")
+
+    def navigate_to_compare_page(self, page: Page, user_ids: list[int]):
+        users_param = "&".join(f"users={uid}" for uid in user_ids)
+        # Force offset=0 so we're testing UTC directly
+        page.goto(f"{reverse('compare_availability')}?{users_param}&offset=0")
+        page.wait_for_load_state("networkidle")
+
+    def assert_selected_users_show_availability(self, page: Page, data: dict):
+        """Verify the grid has colored cells based on user availability."""
+        # Slot 0-0-0 (Sunday 00:00) should have color (both users available)
+        slot_0_0_0 = page.locator('td.time-slot[title*="2/2"]')
+        expect(slot_0_0_0.first).to_be_visible()
+
+        # Slot 0-0-1 (Sunday 00:30) should have partial color (only user_a)
+        slot_0_0_1 = page.locator('td.time-slot[title*="1/2"]')
+        expect(slot_0_0_1.first).to_be_visible()
+
+    def assert_different_overlap_colors(self, page: Page):
+        """Verify cells have different background colors based on overlap count."""
+        # Full overlap cell (2/2) - get computed style
+        full_overlap = page.locator('td.time-slot[title*="2/2"]').first
+        full_style = full_overlap.evaluate(
+            "el => window.getComputedStyle(el).backgroundColor"
+        )
+
+        # Partial overlap cell (1/2)
+        partial_overlap = page.locator('td.time-slot[title*="1/2"]').first
+        partial_style = partial_overlap.evaluate(
+            "el => window.getComputedStyle(el).backgroundColor"
+        )
+
+        # No overlap cell (0/2)
+        no_overlap = page.locator('td.time-slot[title*="0/2"]').first
+        no_style = no_overlap.evaluate(
+            "el => window.getComputedStyle(el).backgroundColor"
+        )
+
+        # Full should be different from partial
+        assert full_style != partial_style, "Full and partial overlap should differ"
+        # Partial should be different from none
+        assert partial_style != no_style, "Partial and no overlap should differ"
+
+    def assert_unavailable_user_grayed_on_hover(self, page: Page, data: dict):
+        """Verify hovering over a cell grays out unavailable users."""
+        # Hover over Sunday 00:30 slot where only user_a is available
+        slot_0_0_1 = page.locator('td.time-slot[title*="1/2"]').first
+        slot_0_0_1.hover()
+
+        # Bob should have unavailable styling
+        bob_card = page.locator(".user-card").filter(has_text="Bob Busy")
+        expect(bob_card).to_have_class(re.compile(r"unavailable"))
+
+        # The user-name inside should have line-through
+        bob_name = bob_card.locator(".user-name")
+        text_decoration = bob_name.evaluate(
+            "el => window.getComputedStyle(el).textDecoration"
+        )
+        assert "line-through" in text_decoration
+
+    def assert_available_user_readable_on_hover(self, page: Page, data: dict):
+        """Verify available user's name is readable when hovering over a cell."""
+        # Hover over Sunday 00:30 slot where only user_a is available
+        slot_0_0_1 = page.locator('td.time-slot[title*="1/2"]').first
+        slot_0_0_1.hover()
+
+        # Alice should not have unavailable class
+        alice_card = page.locator(".user-card").filter(has_text="Alice Available")
+        expect(alice_card).not_to_have_class(re.compile(r"unavailable"))
+
+        # Name should not be struck through
+        alice_name = alice_card.locator(".user-name")
+        text_decoration = alice_name.evaluate(
+            "el => window.getComputedStyle(el).textDecoration"
+        )
+        assert "line-through" not in text_decoration
+
+    def assert_mouseleave_resets_availability(self, page: Page):
+        """Verify moving cursor out of grid makes all users appear available."""
+        # First hover over a cell to trigger unavailable state
+        slot_0_0_1 = page.locator('td.time-slot[title*="1/2"]').first
+        slot_0_0_1.hover()
+
+        # Move cursor out of grid (hover on heading instead)
+        page.get_by_role("heading", name="Compare Availability").hover()
+
+        # All user cards should no longer have unavailable class
+        user_cards = page.locator(".user-card")
+        for i in range(user_cards.count()):
+            expect(user_cards.nth(i)).not_to_have_class(re.compile(r"unavailable"))
+
+    def assert_user_hover_shows_single_availability(self, page: Page, data: dict):
+        """Verify hovering over a user's name shows only that user's availability.
+
+        When hovering over Bob's card, only Bob's availability should be shown.
+        Alice's availability should be hidden (slots where only Alice is available
+        should have no background color).
+        """
+        bob_card = page.locator(".user-card").filter(has_text="Bob Busy")
+        bob_card.hover()
+
+        # Verify hover registered by checking Bob's card has highlight class
+        expect(bob_card).to_have_class(re.compile(r"bg-purple-100"))
+
+        # Bob's available slot (0-0-0) should show full purple
+        slot_0_0_0 = page.locator('td.time-slot[title*="2/2"]').first
+        bob_only_color = slot_0_0_0.evaluate(
+            "el => window.getComputedStyle(el).backgroundColor"
+        )
+        assert bob_only_color.replace(" ", "") == "rgb(92,2,135)"
+
+        # Slot where only Alice is available (0-0-1) should have NO color,
+        # proving Alice's availability is hidden when hovering over Bob
+        slot_0_0_1 = page.locator('td.time-slot[title*="1/2"]').first
+
+        # Wait for the background color to become transparent
+        page.wait_for_function(
+            """(el) => {
+                const bg = window.getComputedStyle(el).backgroundColor;
+                return bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent';
+            }""",
+            arg=slot_0_0_1.element_handle(),
+        )
+
+    @pytest.mark.playwright
+    def test_compare_availability_interactivity(self, page: Page, setup_compare_data):
+        """
+        Test compare availability grid interactivity:
+        1. Selected users' availability shows up in grid
+        2. Different background colors for different overlap counts
+        3. Unavailable user's name grayed and struck out on cell hover
+        4. Available user's name readable on cell hover
+        5. Moving cursor out of grid resets all users to available
+        6. Hovering over user's name shows only that user's availability
+        """
+        data = setup_compare_data
+
+        self.login_as_organizer(page, data["organizer"])
+        self.navigate_to_compare_page(page, [data["user_a"].id, data["user_b"].id])
+
+        self.assert_selected_users_show_availability(page, data)
+        self.assert_different_overlap_colors(page)
+        self.assert_unavailable_user_grayed_on_hover(page, data)
+        self.assert_available_user_readable_on_hover(page, data)
+        self.assert_mouseleave_resets_availability(page)
+        self.assert_user_hover_shows_single_availability(page, data)
