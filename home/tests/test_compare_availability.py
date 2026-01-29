@@ -149,72 +149,6 @@ class CompareAvailabilityTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
 
-    def test_user_with_permission_can_access(self) -> None:
-        """Users with compare_org_availability permission can access."""
-        membership = OrganizerFactory.create()
-
-        self.client.force_login(membership.user)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-
-    def test_user_without_permission_or_session_shows_empty_list(self) -> None:
-        """Users without permission or session context see empty selectable users."""
-        user = UserFactory.create()
-        self.client.force_login(user)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["selectable_users"], [])
-
-    def test_session_organizer_can_see_all_participants(self) -> None:
-        """Session organizers can see all session participants."""
-        membership = OrganizerFactory.create(session=self.session)
-        UserAvailabilityFactory.create(user=membership.user, slots=[0.0])
-
-        self.client.force_login(membership.user)
-        response = self.client.get(f"{self.url}?session={self.session.id}")
-        self.assertEqual(response.status_code, 200)
-
-        # Check all users with availability are in selectable_users
-        selectable_users = response.context["selectable_users"]
-        user_ids = [u.id for u in selectable_users]
-        self.assertIn(self.captain.id, user_ids)
-        self.assertIn(self.navigator.id, user_ids)
-        self.assertIn(self.djangonaut.id, user_ids)
-
-    def test_team_member_can_only_see_team_members(self) -> None:
-        """Team members can only see their team members."""
-        self.client.force_login(self.djangonaut)
-        response = self.client.get(f"{self.url}?session={self.session.id}")
-        self.assertEqual(response.status_code, 200)
-
-        selectable_users = response.context["selectable_users"]
-        user_ids = [u.id for u in selectable_users]
-        self.assertIn(self.captain.id, user_ids)
-        self.assertIn(self.navigator.id, user_ids)
-        self.assertIn(self.djangonaut.id, user_ids)
-
-    def test_team_member_cannot_see_other_team(self) -> None:
-        """Team members cannot see members from other teams."""
-        other_team = Team.objects.create(
-            session=self.session, project=self.project, name="Team Beta"
-        )
-        other_user = UserFactory.create(first_name="Other", last_name="User")
-        UserAvailabilityFactory.create(user=other_user, slots=[0.0])
-        SessionMembershipFactory.create(
-            user=other_user,
-            session=self.session,
-            team=other_team,
-            role=SessionMembership.DJANGONAUT,
-            accepted=True,
-        )
-
-        self.client.force_login(self.djangonaut)
-        response = self.client.get(f"{self.url}?session={self.session.id}")
-
-        selectable_users = response.context["selectable_users"]
-        user_ids = [u.id for u in selectable_users]
-        self.assertNotIn(other_user.id, user_ids)
-
     def test_selected_users_from_query_params(self) -> None:
         """Users can be pre-selected via query params."""
         membership = OrganizerFactory.create()
@@ -250,14 +184,6 @@ class CompareAvailabilityTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].errors)
         self.assertIn("session", response.context["form"].errors)
-
-    def test_non_member_of_session_shows_empty_list(self) -> None:
-        """User not a member of the session sees empty selectable users."""
-        other_user = UserFactory.create()
-        self.client.force_login(other_user)
-        response = self.client.get(f"{self.url}?session={self.session.id}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["selectable_users"], [])
 
     def test_options_are_selected_in_form(self) -> None:
         """Selected users show as selected in the form."""

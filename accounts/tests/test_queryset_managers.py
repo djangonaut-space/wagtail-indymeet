@@ -1,11 +1,18 @@
 """Tests for CustomUser queryset managers and methods."""
 
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
-from accounts.factories import UserFactory
+from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser
-from home.factories import ProjectFactory, SessionFactory
-from home.models import ProjectPreference
+from home.factories import (
+    OrganizerFactory,
+    ProjectFactory,
+    SessionFactory,
+    SessionMembershipFactory,
+)
+from home.models import ProjectPreference, SessionMembership, Team
 
 
 class CustomUserQuerySetTestCase(TestCase):
@@ -131,4 +138,179 @@ class CustomUserQuerySetTestCase(TestCase):
 
         # Should not have duplicates even though there might be multiple joins
         user_ids = [u.id for u in users]
+        self.assertEqual(len(user_ids), len(set(user_ids)))
+
+
+class ForComparingAvailabilityTestCase(TestCase):
+    """Test CustomUser.objects.for_comparing_availability() queryset method."""
+
+    @classmethod
+    def setUpTestData(cls):
+        """Create test data once for all tests in this class."""
+        cls.session = SessionFactory()
+        cls.project = ProjectFactory(name="Django")
+        cls.team = Team.objects.create(
+            session=cls.session, project=cls.project, name="Team Alpha"
+        )
+        cls.other_team = Team.objects.create(
+            session=cls.session, project=cls.project, name="Team Beta"
+        )
+
+        # Create users with availability
+        cls.captain = UserFactory(first_name="Captain", last_name="Marvel")
+        cls.navigator = UserFactory(first_name="Navigator", last_name="Smith")
+        cls.djangonaut = UserFactory(first_name="Django", last_name="Learner")
+        cls.other_team_user = UserFactory(first_name="Other", last_name="User")
+
+        UserAvailabilityFactory.create(user=cls.captain, slots=[0.0, 0.5])
+        UserAvailabilityFactory.create(user=cls.navigator, slots=[0.0, 1.0])
+        UserAvailabilityFactory.create(user=cls.djangonaut, slots=[0.0])
+        UserAvailabilityFactory.create(user=cls.other_team_user, slots=[0.0])
+
+        # Create memberships for main team
+        cls.captain_membership = SessionMembershipFactory.create(
+            session=cls.session,
+            team=cls.team,
+            user=cls.captain,
+            role=SessionMembership.CAPTAIN,
+            accepted=True,
+        )
+        cls.navigator_membership = SessionMembershipFactory.create(
+            session=cls.session,
+            team=cls.team,
+            user=cls.navigator,
+            role=SessionMembership.NAVIGATOR,
+            accepted=True,
+        )
+        cls.djangonaut_membership = SessionMembershipFactory.create(
+            session=cls.session,
+            team=cls.team,
+            user=cls.djangonaut,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+
+        # Create membership for other team
+        SessionMembershipFactory.create(
+            session=cls.session,
+            team=cls.other_team,
+            user=cls.other_team_user,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+
+    def test_user_with_permission_sees_all_users_with_availability(self):
+        """Users with compare_org_availability permission see all users."""
+        user_with_perm = UserFactory()
+        content_type = ContentType.objects.get_for_model(Team)
+        permission = Permission.objects.get(
+            codename="compare_org_availability", content_type=content_type
+        )
+        user_with_perm.user_permissions.add(permission)
+
+        users = CustomUser.objects.for_comparing_availability(user=user_with_perm)
+        user_ids = [u.id for u in users]
+
+        self.assertIn(self.captain.id, user_ids)
+        self.assertIn(self.navigator.id, user_ids)
+        self.assertIn(self.djangonaut.id, user_ids)
+        self.assertIn(self.other_team_user.id, user_ids)
+
+    def test_user_without_permission_or_session_sees_empty_list(self):
+        """Users without permission or session context see empty list."""
+        user_without_perm = UserFactory()
+
+        users = CustomUser.objects.for_comparing_availability(user=user_without_perm)
+
+        self.assertEqual(list(users), [])
+
+    def test_organizer_sees_all_session_participants(self):
+        """Session organizers see all session participants with availability."""
+        organizer_membership = OrganizerFactory.create(session=self.session)
+
+        users = CustomUser.objects.for_comparing_availability(
+            user=organizer_membership.user,
+            session=self.session,
+            session_membership=organizer_membership,
+        )
+        user_ids = [u.id for u in users]
+
+        self.assertIn(self.captain.id, user_ids)
+        self.assertIn(self.navigator.id, user_ids)
+        self.assertIn(self.djangonaut.id, user_ids)
+        self.assertIn(self.other_team_user.id, user_ids)
+
+    def test_team_member_sees_only_team_members(self):
+        """Non-organizer team members see only their team members."""
+        users = CustomUser.objects.for_comparing_availability(
+            user=self.djangonaut,
+            session=self.session,
+            session_membership=self.djangonaut_membership,
+        )
+        user_ids = [u.id for u in users]
+
+        self.assertIn(self.captain.id, user_ids)
+        self.assertIn(self.navigator.id, user_ids)
+        self.assertIn(self.djangonaut.id, user_ids)
+        self.assertNotIn(self.other_team_user.id, user_ids)
+
+    def test_non_member_of_session_sees_empty_list(self):
+        """User not a member of the session sees empty list."""
+        non_member = UserFactory()
+
+        users = CustomUser.objects.for_comparing_availability(
+            user=non_member,
+            session=self.session,
+            session_membership=None,
+        )
+
+        self.assertEqual(list(users), [])
+
+    def test_excludes_users_without_availability(self):
+        """Users without availability records are excluded."""
+        user_no_availability = UserFactory()
+        SessionMembershipFactory.create(
+            session=self.session,
+            team=self.team,
+            user=user_no_availability,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+
+        users = CustomUser.objects.for_comparing_availability(
+            user=self.djangonaut,
+            session=self.session,
+            session_membership=self.djangonaut_membership,
+        )
+        user_ids = [u.id for u in users]
+
+        self.assertNotIn(user_no_availability.id, user_ids)
+
+    def test_results_are_ordered_by_name(self):
+        """Results are ordered by first_name, last_name."""
+        organizer_membership = OrganizerFactory.create(session=self.session)
+
+        users = list(
+            CustomUser.objects.for_comparing_availability(
+                user=organizer_membership.user,
+                session=self.session,
+                session_membership=organizer_membership,
+            )
+        )
+
+        # Verify ordering: Captain Marvel, Django Learner, Navigator Smith, Other User
+        names = [(u.first_name, u.last_name) for u in users]
+        self.assertEqual(names, sorted(names))
+
+    def test_results_are_distinct(self):
+        """Results contain no duplicates."""
+        organizer_membership = OrganizerFactory.create(session=self.session)
+
+        users = CustomUser.objects.for_comparing_availability(
+            user=organizer_membership.user,
+            session=self.session,
+            session_membership=organizer_membership,
+        )
+        user_ids = [u.id for u in users]
+
         self.assertEqual(len(user_ids), len(set(user_ids)))

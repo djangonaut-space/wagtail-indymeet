@@ -5,7 +5,6 @@ from dataclasses import asdict, dataclass
 
 from django import forms
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.shortcuts import render
 
 from accounts.models import CustomUser
@@ -163,7 +162,7 @@ class CompareAvailabilityForm(forms.Form):
                     result.add(int(uid.strip()))
         return result
 
-    def clean_session(self):
+    def clean_session(self) -> Session | None:
         if session := self.cleaned_data.get("session"):
             self._session_membership = (
                 SessionMembership.objects.for_session(session)
@@ -173,39 +172,20 @@ class CompareAvailabilityForm(forms.Form):
         self._session = session
         return self._session
 
-    # TODO move to CustomUserQueryset
     def get_selectable_users(self) -> list[CustomUser]:
         """
         Get users that the current user can select for comparison.
 
-        Builds up a single queryset with appropriate filters based on:
-        - Permission: Users with compare_org_availability see all users
-        - Organizer role: Can see all session participants
-        - Team member: Can see their team members only
-
         Returns:
             List of CustomUser objects the user can compare
-
-        Raises:
-            PermissionDenied: If user lacks permission to compare availability
         """
-        users = CustomUser.objects.select_related("profile", "availability").order_by(
-            "first_name", "last_name"
+        return list(
+            CustomUser.objects.for_comparing_availability(
+                user=self.user,
+                session=self._session,
+                session_membership=self._session_membership,
+            )
         )
-        q_filter = Q(availability__isnull=False)
-        if self._session:
-            q_filter &= Q(session_memberships__session=self._session)
-        if (
-            self._session_membership
-            and self._session_membership.role != SessionMembership.ORGANIZER
-        ):
-            q_filter &= Q(session_memberships__team=self._session_membership.team)
-        # We don't have a session for this user, so let's make sure they can
-        # view the whole org's availability.
-        elif not self.user.has_perm("home.compare_org_availability"):
-            users = users.none()
-
-        return list(users.filter(q_filter).distinct())
 
     def get_selected_users(
         self, selectable_users: list[CustomUser]
