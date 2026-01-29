@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.shortcuts import render
 
 from accounts.models import CustomUser
-from home.availability import get_user_slots
+from home.availability import convert_slot_with_offset, get_user_slots
 from home.models import Session, SessionMembership
 
 slotAvailabilities = dict[str, list[int]]
@@ -83,12 +83,8 @@ def build_grid_data(
             cells = []
 
             for day in range(7):
-                utc_slot = (day * 24.0) + time_value - offset_hours
-
-                if utc_slot < 0:
-                    utc_slot += 168
-                elif utc_slot >= 168:
-                    utc_slot -= 168
+                local_slot = (day * 24.0) + time_value
+                utc_slot = convert_slot_with_offset(local_slot, -offset_hours)
 
                 available_user_ids = [
                     user.id
