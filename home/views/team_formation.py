@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator
-from django.db.models import Prefetch
+from django.db.models import Prefetch, F
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -229,8 +229,6 @@ def get_filtered_applicants(
     # Apply database-level sorting
     # Nulls always go last regardless of sort order using Django's nulls_last/nulls_first
     if sort_by in ["score", "selection_rank", "annotated_previous_application_count"]:
-        from django.db.models import F
-
         order_field = F(sort_by)
         if sort_order == "desc":
             applicants_qs = applicants_qs.order_by(order_field.desc(nulls_last=True))
@@ -283,6 +281,7 @@ def get_filtered_applicants(
                 current_team=current_team,
                 current_role=current_role,
                 is_waitlisted=response.annotated_is_waitlisted,
+                previously_waitlisted=response.annotated_previously_waitlisted,
                 previous_application_count=response.annotated_previous_application_count,
                 previous_avg_score=prev_avg_score,
                 has_availability=has_availability,

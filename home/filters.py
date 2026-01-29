@@ -57,6 +57,11 @@ class ApplicantFilterSet(django_filters.FilterSet):
         label="Show only waitlisted applicants",
         widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
     )
+    show_previously_waitlisted_only = BooleanFilter(
+        method="filter_previously_waitlisted_only",
+        label="Show only previously waitlisted applicants",
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+    )
 
     overlap_with_navigators = django_filters.ModelChoiceFilter(
         queryset=Team.objects.none(),
@@ -134,4 +139,13 @@ class ApplicantFilterSet(django_filters.FilterSet):
         if value:
             # Get user IDs that are waitlisted for this session
             return queryset.filter(annotated_is_waitlisted=True)
+        return queryset
+
+    def filter_previously_waitlisted_only(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        """Show only previously waitlisted applicants."""
+        if value:
+            # Get user IDs that are waitlisted for this session
+            return queryset.filter(annotated_previously_waitlisted=True)
         return queryset

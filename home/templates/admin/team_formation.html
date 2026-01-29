@@ -156,6 +156,7 @@
                                 {% trans "Prev Apps" %}
                             </th>
                             <th title="{% trans 'Has availability data' %}">{% trans "Avail" %}</th>
+                            <th>{% trans "Previously Waitlisted" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -218,6 +219,7 @@
                                     <span class="no-availability">✗ No availability</span>
                                 {% endif %}
                             </td>
+                            <td>{{ applicant.previously_waitlisted|yesno }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

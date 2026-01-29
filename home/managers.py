@@ -265,9 +265,14 @@ class UserSurveyResponseQuerySet(QuerySet):
         """
         Annotate the response with the user's waitlist membership.
         """
+        from home.models import Waitlist
+
         return self.annotate(
             annotated_is_waitlisted=Exists(
                 session.waitlist_entries.filter(user=OuterRef("user"))
+            ),
+            annotated_previously_waitlisted=Exists(
+                Waitlist.objects.filter(~Q(session=session), user=OuterRef("user"))
             ),
         )
 
