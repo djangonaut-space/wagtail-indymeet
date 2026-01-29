@@ -20,7 +20,7 @@ from django.urls import reverse
 from playwright.sync_api import expect, BrowserContext
 from playwright.sync_api import Page
 
-from accounts.factories import UserFactory
+from accounts.factories import UserFactory, UserAvailabilityFactory
 from accounts.models import CustomUser
 from home.factories import (
     ProjectFactory,
@@ -28,6 +28,7 @@ from home.factories import (
     SurveyFactory,
     TeamFactory,
     UserSurveyResponseFactory,
+    OrganizerFactory,
 )
 from home.models import Session, SessionMembership, Survey, Team, UserSurveyResponse
 
@@ -812,9 +813,6 @@ class TestCompareAvailability:
     @pytest.fixture
     def setup_compare_data(self, db):
         """Create users with different availability patterns for testing."""
-        from accounts.factories import UserAvailabilityFactory, UserFactory
-        from home.factories import OrganizerFactory
-
         organizer_membership = OrganizerFactory.create()
         organizer = organizer_membership.user
         organizer.set_password("testpass123")
