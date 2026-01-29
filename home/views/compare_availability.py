@@ -50,7 +50,13 @@ def get_slot_color(available_count: int, total_count: int) -> str | None:
     """
     if total_count == 0 or available_count == 0:
         return None
-    opacity = available_count / total_count
+    if available_count == total_count:
+        return "rgba(92, 2, 135, 1.0)"
+    # Limit the max opacity of any fractional amount to 70%
+    # This will create a bigger visual difference between everyone
+    # being able to meet and all but one person being able to meet.
+    opacity = (available_count / total_count) * 0.70
+
     # ds-purple (#5c0287) = rgb(92, 2, 135)
     return f"rgba(92, 2, 135, {opacity})"
 

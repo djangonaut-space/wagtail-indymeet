@@ -40,10 +40,10 @@ class GetSlotColorTests(TestCase):
     def test_partial_availability_returns_proportional_opacity(self) -> None:
         """When some users are available, return proportional opacity."""
         color = get_slot_color(1, 2)
-        self.assertEqual(color, "rgba(92, 2, 135, 0.5)")
+        self.assertEqual(color, "rgba(92, 2, 135, 0.35)")
 
         color = get_slot_color(2, 4)
-        self.assertEqual(color, "rgba(92, 2, 135, 0.5)")
+        self.assertEqual(color, "rgba(92, 2, 135, 0.35)")
 
 
 class BuildGridDataTests(TestCase):
