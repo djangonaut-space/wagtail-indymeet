@@ -254,3 +254,86 @@ class FindBestAvailabilityOverlapsActionTests(TestCase):
 
         message_list = list(request._messages)
         self.assertEqual(message_list[0].level, messages.INFO)
+
+
+class CompareAvailabilityActionTests(TestCase):
+    """Tests for the compare_availability_action admin action."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.session1 = SessionFactory.create(title="Session 1", slug="session-1")
+        cls.session2 = SessionFactory.create(title="Session 2", slug="session-2")
+        cls.user1, cls.user2, cls.user3 = UserFactory.create_batch(3)
+        cls.membership1, cls.membership2 = SessionMembership.objects.bulk_create(
+            [
+                SessionMembership(
+                    session=cls.session1,
+                    user=cls.user1,
+                    role=SessionMembership.DJANGONAUT,
+                ),
+                SessionMembership(
+                    session=cls.session1, user=cls.user2, role=SessionMembership.CAPTAIN
+                ),
+            ]
+        )
+        cls.membership3 = SessionMembership.objects.create(
+            session=cls.session2, user=cls.user3, role=SessionMembership.NAVIGATOR
+        )
+
+    def setUp(self):
+        self.model_admin = SessionMembershipAdmin(SessionMembership, AdminSite())
+
+    def _make_request(self):
+        factory = RequestFactory()
+        request = factory.get("/admin/home/sessionmembership/")
+        request.session = {}
+        request._messages = FallbackStorage(request)
+        return request
+
+    def test_action_requires_at_least_one_member(self):
+        """Test that action shows error when no members selected."""
+        request = self._make_request()
+        queryset = SessionMembership.objects.none()
+
+        result = self.model_admin.compare_availability_action(request, queryset)
+
+        self.assertIsNone(result)
+        message_list = list(request._messages)
+        self.assertEqual(len(message_list), 1)
+        self.assertEqual(message_list[0].level, messages.ERROR)
+        self.assertIn("at least one member", str(message_list[0].message))
+
+    def test_action_redirects_with_user_ids(self):
+        """Test that action redirects to compare availability with user IDs."""
+        request = self._make_request()
+        queryset = SessionMembership.objects.filter(
+            id__in=[self.membership1.id, self.membership2.id]
+        )
+
+        result = self.model_admin.compare_availability_action(request, queryset)
+
+        self.assertIsNotNone(result)
+        self.assertIn("/compare-availability/", result.url)
+        self.assertIn(f"users={self.user1.id},{self.user2.id}", result.url)
+
+    def test_action_includes_session_when_same_session(self):
+        """Test that session is included when all members from same session."""
+        request = self._make_request()
+        queryset = SessionMembership.objects.filter(
+            id__in=[self.membership1.id, self.membership2.id]
+        )
+
+        result = self.model_admin.compare_availability_action(request, queryset)
+
+        self.assertIn(f"session={self.session1.id}", result.url)
+
+    def test_action_excludes_session_when_different_sessions(self):
+        """Test that session is excluded when members from different sessions."""
+        request = self._make_request()
+        queryset = SessionMembership.objects.filter(
+            id__in=[self.membership1.id, self.membership3.id]
+        )
+
+        result = self.model_admin.compare_availability_action(request, queryset)
+
+        self.assertNotIn("session=", result.url)

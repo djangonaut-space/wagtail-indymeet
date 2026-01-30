@@ -9,7 +9,8 @@ from django.contrib.auth.admin import (
 from django.contrib.auth.models import Group
 from django.contrib import admin as django_admin
 from django.core.management import call_command
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 
 from accounts.models import CustomUser
 from accounts.models import Link
@@ -54,7 +55,7 @@ class LinksInline(admin.StackedInline):
 @admin.register(CustomUser)
 class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
-    actions = ["export_as_csv"]
+    actions = ["export_as_csv", "compare_availability_action"]
     search_fields = (
         "first_name",
         "last_name",
@@ -72,6 +73,23 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "profile__github_username",
         "date_joined",
     )
+
+    @admin.action(description="Compare availability of selected users")
+    def compare_availability_action(
+        self, request, queryset
+    ) -> HttpResponseRedirect | None:
+        """Redirect to compare availability page with selected user IDs."""
+        user_ids = list(queryset.values_list("id", flat=True))
+        if not user_ids:
+            self.message_user(
+                request,
+                "Please select at least one user.",
+                messages.ERROR,
+            )
+            return None
+
+        url = reverse("compare_availability")
+        return HttpResponseRedirect(f"{url}?users={','.join(map(str, user_ids))}")
 
 
 @admin.register(UserProfile)

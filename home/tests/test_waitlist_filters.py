@@ -46,8 +46,9 @@ class WaitlistFilterTestCase(TestCase):
 
     def test_exclude_waitlisted_filter(self):
         """Test that exclude_waitlisted filter hides waitlisted users."""
-        queryset = UserSurveyResponse.objects.filter(survey=self.survey)
-
+        queryset = UserSurveyResponse.objects.with_full_team_formation_data(
+            self.session
+        )
         filterset = ApplicantFilterSet(
             data={"exclude_waitlisted": True},
             queryset=queryset,
@@ -65,7 +66,9 @@ class WaitlistFilterTestCase(TestCase):
 
     def test_show_waitlisted_only_filter(self):
         """Test that show_waitlisted_only filter shows only waitlisted users."""
-        queryset = UserSurveyResponse.objects.filter(survey=self.survey)
+        queryset = UserSurveyResponse.objects.with_full_team_formation_data(
+            self.session
+        )
 
         filterset = ApplicantFilterSet(
             data={"show_waitlisted_only": True},
@@ -84,7 +87,9 @@ class WaitlistFilterTestCase(TestCase):
 
     def test_no_waitlist_filter_applied(self):
         """Test that without filters, all users are shown."""
-        queryset = UserSurveyResponse.objects.filter(survey=self.survey)
+        queryset = UserSurveyResponse.objects.with_full_team_formation_data(
+            self.session
+        )
 
         filterset = ApplicantFilterSet(
             data={},
@@ -103,7 +108,9 @@ class WaitlistFilterTestCase(TestCase):
 
     def test_exclude_waitlisted_with_false_value(self):
         """Test that exclude_waitlisted=False doesn't filter anything."""
-        queryset = UserSurveyResponse.objects.filter(survey=self.survey)
+        queryset = UserSurveyResponse.objects.with_full_team_formation_data(
+            self.session
+        )
 
         filterset = ApplicantFilterSet(
             data={"exclude_waitlisted": False},
@@ -119,7 +126,9 @@ class WaitlistFilterTestCase(TestCase):
 
     def test_show_waitlisted_only_with_false_value(self):
         """Test that show_waitlisted_only=False doesn't filter anything."""
-        queryset = UserSurveyResponse.objects.filter(survey=self.survey)
+        queryset = UserSurveyResponse.objects.with_full_team_formation_data(
+            self.session
+        )
 
         filterset = ApplicantFilterSet(
             data={"show_waitlisted_only": False},
@@ -148,7 +157,7 @@ class WaitlistFilterTestCase(TestCase):
         Waitlist.objects.create(user=self.user1, session=session2)
 
         # Filter session2 responses
-        queryset = UserSurveyResponse.objects.filter(survey=survey2)
+        queryset = UserSurveyResponse.objects.with_full_team_formation_data(session2)
 
         filterset = ApplicantFilterSet(
             data={"show_waitlisted_only": True},
@@ -162,3 +171,66 @@ class WaitlistFilterTestCase(TestCase):
         # Should only include user1 for session2
         self.assertIn(self.user1.id, user_ids)
         self.assertEqual(len(user_ids), 1)
+
+
+class PreviouslyWaitlistedFilterTestCase(TestCase):
+    """Test previously waitlisted filtering in ApplicantFilterSet."""
+
+    def setUp(self):
+        """Create test data with users waitlisted in different sessions."""
+        self.current_session = SessionFactory()
+        self.current_survey = SurveyFactory(session=self.current_session)
+        self.current_session.application_survey = self.current_survey
+        self.current_session.save()
+
+        self.previous_session = SessionFactory()
+
+        self.user_previously_waitlisted = UserFactory()
+        self.user_currently_waitlisted = UserFactory()
+        self.user_both_waitlisted = UserFactory()
+        self.user_never_waitlisted = UserFactory()
+
+        # Create survey responses for current session
+        for user in [
+            self.user_previously_waitlisted,
+            self.user_currently_waitlisted,
+            self.user_both_waitlisted,
+            self.user_never_waitlisted,
+        ]:
+            UserSurveyResponse.objects.create(user=user, survey=self.current_survey)
+
+        # user_previously_waitlisted: only on previous session waitlist
+        Waitlist.objects.create(
+            user=self.user_previously_waitlisted, session=self.previous_session
+        )
+
+        # user_currently_waitlisted: only on current session waitlist
+        Waitlist.objects.create(
+            user=self.user_currently_waitlisted, session=self.current_session
+        )
+
+        # user_both_waitlisted: on both waitlists
+        Waitlist.objects.create(
+            user=self.user_both_waitlisted, session=self.previous_session
+        )
+        Waitlist.objects.create(
+            user=self.user_both_waitlisted, session=self.current_session
+        )
+
+    def test_show_previously_waitlisted_only_filter(self):
+        """Filter returns users waitlisted in sessions other than current."""
+        queryset = UserSurveyResponse.objects.with_full_team_formation_data(
+            self.current_session
+        )
+        filterset = ApplicantFilterSet(
+            data={"show_previously_waitlisted_only": True},
+            queryset=queryset,
+            session=self.current_session,
+        )
+
+        user_ids = [r.user_id for r in filterset.qs]
+
+        self.assertIn(self.user_previously_waitlisted.id, user_ids)
+        self.assertIn(self.user_both_waitlisted.id, user_ids)
+        self.assertNotIn(self.user_currently_waitlisted.id, user_ids)
+        self.assertNotIn(self.user_never_waitlisted.id, user_ids)

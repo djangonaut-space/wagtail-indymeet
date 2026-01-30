@@ -17,6 +17,10 @@
               class="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded transition-colors">
         <span id="toggle-button-text"></span>
       </button>
+      <a href="{% url 'compare_availability' %}?session={{ team.session.id }}&users={% for m in navigators %}{{ m.user.id }}{% if not forloop.last %},{% endif %}{% endfor %}{% if navigators and djangonauts %},{% endif %}{% for m in djangonauts %}{{ m.user.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+         class="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded transition-colors">
+        <i class="fas fa-calendar-alt mr-1"></i>{% trans "Compare Availability" %}
+      </a>
     </div>
   </div>
 

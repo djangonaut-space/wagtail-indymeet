@@ -51,7 +51,10 @@ class Command(BaseCommand):
             )
 
             # Build list of (content_type_id, codename) tuples for all permissions
-            permission_lookups = [(content_types[Team].id, "form_team")]
+            permission_lookups = [
+                (content_types[Team].id, "form_team"),
+                (content_types[Team].id, "compare_org_availability"),
+            ]
             for model, perm_types in permissions_to_add:
                 content_type = content_types[model]
                 for perm_type in perm_types:

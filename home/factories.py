@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 import factory
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from accounts.factories import UserFactory
@@ -124,6 +126,35 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     session = factory.SubFactory(SessionFactory)
     team = factory.SubFactory(TeamFactory)
     role = SessionMembership.DJANGONAUT
+
+
+class OrganizerFactory(factory.django.DjangoModelFactory):
+    """Factory that creates a user with organizer role and relevant custom permissions."""
+
+    class Meta:
+        model = SessionMembership
+        skip_postgeneration_save = True
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    team = None
+    role = SessionMembership.ORGANIZER
+    accepted = True
+
+    @factory.post_generation
+    def with_permissions(self, create, extracted, **kwargs):
+        if not create:
+            return
+        # Default to adding permission unless explicitly set to False
+        if extracted is False:
+            return
+
+        content_type = ContentType.objects.get_for_model(Team)
+        permissions = Permission.objects.filter(
+            codename__in=["compare_org_availability", "form_team"],
+            content_type=content_type,
+        )
+        self.user.user_permissions.add(*permissions)
 
 
 class WaitlistFactory(factory.django.DjangoModelFactory):
