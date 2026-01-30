@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
+from django.utils.translation import gettext_lazy as _
 
 from .models import CustomUser
 from .models import UserAvailability
@@ -45,6 +47,22 @@ class CustomUserCreationForm(BaseCustomUserForm, UserCreationForm):
         "the CoC"
         "</a>",
     )
+
+    def clean_email(self):
+        """Reject emails that differ only in case."""
+        email = self.cleaned_data.get("email")
+        if email and self._meta.model.objects.filter(email__iexact=email).exists():
+            self._update_errors(
+                ValidationError(
+                    {
+                        "email": _(
+                            "This email has already been used. Please reset your password."
+                        )
+                    }
+                )
+            )
+        else:
+            return email
 
     class Meta:
         model = CustomUser
@@ -93,6 +111,48 @@ class CustomUserChangeForm(BaseCustomUserForm):
         else:
             help_text = "<p class='text-amber-600'>You have not confirmed your email address.</p>"
             self.fields["email"].help_text = help_text
+
+    def clean_username(self):
+        """Reject usernames that differ only in case."""
+        username = self.cleaned_data.get("username")
+        if (
+            username
+            and self._meta.model.objects.exclude(id=self.instance.id)
+            .filter(username__iexact=username)
+            .exists()
+        ):
+            self._update_errors(
+                ValidationError(
+                    {
+                        "username": self.instance.unique_error_message(
+                            self._meta.model, ["username"]
+                        )
+                    }
+                )
+            )
+        else:
+            return username
+
+    def clean_email(self):
+        """Reject emails that differ only in case."""
+        email = self.cleaned_data.get("email")
+        if (
+            email
+            and self._meta.model.objects.exclude(id=self.instance.id)
+            .filter(email__iexact=email)
+            .exists()
+        ):
+            self._update_errors(
+                ValidationError(
+                    {
+                        "email": _(
+                            "This email has already been used. Please reset your password."
+                        )
+                    }
+                )
+            )
+        else:
+            return email
 
 
 class EmailSubscriptionsChangeForm(forms.ModelForm):
