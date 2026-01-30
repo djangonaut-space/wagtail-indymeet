@@ -745,9 +745,7 @@ class TestTeamFormation:
         checkboxes.nth(1).check()
 
         # Select a team for overlap analysis
-        # The second combobox named "Team" is in the overlap analysis form
-        team_comboboxes = team_page.get_by_role("combobox", name="Team")
-        overlap_team_select = team_comboboxes.nth(1)  # Second one is the overlap form
+        overlap_team_select = team_page.locator("#overlap-form").get_by_role("combobox")
         overlap_team_select.select_option(value=str(data.team_alpha.id))
 
         # Select analysis type

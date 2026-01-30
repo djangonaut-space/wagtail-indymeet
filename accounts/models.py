@@ -7,10 +7,12 @@ from django.core.signing import SignatureExpired
 from django.core.signing import TimestampSigner
 from django.db import models
 from django.db.models import Q, QuerySet
+from django.db.models.functions import Lower
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from wagtail.models import Orderable
+from django.utils.translation import gettext_lazy as _
 
 from accounts.fields import DefaultOneToOneField
 
@@ -121,6 +123,15 @@ class CustomUserManager(UserManager.from_queryset(CustomUserQuerySet)):
 
 class CustomUser(AbstractUser):
     objects = CustomUserManager()
+
+    class Meta:
+        verbose_name = _("user")
+        verbose_name_plural = _("users")
+        constraints = [
+            models.UniqueConstraint(
+                Lower("email"), name="accounts_customuser_email_unq"
+            )
+        ]
 
     def __str__(self):
         full_name = self.get_full_name()
