@@ -40,7 +40,7 @@ class AuthViewTests(TestCase):
 
     def test_password_reset_confirm(self):
         response = self.client.post(
-            reverse("password_reset"), {"email": "example@example.com"}
+            reverse("password_reset"), {"email": self.user.email}
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
