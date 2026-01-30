@@ -829,6 +829,7 @@ class OverlapAnalysisForm(BaseTeamForm):
         label=_("Team"),
         queryset=None,
         required=True,
+        empty_label=_("Choose Team to check availability overlap"),
         help_text=_("Team whose navigators/captain will be included in analysis"),
         widget=forms.Select(attrs={"class": "form-select"}),
     )
@@ -985,7 +986,7 @@ class BulkTeamAssignmentForm(BaseTeamForm):
         label=_("Team"),
         queryset=None,
         required=True,
-        empty_label=_("-- Choose Team --"),
+        empty_label=_("Choose Team to assign Djangonauts"),
         widget=forms.Select(attrs={"class": "form-select", "id": "bulk-team-select"}),
         help_text=_("Select the team to assign selected users to"),
     )
