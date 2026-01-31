@@ -427,6 +427,7 @@ const django_contribution_opportunities = [
       "improved technical communication"
     ],
     "links": [
+      "https://docs.djangoproject.com/en/dev/internals/contributing/triaging-tickets/#reviewing-patches",
       "https://djangotv.com/videos/djangocon-europe/2025/djancocon-europe-2025-keynote-django-needs-you-to-do-code-review/",
       "https://code.djangoproject.com/wiki/Reports#Reviewingpatches",
       "https://github.com/djangonaut-space/space-reviewers"
