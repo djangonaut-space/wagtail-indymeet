@@ -194,21 +194,31 @@ class GitHubStatsCollector:
                     name=item.user.name or item.user.login,
                 )
 
-                # Get the actual PR to check merged status
-                pr_created = self._parse_date(item.created_at)
+                # Fetch the actual PR to get merged_at
+                pull_request = item.as_pull_request()
+                merged_at = (
+                    self._parse_date(pull_request.merged_at)
+                    if pull_request.merged_at
+                    else None
+                )
 
                 pr = PR(
                     title=item.title,
                     number=item.number,
                     url=item.html_url,
                     author=author,
-                    created_at=pr_created,
-                    merged_at=None,  # Search API doesn't return this directly
+                    created_at=self._parse_date(item.created_at),
+                    merged_at=merged_at,
                     state="open" if item.state == "open" else "closed",
                     repo=f"{owner}/{repo_name}",
                 )
                 prs.append(pr)
-                logger.debug("Found PR #%d by %s", item.number, item.user.login)
+                logger.debug(
+                    "Found PR #%d by %s (merged: %s)",
+                    item.number,
+                    item.user.login,
+                    merged_at is not None,
+                )
 
         return prs
 
@@ -343,18 +353,30 @@ class GitHubStatsCollector:
                         github_username=item.user.login,
                         name=item.user.name or item.user.login,
                     )
+                    # Fetch the actual PR to get merged_at
+                    pull_request = item.as_pull_request()
+                    merged_at = (
+                        self._parse_date(pull_request.merged_at)
+                        if pull_request.merged_at
+                        else None
+                    )
                     pr = PR(
                         title=item.title,
                         number=item.number,
                         url=item.html_url,
                         author=author,
                         created_at=self._parse_date(item.created_at),
-                        merged_at=None,
+                        merged_at=merged_at,
                         state="open" if item.state == "open" else "closed",
                         repo=item.repository.full_name,
                     )
                     report.prs.append(pr)
-                    logger.debug("Found PR #%d in %s", item.number, repo_full_name)
+                    logger.debug(
+                        "Found PR #%d in %s (merged: %s)",
+                        item.number,
+                        repo_full_name,
+                        merged_at is not None,
+                    )
 
             # Search for issues
             issue_query = (
