@@ -112,8 +112,7 @@ for section in html_sections:
 print("\n" + "=" * 60)
 print("VERIFICATION SUMMARY")
 print("=" * 60)
-print(
-    """
+print("""
 ✓ is_closed property logic verified
 ✓ PR categorization logic verified
 ✓ HTML output structure defined
@@ -127,5 +126,4 @@ Next Steps:
 1. Run full test suite when Django environment is available
 2. Test in admin interface with real GitHub data
 3. Verify backward compatibility with existing data
-"""
-)
+""")
