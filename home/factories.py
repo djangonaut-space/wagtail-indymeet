@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 import factory
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from accounts.factories import UserFactory
@@ -13,6 +15,7 @@ from home.models import (
     SessionMembership,
     Survey,
     Team,
+    Testimonial,
     TypeField,
     UserQuestionResponse,
     UserSurveyResponse,
@@ -125,9 +128,52 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     role = SessionMembership.DJANGONAUT
 
 
+class OrganizerFactory(factory.django.DjangoModelFactory):
+    """Factory that creates a user with organizer role and relevant custom permissions."""
+
+    class Meta:
+        model = SessionMembership
+        skip_postgeneration_save = True
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    team = None
+    role = SessionMembership.ORGANIZER
+    accepted = True
+
+    @factory.post_generation
+    def with_permissions(self, create, extracted, **kwargs):
+        if not create:
+            return
+        # Default to adding permission unless explicitly set to False
+        if extracted is False:
+            return
+
+        content_type = ContentType.objects.get_for_model(Team)
+        permissions = Permission.objects.filter(
+            codename__in=["compare_org_availability", "form_team"],
+            content_type=content_type,
+        )
+        self.user.user_permissions.add(*permissions)
+
+
 class WaitlistFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Waitlist
 
     user = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
+
+
+class TestimonialFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Testimonial
+
+    title = factory.Sequence(lambda n: "Testimonial Title %d" % n)
+    text = factory.Sequence(
+        lambda n: "This is my testimonial text for my experience during the program. "
+        "It was a great learning experience! %d" % n
+    )
+    author = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    is_published = False

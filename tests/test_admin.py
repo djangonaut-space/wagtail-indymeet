@@ -11,7 +11,6 @@ from unittest_parametrize import ParametrizedTestCase
 
 from accounts.models import CustomUser
 
-
 each_model_admin = parametrize(
     "site,model,model_admin",
     [

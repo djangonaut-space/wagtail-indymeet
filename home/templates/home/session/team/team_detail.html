@@ -111,7 +111,8 @@
 <script>
 // Minimal JavaScript for timezone detection and HTMX support
 (function() {
-    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const [overrideTZ, overrideTZOffset] = (new URLSearchParams(window.location.search).get('override-timezone') || '').split(':');
+    const userTz = overrideTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // Get UTC offset in hours for the user's timezone
     function getUserOffset() {
@@ -120,7 +121,7 @@
         return -now.getTimezoneOffset() / 60;
     }
 
-    const userOffset = getUserOffset();
+    const userOffset = overrideTZOffset || getUserOffset();
 
     // Track current state (starts with user's timezone)
     let currentTz = userTz;

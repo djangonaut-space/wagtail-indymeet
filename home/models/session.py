@@ -198,6 +198,7 @@ class Team(models.Model):
     class Meta:
         permissions = [
             ("form_team", "Can form teams from the pool of applicants."),
+            ("compare_org_availability", "Can compare organization-wide availability."),
         ]
 
     session = models.ForeignKey(Session, related_name="teams", on_delete=models.CASCADE)

@@ -1,14 +1,14 @@
 """Survey-related views."""
 
 from gettext import gettext
-from typing import Optional
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Prefetch
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormMixin, ModelFormMixin
 
@@ -16,8 +16,30 @@ from home.forms import CreateUserSurveyResponseForm, EditUserSurveyResponseForm
 from home.models import Survey, UserQuestionResponse, UserSurveyResponse
 
 
+class ApplicationStatusMixin:
+    """Mixin providing application status checking for survey views."""
+
+    def get_application_status(self, survey):
+        """Check the survey's application status.
+
+        Returns (status, start_date) where status is 'open', 'not_yet_open', or 'closed'.
+        """
+        session = getattr(survey, "application_session", None)
+        if session is not None:
+            now = timezone.now()
+            if now < session.application_start_anywhere_on_earth():
+                return "not_yet_open", session.application_start_date
+            if now > session.application_end_anywhere_on_earth():
+                return "closed", None
+        return "open", None
+
+
 class CreateUserSurveyResponseFormView(
-    LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView
+    ApplicationStatusMixin,
+    LoginRequiredMixin,
+    UserPassesTestMixin,
+    FormMixin,
+    DetailView,
 ):
     """View for creating a new survey response."""
 
@@ -71,8 +93,12 @@ class CreateUserSurveyResponseFormView(
 
     def get_context_data(self, **kwargs):
         """Add survey and editing flag to context."""
-        kwargs["survey"] = self.get_object()
+        survey = self.get_object()
+        kwargs["survey"] = survey
         kwargs["is_editing"] = False
+        status, start_date = self.get_application_status(survey)
+        kwargs["application_status"] = status
+        kwargs["application_start_date"] = start_date
         return super().get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -82,7 +108,7 @@ class CreateUserSurveyResponseFormView(
         if form.is_valid():
             user_survey_response = form.save()
             user_survey_response.send_created_notification()
-            messages.success(self.request, gettext(f"Survey successfully saved!"))
+            messages.success(self.request, gettext("Survey successfully saved!"))
             return self.form_valid(form)
         else:
             messages.error(self.request, gettext("Something went wrong."))
@@ -119,7 +145,9 @@ class UserSurveyResponseView(LoginRequiredMixin, DetailView):
         return super().get_context_data(**kwargs)
 
 
-class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView):
+class EditUserSurveyResponseView(
+    ApplicationStatusMixin, LoginRequiredMixin, ModelFormMixin, DetailView
+):
     """View for editing a survey response."""
 
     model = UserSurveyResponse
@@ -147,6 +175,9 @@ class EditUserSurveyResponseView(LoginRequiredMixin, ModelFormMixin, DetailView)
         """Add survey and editing flag to context."""
         kwargs["survey"] = self.object.survey
         kwargs["is_editing"] = True
+        status, start_date = self.get_application_status(self.object.survey)
+        kwargs["application_status"] = status
+        kwargs["application_start_date"] = start_date
         return super().get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):

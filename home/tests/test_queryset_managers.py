@@ -13,7 +13,7 @@ from home.factories import (
     TeamFactory,
     UserSurveyResponseFactory,
 )
-from home.models import Session, SessionMembership, UserSurveyResponse
+from home.models import Session, SessionMembership, UserSurveyResponse, Waitlist
 
 
 class UserSurveyResponseQuerySetTestCase(TestCase):
@@ -329,6 +329,55 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         self.assertEqual(result.annotated_previous_avg_score_value, 5.0)
         self.assertTrue(result.annotated_has_availability)
         self.assertTrue(hasattr(result.user, "prefetched_current_session_memberships"))
+
+    def test_with_waitlisted_annotations(self):
+        """Test waitlist annotations distinguish current vs previous sessions."""
+        previous_session = SessionFactory()
+
+        user_previously_waitlisted = UserFactory()
+        user_currently_waitlisted = UserFactory()
+        user_both_waitlisted = UserFactory()
+        user_never_waitlisted = UserFactory()
+
+        for user in [
+            user_previously_waitlisted,
+            user_currently_waitlisted,
+            user_both_waitlisted,
+            user_never_waitlisted,
+        ]:
+            UserSurveyResponseFactory(user=user, survey=self.survey)
+
+        Waitlist.objects.create(
+            user=user_previously_waitlisted, session=previous_session
+        )
+        Waitlist.objects.create(user=user_currently_waitlisted, session=self.session)
+        Waitlist.objects.create(user=user_both_waitlisted, session=previous_session)
+        Waitlist.objects.create(user=user_both_waitlisted, session=self.session)
+
+        qs = UserSurveyResponse.objects.for_survey(self.survey).with_waitlisted(
+            self.session
+        )
+        results = {r.user_id: r for r in qs}
+
+        self.assertTrue(
+            results[user_previously_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertFalse(results[user_previously_waitlisted.id].annotated_is_waitlisted)
+
+        self.assertFalse(
+            results[user_currently_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertTrue(results[user_currently_waitlisted.id].annotated_is_waitlisted)
+
+        self.assertTrue(
+            results[user_both_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertTrue(results[user_both_waitlisted.id].annotated_is_waitlisted)
+
+        self.assertFalse(
+            results[user_never_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertFalse(results[user_never_waitlisted.id].annotated_is_waitlisted)
 
     def test_with_full_team_formation_data_no_survey(self):
         """Test with_full_team_formation_data with no application survey."""

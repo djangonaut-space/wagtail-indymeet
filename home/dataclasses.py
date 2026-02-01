@@ -23,6 +23,7 @@ class ApplicantData:
     current_team: Team | None
     current_role: str | None
     is_waitlisted: bool
+    previously_waitlisted: bool
     previous_application_count: int
     previous_avg_score: float | None
     has_availability: bool

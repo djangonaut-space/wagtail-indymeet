@@ -57,6 +57,11 @@ class ApplicantFilterSet(django_filters.FilterSet):
         label="Show only waitlisted applicants",
         widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
     )
+    show_previously_waitlisted_only = BooleanFilter(
+        method="filter_previously_waitlisted_only",
+        label="Show only previously waitlisted applicants",
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+    )
 
     overlap_with_navigators = django_filters.ModelChoiceFilter(
         queryset=Team.objects.none(),
@@ -90,7 +95,7 @@ class ApplicantFilterSet(django_filters.FilterSet):
         self, queryset: QuerySet, name: str, value: Team | None
     ) -> QuerySet:
         """Filter applicants by specific team assignment."""
-        if value and self.session:
+        if value:
             return queryset.with_team_assignment(value, self.session)
         return queryset
 
@@ -98,7 +103,7 @@ class ApplicantFilterSet(django_filters.FilterSet):
         """Filter to show only unassigned applicants."""
         # BooleanFilter will pass True, False, or None
         # We only want to filter when explicitly True
-        if value is True and self.session:
+        if value:
             return queryset.without_team_assignment(self.session)
         return queryset
 
@@ -114,7 +119,7 @@ class ApplicantFilterSet(django_filters.FilterSet):
         self, queryset: QuerySet, name: str, value: Team | None
     ) -> QuerySet:
         """Filter applicants by availability overlap with team captain."""
-        if value and self.session:
+        if value:
             return queryset.with_captain_overlap(value)
         return queryset
 
@@ -122,46 +127,25 @@ class ApplicantFilterSet(django_filters.FilterSet):
         self, queryset: QuerySet, name: str, value: bool
     ) -> QuerySet:
         """Exclude waitlisted applicants from results."""
-        if value is True and self.session:
+        if value:
             # Get user IDs that are waitlisted for this session
-            waitlisted_user_ids = Waitlist.objects.filter(
-                session=self.session
-            ).values_list("user_id", flat=True)
-            return queryset.exclude(user_id__in=waitlisted_user_ids)
+            return queryset.filter(annotated_is_waitlisted=False)
         return queryset
 
     def filter_waitlisted_only(
         self, queryset: QuerySet, name: str, value: bool
     ) -> QuerySet:
         """Show only waitlisted applicants."""
-        if value is True and self.session:
+        if value:
             # Get user IDs that are waitlisted for this session
-            waitlisted_user_ids = Waitlist.objects.filter(
-                session=self.session
-            ).values_list("user_id", flat=True)
-            return queryset.filter(user_id__in=waitlisted_user_ids)
+            return queryset.filter(annotated_is_waitlisted=True)
         return queryset
 
-    def filter_exclude_waitlisted(
+    def filter_previously_waitlisted_only(
         self, queryset: QuerySet, name: str, value: bool
     ) -> QuerySet:
-        """Exclude waitlisted applicants from results."""
-        if value is True and self.session:
+        """Show only previously waitlisted applicants."""
+        if value:
             # Get user IDs that are waitlisted for this session
-            waitlisted_user_ids = Waitlist.objects.filter(
-                session=self.session
-            ).values_list("user_id", flat=True)
-            return queryset.exclude(user_id__in=waitlisted_user_ids)
-        return queryset
-
-    def filter_waitlisted_only(
-        self, queryset: QuerySet, name: str, value: bool
-    ) -> QuerySet:
-        """Show only waitlisted applicants."""
-        if value is True and self.session:
-            # Get user IDs that are waitlisted for this session
-            waitlisted_user_ids = Waitlist.objects.filter(
-                session=self.session
-            ).values_list("user_id", flat=True)
-            return queryset.filter(user_id__in=waitlisted_user_ids)
+            return queryset.filter(annotated_previously_waitlisted=True)
         return queryset

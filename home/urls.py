@@ -1,6 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
+from home.views.compare_availability import compare_availability
 from home.views.events import EventDetailView, EventListView, event_calendar
 from home.views.membership_acceptance import accept_membership_view
 from home.views.resources import resource_link
@@ -15,9 +16,20 @@ from home.views.teams import (
     TeamDetailView,
     team_availability_fragment,
 )
+from home.views.testimonials import (
+    TestimonialCreateView,
+    TestimonialDeleteView,
+    TestimonialListView,
+    TestimonialUpdateView,
+)
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),
+    path(
+        "compare-availability/",
+        compare_availability,
+        name="compare_availability",
+    ),
     path("events/", EventListView.as_view(), name="event_list"),
     path(
         "events/<int:year>/<int:month>/<slug:slug>/",
@@ -69,5 +81,21 @@ urlpatterns = [
             template_name="home/opportunities.html", extra_context={"blog_page": True}
         ),
         name="opportunities",
+    ),
+    path("testimonials/", TestimonialListView.as_view(), name="testimonial_list"),
+    path(
+        "testimonials/create/",
+        TestimonialCreateView.as_view(),
+        name="testimonial_create",
+    ),
+    path(
+        "testimonials/<slug:slug>/edit/",
+        TestimonialUpdateView.as_view(),
+        name="testimonial_edit",
+    ),
+    path(
+        "testimonials/<slug:slug>/delete/",
+        TestimonialDeleteView.as_view(),
+        name="testimonial_delete",
     ),
 ]

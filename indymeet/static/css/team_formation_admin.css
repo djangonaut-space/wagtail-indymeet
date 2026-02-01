@@ -58,6 +58,7 @@
     display: flex;
     gap: 1rem;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
 }
 
@@ -74,9 +75,12 @@
 
 .toolbar-divider {
     width: 1px;
-    height: 30px;
-    background: #ddd;
-    margin: 0 0.5rem;
+    height: 35px;
+    background: #aaa;
+}
+
+.main-content .button {
+    padding: 10px 15px;
 }
 
 /* Overlap form styling */

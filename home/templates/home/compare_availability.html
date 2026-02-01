@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Compare Availability | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% trans "Compare Availability | Djangonaut Space" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    #availability-grid {
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .time-slot {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .user-card {
+        transition: all 0.15s ease-in-out;
+    }
+
+    .user-card.unavailable {
+        background-color: #f3f4f6;
+        opacity: 0.6;
+    }
+
+    .user-card.unavailable .user-name {
+        text-decoration: line-through;
+        color: #9ca3af;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container max-w-7xl"
+         x-data="availabilityGrid()">
+        <nav class="mb-4 text-sm" aria-label="breadcrumb">
+            <ol class="flex items-center gap-2">
+                <li><a href="{% url 'user_sessions' %}">{% trans "My Sessions" %}</a></li>
+                <li class="text-gray-400">/</li>
+                <li class="text-gray-600">{% trans "Compare Availability" %}</li>
+            </ol>
+        </nav>
+
+        <h1 class="text-4xl mb-6">{% trans "Compare Availability" %}</h1>
+
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+            <p class="text-sm">
+                <strong>{% trans "Instructions:" %}</strong>
+                {% blocktrans %}
+                    Select users to compare their availability. The calendar shows overlap - darker colors indicate more people available. Hover over a time slot to see who is available.
+                {% endblocktrans %}
+            </p>
+        </div>
+
+        {% if form.errors %}
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p class="text-sm font-semibold text-red-800 mb-2">{% trans "Please correct the following errors:" %}</p>
+            <ul class="list-disc list-inside text-sm text-red-700">
+              {{ form.errors.as_ul }}
+            </ul>
+          </div>
+        {% endif %}
+
+        <!-- User Selection Form -->
+        <form method="get" class="mb-6">
+            {% if session_id %}
+            <input type="hidden" name="session" value="{{ session_id }}">
+            {% endif %}
+            <input type="hidden" name="offset" x-bind:value="offsetHours">
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-grow">
+                    <label for="user-select" class="block text-sm font-medium text-gray-700 mb-2">
+                        {% trans "Select Users to Compare" %}
+                    </label>
+                    <select id="user-select" name="users" multiple
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-purple-500 focus:border-purple-500"
+                            size="5">
+                        {% for user in selectable_users %}
+                        <option value="{{ user.id }}"
+                                {% if user.id in selected_user_ids %}selected{% endif %}>
+                            {{ user.get_full_name|default:user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">{% trans "Hold Ctrl/Cmd to select multiple users" %}</p>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit"
+                            class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                        {% trans "Apply" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        {% if selected_users %}
+        <!-- Timezone and Legend -->
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-600">
+                {% trans "Timezone:" %} <span x-text="timezone" class="font-bold"></span>
+            </span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">{% trans "Legend:" %}</span>
+                <span class="inline-flex items-center gap-1">
+                    <span class="w-4 h-4 rounded border border-gray-200 bg-ds-purple"></span>
+                    <span class="text-xs">{% trans "All available" %}</span>
+                </span>
+                <span class="inline-flex items-center gap-1">
+                    <span class="w-4 h-4 rounded bg-gray-50 border border-gray-200"></span>
+                    <span class="text-xs">{% trans "None available" %}</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Grid -->
+            <div class="flex-grow">
+                <div class="overflow-x-auto">
+                    <table id="availability-grid" class="w-full border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="bg-gray-50 border border-gray-200 p-1 w-16"></th>
+                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Sun" %}</th>
+                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Mon" %}</th>
+                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Tue" %}</th>
+                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Wed" %}</th>
+                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Thu" %}</th>
+                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Fri" %}</th>
+                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Sat" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody @mouseleave="hoveredSlot = null">
+                            {% for row in grid_rows %}
+                            <tr>
+                                {% if row.show_time_label %}
+                                <th rowspan="2" class="border border-gray-200 text-xs text-right pr-2 bg-gray-50">
+                                    {{ row.time_label }}
+                                </th>
+                                {% endif %}
+                                {% for cell in row.cells %}
+                                <td class="time-slot h-4 border border-gray-200 cursor-pointer"
+                                    :style="getCellStyle('{{ cell.slot_key }}', '{{ cell.color|default:'' }}')"
+                                    title="{{ cell.available_count }}/{{ cell.total_count }} {% trans 'available' %}"
+                                    @mouseenter="hoveredSlot = '{{ cell.slot_key }}'">
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Panel -->
+            <div class="w-full lg:w-64 flex-shrink-0">
+                <div class="bg-white border border-gray-200 rounded-lg p-4 sticky top-4">
+                    <h3 class="font-bold text-gray-900 mb-3">{% trans "Selected Users" %}</h3>
+                    <div class="space-y-2">
+                        <template x-for="user in users" :key="user.id">
+                            <div class="user-card p-2 rounded border border-gray-100 cursor-pointer"
+                                 :class="{ 'unavailable': isUnavailable(user.id), 'bg-purple-100 border-purple-300': hoveredUser === user.id }"
+                                 @mouseenter="hoveredUser = user.id"
+                                 @mouseleave="hoveredUser = null">
+                                <span class="user-name text-sm text-gray-900 truncate" x-text="user.display_name"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <p>{% trans "Select users above and click Apply to compare availability." %}</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+{{ slot_availabilities|json_script:"slot-availabilities" }}
+{{ selected_users|json_script:"selected-users" }}
+
+<script>
+function availabilityGrid() {
+    const slotAvailabilities = JSON.parse(document.getElementById('slot-availabilities').textContent);
+    const users = JSON.parse(document.getElementById('selected-users').textContent);
+    return {
+        slotAvailabilities: slotAvailabilities,
+        users: users,
+        hoveredSlot: null,
+        hoveredUser: null,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        offsetHours: -new Date().getTimezoneOffset() / 60,
+
+        isUnavailable(userId) {
+            if (this.hoveredSlot === null) return false;
+            const available = this.slotAvailabilities[this.hoveredSlot] || [];
+            return !available.includes(userId);
+        },
+
+        getCellStyle(slotKey, defaultColor) {
+            if (this.hoveredUser === null) {
+                return defaultColor ? { backgroundColor: defaultColor } : {};
+            }
+            const available = this.slotAvailabilities[slotKey] || [];
+            if (available.includes(this.hoveredUser)) {
+                return { backgroundColor: '#5c0287' };
+            }
+            return {};
+        }
+    }
+}
+</script>
+{% endblock content %}

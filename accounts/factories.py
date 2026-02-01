@@ -21,7 +21,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.Sequence(lambda n: "user_%d" % n)
     first_name = "Jane"
     last_name = "Doe"
-    email = "example@example.com"
+    email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
     profile = factory.RelatedFactory(ProfileFactory, factory_related_name="user")
 
 

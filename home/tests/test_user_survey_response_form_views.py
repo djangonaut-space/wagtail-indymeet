@@ -1,16 +1,18 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
 
 from accounts.factories import UserFactory
-from home.factories import QuestionFactory
-from home.factories import SessionFactory
-from home.factories import SurveyFactory
-from home.factories import UserQuestionResponseFactory
-from home.factories import UserSurveyResponseFactory
-from home.models import UserQuestionResponse
-from home.models import UserSurveyResponse
+from home.factories import (
+    QuestionFactory,
+    SessionFactory,
+    SurveyFactory,
+    UserQuestionResponseFactory,
+    UserSurveyResponseFactory,
+)
+from home.models import UserQuestionResponse, UserSurveyResponse
 
 
 class CreateUserSurveyResponseFormViewTests(TestCase):
@@ -25,6 +27,34 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
             survey=cls.survey,
             label="How are you?",
         )
+
+    def test_cannot_access_survey_before_application_opens(self):
+        """Test users cannot access survey form before application period starts."""
+        now = timezone.now().date()
+        SessionFactory.create(
+            application_survey=self.survey,
+            application_start_date=now + timedelta(days=5),
+            application_end_date=now + timedelta(days=15),
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "will be open on")
+        self.assertNotContains(response, "Submit")
+
+    def test_cannot_access_survey_after_application_closes(self):
+        """Users should not be able to access the survey form after the application period ends."""
+        now = timezone.now().date()
+        SessionFactory.create(
+            application_survey=self.survey,
+            application_start_date=now - timedelta(days=15),
+            application_end_date=now - timedelta(days=5),
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "application is closed")
+        self.assertNotContains(response, "Submit")
 
     def test_login_required(self):
         response = self.client.get(self.url, follow=True)
@@ -245,7 +275,7 @@ class EditUserSurveyResponseViewTests(TestCase):
             data={f"field_survey_{self.question.id}": "Excellent"},
             follow=True,
         )
-        self.assertContains(response, "You are no longer able to edit this.")
+        self.assertContains(response, "This application is closed.")
 
     def test_can_edit_session_application_within_deadline(self):
         # Create a session with active application period
