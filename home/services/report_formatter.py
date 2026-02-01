@@ -56,9 +56,7 @@ class ReportFormatter:
                 f'<span class="author-tag">{author.name}</span>' for author in authors
             ]
             html_parts.append(
-                f'<div style="margin-top:15px; '
-                f"border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; "
-                f'font-size:0.9em; opacity:0.9;"><strong>Djangonauts:</strong> '
+                f'<div class="authors-row"><strong>Djangonauts:</strong> '
                 f'{", ".join(author_names)}</div>'
             )
 
@@ -161,8 +159,7 @@ class ReportFormatter:
         # No activity message
         if not (merged_prs or closed_prs or open_prs or open_issues):
             html_parts.append(
-                '<div style="text-align:center; padding:50px; color:#666; '
-                'background:#f9f9f9; border-radius:8px;">'
+                '<div class="no-activity">'
                 "<h3>No GitHub activity found</h3>"
                 "<p>Try selecting a different date range.</p></div>"
             )

@@ -3,19 +3,19 @@
 
 {% block extrastyle %}{{ block.super }}
 <style>
-    /* Simple, Clean Admin Styles */
+    /* Admin Styles with Dark Mode Support */
 
     .stats-summary {
-        background: #fff;
+        background: var(--body-bg, #fff);
         padding: 20px;
         margin-bottom: 20px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--hairline-color, #eee);
     }
 
     .stats-summary h2 {
         margin: 0 0 15px 0;
         font-size: 18px;
-        color: #333;
+        color: var(--body-fg, #333);
         border-bottom: none;
     }
 
@@ -32,37 +32,41 @@
 
     .stat span {
         font-size: 13px;
-        color: #666;
+        color: var(--body-quiet-color, #666);
         text-transform: uppercase;
     }
 
     .stat strong {
         font-size: 24px;
         font-weight: normal;
-        color: #333;
+        color: var(--body-fg, #333);
     }
 
     /* Activity Sections */
     h3 {
         font-size: 14px;
         text-transform: uppercase;
-        color: #666;
-        border-bottom: 1px solid #ccc;
+        color: var(--body-quiet-color, #666);
+        border-bottom: 1px solid var(--hairline-color, #ccc);
         padding-bottom: 5px;
         margin-top: 30px;
         margin-bottom: 15px;
     }
 
     .merged-prs h3 {
-        color: #28a745;
+        color: var(--message-success-bg, #28a745);
     }
 
     .open-prs h3 {
-        color: #007bff;
+        color: var(--link-fg, #007bff);
+    }
+
+    .closed-prs h3 {
+        color: var(--body-quiet-color, #666);
     }
 
     .open-issues h3 {
-        color: #fd7e14;
+        color: var(--message-warning-bg, #fd7e14);
     }
 
     ul {
@@ -71,41 +75,41 @@
     }
 
     li {
-        background: #fff;
+        background: var(--body-bg, #fff);
         padding: 10px 0;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--hairline-color, #eee);
     }
 
     li strong {
         font-size: 14px;
         font-weight: bold;
-        color: #333;
+        color: var(--body-fg, #333);
     }
 
     .meta-row {
         font-size: 12px;
-        color: #666;
+        color: var(--body-quiet-color, #666);
         margin: 3px 0;
     }
 
     .repo {
-        color: #444;
+        color: var(--body-fg, #444);
         font-weight: bold;
     }
 
     .back-actions {
         margin-top: 30px;
         padding-top: 20px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid var(--hairline-color, #eee);
     }
 
     /* Standard Admin Button Styles */
     .button {
-        background: #79aec8;
+        background: var(--primary, #79aec8);
         padding: 10px 15px;
         border: none;
         border-radius: 4px;
-        color: white;
+        color: var(--primary-fg, white);
         text-transform: uppercase;
         font-size: 11px;
         letter-spacing: 0.5px;
@@ -115,15 +119,39 @@
     }
 
     .button:hover {
-        background: #609ab6;
+        background: var(--primary-hover, #609ab6);
     }
 
     .button.back {
-        background: #999;
+        background: var(--close-button-bg, #999);
     }
 
     .button.back:hover {
-        background: #888;
+        background: var(--close-button-hover-bg, #888);
+    }
+
+    .authors-row {
+        margin-top: 15px;
+        border-top: 1px solid var(--hairline-color, #eee);
+        padding-top: 10px;
+        font-size: 0.9em;
+        color: var(--body-quiet-color, #666);
+    }
+
+    .no-activity {
+        text-align: center;
+        padding: 50px;
+        color: var(--body-quiet-color, #666);
+        background: var(--darkened-bg, #f9f9f9);
+        border-radius: 8px;
+    }
+
+    a {
+        color: var(--link-fg, #007bff);
+    }
+
+    a:hover {
+        color: var(--link-hover-color, #0056b3);
     }
 </style>
 {% endblock %}
