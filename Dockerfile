@@ -32,8 +32,8 @@ ENV PATH="/home/python/.local/bin:${PATH}" \
 
 RUN npm install ./theme/static_src
 
-RUN uv run python manage.py tailwind install --no-input;
-RUN uv run python manage.py tailwind build --no-input;
+RUN uv run python manage.py tailwind install;
+RUN uv run python manage.py tailwind build;
 RUN uv run python manage.py collectstatic --no-input;
 
 CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
