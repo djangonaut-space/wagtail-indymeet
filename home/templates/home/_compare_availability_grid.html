@@ -1,0 +1,128 @@
+{% load i18n email_tags %}
+
+{% if selected_users %}
+<!-- Timezone and Legend -->
+<div class="flex items-center justify-between mb-3">
+    <span class="text-sm text-gray-600">
+        {% trans "Timezone:" %} <span x-text="timezone" class="font-bold"></span>
+    </span>
+    <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-500">{% trans "Legend:" %}</span>
+        <span class="inline-flex items-center gap-1">
+            <span class="w-4 h-4 rounded border border-gray-200 bg-ds-purple"></span>
+            <span class="text-xs">{% trans "All available" %}</span>
+        </span>
+        <span class="inline-flex items-center gap-1">
+            <span class="w-4 h-4 rounded bg-gray-50 border border-gray-200"></span>
+            <span class="text-xs">{% trans "None available" %}</span>
+        </span>
+    </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Grid -->
+    <div class="flex-grow">
+        <div class="overflow-x-auto">
+            <table id="availability-grid" class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="bg-gray-50 border border-gray-200 p-1 w-16"></th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Sun" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Mon" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Tue" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Wed" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Thu" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Fri" %}</th>
+                        <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Sat" %}</th>
+                    </tr>
+                </thead>
+                <tbody @mouseleave="hoveredSlot = null;
+                    if (!fixedSlot) { activeDisplayTime = ''; activeTimeIsUrl = ''; }">
+                    {% for row in grid_rows %}
+                    <tr>
+                        {% if row.show_time_label %}
+                        <th rowspan="2" class="border border-gray-200 text-xs text-right pr-2 bg-gray-50">
+                            {{ row.time_label }}
+                        </th>
+                        {% endif %}
+                        {% for cell in row.cells %}
+                        <td class="time-slot h-4 border border-gray-200 cursor-pointer"
+                            :style="{
+                                ...getCellStyle('{{ cell.slot_key }}', '{{ cell.color|default:'' }}'),
+                                ...(fixedSlot === '{{ cell.slot_key }}' ? {
+                                    outline: '3px solid #7c3aed',
+                                    outlineOffset: '-1px',
+                                    position: 'relative',
+                                    zIndex: 10
+                                } : {})
+                            }"
+                            title="{{ cell.available_count }}/{{ cell.total_count }} {% trans 'available' %}"
+                            data-display-time="{{ cell.display_time }}"
+                            data-time-is-url="{{ cell.utc_datetime|time_is_link }}"
+                            @mouseenter="hoveredSlot = '{{ cell.slot_key }}';
+                                if (!fixedSlot) {
+                                    activeDisplayTime = $event.target.dataset.displayTime;
+                                    activeTimeIsUrl = $event.target.dataset.timeIsUrl;
+                                }"
+                            @click="
+                                if (fixedSlot === '{{ cell.slot_key }}') {
+                                    fixedSlot = null;
+                                    activeDisplayTime = '';
+                                    activeTimeIsUrl = '';
+                                } else {
+                                    fixedSlot = '{{ cell.slot_key }}';
+                                    activeDisplayTime = $event.target.dataset.displayTime;
+                                    activeTimeIsUrl = $event.target.dataset.timeIsUrl;
+                                }">
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Users Panel -->
+    <div class="w-full lg:w-64 flex-shrink-0">
+        <div class="bg-white border border-gray-200 rounded-lg p-4 sticky top-4">
+            <div x-show="activeDisplayTime" x-cloak class="mb-3 p-2 bg-purple-50 rounded border border-purple-200 text-sm">
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-purple-900" x-text="activeDisplayTime"></span>
+                    <button x-show="fixedSlot"
+                            @click="fixedSlot = null; activeDisplayTime = ''; activeTimeIsUrl = '';"
+                            class="text-purple-400 hover:text-purple-700 ml-2 cursor-pointer text-lg leading-none font-bold"
+                            title="{% trans 'Unpin time slot' %}">
+                        &times;
+                    </button>
+                </div>
+                <a :href="activeTimeIsUrl"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="block text-purple-600 hover:text-purple-800 text-xs mt-1 underline">
+                    {% trans "View on time.is" %} &rarr;
+                </a>
+            </div>
+            <h3 class="font-bold text-gray-900 mb-3">{% trans "Selected Users" %}</h3>
+            <div class="space-y-2">
+                <template x-for="user in users" :key="user.id">
+                    <div class="user-card p-2 rounded border border-gray-100 cursor-pointer"
+                         :class="{ 'unavailable': isUnavailable(user.id), 'bg-purple-100 border-purple-300': hoveredUser === user.id }"
+                         @mouseenter="hoveredUser = user.id"
+                         @mouseleave="hoveredUser = null">
+                        <span class="user-name text-sm text-gray-900 truncate" x-text="user.display_name"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ slot_availabilities|json_script:"slot-availabilities" }}
+{{ selected_users|json_script:"selected-users" }}
+{% else %}
+<div class="text-center py-12 text-gray-500">
+    <p>{% trans "Select users above and click Apply to compare availability." %}</p>
+</div>
+{% endif %}
