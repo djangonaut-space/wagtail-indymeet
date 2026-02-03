@@ -1,14 +1,19 @@
 """Views for comparing availability across multiple users."""
 
-import json
 from dataclasses import asdict, dataclass
+from datetime import datetime
 
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from accounts.models import CustomUser
-from home.availability import convert_slot_with_offset, get_user_slots
+from home.availability import (
+    convert_slot_with_offset,
+    format_slot_as_time,
+    get_user_slots,
+    slot_to_datetime,
+)
 from home.models import Session, SessionMembership
 
 slotAvailabilities = dict[str, list[int]]
@@ -22,6 +27,8 @@ class GridCell:
     color: str
     available_count: int
     total_count: int
+    display_time: str
+    utc_datetime: datetime
 
 
 @dataclass
@@ -100,6 +107,8 @@ def build_grid_data(
                         color=get_slot_color(len(available_user_ids), total_count),
                         available_count=len(available_user_ids),
                         total_count=total_count,
+                        display_time=format_slot_as_time(local_slot),
+                        utc_datetime=slot_to_datetime(utc_slot),
                     )
                 )
 
@@ -222,6 +231,31 @@ def compare_availability(request):
     if form.is_valid():
         selectable_users = form.get_selectable_users()
         selected_users = form.get_selected_users(selectable_users)
+    else:
+        selectable_users = []
+        selected_users = []
+
+    context = {
+        "form": form,
+        "selectable_users": selectable_users,
+        "selected_user_ids": [u.id for u in selected_users],
+        "session_id": form.data.get("session"),
+    }
+    return render(request, "home/compare_availability.html", context)
+
+
+@login_required
+def compare_availability_grid(request):
+    """
+    Return the availability grid partial for htmx requests.
+
+    This endpoint is called via htmx to load the grid with the correct
+    timezone offset from the client.
+    """
+    form = CompareAvailabilityForm(data=request.GET, user=request.user)
+    if form.is_valid():
+        selectable_users = form.get_selectable_users()
+        selected_users = form.get_selected_users(selectable_users)
         offset_hours = form.get_offset_hours()
 
         user_slots = {}
@@ -229,7 +263,6 @@ def compare_availability(request):
             slots = get_user_slots(user)
             user_slots[user.id] = set(slots)
     else:
-        selectable_users = []
         selected_users = []
         offset_hours = 0.0
         user_slots = {}
@@ -238,8 +271,6 @@ def compare_availability(request):
         selected_users, user_slots, offset_hours
     )
     context = {
-        "form": form,
-        "selectable_users": selectable_users,
         "selected_users": [
             asdict(
                 SelectedUser(
@@ -249,10 +280,7 @@ def compare_availability(request):
             )
             for user in selected_users
         ],
-        "selected_user_ids": [u.id for u in selected_users],
         "grid_rows": grid_rows,
         "slot_availabilities": slot_availabilities,
-        "session_id": form.data.get("session"),
-        "offset_hours": offset_hours,
     }
-    return render(request, "home/compare_availability.html", context)
+    return render(request, "home/_compare_availability_grid.html", context)
