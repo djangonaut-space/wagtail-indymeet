@@ -1,5 +1,6 @@
 import csv
 import io
+from datetime import date
 
 from django import forms
 from django.core import validators
@@ -1189,6 +1190,48 @@ class MembershipAcceptanceForm(forms.Form):
             )
 
         return is_accepted
+
+
+class CollectStatsForm(forms.Form):
+    """Form for collecting GitHub stats with date range selection."""
+
+    start_date = forms.DateField(
+        label=_("Start Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    end_date = forms.DateField(
+        label=_("End Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    def clean_start_date(self) -> date:
+        start_date = self.cleaned_data["start_date"]
+        today = date.today()
+        if start_date > today:
+            raise forms.ValidationError(
+                _("Start date cannot be in the future. Today is %(today)s."),
+                params={"today": today},
+            )
+        return start_date
+
+    def clean_end_date(self) -> date:
+        end_date = self.cleaned_data["end_date"]
+        today = date.today()
+        if end_date > today:
+            return today
+        return end_date
+
+    def clean(self) -> dict:
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError(
+                _("Start date must be before or equal to end date.")
+            )
+
+        return cleaned_data
 
 
 class TestimonialFormRenderer(DjangoTemplates):

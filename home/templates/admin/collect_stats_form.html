@@ -1,9 +1,8 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_urls static admin_modify %}
+{% load i18n static %}
 
 {% block extrahead %}{{ block.super }}
 <script src="{% url 'admin:jsi18n' %}"></script>
-{{ media }}
 {% endblock %}
 
 {% block extrastyle %}{{ block.super }}
@@ -26,7 +25,7 @@
     <div class="module">
         <h2>{% trans "Configuration" %}</h2>
         <p>
-            {% blocktrans with count=djangonauts_count %}
+            {% blocktrans with count=github_usernames|length %}
                 Found {{ count }} Djangonauts with configured GitHub usernames.
             {% endblocktrans %}
         </p>
@@ -34,17 +33,25 @@
         <form method="post">
             {% csrf_token %}
 
+            {% if form.non_field_errors %}
+            <p class="errornote">
+                {% for error in form.non_field_errors %}
+                {{ error }}
+                {% endfor %}
+            </p>
+            {% endif %}
+
             <fieldset class="module aligned">
-                <div class="form-row">
-                    <label for="start_date">{% trans "Start Date:" %}</label>
-                    <input type="date" name="start_date" id="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
-                    <p class="help">{% trans "Defaults to session start date or 7 days ago." %}</p>
+                <div class="form-row{% if form.start_date.errors %} errors{% endif %}">
+                    {{ form.start_date.errors }}
+                    <label for="{{ form.start_date.id_for_label }}">{% trans "Start Date:" %}</label>
+                    {{ form.start_date }}
                 </div>
 
-                <div class="form-row">
-                    <label for="end_date">{% trans "End Date:" %}</label>
-                    <input type="date" name="end_date" id="end_date" value="{{ end_date|date:'Y-m-d' }}" required>
-                    <p class="help">{% trans "Defaults to session end date or today." %}</p>
+                <div class="form-row{% if form.end_date.errors %} errors{% endif %}">
+                    {{ form.end_date.errors }}
+                    <label for="{{ form.end_date.id_for_label }}">{% trans "End Date:" %}</label>
+                    {{ form.end_date }}
                 </div>
 
                 <div class="form-row">
@@ -56,7 +63,7 @@
             </fieldset>
 
             <div class="submit-row">
-                <input type="submit" value="{% trans 'Collect Stats' %}" class="default" name="collect">
+                <input type="submit" value="{% trans 'Collect Stats' %}" class="default">
                 <a href="{% url 'admin:home_session_changelist' %}" class="button" style="float: right;">{% trans "Cancel" %}</a>
             </div>
         </form>

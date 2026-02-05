@@ -7,15 +7,15 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
+from home.forms import CollectStatsForm
 from home.models import Session, SessionMembership
 from home.services.github_stats import GitHubStatsCollector
-from home.services.report_formatter import ReportFormatter
 
 
 class SessionDetailView(DetailView):
@@ -90,80 +90,7 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     """
     session = get_object_or_404(Session, id=session_id)
 
-    # Get Djangonauts with GitHub usernames
-    djangonauts = session.session_memberships.djangonauts().select_related(
-        "user__profile"
-    )
-    djangonauts_with_github = [m for m in djangonauts if m.user.profile.github_username]
-
-    # Check if any Djangonauts have GitHub usernames
-    if not djangonauts_with_github:
-        messages.warning(
-            request,
-            f"No Djangonauts in '{session.title}' have GitHub usernames configured. "
-            "Please add GitHub usernames to user profiles first.",
-        )
-        return redirect("admin:home_session_changelist")
-
-    # Get GitHub usernames
-    github_usernames = [m.user.profile.github_username for m in djangonauts_with_github]
-
-    # Determine date range
-    if request.method == "POST":
-        # Use custom date range from form
-        start_date_str = request.POST.get("start_date")
-        end_date_str = request.POST.get("end_date")
-
-        try:
-            start_date = date.fromisoformat(start_date_str)
-            end_date = date.fromisoformat(end_date_str)
-        except (ValueError, TypeError):
-            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
-            return redirect(request.path)
-
-        # Validate dates are not in the future
-        today = date.today()
-        if start_date > today:
-            messages.error(
-                request,
-                f"Start date ({start_date}) cannot be in the future. Today is {today}.",
-            )
-            return redirect(request.path)
-        if end_date > today:
-            end_date = today  # Silently cap end_date to today
-    else:
-        # Use session dates or default to last 7 days
-        today = date.today()
-        if session.start_date and session.start_date <= today:
-            start_date = session.start_date
-        else:
-            start_date = today - timedelta(days=7)
-
-        if session.end_date:
-            end_date = min(session.end_date, today)
-        else:
-            end_date = today
-
-    # Check if we should collect stats or just show the form
-    if request.method == "GET" and "collect" not in request.GET:
-        # Show date selection form
-        context = {
-            "session": session,
-            "djangonauts_count": len(djangonauts_with_github),
-            "start_date": start_date,
-            "end_date": end_date,
-            "github_usernames": github_usernames,
-            "opts": Session._meta,
-            "has_view_permission": True,
-        }
-        return render(request, "admin/collect_stats_form.html", context)
-
-    # Collect stats
-    collector = GitHubStatsCollector()
-
-    # Get repository configuration from settings
     repos = getattr(settings, "DJANGONAUT_MONITORED_REPOS", [])
-
     if not repos:
         messages.error(
             request,
@@ -171,33 +98,65 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
         )
         return redirect("admin:home_session_changelist")
 
-    # Collect the stats
-    report = collector.collect_all_stats(
-        repos=repos,
-        usernames=github_usernames,
-        start_date=start_date,
-        end_date=end_date,
+    github_usernames = list(
+        session.session_memberships.djangonauts()
+        .filter(~Q(user__profile__github_username=""))
+        .values_list("user__profile__github_username", flat=True)
+        .distinct()
     )
+    if not github_usernames:
+        messages.warning(
+            request,
+            "No Djangonauts in this session have GitHub usernames configured.",
+        )
+        return redirect("admin:home_session_changelist")
 
-    # Format report as HTML
-    report_html = ReportFormatter.format_html(report)
+    if request.method == "POST":
+        form = CollectStatsForm(request.POST)
+        if form.is_valid():
+            report = GitHubStatsCollector().collect_all_stats(
+                repos=repos,
+                usernames=github_usernames,
+                start_date=form.cleaned_data["start_date"],
+                end_date=form.cleaned_data["end_date"],
+            )
 
-    # Success message
-    messages.success(
+            messages.success(
+                request,
+                f"Successfully collected stats for {len(github_usernames)} Djangonauts. "
+                f"Found {report.count_open_prs()} open PRs, "
+                f"{report.count_merged_prs()} merged PRs, "
+                f"{report.count_closed_prs()} closed PRs, "
+                f"and {report.count_open_issues()} issues.",
+            )
+
+            return render(
+                request,
+                "admin/collect_stats_results.html",
+                {
+                    "session": session,
+                    "report": report,
+                    "opts": Session._meta,
+                    "has_view_permission": True,
+                },
+            )
+    else:
+        today = date.today()
+        form = CollectStatsForm(
+            initial={
+                "start_date": today - timedelta(days=7),
+                "end_date": today,
+            }
+        )
+
+    return render(
         request,
-        f"Successfully collected stats for {len(github_usernames)} Djangonauts. "
-        f"Found {report.count_open_prs()} open PRs, {report.count_merged_prs()} merged PRs, "
-        f"{report.count_closed_prs()} closed PRs, and {report.count_open_issues()} issues.",
+        "admin/collect_stats_form.html",
+        {
+            "session": session,
+            "form": form,
+            "github_usernames": github_usernames,
+            "opts": Session._meta,
+            "has_view_permission": True,
+        },
     )
-
-    context = {
-        "session": session,
-        "report": report,
-        "report_html": report_html,
-        "start_date": start_date,
-        "end_date": end_date,
-        "djangonauts_count": len(djangonauts_with_github),
-        "opts": Session._meta,
-        "has_view_permission": True,
-    }
-    return render(request, "admin/collect_stats_results.html", context)

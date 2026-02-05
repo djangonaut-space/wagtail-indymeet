@@ -451,12 +451,6 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    def collect_stats_view(self, request, session_id):
-        """Handle GitHub stats collection for a session."""
-        from .views.sessions import collect_stats_view
-
-        return collect_stats_view(request, session_id)
-
     @admin.action(description="Auto-allocate Djangonauts to teams")
     def auto_allocate_teams_action(self, request, queryset):
         """
