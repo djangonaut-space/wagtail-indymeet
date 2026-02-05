@@ -10,6 +10,16 @@
     <span>{{ field.label }}</span>
     <!-- Checkbox -->
     {% if field|field_type == 'booleanfield' %} {{ field|add_class:"rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50 read-only:text-slate-700" }}
+    <!-- Password field with toggle visibility -->
+    {% elif field.field.widget.input_type == 'password' %}
+        <div class="flex">
+            {{ field|add_class:"password-input block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 "|attr:"placeholder:" }}
+            <button type="button"
+                    onclick="togglePassword()"
+                    class="text-gray-600 -ml-[30px] hover:text-gray-800">
+                <i class="eye fa-solid fa-eye"> </i>
+            </button>
+        </div>
     {% else %}
     {{ field|add_class:"mt-1 block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 disabled:bg-slate-50 disabled:text-slate-700 disabled:border-slate-200"|attr:"placeholder:" }}
     {% endif %}
@@ -18,3 +28,20 @@
   </label>
   {% endfor %}
 </div>
+
+<script>
+    function togglePassword() {
+    const input = document.querySelector('.password-input');
+    const eye = document.querySelector('.eye');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        eye.classList.add('fa-eye-slash');
+        eye.classList.remove('fa-eye');
+    } else {
+        input.type = 'password';
+        eye.classList.remove('fa-eye-slash');
+        eye.classList.add('fa-eye');
+    }
+}
+</script>
