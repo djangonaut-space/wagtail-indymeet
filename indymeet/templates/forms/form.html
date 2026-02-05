@@ -12,11 +12,11 @@
     {% if field|field_type == 'booleanfield' %} {{ field|add_class:"rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50 read-only:text-slate-700" }}
     <!-- Password field with toggle visibility -->
     {% elif field.field.widget.input_type == 'password' %}
-        <div class="flex">
-            {{ field|add_class:"password-input block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mb-2 "|attr:"placeholder:" }}
+        <div class="flex mb-2">
+            {{ field|add_class:"password-input block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"|attr:"placeholder:" }}
             <button type="button"
                     onclick="togglePassword()"
-                    class="text-gray-600 -ml-[30px] hover:text-gray-800">
+                    class="text-gray-600 text-center -ml-[30px] hover:text-gray-800">
                 <i class="eye fa-solid fa-eye"> </i>
             </button>
         </div>
