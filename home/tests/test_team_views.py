@@ -351,6 +351,16 @@ class TeamDetailViewTests(TestCase):
         # for_user() queryset method filters to accepted memberships, so returns 404
         self.assertEqual(response.status_code, 404)
 
+    def test_djangonaut_access_control_enforced(self) -> None:
+        """Test that enforce_djangonaut_access_control is applied to team detail view."""
+        self.current_session.djangonauts_have_access = False
+        self.current_session.start_date = datetime(2024, 7, 1).date()
+        self.current_session.save()
+
+        self.client.force_login(self.djangonaut1)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
     def test_djangonaut_cannot_see_survey_links(self) -> None:
         """Test that Djangonauts cannot see 'View Application' links."""
         self.client.force_login(self.djangonaut1)

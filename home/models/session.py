@@ -108,6 +108,14 @@ class Session(models.Model):
             "session organizer drive folder."
         ),
     )
+    djangonauts_have_access = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Whether Djangonauts can access their team detail pages. "
+            "Automatically set to True when team welcome emails are sent. "
+            "This will be ignored once session start date is in the past."
+        ),
+    )
 
     objects = models.Manager.from_queryset(SessionQuerySet)()
 
