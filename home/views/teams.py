@@ -46,9 +46,9 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
 
         # Check if requesting user has permissions to view the team
         self.user_session_membership = get_object_or_404(
-            SessionMembership.objects.for_user(self.request.user).for_session(
-                team.session
-            )
+            SessionMembership.objects.for_user(self.request.user)
+            .for_session(team.session)
+            .enforce_djangonaut_access_control()
         )
 
         # Only allow organizers or members of this specific team
@@ -226,7 +226,9 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
 
     # Check if requesting user has permissions to view the team
     user_session_membership = get_object_or_404(
-        SessionMembership.objects.for_user(request.user).for_session(team.session)
+        SessionMembership.objects.for_user(request.user)
+        .for_session(team.session)
+        .enforce_djangonaut_access_control()
     )
 
     # Only allow organizers or members of this specific team
