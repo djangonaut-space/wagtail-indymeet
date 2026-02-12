@@ -57,11 +57,16 @@ class AvailabilityWindow:
         return ", ".join(role_parts)
 
     @property
+    def unavailable_member_ids(self) -> list[int]:
+        return [user.id for user in self.unavailable_users]
+
+    @property
     def admin_unavailable_url(self) -> str | None:
         """Build admin URL for filtering unavailable members."""
-        if not self.unavailable_users:
+        ids = [str(id) for id in self.unavailable_member_ids]
+        if not ids:
             return None
-        ids_str = ",".join(str(id) for id in self.unavailable_users)
+        ids_str = ",".join(ids)
         return (
             reverse("admin:home_sessionmembership_changelist")
             + f"?user_id__in={ids_str}"
@@ -601,5 +606,4 @@ def find_best_one_hour_windows_with_roles(
             role_counts[role] += 1
 
         window.role_counts = role_counts
-        window.unavailable_member_ids = [user.id for user in window.unavailable_users]
     return windows
