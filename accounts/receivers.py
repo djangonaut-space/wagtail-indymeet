@@ -23,11 +23,10 @@ def manage_organizer_group_on_save(
     Note: This only handles additions of organizer memberships. Role changes FROM
     organizer to another role require manual group removal via admin.
     """
-    if (
-        instance.role == SessionMembership.ORGANIZER
-        and not instance.user.is_superuser
-        and instance.session.status != "past"
-    ):
+    if instance.role == SessionMembership.ORGANIZER and not instance.user.is_superuser:
+        if not instance.session.is_current_or_upcoming():
+            return
+
         user = instance.user
 
         if not user.is_staff:

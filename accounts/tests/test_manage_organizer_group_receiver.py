@@ -1,8 +1,9 @@
 from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
-from accounts.models import CustomUser
-from home.models.session import Session, SessionMembership
+from accounts.factories import UserFactory
+from home.factories import SessionFactory, SessionMembershipFactory
+from home.models import SessionMembership
 
 
 class TestManageOrganizerGroupReceiver(TestCase):
@@ -10,37 +11,26 @@ class TestManageOrganizerGroupReceiver(TestCase):
         """
         Test that organizers of past sessions are NOT granted permissions.
         """
-        # Create a user
-        user = CustomUser.objects.create_user(
-            username="testuser", email="test@example.com", password="password"
-        )
+        user = UserFactory.create()
 
-        # Create a PAST session
         today = timezone.now().date()
-        # Start and end in the past
         past_start = today - timedelta(days=60)
         past_end = today - timedelta(days=30)
 
-        session = Session.objects.create(
-            title="Past Session",
+        session = SessionFactory.create(
             start_date=past_start,
             end_date=past_end,
-            slug="past-session",
             invitation_date=past_start - timedelta(days=10),
             application_start_date=past_start - timedelta(days=20),
             application_end_date=past_start - timedelta(days=15),
         )
 
-        # Verify session status is 'past'
         self.assertEqual(session.status, "past")
 
-        # Add user as ORGANIZER to the session
-        # This triggers the receiver
-        SessionMembership.objects.create(
+        SessionMembershipFactory.create(
             user=user, session=session, role=SessionMembership.ORGANIZER
         )
 
-        # Refresh user from db
         user.refresh_from_db()
 
         self.assertFalse(user.is_staff)
