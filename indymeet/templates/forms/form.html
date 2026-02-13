@@ -15,7 +15,7 @@
         <div class="flex mb-2">
             {{ field|add_class:"password-input block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"|attr:"placeholder:" }}
             <button type="button"
-                    onclick="togglePassword()"
+                    onclick="togglePassword(this)"
                     class="text-gray-600 text-center -ml-[30px] hover:text-gray-800">
                 <i class="eye fa-solid fa-eye"> </i>
             </button>
@@ -30,18 +30,19 @@
 </div>
 
 <script>
-    function togglePassword() {
-    const input = document.querySelector('.password-input');
-    const eye = document.querySelector('.eye');
+    function togglePassword(button) {
+        const container = button.parentElement;
+        const input = container.querySelector('.password-input');
+        const eye = button.querySelector('.eye');
 
-    if (input.type === 'password') {
-        input.type = 'text';
-        eye.classList.add('fa-eye-slash');
-        eye.classList.remove('fa-eye');
-    } else {
-        input.type = 'password';
-        eye.classList.remove('fa-eye-slash');
-        eye.classList.add('fa-eye');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eye.classList.add('fa-eye-slash');
+            eye.classList.remove('fa-eye');
+        } else {
+            input.type = 'password';
+            eye.classList.remove('fa-eye-slash');
+            eye.classList.add('fa-eye');
+        }
     }
-}
 </script>
