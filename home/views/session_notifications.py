@@ -202,6 +202,8 @@ def send_team_welcome_emails_view(
             tasks.send_team_welcome_email.enqueue(
                 team_id=team.pk,
             )
+        session.djangonauts_have_access = True
+        session.save(update_fields=["djangonauts_have_access"])
         messages.success(
             request,
             f"Successfully queued {team_count} team welcome email(s) for '{session.title}'.",
