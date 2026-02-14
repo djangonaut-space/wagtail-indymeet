@@ -54,6 +54,29 @@ class TeamFormationTestData:
 RESULTS_PATTERN = re.compile(r"Showing \d+ of \d+ opportunities")
 
 
+def drag_select(page: Page, from_locator, to_locator) -> None:
+    """Simulate a mouse drag selection between two elements.
+
+    Uses explicit mouse events (mousedown/mousemove/mouseup) instead of
+    Playwright's drag_to(), which uses HTML5 drag events that libraries
+    like Viselect don't listen for — causing failures in WebKit.
+    """
+    from_locator.scroll_into_view_if_needed()
+    to_locator.scroll_into_view_if_needed()
+    box_start = from_locator.bounding_box()
+    box_end = to_locator.bounding_box()
+    start_x = box_start["x"] + box_start["width"] / 2
+    start_y = box_start["y"]
+    end_x = box_end["x"] + box_end["width"] / 2
+    end_y = box_end["y"] + box_end["height"]
+    page.mouse.move(start_x, start_y)
+    page.mouse.down()
+    page.mouse.move(end_x, end_y)
+    # Wait for viselect to visually mark the last cell before releasing
+    expect(to_locator).to_have_class(re.compile(r"\bselecting\b"))
+    page.mouse.up()
+
+
 @pytest.fixture
 def context(new_context, live_server) -> BrowserContext:
     """Configure the playwright context
@@ -419,12 +442,7 @@ class TestAvailabilityPage:
         monday_10am = page.locator('.time-slot[data-day="1"][data-hour="10"]')
         monday_1030am = page.locator('.time-slot[data-day="1"][data-hour="10.5"]')
 
-        # Use drag selection to select the block
-        # Drag from the first cell to the last cell
-        monday_9am.drag_to(monday_1030am)
-
-        # Wait for selection to be processed
-        page.wait_for_timeout(200)
+        drag_select(page, monday_9am, monday_1030am)
 
         # Wait for the first cell to have the selected class
         # (indicates JS has processed the selection)
@@ -491,12 +509,7 @@ class TestAvailabilityPage:
         tuesday_230pm = page.locator('.time-slot[data-day="2"][data-hour="14.5"]')
         tuesday_3pm = page.locator('.time-slot[data-day="2"][data-hour="15"]')
 
-        # Use drag selection to select the new block
-        # Drag from the first cell to the last cell
-        tuesday_2pm.drag_to(tuesday_3pm)
-
-        # Wait for selection to be processed
-        page.wait_for_timeout(200)
+        drag_select(page, tuesday_2pm, tuesday_3pm)
 
         # Verify all cells in the new block are selected
         expect(tuesday_2pm).to_have_class(re.compile(r".*\bselected\b.*"))
