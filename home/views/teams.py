@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet, Q
@@ -80,7 +81,6 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
         djangonauts = [
             m for m in team_members if m.role == SessionMembership.DJANGONAUT
         ]
-
         # Calculate availability overlaps with logged-in user for each member
         current_user = self.request.user
         for membership in team_members:
@@ -93,19 +93,16 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
             else:
                 membership.overlap_slots = []
                 membership.offset_hours = 0
-
-        context["captains"] = captains
-        context["navigators"] = navigators
-        context["djangonauts"] = djangonauts
-
         # Calculate team availability (navigators + djangonauts)
         team_overlap_slots, _ = calculate_overlap(
             [m.user for m in navigators + djangonauts]
         )
-        context["team_availability_by_day"] = format_availability_by_day(
-            team_overlap_slots
+        organizers = (
+            SessionMembership.objects.organizers()
+            .for_session(team.session)
+            .select_related("user", "user__profile")
+            .order_by("user__first_name", "user__last_name")
         )
-        context["timezone"] = "UTC"  # Default to UTC on initial page load
 
         # Show survey link if session is active, has survey, and user is captain/navigator
         context["show_survey_link"] = (
@@ -118,17 +115,20 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
                 SessionMembership.ORGANIZER,
             }
         )
-        context["session"] = team.session
-
-        # Add organizers to context
-        organizers = (
-            SessionMembership.objects.organizers()
-            .for_session(team.session)
-            .select_related("user", "user__profile")
-            .order_by("user__first_name", "user__last_name")
+        context.update(
+            {
+                "user": self.request.user,
+                "captains": captains,
+                "navigators": navigators,
+                "djangonauts": djangonauts,
+                "team_availability_by_day": format_availability_by_day(
+                    team_overlap_slots
+                ),
+                "session": team.session,
+                "timezone": "UTC",  # Default to UTC on initial page load
+                "organizers": organizers,
+            }
         )
-        context["organizers"] = organizers
-
         return context
 
 
@@ -209,6 +209,7 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
         return context
 
 
+@login_required
 def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
     """
     Render team availability HTML fragment with timezone-converted times.
@@ -278,6 +279,7 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
     context = {
+        "user": request.user,
         "team": team,
         "timezone": timezone,
         "offset_hours": offset_hours,

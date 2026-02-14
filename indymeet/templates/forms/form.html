@@ -1,7 +1,7 @@
 {% load widget_tweaks %}
-<div class="grid grid-cols-1 gap-6 mb-2">
+<div class="mb-2 grid grid-cols-1 gap-6">
   {% if form.non_field_errors %}
-  <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+  <div class="mb-6 border-l-4 border-red-500 bg-red-100 p-4 text-red-700" role="alert">
     <ul>{{ form.non_field_errors.as_ul }}</ul>
   </div>
   {% endif %}
@@ -12,16 +12,16 @@
     {% if field|field_type == 'booleanfield' %} {{ field|add_class:"rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50 read-only:text-slate-700" }}
     <!-- Password field with toggle visibility -->
     {% elif field.field.widget.input_type == 'password' %}
-        <div class="flex mb-2">
-            {{ field|add_class:"password-input block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"|attr:"placeholder:" }}
+        <div class="mb-2 flex">
+            {{ field|add_class:"password-input block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"|attr:"placeholder:" }}
             <button type="button"
-                    onclick="togglePassword()"
-                    class="text-gray-600 text-center -ml-[30px] hover:text-gray-800">
+                    onclick="togglePassword(this)"
+                    class="text-center text-gray-600 -ml-[30px] hover:text-gray-800">
                 <i class="eye fa-solid fa-eye"> </i>
             </button>
         </div>
     {% else %}
-    {{ field|add_class:"mt-1 block rounded-lg border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 disabled:bg-slate-50 disabled:text-slate-700 disabled:border-slate-200"|attr:"placeholder:" }}
+    {{ field|add_class:"mt-1 block rounded-lg w-full border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 disabled:bg-slate-50 disabled:text-slate-700 disabled:border-slate-200"|attr:"placeholder:" }}
     {% endif %}
     {% if field.help_text %}<div class="text-gray-500"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</div>{% endif %}
     {% if field.errors %}<ul class="text-red-700">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
@@ -30,18 +30,19 @@
 </div>
 
 <script>
-    function togglePassword() {
-    const input = document.querySelector('.password-input');
-    const eye = document.querySelector('.eye');
+    function togglePassword(button) {
+        const container = button.parentElement;
+        const input = container.querySelector('.password-input');
+        const eye = button.querySelector('.eye');
 
-    if (input.type === 'password') {
-        input.type = 'text';
-        eye.classList.add('fa-eye-slash');
-        eye.classList.remove('fa-eye');
-    } else {
-        input.type = 'password';
-        eye.classList.remove('fa-eye-slash');
-        eye.classList.add('fa-eye');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eye.classList.add('fa-eye-slash');
+            eye.classList.remove('fa-eye');
+        } else {
+            input.type = 'password';
+            eye.classList.remove('fa-eye-slash');
+            eye.classList.add('fa-eye');
+        }
     }
-}
 </script>

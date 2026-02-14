@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home.availability import (
+    AvailabilityWindow,
     calculate_overlap,
     calculate_team_overlap,
     count_one_hour_blocks,
@@ -129,3 +130,35 @@ class AvailabilityUtilsTestCase(TestCase):
         # Empty slots
         ranges = format_slots_as_ranges([])
         self.assertEqual(ranges, [])
+
+
+class AvailabilityWindowTestCase(TestCase):
+    """Tests for AvailabilityWindow dataclass."""
+
+    def test_admin_unavailable_url_uses_user_ids(self):
+        """Test that admin_unavailable_url uses user.id, not str(user)."""
+        user1 = UserFactory(username="user1", email="user1@example.com")
+        user2 = UserFactory(username="user2", email="user2@example.com")
+
+        window = AvailabilityWindow(
+            slot_range=(10.0, 10.5),
+            formatted_time="Sun 10:00 AM - 11:00 AM",
+            available_users=[],
+            unavailable_users=[user1, user2],
+        )
+
+        url = window.admin_unavailable_url
+        expected_ids = f"{user1.id},{user2.id}"
+        self.assertIn(f"?user_id__in={expected_ids}", url)
+        self.assertIn("home/sessionmembership/", url)
+
+    def test_admin_unavailable_url_returns_none_when_no_unavailable_users(self):
+        """Test that admin_unavailable_url returns None with no unavailable users."""
+        window = AvailabilityWindow(
+            slot_range=(10.0, 10.5),
+            formatted_time="Sun 10:00 AM - 11:00 AM",
+            available_users=[],
+            unavailable_users=[],
+        )
+
+        self.assertIsNone(window.admin_unavailable_url)

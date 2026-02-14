@@ -10,22 +10,19 @@
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section my-3 mx-5">
-    <div class="section-container">
-        <h1 class="text-5xl mb-6">{% translate "Update Profile Info" %}</h1>
+<main class="mx-auto max-w-3xl px-2 py-8 md:px-4">
+    <div class="mb-12 md:mb-6">
+        <h1 class="mb-6 text-center text-5xl">{% translate "Update Profile Info" %}</h1>
+    </div>
 
-        <div class="row ">
-          <div class="col">
+        <!-- Box with shadow-->
+        <div class="mb-4 md:mb-8 md:rounded-xl md:p-16 md:shadow-lg">
             <form method="post">
               {% csrf_token %}
-
               {{ form }}
-              <button type="submit" class="action-button mt-4">{% translate "Save" %}</button>
-              <a class="px-4 text-ds-purple hover:underline cursor-pointer" href="{% url "profile" %}"> {% trans "Cancel" %}</a>
+              <button type="submit" class="mt-4 action-button">{% translate "Save" %}</button>
+              <a class="cursor-pointer px-4 text-ds-purple hover:underline" href="{% url "profile" %}"> {% trans "Cancel" %}</a>
             </form>
           </div>
-          <div class="col"></div>
-        </div>
-    </div>
 </main>
 {% endblock content %}
