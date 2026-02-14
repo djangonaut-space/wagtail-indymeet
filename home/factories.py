@@ -29,8 +29,8 @@ class EventFactory(factory.django.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: "Event %d" % n)
     slug = factory.Sequence(lambda n: "event-%d" % n)
-    start_time = factory.Faker("datetime")
-    end_time = factory.Faker("datetime")
+    start_time = factory.Faker("date_time")
+    end_time = factory.Faker("date_time")
     location = "https://zoom.link"
     status = Event.SCHEDULED
 
@@ -51,9 +51,9 @@ class SessionFactory(factory.django.DjangoModelFactory):
     end_date = factory.Faker("date_object")
     title = factory.Sequence(lambda n: "Session %d" % n)
     slug = factory.Sequence(lambda n: "session-%d" % n)
-    invitation_date = factory.Faker("date")
-    application_start_date = factory.Faker("date")
-    application_end_date = factory.Faker("date")
+    invitation_date = factory.Faker("date_object")
+    application_start_date = factory.Faker("date_object")
+    application_end_date = factory.Faker("date_object")
     application_url = factory.Sequence(lambda n: "https://apply.session%d.com" % n)
     discord_invite_url = "https://discord.gg/test"
 
