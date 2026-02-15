@@ -52,3 +52,4 @@ class TeamStatistics:
     navigator_meeting_hours: int
     captain_meetings: list[dict]  # Keep as dict since it comes from utils
     is_valid: bool
+    compare_availability_url: str

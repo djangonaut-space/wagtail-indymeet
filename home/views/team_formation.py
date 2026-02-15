@@ -368,6 +368,14 @@ def get_teams_with_statistics(session: Session) -> list[TeamStatistics]:
                     )
                 )
 
+        # Generate comparison URL for the entire team
+        all_team_members = navigators + ([captain] if captain else []) + djangonauts
+        user_ids = [str(u.id) for u in all_team_members]
+        compare_url = (
+            reverse("compare_availability")
+            + f"?users={','.join(user_ids)}&session={session.id}"
+        )
+
         teams_data.append(
             TeamStatistics(
                 team=team,
@@ -377,6 +385,7 @@ def get_teams_with_statistics(session: Session) -> list[TeamStatistics]:
                 navigator_meeting_hours=overlap_stats["navigator_meeting_hours"],
                 captain_meetings=overlap_stats.get("captain_meetings", []),
                 is_valid=overlap_stats["is_valid"],
+                compare_availability_url=compare_url,
             )
         )
 

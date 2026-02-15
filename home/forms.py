@@ -4,6 +4,7 @@ import io
 from django import forms
 from django.core import validators
 from django.forms.renderers import DjangoTemplates
+from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
@@ -910,21 +911,41 @@ class OverlapAnalysisForm(BaseTeamForm):
         """
         team = self.cleaned_data["team"]
         navigators = self.get_team_navigators()
+
+        # Also get existing djangonauts on the team
+        djangonaut_memberships = (
+            SessionMembership.objects.for_team(team)
+            .filter(role=SessionMembership.DJANGONAUT)
+            .select_related("user")
+            .prefetch_related("user__availability")
+        )
+        existing_djangonauts = [m.user for m in djangonaut_memberships]
+
         selected_users = self.get_selected_users()
 
-        # Calculate navigator overlap (navigators + selected users)
-        all_users = navigators + selected_users
+        # Calculate overlap (navigators + existing djangonauts + selected users)
+        existing_team_members = navigators + existing_djangonauts
+        all_users = existing_team_members + selected_users
         slots, hours = calculate_overlap(all_users)
         time_ranges = format_slots_as_ranges(slots)
+
+        # Generate comparison URL
+        user_ids = [str(u.id) for u in all_users]
+        compare_url = (
+            reverse("compare_availability")
+            + f"?users={','.join(user_ids)}&session={self.session.id}"
+        )
 
         return {
             "team": team,
             "analysis_type": "overlap-navigator",
             "navigators": navigators,
+            "existing_djangonauts": existing_djangonauts,
             "selected_users": selected_users,
             "hour_blocks": hours,
             "time_ranges": time_ranges,
             "is_sufficient": hours >= 5,
+            "compare_availability_url": compare_url,
         }
 
     def calculate_captain_overlap_context(self) -> dict:
@@ -943,12 +964,19 @@ class OverlapAnalysisForm(BaseTeamForm):
         for user in selected_users:
             slots, hours = calculate_overlap([captain, user])
             time_ranges = format_slots_as_ranges(slots)
+            user_ids = [str(captain.id), str(user.id)]
+            compare_url = (
+                reverse("compare_availability")
+                + f"?users={','.join(user_ids)}&session={self.session.id}"
+            )
+
             results.append(
                 {
                     "user": user,
                     "hour_blocks": hours,
                     "time_ranges": time_ranges,
                     "is_sufficient": hours >= 2,
+                    "compare_availability_url": compare_url,
                 }
             )
 

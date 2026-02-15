@@ -16,11 +16,17 @@
         {% else %}
             {% trans "None" %}
         {% endif %}
+        {% if compare_availability_url %}
+            <a href="{{ compare_availability_url }}" target="_blank" title="{% trans 'Compare Availability' %}">🔗</a>
+        {% endif %}
     {% else %}
         {# Full format for group results #}
         <strong>{{ title }}</strong> (Team: {{ team.name }})<br>
         {% if navigators %}
             <em>{% trans "Navigators:" %} {% for nav in navigators %}{{ nav.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
+        {% endif %}
+        {% if existing_djangonauts %}
+            <em>{% trans "Existing Djangonauts:" %} {% for d in existing_djangonauts %}{{ d.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
         {% endif %}
         {% if selected_users %}
             <em>{% trans "Selected applicants:" %} {{ selected_users|length }}</em><br>
@@ -35,6 +41,10 @@
             {{ time_ranges|join:", " }}
         {% else %}
             {% trans "None" %}
+        {% endif %}
+        {% if compare_availability_url %}
+        <br>
+        <a href="{{ compare_availability_url }}" target="_blank">{% trans "Compare Availability" %} &rarr;</a>
         {% endif %}
     {% endif %}
 </div>

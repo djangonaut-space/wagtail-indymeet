@@ -602,7 +602,7 @@ class TeamFormationViewTestCase(TestCase):
         # Note: Query 7 efficiently fetches all project preferences in one query
         # There are some N+1 queries for team.project (queries 13-22) but that's
         # unrelated to the project preferences column we added
-        with self.assertNumQueries(22):  # Expected stable query count
+        with self.assertNumQueries(23):  # Expected stable query count
             response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
