@@ -8,6 +8,8 @@ and IDE support.
 from dataclasses import dataclass
 from typing import Optional
 
+from django.urls import reverse
+
 from accounts.models import CustomUser
 from home.models import Project, Team, UserSurveyResponse
 
@@ -52,4 +54,13 @@ class TeamStatistics:
     navigator_meeting_hours: int
     captain_meetings: list[dict]  # Keep as dict since it comes from utils
     is_valid: bool
-    compare_availability_url: str
+
+    @property
+    def compare_availability_url(self) -> str:
+        all_members = self.navigators + ([self.captain] if self.captain else [])
+        all_members.extend([d.user for d in self.djangonaut_details])
+        user_ids = [str(u.id) for u in all_members]
+        return (
+            reverse("compare_availability")
+            + f"?users={','.join(user_ids)}&session={self.team.session_id}"
+        )
