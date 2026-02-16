@@ -25,9 +25,6 @@
         {% if navigators %}
             <em>{% trans "Navigators:" %} {% for nav in navigators %}{{ nav.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
         {% endif %}
-        {% if existing_djangonauts %}
-            <em>{% trans "Existing Djangonauts:" %} {% for d in existing_djangonauts %}{{ d.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
-        {% endif %}
         {% if selected_users %}
             <em>{% trans "Selected applicants:" %} {{ selected_users|length }}</em><br>
         {% endif %}
