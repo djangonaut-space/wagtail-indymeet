@@ -850,7 +850,7 @@ class OverlapAnalysisForm(BaseTeamForm):
         super().__init__(*args, **kwargs)
         self.fields["team"].queryset = self.session.teams.order_by("name")
 
-    def get_team_members(self) -> tuple[list[CustomUser], list[CustomUser]]:
+    def get_existing_members(self) -> list[CustomUser]:
         """
         Get navigators and djangonauts from the selected team in a single query.
 
@@ -861,33 +861,18 @@ class OverlapAnalysisForm(BaseTeamForm):
             forms.ValidationError: If team has no navigators
         """
         team = self.cleaned_data["team"]
+        selected_users = self.cleaned_data["user_ids"]
 
-        # Fetch all team members (navigators + djangonauts) in a single query
         team_memberships = (
             SessionMembership.objects.for_team(team)
             .filter(
                 role__in=[SessionMembership.NAVIGATOR, SessionMembership.DJANGONAUT]
             )
+            .exclude(user_id__in=selected_users)
             .select_related("user")
             .prefetch_related("user__availability")
         )
-
-        # Separate navigators and djangonauts
-        navigators = []
-        existing_djangonauts = []
-        for membership in team_memberships:
-            if membership.role == SessionMembership.NAVIGATOR:
-                navigators.append(membership.user)
-            elif membership.role == SessionMembership.DJANGONAUT:
-                existing_djangonauts.append(membership.user)
-
-        # Validate that team has navigators
-        if not navigators:
-            raise forms.ValidationError(
-                f"Team '{team.name}' has no navigators assigned"
-            )
-
-        return navigators, existing_djangonauts
+        return [membership.user for membership in team_memberships]
 
     def get_team_captain(self) -> CustomUser:
         """
@@ -922,11 +907,11 @@ class OverlapAnalysisForm(BaseTeamForm):
             Context dictionary with overlap analysis results
         """
         team = self.cleaned_data["team"]
-        navigators, existing_djangonauts = self.get_team_members()
+        existing_members = self.get_existing_members()
         selected_users = self.get_selected_users()
 
         # Calculate overlap (navigators + existing djangonauts + selected users)
-        all_users = navigators + existing_djangonauts + selected_users
+        all_users = existing_members + selected_users
         slots, hours = calculate_overlap(all_users)
         time_ranges = format_slots_as_ranges(slots)
 
@@ -940,8 +925,7 @@ class OverlapAnalysisForm(BaseTeamForm):
         return {
             "team": team,
             "analysis_type": "overlap-navigator",
-            "navigators": navigators,
-            "existing_djangonauts": existing_djangonauts,
+            "existing_members": existing_members,
             "selected_users": selected_users,
             "hour_blocks": hours,
             "time_ranges": time_ranges,

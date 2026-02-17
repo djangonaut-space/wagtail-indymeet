@@ -1,47 +1,31 @@
 {% load i18n %}
 
-{% if is_sufficient %}
-<div class="overlap-result overlap-sufficient{% if is_nested %} overlap-result-nested{% endif %}">
-{% else %}
-<div class="overlap-result overlap-insufficient{% if is_nested %} overlap-result-nested{% endif %}">
-{% endif %}
+<div class="overlap-result {% if is_sufficient %}overlap-sufficient{% else %}overlap-insufficient{% endif %} {% if is_nested %}overlap-result-nested{% endif %}">
     {% if is_nested %}
         {# Compact format for nested results (captain meetings) #}
         {% if is_sufficient %}✓{% else %}⚠{% endif %}
         <strong>{{ title }}:</strong>
-        {{ hour_blocks }} {% trans "hour blocks (need 2)" %}<br>
-        <strong>{% trans "Times:" %}</strong>
-        {% if time_ranges %}
-            {{ time_ranges|join:", " }}
-        {% else %}
-            {% trans "None" %}
-        {% endif %}
-        {% if compare_availability_url %}
-            <a href="{{ compare_availability_url }}" target="_blank" title="{% trans 'Compare Availability' %}">🔗</a>
-        {% endif %}
+        {{ hour_blocks }} {% trans "hour blocks" %}<br>
     {% else %}
-        {# Full format for group results #}
+       {# Full format for group results #}
         <strong>{{ title }}</strong> (Team: {{ team.name }})<br>
-        {% if navigators %}
-            <em>{% trans "Navigators:" %} {% for nav in navigators %}{{ nav.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
+        {% if existing_members %}
+            <em>{% trans "Existing members:" %} {% for user in existing_members %}{{ user.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</em><br>
         {% endif %}
         {% if selected_users %}
             <em>{% trans "Selected applicants:" %} {{ selected_users|length }}</em><br>
         {% endif %}
-        {% if is_sufficient %}
-            ✓ {% trans "Sufficient" %}: {{ hour_blocks }} {% trans "hour blocks found (need 5)" %}<br>
-        {% else %}
-            ⚠ {% trans "Insufficient" %}: {{ hour_blocks }} {% trans "hour blocks found (need 5)" %}<br>
-        {% endif %}
-        <strong>{% trans "Time Ranges:" %}</strong>
-        {% if time_ranges %}
-            {{ time_ranges|join:", " }}
-        {% else %}
-            {% trans "None" %}
-        {% endif %}
-        {% if compare_availability_url %}
-        <br>
-        <a href="{{ compare_availability_url }}" target="_blank">{% trans "Compare Availability" %} &rarr;</a>
-        {% endif %}
+        {% if is_sufficient %}✓ {% trans "Sufficient" %}{% else %}⚠ {% trans "Insufficient" %}{% endif %}: {{ hour_blocks }} {% trans "hour blocks found" %}<br>
+    {% endif %}
+
+    <strong>{% trans "Times:" %}</strong>
+    {% if time_ranges %}
+        {{ time_ranges|join:", " }}
+    {% else %}
+        {% trans "None" %}
+    {% endif %}
+    {% if compare_availability_url %}
+    <br>
+    <a href="{{ compare_availability_url }}" target="_blank">{% trans "Compare Availability" %} &rarr;</a>
     {% endif %}
 </div>

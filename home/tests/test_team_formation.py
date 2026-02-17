@@ -660,9 +660,11 @@ class TeamFormationViewTestCase(TestCase):
         self.assertIn("Project Gamma", content)
 
     def test_overlap_includes_existing_djangonauts(self):
-        """Test that overlap calculation includes existing djangonauts."""
-        # Create a djangonaut on the team
-        djangonaut = UserFactory(username="djangonaut")
+        """Test that overlap calculation includes existing djangonauts in the rendered response."""
+        # Create a djangonaut on the team with limited availability
+        djangonaut = UserFactory(
+            username="djangonaut", first_name="Existing", last_name="Djangonaut"
+        )
         team = TeamFactory(session=self.session, name="Test Team")
         SessionMembershipFactory(
             user=djangonaut,
@@ -670,46 +672,52 @@ class TeamFormationViewTestCase(TestCase):
             team=team,
             role=SessionMembership.DJANGONAUT,
         )
-        # Give djangonaut availability (slot 24.0 = Mon 00:00)
+        # Give djangonaut narrow availability (only Mon 00:00-01:00)
         UserAvailabilityFactory(user=djangonaut, slots=[24.0, 24.5])
 
-        # Create a navigator on the team
-        navigator = UserFactory(username="navigator")
+        # Create a navigator on the team with wider availability
+        navigator = UserFactory(
+            username="navigator", first_name="Team", last_name="Navigator"
+        )
         SessionMembershipFactory(
             user=navigator,
             session=self.session,
             team=team,
             role=SessionMembership.NAVIGATOR,
         )
-        # Give navigator availability (slot 24.0 = Mon 00:00)
-        UserAvailabilityFactory(user=navigator, slots=[24.0, 24.5])
+        # Give navigator wider availability (Mon 00:00-02:00)
+        UserAvailabilityFactory(user=navigator, slots=[24.0, 24.5, 25.0, 25.5])
 
-        # Create an applicant with matching availability
+        # Create an applicant with wide availability
         applicant = UserFactory(username="applicant")
-        UserAvailabilityFactory(user=applicant, slots=[24.0, 24.5])
+        UserAvailabilityFactory(user=applicant, slots=[24.0, 24.5, 25.0, 25.5])
 
-        # We need "selected_users" for the form. The form uses cleaned_data['user_ids']
-        # But for testing `calculate_navigator_overlap_context` we can mock or use valid data
+        url = reverse("admin:session_calculate_overlap", args=[self.session.id])
+        response = self.client.post(
+            url,
+            {
+                "overlap-team": team.id,
+                "overlap-analysis_type": "overlap-navigator",
+                "overlap-user_ids": str(applicant.id),
+            },
+        )
 
-        form_data = {
-            "overlap-team": team.id,
-            "overlap-analysis_type": "overlap-navigator",
-            "overlap-user_ids": str(applicant.id),
-        }
-        form = OverlapAnalysisForm(data=form_data, session=self.session)
-        self.assertTrue(form.is_valid())
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
 
-        context = form.calculate_navigator_overlap_context()
+        # The navigator overlap title and team name should be rendered
+        self.assertIn("Navigator(s) Overlap", content)
+        self.assertIn("Test Team", content)
 
-        # Check that existing djangonauts are in context
-        self.assertIn("existing_djangonauts", context)
-        self.assertEqual(len(context["existing_djangonauts"]), 1)
-        self.assertEqual(context["existing_djangonauts"][0], djangonaut)
+        # Existing members (navigator + djangonaut) should be listed
+        self.assertIn("Existing members:", content)
+        self.assertIn("Existing Djangonaut", content)
+        self.assertIn("Team Navigator", content)
 
-        # Check overlap calculation (should be 1 hour because all 3 overlap)
-        # The overlap logic calculates intersection of ALL users.
-        # Navigator and Djangonaut and Applicant all have [24.0, 24.5].
-        self.assertEqual(context["hour_blocks"], 1)
+        # The overlap should be 1 hour: djangonaut's narrower availability [24.0, 24.5]
+        # constrains the intersection of all three users. If existing djangonauts were
+        # excluded, the overlap would be 2 hours (navigator ∩ applicant = [24.0..25.5]).
+        self.assertIn("1 hour blocks found", content)
 
     def test_compare_availability_url_in_context(self):
         """Test that compare_availability_url is present in overlap context."""
