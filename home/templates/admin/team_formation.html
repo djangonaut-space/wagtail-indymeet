@@ -68,6 +68,7 @@
                             </div>
                         {% endif %}
                         {% for field in bulk_form %}
+                            {{ field.errors }}
                             {{ field }}
                         {% endfor %}
                         <button type="submit" class="button default">{% trans "Assign to Team" %}</button>
@@ -259,6 +260,10 @@
                         {% else %}
                             <em>{% trans "None" %}</em>
                         {% endif %}
+                    </p>
+
+                    <p>
+                        <a href="{{ team_data.compare_availability_url }}" target="_blank">{% trans "Compare team availability" %} &rarr;</a>
                     </p>
 
                     <div class="stats-grid">

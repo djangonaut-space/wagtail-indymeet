@@ -8,8 +8,23 @@ from django.urls import reverse
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserAvailability
 from home.admin import SessionAdmin
-from home.factories import ProjectFactory, TeamFactory
-from home.forms import ApplicantFilterForm
+from home.availability import (
+    calculate_overlap,
+    calculate_team_overlap,
+    count_one_hour_blocks,
+    format_slot_as_time,
+    format_slots_as_ranges,
+)
+from home.factories import (
+    TeamFactory,
+    ProjectFactory,
+    SurveyFactory,
+    SessionMembershipFactory,
+    ProjectPreferenceFactory,
+    UserSurveyResponseFactory,
+)
+from home.filters import ApplicantFilterSet
+from home.forms import ApplicantFilterForm, OverlapAnalysisForm
 from home.models import (
     ProjectPreference,
     Question,
@@ -20,13 +35,8 @@ from home.models import (
     TypeField,
     UserSurveyResponse,
 )
-from home.availability import (
-    calculate_overlap,
-    calculate_team_overlap,
-    count_one_hour_blocks,
-    format_slot_as_time,
-    format_slots_as_ranges,
-)
+
+from home.views.team_formation import get_teams_with_statistics
 
 
 class AvailabilityUtilsTestCase(TestCase):
@@ -166,6 +176,7 @@ class ApplicantFilterFormTestCase(TestCase):
             application_start_date="2025-01-15",
             application_end_date="2025-02-15",
         )
+        self.survey = SurveyFactory(session=self.session)
 
         self.team = TeamFactory(session=self.session, name="Test Team")
 
@@ -186,6 +197,41 @@ class ApplicantFilterFormTestCase(TestCase):
         }
         form = ApplicantFilterForm(data=form_data, session=self.session)
         self.assertTrue(form.is_valid())
+
+    def test_project_preference_filter(self):
+        """Test filtering applicants by project preference."""
+        project1 = ProjectFactory(name="Project 1")
+        project2 = ProjectFactory(name="Project 2")
+        self.session.available_projects.add(project1, project2)
+
+        applicant1 = UserFactory(username="app1")
+        UserSurveyResponseFactory(user=applicant1, survey=self.survey)
+        ProjectPreferenceFactory(
+            user=applicant1, session=self.session, project=project1
+        )
+
+        applicant2 = UserFactory(username="app2")
+        UserSurveyResponseFactory(user=applicant2, survey=self.survey)
+        ProjectPreferenceFactory(
+            user=applicant2, session=self.session, project=project2
+        )
+
+        qs = UserSurveyResponse.objects.filter(survey=self.survey)
+
+        # Filter by Project 1
+        filterset = ApplicantFilterSet(
+            data={"project_preferences": project1.id}, queryset=qs, session=self.session
+        )
+        self.assertTrue(filterset.is_valid())
+        self.assertEqual(filterset.qs.count(), 1)
+        self.assertEqual(filterset.qs.first().user, applicant1)
+
+        # Filter by Project 2
+        filterset = ApplicantFilterSet(
+            data={"project_preferences": project2.id}, queryset=qs, session=self.session
+        )
+        self.assertEqual(filterset.qs.count(), 1)
+        self.assertEqual(filterset.qs.first().user, applicant2)
 
 
 class TeamFormationViewTestCase(TestCase):
@@ -602,7 +648,7 @@ class TeamFormationViewTestCase(TestCase):
         # Note: Query 7 efficiently fetches all project preferences in one query
         # There are some N+1 queries for team.project (queries 13-22) but that's
         # unrelated to the project preferences column we added
-        with self.assertNumQueries(22):  # Expected stable query count
+        with self.assertNumQueries(23):  # Expected stable query count
             response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -612,3 +658,110 @@ class TeamFormationViewTestCase(TestCase):
         self.assertIn("Project Alpha", content)
         self.assertIn("Project Beta", content)
         self.assertIn("Project Gamma", content)
+
+    def test_overlap_includes_existing_djangonauts(self):
+        """Test that overlap calculation includes existing djangonauts in the rendered response."""
+        # Create a djangonaut on the team with limited availability
+        djangonaut = UserFactory(
+            username="djangonaut", first_name="Existing", last_name="Djangonaut"
+        )
+        team = TeamFactory(session=self.session, name="Test Team")
+        SessionMembershipFactory(
+            user=djangonaut,
+            session=self.session,
+            team=team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        # Give djangonaut narrow availability (only Mon 00:00-01:00)
+        UserAvailabilityFactory(user=djangonaut, slots=[24.0, 24.5])
+
+        # Create a navigator on the team with wider availability
+        navigator = UserFactory(
+            username="navigator", first_name="Team", last_name="Navigator"
+        )
+        SessionMembershipFactory(
+            user=navigator,
+            session=self.session,
+            team=team,
+            role=SessionMembership.NAVIGATOR,
+        )
+        # Give navigator wider availability (Mon 00:00-02:00)
+        UserAvailabilityFactory(user=navigator, slots=[24.0, 24.5, 25.0, 25.5])
+
+        # Create an applicant with wide availability
+        applicant = UserFactory(username="applicant")
+        UserAvailabilityFactory(user=applicant, slots=[24.0, 24.5, 25.0, 25.5])
+
+        url = reverse("admin:session_calculate_overlap", args=[self.session.id])
+        response = self.client.post(
+            url,
+            {
+                "overlap-team": team.id,
+                "overlap-analysis_type": "overlap-navigator",
+                "overlap-user_ids": str(applicant.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+
+        # The navigator overlap title and team name should be rendered
+        self.assertIn("Navigator(s) Overlap", content)
+        self.assertIn("Test Team", content)
+
+        # Existing members (navigator + djangonaut) should be listed
+        self.assertIn("Existing members:", content)
+        self.assertIn("Existing Djangonaut", content)
+        self.assertIn("Team Navigator", content)
+
+        # The overlap should be 1 hour: djangonaut's narrower availability [24.0, 24.5]
+        # constrains the intersection of all three users. If existing djangonauts were
+        # excluded, the overlap would be 2 hours (navigator ∩ applicant = [24.0..25.5]).
+        self.assertIn("1 hour blocks found", content)
+
+    def test_compare_availability_url_in_context(self):
+        """Test that compare_availability_url is present in overlap context."""
+        navigator = UserFactory(username="navigator")
+        team = TeamFactory(session=self.session, name="Test Team")
+        SessionMembershipFactory(
+            user=navigator,
+            session=self.session,
+            team=team,
+            role=SessionMembership.NAVIGATOR,
+        )
+
+        applicant = UserFactory(username="applicant")
+
+        form_data = {
+            "overlap-team": team.id,
+            "overlap-analysis_type": "overlap-navigator",
+            "overlap-user_ids": str(applicant.id),
+        }
+        form = OverlapAnalysisForm(data=form_data, session=self.session)
+        self.assertTrue(form.is_valid())
+
+        context = form.calculate_navigator_overlap_context()
+        self.assertIn("compare_availability_url", context)
+        url = context["compare_availability_url"]
+        self.assertIn(reverse("compare_availability"), url)
+        self.assertIn(str(navigator.id), url)
+        self.assertIn(str(applicant.id), url)
+
+    def test_team_statistics_has_compare_url(self):
+        """Test that team statistics includes compare availability URL."""
+        djangonaut = UserFactory(username="djangonaut")
+        team = TeamFactory(session=self.session, name="Test Team")
+        SessionMembershipFactory(
+            user=djangonaut,
+            session=self.session,
+            team=team,
+            role=SessionMembership.DJANGONAUT,
+        )
+
+        teams_data = get_teams_with_statistics(self.session)
+        self.assertEqual(len(teams_data), 1)
+        stat = teams_data[0]
+
+        self.assertTrue(hasattr(stat, "compare_availability_url"))
+        self.assertIn(reverse("compare_availability"), stat.compare_availability_url)
+        self.assertIn(str(djangonaut.id), stat.compare_availability_url)
