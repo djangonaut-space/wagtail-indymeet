@@ -54,6 +54,8 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from playwright.sync_api import BrowserContext, Page, expect
 
+from tests.conftest import drag_select
+
 from accounts.models import CustomUser
 from accounts.tokens import account_activation_token
 from home.models import Project, Question, Session, SessionMembership, Survey, Team
@@ -179,8 +181,7 @@ class TestCompleteSessionOnboardingFlow:
         # Select some availability slots (Monday 9 AM - 10 AM)
         monday_9am = page.locator('.time-slot[data-day="1"][data-hour="9"]')
         monday_10am = page.locator('.time-slot[data-day="1"][data-hour="10"]')
-        monday_9am.drag_to(monday_10am)
-        page.wait_for_timeout(200)
+        drag_select(page, monday_9am, monday_10am)
 
         # Save availability
         page.get_by_role("button", name="Save Availability").first.click()
