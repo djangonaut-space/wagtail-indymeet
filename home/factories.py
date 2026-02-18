@@ -20,6 +20,7 @@ from home.models import (
     UserQuestionResponse,
     UserSurveyResponse,
     Waitlist,
+    ProjectPreference,
 )
 
 
@@ -177,3 +178,12 @@ class TestimonialFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
     is_published = False
+
+
+class ProjectPreferenceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ProjectPreference
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    project = factory.SubFactory(ProjectFactory)

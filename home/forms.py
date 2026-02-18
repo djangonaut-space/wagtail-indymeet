@@ -4,6 +4,7 @@ import io
 from django import forms
 from django.core import validators
 from django.forms.renderers import DjangoTemplates
+from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxLengthValidator
 from django.core.validators import MinLengthValidator
@@ -849,32 +850,29 @@ class OverlapAnalysisForm(BaseTeamForm):
         super().__init__(*args, **kwargs)
         self.fields["team"].queryset = self.session.teams.order_by("name")
 
-    def get_team_navigators(self) -> list[CustomUser]:
+    def get_existing_members(self) -> list[CustomUser]:
         """
-        Get navigators from the selected team.
+        Get navigators and djangonauts from the selected team in a single query.
 
         Returns:
-            List of navigator users with availability prefetched
+            Tuple of (navigators, existing_djangonauts) with availability prefetched
 
         Raises:
             forms.ValidationError: If team has no navigators
         """
         team = self.cleaned_data["team"]
-        navigator_memberships = (
+        selected_users = self.cleaned_data["user_ids"]
+
+        team_memberships = (
             SessionMembership.objects.for_team(team)
-            .navigators()
+            .filter(
+                role__in=[SessionMembership.NAVIGATOR, SessionMembership.DJANGONAUT]
+            )
+            .exclude(user_id__in=selected_users)
             .select_related("user")
             .prefetch_related("user__availability")
         )
-
-        navigators = [m.user for m in navigator_memberships]
-
-        if not navigators:
-            raise forms.ValidationError(
-                f"Team '{team.name}' has no navigators assigned"
-            )
-
-        return navigators
+        return [membership.user for membership in team_memberships]
 
     def get_team_captain(self) -> CustomUser:
         """
@@ -909,22 +907,30 @@ class OverlapAnalysisForm(BaseTeamForm):
             Context dictionary with overlap analysis results
         """
         team = self.cleaned_data["team"]
-        navigators = self.get_team_navigators()
+        existing_members = self.get_existing_members()
         selected_users = self.get_selected_users()
 
-        # Calculate navigator overlap (navigators + selected users)
-        all_users = navigators + selected_users
+        # Calculate overlap (navigators + existing djangonauts + selected users)
+        all_users = existing_members + selected_users
         slots, hours = calculate_overlap(all_users)
         time_ranges = format_slots_as_ranges(slots)
+
+        # Generate comparison URL
+        user_ids = [str(u.id) for u in all_users]
+        compare_url = (
+            reverse("compare_availability")
+            + f"?users={','.join(user_ids)}&session={self.session.id}"
+        )
 
         return {
             "team": team,
             "analysis_type": "overlap-navigator",
-            "navigators": navigators,
+            "existing_members": existing_members,
             "selected_users": selected_users,
             "hour_blocks": hours,
             "time_ranges": time_ranges,
             "is_sufficient": hours >= 5,
+            "compare_availability_url": compare_url,
         }
 
     def calculate_captain_overlap_context(self) -> dict:
@@ -943,12 +949,19 @@ class OverlapAnalysisForm(BaseTeamForm):
         for user in selected_users:
             slots, hours = calculate_overlap([captain, user])
             time_ranges = format_slots_as_ranges(slots)
+            user_ids = [str(captain.id), str(user.id)]
+            compare_url = (
+                reverse("compare_availability")
+                + f"?users={','.join(user_ids)}&session={self.session.id}"
+            )
+
             results.append(
                 {
                     "user": user,
                     "hour_blocks": hours,
                     "time_ranges": time_ranges,
                     "is_sufficient": hours >= 2,
+                    "compare_availability_url": compare_url,
                 }
             )
 
