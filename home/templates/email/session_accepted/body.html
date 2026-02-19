@@ -19,6 +19,12 @@
 
 {% block cta_button_text %}Accept Your Spot{% endblock cta_button_text %}
 
+{% block secondary_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-top: 16px; text-align: center;">
+    Can't make it this time? <a href="{{ decline_link }}" style="color: #5c0287;">Let us know</a> so we can invite someone else.
+  </p>
+{% endblock secondary_cta %}
+
 {% block after_cta %}
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
     The Djangonaut Program aims to level up the Django code contributions from our community and to help you become a future leader of Django. 💪 This is an 8 week group mentoring program with an emphasis on sustainability and longevity.

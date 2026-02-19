@@ -28,6 +28,9 @@ def send_accepted_email(membership_id: int) -> None:
     acceptance_url = settings.BASE_URL + reverse(
         "accept_membership", kwargs={"slug": membership.session.slug}
     )
+    decline_url = settings.BASE_URL + reverse(
+        "accept_membership", kwargs={"slug": membership.session.slug}
+    )
 
     context = {
         "user": membership.user,
@@ -36,6 +39,7 @@ def send_accepted_email(membership_id: int) -> None:
         "membership": membership,
         "acceptance_url": acceptance_url,
         "cta_link": acceptance_url,
+        "decline_link": decline_url,
     }
 
     email.send(
@@ -127,6 +131,9 @@ def send_acceptance_reminder_email(membership_id: int) -> None:
     acceptance_url = settings.BASE_URL + reverse(
         "accept_membership", kwargs={"slug": membership.session.slug}
     )
+    decline_url = settings.BASE_URL + reverse(
+        "accept_membership", kwargs={"slug": membership.session.slug}
+    )
 
     context = {
         "user": membership.user,
@@ -135,6 +142,7 @@ def send_acceptance_reminder_email(membership_id: int) -> None:
         "membership": membership,
         "acceptance_url": acceptance_url,
         "cta_link": acceptance_url,
+        "decline_link": decline_url,
     }
 
     email.send(
@@ -208,6 +216,9 @@ def send_membership_acceptance_email(membership_id: int) -> None:
     acceptance_url = settings.BASE_URL + reverse(
         "accept_membership", kwargs={"slug": membership.session.slug}
     )
+    decline_url = settings.BASE_URL + reverse(
+        "accept_membership", kwargs={"slug": membership.session.slug}
+    )
 
     context = {
         "user": membership.user,
@@ -216,6 +227,7 @@ def send_membership_acceptance_email(membership_id: int) -> None:
         "membership": membership,
         "acceptance_url": acceptance_url,
         "cta_link": acceptance_url,
+        "decline_link": decline_url,
     }
 
     email.send(
