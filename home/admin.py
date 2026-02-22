@@ -370,12 +370,24 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
-    list_display = ("title", "start_date", "end_date", "form_teams", "email_actions")
+    list_display = (
+        "title",
+        "start_date",
+        "end_date",
+        "form_teams",
+        "collect_stats",
+        "email_actions",
+    )
 
     @admin.display(description="Form Teams")
     def form_teams(self, obj):
         href = reverse("admin:session_form_teams", kwargs={"session_id": obj.id})
         return mark_safe(f'<a href="{href}">Form Teams</a>')
+
+    @admin.display(description="GitHub Stats")
+    def collect_stats(self, obj):
+        href = reverse("admin:session_collect_stats", args=[obj.id])
+        return mark_safe(f'<a href="{href}">Collect Stats</a>')
 
     @admin.display(description="Email Actions")
     def email_actions(self, obj):
@@ -415,6 +427,11 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "<int:session_id>/calculate-overlap/",
                 self.admin_site.admin_view(calculate_overlap_ajax),
                 name="session_calculate_overlap",
+            ),
+            path(
+                "<int:session_id>/collect-stats/",
+                self.admin_site.admin_view(self.collect_stats_view),
+                name="session_collect_stats",
             ),
             path(
                 "<int:session_id>/send-session-results/",

@@ -38,6 +38,13 @@ class Project(models.Model):
     class Meta:
         ordering = ["name"]
 
+    @property
+    def github_repo(self) -> tuple[str, str] | None:
+        """Return the GitHub org, repo pair"""
+        if not self.url.startswith("https://github.com/"):
+            return
+        return tuple(self.url[19:].split("/", maxsplit=1))
+
     def __str__(self) -> str:
         return self.name
 
