@@ -29,7 +29,7 @@ class TalkGeoSerializer(GeoFeatureModelSerializer):
     def get_popup_html(self, obj):
         video_html = (
             f"""
-            <a href="${obj.video_link}" target="_blank" aria-label="Watch talk recording">
+            <a href="{obj.video_link}" target="_blank" aria-label="Watch talk recording">
                 <span aria-hidden="true">📹</span> Talk recording
             </a>"""
             if obj.video_link

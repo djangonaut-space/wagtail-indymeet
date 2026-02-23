@@ -6,6 +6,7 @@ import modelcluster.fields
 import uuid
 from django.conf import settings
 from django.db import migrations, models
+from django.contrib.postgres.operations import CreateExtension
 
 
 class Migration(migrations.Migration):
@@ -16,10 +17,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            "CREATE EXTENSION IF NOT EXISTS postgis;",
-            reverse_sql=migrations.RunSQL.noop,  # Does nothing when rolled back
-        ),
+        CreateExtension("postgis"),
         migrations.CreateModel(
             name="Talk",
             fields=[
