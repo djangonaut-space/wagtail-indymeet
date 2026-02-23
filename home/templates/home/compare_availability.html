@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Compare Availability | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% trans "Compare Availability | Djangonaut Space" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    #availability-grid {
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .time-slot {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .user-card {
+        transition: all 0.15s ease-in-out;
+    }
+
+    .user-card.unavailable {
+        background-color: #f3f4f6;
+        opacity: 0.6;
+    }
+
+    .user-card.unavailable .user-name {
+        text-decoration: line-through;
+        color: #9ca3af;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container max-w-7xl"
+         x-data="availabilityGrid()">
+        <nav class="mb-4 text-sm" aria-label="breadcrumb">
+            <ol class="flex items-center gap-2">
+                <li><a href="{% url 'user_sessions' %}">{% trans "My Sessions" %}</a></li>
+                <li class="text-gray-400">/</li>
+                <li class="text-gray-600">{% trans "Compare Availability" %}</li>
+            </ol>
+        </nav>
+
+        <h1 class="text-4xl mb-6">{% trans "Compare Availability" %}</h1>
+
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+            <p class="text-sm">
+                <strong>{% trans "Instructions:" %}</strong>
+                {% blocktrans %}
+                    Select users to compare their availability. The calendar shows overlap - darker colors indicate more people available. Hover over a time slot to see who is available.
+                {% endblocktrans %}
+            </p>
+        </div>
+
+        {% if form.errors %}
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p class="text-sm font-semibold text-red-800 mb-2">{% trans "Please correct the following errors:" %}</p>
+            <ul class="list-disc list-inside text-sm text-red-700">
+              {{ form.errors.as_ul }}
+            </ul>
+          </div>
+        {% endif %}
+
+        <!-- User Selection Form -->
+        <form method="get" class="mb-6">
+            {% if session_id %}
+            <input type="hidden" name="session" value="{{ session_id }}">
+            {% endif %}
+            <input type="hidden" name="offset" x-bind:value="offsetHours">
+
+            <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-grow">
+                    <label for="user-select" class="block text-sm font-medium text-gray-700 mb-2">
+                        {% trans "Select Users to Compare" %}
+                    </label>
+                    <select id="user-select" name="users" multiple
+                            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-purple-500 focus:border-purple-500"
+                            size="5">
+                        {% for user in selectable_users %}
+                        <option value="{{ user.id }}"
+                                {% if user.id in selected_user_ids %}selected{% endif %}>
+                            {{ user.get_full_name|default:user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">{% trans "Hold Ctrl/Cmd to select multiple users" %}</p>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit"
+                            class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                        {% trans "Apply" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        {% comment %}
+            The grid is loaded via htmx so we can inject the browser's UTC offset
+            (not available server-side) into the request via hx-vals.
+            After htmx settles the response, we hydrate Alpine.js state from the
+            JSON script tags rendered by the grid partial and reset any pinned
+            slot since the grid contents have changed.
+        {% endcomment %}
+        <div id="availability-grid-container"
+             hx-get="{% url 'compare_availability_grid' %}?{{ request.GET.urlencode }}"
+             hx-trigger="load"
+             hx-vals='js:{"offset": -new Date().getTimezoneOffset() / 60}'
+             hx-swap="innerHTML"
+             hx-disinherit="*"
+             @htmx:after-settle="
+                 const sa = document.getElementById('slot-availabilities');
+                 const su = document.getElementById('selected-users');
+                 if (sa) slotAvailabilities = JSON.parse(sa.textContent);
+                 if (su) users = JSON.parse(su.textContent);
+                 fixedSlot = null;
+                 activeDisplayTime = '';
+                 activeTimeIsUrl = '';
+             ">
+            <div class="text-center py-12 text-gray-500">
+                <p>{% trans "Loading availability..." %}</p>
+            </div>
+        </div>
+    </div>
+</main>
+<script>
+function availabilityGrid() {
+    return {
+        slotAvailabilities: {},
+        users: [],
+        hoveredSlot: null,
+        fixedSlot: null,
+        hoveredUser: null,
+        activeDisplayTime: '',
+        activeTimeIsUrl: '',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        offsetHours: -new Date().getTimezoneOffset() / 60,
+
+        get activeSlot() {
+            return this.fixedSlot || this.hoveredSlot;
+        },
+
+        isUnavailable(userId) {
+            if (this.activeSlot === null) return false;
+            const available = this.slotAvailabilities[this.activeSlot] || [];
+            return !available.includes(userId);
+        },
+
+        getCellStyle(slotKey, defaultColor) {
+            if (this.hoveredUser === null) {
+                return defaultColor ? { backgroundColor: defaultColor } : {};
+            }
+            const available = this.slotAvailabilities[slotKey] || [];
+            if (available.includes(this.hoveredUser)) {
+                return { backgroundColor: '#5c0287' };
+            }
+            return {};
+        }
+    }
+}
+</script>
+{% endblock content %}

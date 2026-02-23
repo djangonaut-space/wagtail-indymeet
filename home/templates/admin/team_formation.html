@@ -37,13 +37,29 @@
             <!-- Actions Toolbar -->
             <div class="actions-toolbar">
                 <div class="toolbar-section">
+                    <form id="overlap-form"
+                          hx-post="{% url 'admin:session_calculate_overlap' session.id %}"
+                          hx-target="#overlap-results"
+                          hx-swap="innerHTML"
+                          data-user-ids-id="{{ overlap_form.user_ids.id_for_label }}"
+                    >
+                        {% csrf_token %}
+                        {% for field in overlap_form %}
+                            {{ field }}
+                        {% endfor %}
+                        <button type="submit" class="button default">{% trans "Check Overlap" %}</button>
+                    </form>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <div class="toolbar-section">
                     <form id="assign-form"
                           method="post"
                           action=""
                           data-user-ids-id="{{ bulk_form.user_ids.id_for_label }}"
                     >
                         {% csrf_token %}
-
                         {% if bulk_form.non_field_errors %}
                             <div class="error-messages-block">
                                 {% for error in bulk_form.non_field_errors %}
@@ -51,15 +67,10 @@
                                 {% endfor %}
                             </div>
                         {% endif %}
-
                         {% for field in bulk_form %}
-                            {% if field.name == 'user_ids' %}
-                                {{ field }}
-                            {% else %}
-                                {% include "admin/widgets/toolbar_field.html" with field=field %}
-                            {% endif %}
+                            {{ field.errors }}
+                            {{ field }}
                         {% endfor %}
-
                         <button type="submit" class="button default">{% trans "Assign to Team" %}</button>
                     </form>
                 </div>
@@ -73,39 +84,14 @@
                           data-user-ids-id="{{ waitlist_form.user_ids.id_for_label }}"
                     >
                         {% csrf_token %}
-
                         {% for field in waitlist_form %}
                             {{ field }}
                         {% endfor %}
-
                         <button type="submit" class="button">{% trans "Add to Waitlist" %}</button>
                     </form>
                 </div>
 
-                <div class="toolbar-divider"></div>
 
-                <div class="toolbar-section">
-                    <form id="overlap-form"
-                          hx-post="{% url 'admin:session_calculate_overlap' session.id %}"
-                          hx-target="#overlap-results"
-                          hx-swap="innerHTML"
-                          data-user-ids-id="{{ overlap_form.user_ids.id_for_label }}"
-                    >
-                        {% csrf_token %}
-
-                        {% for field in overlap_form %}
-                            {% if field.name == 'analysis_type' %}
-                                <div class="analysis-type-wrapper">
-                                    {{ field }}
-                                </div>
-                            {% else %}
-                                {% include "admin/widgets/toolbar_field.html" with field=field %}
-                            {% endif %}
-                        {% endfor %}
-
-                        <button type="submit" class="button default">{% trans "Check Overlap" %}</button>
-                    </form>
-                </div>
             </div>
 
             <!-- Overlap Results -->
@@ -156,6 +142,7 @@
                                 {% trans "Prev Apps" %}
                             </th>
                             <th title="{% trans 'Has availability data' %}">{% trans "Avail" %}</th>
+                            <th>{% trans "Previously Waitlisted" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -218,6 +205,7 @@
                                     <span class="no-availability">✗ No availability</span>
                                 {% endif %}
                             </td>
+                            <td>{{ applicant.previously_waitlisted|yesno }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -272,6 +260,10 @@
                         {% else %}
                             <em>{% trans "None" %}</em>
                         {% endif %}
+                    </p>
+
+                    <p>
+                        <a href="{{ team_data.compare_availability_url }}" target="_blank">{% trans "Compare team availability" %} &rarr;</a>
                     </p>
 
                     <div class="stats-grid">

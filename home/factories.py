@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 import factory
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from accounts.factories import UserFactory
@@ -18,6 +20,7 @@ from home.models import (
     UserQuestionResponse,
     UserSurveyResponse,
     Waitlist,
+    ProjectPreference,
 )
 
 
@@ -27,8 +30,8 @@ class EventFactory(factory.django.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: "Event %d" % n)
     slug = factory.Sequence(lambda n: "event-%d" % n)
-    start_time = factory.Faker("datetime")
-    end_time = factory.Faker("datetime")
+    start_time = factory.Faker("date_time")
+    end_time = factory.Faker("date_time")
     location = "https://zoom.link"
     status = Event.SCHEDULED
 
@@ -45,13 +48,13 @@ class SessionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Session
 
-    start_date = factory.Faker("date")
-    end_date = factory.Faker("date")
+    start_date = factory.Faker("date_object")
+    end_date = factory.Faker("date_object")
     title = factory.Sequence(lambda n: "Session %d" % n)
     slug = factory.Sequence(lambda n: "session-%d" % n)
-    invitation_date = factory.Faker("date")
-    application_start_date = factory.Faker("date")
-    application_end_date = factory.Faker("date")
+    invitation_date = factory.Faker("date_object")
+    application_start_date = factory.Faker("date_object")
+    application_end_date = factory.Faker("date_object")
     application_url = factory.Sequence(lambda n: "https://apply.session%d.com" % n)
     discord_invite_url = "https://discord.gg/test"
 
@@ -126,6 +129,35 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     role = SessionMembership.DJANGONAUT
 
 
+class OrganizerFactory(factory.django.DjangoModelFactory):
+    """Factory that creates a user with organizer role and relevant custom permissions."""
+
+    class Meta:
+        model = SessionMembership
+        skip_postgeneration_save = True
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    team = None
+    role = SessionMembership.ORGANIZER
+    accepted = True
+
+    @factory.post_generation
+    def with_permissions(self, create, extracted, **kwargs):
+        if not create:
+            return
+        # Default to adding permission unless explicitly set to False
+        if extracted is False:
+            return
+
+        content_type = ContentType.objects.get_for_model(Team)
+        permissions = Permission.objects.filter(
+            codename__in=["compare_org_availability", "form_team"],
+            content_type=content_type,
+        )
+        self.user.user_permissions.add(*permissions)
+
+
 class WaitlistFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Waitlist
@@ -146,3 +178,12 @@ class TestimonialFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
     is_published = False
+
+
+class ProjectPreferenceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ProjectPreference
+
+    user = factory.SubFactory(UserFactory)
+    session = factory.SubFactory(SessionFactory)
+    project = factory.SubFactory(ProjectFactory)

@@ -1,16 +1,23 @@
+from typing import TYPE_CHECKING, Optional
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
 from django.core.signing import TimestampSigner
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
+from django.db.models.functions import Lower
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from wagtail.models import Orderable
+from django.utils.translation import gettext_lazy as _
 
 from accounts.fields import DefaultOneToOneField
+
+if TYPE_CHECKING:
+    from home.models import Session, SessionMembership
 
 
 class CustomUserQuerySet(QuerySet):
@@ -66,6 +73,49 @@ class CustomUserQuerySet(QuerySet):
             .distinct()
         )
 
+    def for_comparing_availability(
+        self,
+        user: "CustomUser",
+        session: Optional["Session"] = None,
+        session_membership: Optional["SessionMembership"] = None,
+    ) -> "QuerySet[CustomUser]":
+        """
+        Filter users that can be selected for availability comparison.
+
+        Access is determined by:
+        - Permission: Users with compare_org_availability see all users
+        - Organizer role: Can see all session participants
+        - Team member: Can see their team members only
+
+        Args:
+            user: The currently logged-in user making the request
+            session: Optional session to filter by
+            session_membership: Optional session membership for role/team filtering
+
+        Returns:
+            QuerySet of CustomUser objects the user can compare availability with
+        """
+        from home.models import SessionMembership
+
+        qs = self.select_related("profile", "availability").order_by(
+            "first_name", "last_name"
+        )
+        q_filter = Q(availability__isnull=False)
+
+        if session:
+            q_filter &= Q(session_memberships__session=session)
+
+        if (
+            session_membership
+            and session_membership.role != SessionMembership.ORGANIZER
+        ):
+            q_filter &= Q(session_memberships__team=session_membership.team)
+        elif not user.has_perm("home.compare_org_availability"):
+            # No session for this user, so check if they can view org-wide availability
+            return qs.none()
+
+        return qs.filter(q_filter).distinct()
+
 
 class CustomUserManager(UserManager.from_queryset(CustomUserQuerySet)):
     pass
@@ -73,6 +123,15 @@ class CustomUserManager(UserManager.from_queryset(CustomUserQuerySet)):
 
 class CustomUser(AbstractUser):
     objects = CustomUserManager()
+
+    class Meta:
+        verbose_name = _("user")
+        verbose_name_plural = _("users")
+        constraints = [
+            models.UniqueConstraint(
+                Lower("email"), name="accounts_customuser_email_unq"
+            )
+        ]
 
     def __str__(self):
         full_name = self.get_full_name()

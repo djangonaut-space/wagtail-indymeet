@@ -33,12 +33,12 @@ jobs:
           POSTGRES_PASSWORD: "djangonaut"
           POSTGRES_DB: "djangonaut-space"
     steps:
-      - uses: actions/checkout@v6.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Set up Python version
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: '3.11'
 
@@ -48,7 +48,7 @@ jobs:
           sudo apt-get install -y libgdal-dev g++ gdal-bin libpq-dev
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
 
       - name: Install dependencies
         run: |
@@ -59,9 +59,16 @@ jobs:
         run: uv run pytest --cov --cov-branch --cov-report=xml --cov-report=term
 
       - name: Run playwright tests
-        run: uv run pytest -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
+        run: uv run pytest --tracing retain-on-failure -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
 
       - name: Upload results to Codecov
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7  # v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de  # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
+        name: Upload playwright traces
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-traces
+          path: test-results/

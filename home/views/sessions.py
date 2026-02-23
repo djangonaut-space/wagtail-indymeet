@@ -52,6 +52,7 @@ class UserSessionListView(LoginRequiredMixin, ListView):
         # (Djangonauts need accepted=True, other roles are automatically members)
         return (
             SessionMembership.objects.for_user(self.request.user)
+            .enforce_djangonaut_access_control()
             .select_related("session", "team", "team__project")
             .order_by("-session__end_date")
         )

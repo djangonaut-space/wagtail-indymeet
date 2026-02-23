@@ -108,6 +108,14 @@ class Session(models.Model):
             "session organizer drive folder."
         ),
     )
+    djangonauts_have_access = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Whether Djangonauts can access their team detail pages. "
+            "Automatically set to True when team welcome emails are sent. "
+            "This will be ignored once session start date is in the past."
+        ),
+    )
 
     objects = models.Manager.from_queryset(SessionQuerySet)()
 
@@ -198,6 +206,7 @@ class Team(models.Model):
     class Meta:
         permissions = [
             ("form_team", "Can form teams from the pool of applicants."),
+            ("compare_org_availability", "Can compare organization-wide availability."),
         ]
 
     session = models.ForeignKey(Session, related_name="teams", on_delete=models.CASCADE)

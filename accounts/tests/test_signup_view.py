@@ -5,6 +5,7 @@ from django.test import Client
 from django.test import TestCase
 from django.urls import reverse
 
+from accounts.factories import UserFactory
 from accounts.models import CustomUser
 
 
@@ -58,3 +59,30 @@ class SignUpViewTests(TestCase):
         self.assertTrue(created_user.profile.receiving_newsletter)
         self.assertTrue(created_user.profile.receiving_program_updates)
         self.assertTrue(created_user.profile.receiving_event_updates)
+
+    @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)
+    def test_signup_template_post_success(self, mock_captcha):
+        UserFactory.create(email="jane@whoareyou.com")
+        response = self.client.post(
+            self.url,
+            data={
+                "username": "janedoe",
+                "email": "jane@whoareyou.com",
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "password1": "secretpassword123",
+                "password2": "secretpassword123",
+                "email_consent": True,
+                "accepted_coc": True,
+                "receive_newsletter": True,
+                "receive_program_updates": True,
+                "receive_event_updates": True,
+                "g-recaptcha-response": "dummy-response",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "This email has already been used. Please reset your password.",
+        )

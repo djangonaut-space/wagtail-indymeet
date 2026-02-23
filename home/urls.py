@@ -1,6 +1,10 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
+from home.views.compare_availability import (
+    compare_availability,
+    compare_availability_grid,
+)
 from home.views.events import EventDetailView, EventListView, event_calendar
 from home.views.membership_acceptance import accept_membership_view
 from home.views.resources import resource_link
@@ -25,6 +29,16 @@ from home.views.testimonials import (
 
 urlpatterns = [
     path("calendar/", event_calendar, name="calendar"),
+    path(
+        "compare-availability/",
+        compare_availability,
+        name="compare_availability",
+    ),
+    path(
+        "compare-availability/grid/",
+        compare_availability_grid,
+        name="compare_availability_grid",
+    ),
     path("events/", EventListView.as_view(), name="event_list"),
     path(
         "events/<int:year>/<int:month>/<slug:slug>/",

@@ -13,7 +13,7 @@ from home.factories import (
     TeamFactory,
     UserSurveyResponseFactory,
 )
-from home.models import Session, SessionMembership, UserSurveyResponse
+from home.models import Session, SessionMembership, UserSurveyResponse, Waitlist
 
 
 class UserSurveyResponseQuerySetTestCase(TestCase):
@@ -329,6 +329,55 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         self.assertEqual(result.annotated_previous_avg_score_value, 5.0)
         self.assertTrue(result.annotated_has_availability)
         self.assertTrue(hasattr(result.user, "prefetched_current_session_memberships"))
+
+    def test_with_waitlisted_annotations(self):
+        """Test waitlist annotations distinguish current vs previous sessions."""
+        previous_session = SessionFactory()
+
+        user_previously_waitlisted = UserFactory()
+        user_currently_waitlisted = UserFactory()
+        user_both_waitlisted = UserFactory()
+        user_never_waitlisted = UserFactory()
+
+        for user in [
+            user_previously_waitlisted,
+            user_currently_waitlisted,
+            user_both_waitlisted,
+            user_never_waitlisted,
+        ]:
+            UserSurveyResponseFactory(user=user, survey=self.survey)
+
+        Waitlist.objects.create(
+            user=user_previously_waitlisted, session=previous_session
+        )
+        Waitlist.objects.create(user=user_currently_waitlisted, session=self.session)
+        Waitlist.objects.create(user=user_both_waitlisted, session=previous_session)
+        Waitlist.objects.create(user=user_both_waitlisted, session=self.session)
+
+        qs = UserSurveyResponse.objects.for_survey(self.survey).with_waitlisted(
+            self.session
+        )
+        results = {r.user_id: r for r in qs}
+
+        self.assertTrue(
+            results[user_previously_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertFalse(results[user_previously_waitlisted.id].annotated_is_waitlisted)
+
+        self.assertFalse(
+            results[user_currently_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertTrue(results[user_currently_waitlisted.id].annotated_is_waitlisted)
+
+        self.assertTrue(
+            results[user_both_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertTrue(results[user_both_waitlisted.id].annotated_is_waitlisted)
+
+        self.assertFalse(
+            results[user_never_waitlisted.id].annotated_previously_waitlisted
+        )
+        self.assertFalse(results[user_never_waitlisted.id].annotated_is_waitlisted)
 
     def test_with_full_team_formation_data_no_survey(self):
         """Test with_full_team_formation_data with no application survey."""
@@ -676,6 +725,87 @@ class SessionMembershipQuerySetTestCase(TestCase):
         self.assertEqual(qs.count(), 2)
         self.assertIn(membership1, qs)
         self.assertIn(membership2, qs)
+
+
+class EnforceDjangonautAccessControlTestCase(TestCase):
+    """Test SessionMembershipQuerySet.enforce_djangonaut_access_control()."""
+
+    def setUp(self):
+        today = timezone.now().date()
+        self.upcoming_session = SessionFactory(
+            start_date=today + timedelta(days=30),
+            end_date=today + timedelta(days=90),
+            djangonauts_have_access=False,
+        )
+        self.active_session = SessionFactory(
+            start_date=today - timedelta(days=10),
+            end_date=today + timedelta(days=60),
+            djangonauts_have_access=False,
+        )
+        self.upcoming_team = TeamFactory(session=self.upcoming_session)
+        self.active_team = TeamFactory(session=self.active_session)
+
+    def test_excludes_djangonaut_before_start_without_access(self):
+        """Djangonaut on upcoming session without access flag is excluded."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertNotIn(membership, qs)
+
+    def test_includes_djangonaut_when_access_flag_set(self):
+        """Djangonaut is included when djangonauts_have_access is True."""
+        self.upcoming_session.djangonauts_have_access = True
+        self.upcoming_session.save()
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_djangonaut_after_start_date(self):
+        """Djangonaut is included when session start date has passed."""
+        membership = SessionMembershipFactory.create(
+            session=self.active_session,
+            team=self.active_team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_captain_regardless(self):
+        """Captains are always included even without access."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.CAPTAIN,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_navigator_regardless(self):
+        """Navigators are always included even without access."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.NAVIGATOR,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_organizer_regardless(self):
+        """Organizers are always included even without access."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=None,
+            role=SessionMembership.ORGANIZER,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
 
 
 class SessionQuerySetTestCase(TestCase):

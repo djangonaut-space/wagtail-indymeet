@@ -381,6 +381,9 @@ class TeamWelcomeEmailTests(TestCase):
         }
         self.assertEqual(enqueued_team_ids, {self.team1.id, self.team2.id})
 
+        self.session.refresh_from_db()
+        self.assertTrue(self.session.djangonauts_have_access)
+
 
 class MembershipAcceptanceViewTests(TestCase):
     """Tests for user acceptance/decline of memberships"""
