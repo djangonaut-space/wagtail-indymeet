@@ -847,6 +847,8 @@ class TestTaksGlobeRenders:
         # Markers will be present in the DOM but hidden
         expect(markers).to_be_attached()
         expect(markers).to_be_hidden()
+
+
 class TestCompareAvailability:
     """Test suite for compare availability page functionality."""
 
