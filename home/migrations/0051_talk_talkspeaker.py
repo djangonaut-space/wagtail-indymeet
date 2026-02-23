@@ -12,7 +12,7 @@ from django.contrib.postgres.operations import CreateExtension
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("home", "0048_create_testimonial_model"),
+        ("home", "0050_add_djangonauts_have_access_to_session"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
