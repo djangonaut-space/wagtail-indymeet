@@ -836,13 +836,47 @@ class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         )
 
 
+class DjangonautMembershipFilter(admin.SimpleListFilter):
+    """
+    Filter UserQuestionResponses by whether the user has a
+    Djangonaut session membership on the survey's session.
+    """
+
+    title = "djangonaut session membership"
+    parameter_name = "djangonaut_membership"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("yes", "Has Djangonaut membership"),
+            ("no", "No Djangonaut membership"),
+        )
+
+    def queryset(self, request, queryset):
+        """
+        Filter based on whether the user has a Djangonaut session membership on
+        the survey's session.
+        """
+        membership_exists = Exists(
+            SessionMembership.objects.djangonauts().filter(
+                user=OuterRef("user_survey_response__user"),
+                session__application_survey=OuterRef("user_survey_response__survey"),
+            )
+        )
+        if self.value() == "yes":
+            return queryset.filter(membership_exists)
+        elif self.value() == "no":
+            return queryset.filter(~membership_exists)
+        return queryset
+
+
 @admin.register(UserQuestionResponse)
 class UserQuestionResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = UserQuestionResponse
-    list_filter = ["user_survey_response__survey__name"]
+    list_filter = ["user_survey_response__survey__name", DjangonautMembershipFilter]
     list_display = [
         "survey_name",
         "question_label",
+        "value",
         "user_email",
         "created_at",
     ]
