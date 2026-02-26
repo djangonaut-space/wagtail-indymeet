@@ -29,7 +29,7 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 # Application definition
 INSTALLED_APPS = [
     "accounts",
-    "home",
+    "home.apps.HomeAppConfig",
     "anymail",
     "django_recaptcha",
     "wagtail.contrib.forms",
@@ -264,6 +264,12 @@ FORM_RENDERER = "indymeet.settings.base.FormRenderer"
 
 # Should be removed in Django 6.0
 FORMS_URLFIELD_ASSUME_HTTPS = True
+
+# Zoom Server-to-Server OAuth credentials for automatic meeting creation.
+# Set all three to enable; leave unset to disable the feature.
+ZOOM_ACCOUNT_ID = os.environ.get("ZOOM_ACCOUNT_ID")
+ZOOM_CLIENT_ID = os.environ.get("ZOOM_CLIENT_ID")
+ZOOM_CLIENT_SECRET = os.environ.get("ZOOM_CLIENT_SECRET")
 
 ######################
 # Application settings
