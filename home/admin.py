@@ -5,7 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Exists, F, Max, Count, OuterRef
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import path, reverse
@@ -46,6 +46,108 @@ User = get_user_model()
 class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
     filter_horizontal = ("speakers", "rsvped_members", "organizers")
+    actions = ["copy_event", "send_calendar_invites"]
+
+    def get_changeform_initial_data(self, request: HttpRequest) -> dict:
+        """Pre-populate the add form with data from an existing event.
+
+        When the request contains a ``copy_from`` GET parameter, the add form
+        is pre-filled with the source event's data so the user can review,
+        modify, and save it as a completely new event in a single step.
+        RSVPs (rsvped_members) are intentionally excluded.
+        """
+        initial = super().get_changeform_initial_data(request)
+        copy_from = request.GET.get("copy_from")
+        if not copy_from:
+            return initial
+        try:
+            source = Event.objects.prefetch_related(
+                "speakers", "organizers", "tags"
+            ).get(pk=copy_from)
+        except Event.DoesNotExist:
+            return initial
+
+        initial.update(
+            {
+                "title": source.title,
+                "slug": source.slug,
+                "start_time": source.start_time,
+                "end_time": source.end_time,
+                "location": source.location,
+                "description": source.description or "",
+                "status": Event.PENDING,
+                "video_link": source.video_link,
+                "is_public": source.is_public,
+                "capacity": source.capacity,
+                "extra_emails": source.extra_emails,
+                "session": source.session_id,
+                "speakers": source.speakers.all(),
+                "organizers": source.organizers.all(),
+                "tags": ", ".join(source.tags.names()),
+            }
+        )
+        return initial
+
+    @admin.action(description="Copy selected event and open as new")
+    def copy_event(self, request, queryset) -> HttpResponseRedirect | None:
+        """Redirect to the add form pre-populated with the selected event's data.
+
+        No copy is persisted until the user submits the form, so navigating
+        away leaves no orphan records.  Exactly one event must be selected.
+        """
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one event to copy.",
+                messages.ERROR,
+            )
+            return None
+
+        event = queryset.first()
+        url = reverse("admin:home_event_add")
+        return HttpResponseRedirect(f"{url}?copy_from={event.pk}")
+
+    @admin.action(description="Send calendar invites to event members")
+    def send_calendar_invites(self, request, queryset) -> None:
+        """Queue calendar invite emails for each selected event.
+
+        Recipients are determined by the event's session and visibility:
+        - Session event: all members of that session who have an email address.
+        - Public event (no session): all users opted in to event updates.
+        - Private event (no session): no extra recipients; the task still sends
+          to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
+        """
+        queued = 0
+        for event in queryset:
+            if event.session_id:
+                recipients = list(
+                    User.objects.filter(
+                        session_memberships__session_id=event.session_id
+                    )
+                    .exclude(email="")
+                    .values_list("email", flat=True)
+                    .distinct()
+                )
+            elif event.is_public:
+                recipients = list(
+                    User.objects.filter(profile__receiving_event_updates=True)
+                    .exclude(email="")
+                    .values_list("email", flat=True)
+                )
+            else:
+                recipients = []
+
+            tasks.send_event_calendar_invite.enqueue(
+                event_id=event.pk,
+                recipients=recipients,
+            )
+            queued += 1
+
+        self.message_user(
+            request,
+            f"Calendar invites queued for {queued} event(s).",
+            messages.SUCCESS,
+        )
 
 
 @admin.register(Project)
