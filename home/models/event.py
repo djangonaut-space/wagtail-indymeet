@@ -15,6 +15,10 @@ from wagtail.snippets.models import register_snippet
 from home.managers import EventQuerySet
 
 
+def default_extra_emails():
+    return ["sessions@djangonaut.space"]
+
+
 def validate_email_list(value: list) -> None:
     """Validate that every item in the list is a valid email address."""
     if not isinstance(value, list):
@@ -78,7 +82,7 @@ class Event(ClusterableModel):
     is_public = models.BooleanField(default=True)
     extra_emails = models.JSONField(
         blank=True,
-        default=["sessions@djangonaut.space"],
+        default=default_extra_emails,
         validators=[validate_email_list],
         help_text=(
             "JSON list of email addresses to include in calendar invites "
