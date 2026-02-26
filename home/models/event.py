@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -11,6 +13,21 @@ from taggit.models import TaggedItemBase
 from wagtail.snippets.models import register_snippet
 
 from home.managers import EventQuerySet
+
+
+def default_extra_emails():
+    return ["sessions@djangonaut.space"]
+
+
+def validate_email_list(value: list) -> None:
+    """Validate that every item in the list is a valid email address."""
+    if not isinstance(value, list):
+        raise ValidationError("extra_emails must be a list.")
+    for entry in value:
+        try:
+            validate_email(entry)
+        except ValidationError:
+            raise ValidationError(f"'{entry}' is not a valid email address.")
 
 
 class EventTag(TaggedItemBase):
@@ -62,6 +79,16 @@ class Event(ClusterableModel):
         on_delete=models.SET_NULL,
     )
     video_link = models.URLField(blank=True, default="")
+    is_public = models.BooleanField(default=True)
+    extra_emails = models.JSONField(
+        blank=True,
+        default=default_extra_emails,
+        validators=[validate_email_list],
+        help_text=(
+            "JSON list of email addresses to include in calendar invites "
+            '(e.g. guest speakers). Defaults to ["sessions@djangonaut.space"].'
+        ),
+    )
     objects = EventQuerySet.as_manager()
 
     def __str__(self):

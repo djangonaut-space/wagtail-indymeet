@@ -1,0 +1,38 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}You're invited: {{ event.title }}{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello 👋</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You are invited to join us for <strong>{{ event.title }}</strong> on <strong>{{ event.start_time|date:"l, F j, Y" }}</strong> at <strong>{{ event.start_time|date:"g:i A e" }}</strong>.
+  </p>
+
+  {% if event.description %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    {{ event.description|linebreaksbr }}
+  </p>
+  {% endif %}
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>Location:</strong> {{ event.location }}<br>
+    <strong>Start:</strong> {{ event.start_time|date:"l, F j, Y g:i A e" }}<br>
+    <strong>End:</strong> {{ event.end_time|date:"l, F j, Y g:i A e" }}
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    A calendar invite (.ics) is attached so you can add this event to your calendar.
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}View Event Details{% endblock cta_button_text %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Thank you,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}
