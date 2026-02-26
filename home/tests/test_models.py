@@ -5,6 +5,7 @@ from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from accounts.factories import UserFactory
+from home.constants import SRID_WGS84
 from home.factories import (
     ProjectFactory,
     QuestionFactory,
@@ -16,6 +17,10 @@ from home.factories import (
     UserSurveyResponseFactory,
 )
 from home.models import SessionMembership, TypeField
+from home.models.talk import Talk, TalkSpeaker
+from django.contrib.gis.geos import Point
+from accounts.models import CustomUser
+from django.core.exceptions import ValidationError
 
 
 class SessionTests(TestCase):
@@ -497,3 +502,78 @@ class TeamTests(TestCase):
 
         expected_url = f"/sessions/spring-2024/teams/{team.pk}/"
         self.assertEqual(team.get_absolute_url(), expected_url)
+
+
+class TalksBaseData(TestCase):
+    """Base data for Talk tests."""
+
+    @classmethod
+    def create_talk_speakers(cls, talk, speakers):
+        """Create multiple TalkSpeaker instances for a talk"""
+        return [
+            TalkSpeaker.objects.create(talk=talk, speaker=speaker)
+            for speaker in speakers
+        ]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.speaker_1 = UserFactory.create()
+        cls.speaker_2 = UserFactory.create(
+            email="speaker2@example.com",
+            first_name="Paul",
+            last_name="Smith",
+        )
+        cls.speaker_3_only_username = CustomUser.objects.create_user(username="speAKer")
+        cls.talk_online = Talk.objects.create(
+            title="Test online Talk",
+            description="This is a test talk",
+            date=datetime(2026, 1, 25),
+            talk_type=Talk.TalkType.ONLINE,
+            event_name="Test Event",
+            video_link="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        )
+        cls.talk_on_site = Talk.objects.create(
+            title="Test on-site Talk",
+            description="This is a test talk",
+            date=datetime(2026, 1, 25),
+            talk_type=Talk.TalkType.ON_SITE,
+            event_name="Test Event",
+            address="399 N Garey Ave, Pomona, CA 91767, United States",
+            location=Point(-117.75, 34.05),
+        )
+        cls.create_talk_speakers(cls.talk_online, [cls.speaker_1, cls.speaker_2])
+        cls.create_talk_speakers(
+            cls.talk_on_site, [cls.speaker_1, cls.speaker_3_only_username]
+        )
+
+
+class TalkTests(TalksBaseData):
+
+    def test_talk_str(self):
+        self.assertEqual(
+            str(self.talk_online),
+            "Test online Talk - Test Event - 2026 - Jane Doe, Paul Smith",
+        )
+        self.assertEqual(
+            str(self.talk_on_site),
+            "Test on-site Talk - Test Event - 2026 - Jane Doe, speAKer",
+        )
+
+    def test_get_speakers_names(self):
+        self.assertEqual(self.talk_online.get_speakers_names(), "Jane Doe, Paul Smith")
+        self.assertEqual(self.talk_on_site.get_speakers_names(), "Jane Doe, speAKer")
+
+    def test_no_address_clean_sets_location_null_island(self):
+        self.assertEqual(
+            self.talk_on_site.address,
+            "399 N Garey Ave, Pomona, CA 91767, United States",
+        )
+        self.assertIsNone(self.talk_online.address)
+        self.assertEqual(self.talk_on_site.location.tuple, (-117.75, 34.05))
+        self.assertEqual(self.talk_on_site.location.srid, SRID_WGS84)
+        self.assertEqual(self.talk_online.location.tuple, (0.0, 0.0))
+        self.assertEqual(self.talk_online.location.srid, SRID_WGS84)
+        # Assert validation error if on-site talk has no address
+        self.talk_on_site.address = None
+        with self.assertRaises(ValidationError):
+            self.talk_on_site.clean()

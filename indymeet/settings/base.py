@@ -68,6 +68,10 @@ INSTALLED_APPS = [
     "theme",
     "widget_tweaks",
     "import_export",
+    "django.contrib.gis",
+    "rest_framework",
+    "rest_framework_gis",
+    "wagtailgeowidget",
 ]
 
 MIDDLEWARE = [

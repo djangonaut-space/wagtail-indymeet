@@ -10,6 +10,7 @@ It can be helpful to run them specifically locally:
 
 """
 
+from datetime import datetime
 import re
 from dataclasses import dataclass
 from logging import getLogger
@@ -31,6 +32,9 @@ from home.factories import (
     OrganizerFactory,
 )
 from home.models import Session, SessionMembership, Survey, Team, UserSurveyResponse
+from django.contrib.gis.geos import Point
+
+from home.models.talk import Talk, TalkSpeaker
 
 logger = getLogger(__name__)
 
@@ -803,6 +807,46 @@ class TestTeamFormation:
             "Successfully added"
         )
         expect(team_page.locator(".messagelist").first).to_contain_text("waitlist")
+
+
+class TestTaksGlobeRenders:
+
+    @pytest.fixture
+    def globe_page(self, page):
+        """Fixture to access the talks globe page."""
+        page.goto(reverse("talks_map"))
+        page.wait_for_load_state("networkidle")
+        return page
+
+    @pytest.fixture
+    def talks(self):
+        speaker = UserFactory.create()
+        talk = Talk.objects.create(
+            title="Test on-site Talk",
+            description="This is a test talk",
+            date=datetime(2026, 1, 25),
+            talk_type=Talk.TalkType.ON_SITE,
+            event_name="Test Event",
+            address="399 N Garey Ave, Pomona, CA 91767, United States",
+            location=Point(-117.75, 34.05),
+        )
+        TalkSpeaker.objects.create(talk=talk, speaker=speaker)
+        return [talk]
+
+    @pytest.mark.playwright
+    def test_globe_renders(self, globe_page, talks):
+        globe_page.wait_for_selector("#map")
+        globe_page.wait_for_timeout(3000)
+        expect(globe_page.locator("#map-title h1")).to_have_text(
+            "Djangonaut Space Talks"
+        )
+        expect(globe_page.locator("#map")).to_be_visible()
+        earth = globe_page.locator("canvas").first
+        expect(earth).to_be_visible()
+        markers = globe_page.locator("#markerPopup")
+        # Markers will be present in the DOM but hidden
+        expect(markers).to_be_attached()
+        expect(markers).to_be_hidden()
 
 
 class TestCompareAvailability:

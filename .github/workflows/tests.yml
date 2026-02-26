@@ -15,7 +15,7 @@ jobs:
     env:
       ENVIRONMENT: 'test'
       DJANGO_SETTINGS_MODULE: 'indymeet.settings.test'
-      DATABASE_URL: "postgres://djangonaut:djangonaut@localhost:5432/djangonaut-space"
+      DATABASE_URL: "postgis://djangonaut:djangonaut@localhost:5432/djangonaut-space"
       DEBUG: False
       SECRET_KEY: "hunter2"
       RECAPTCHA_PUBLIC_KEY: "dummy_value"
@@ -25,7 +25,7 @@ jobs:
       contents: read
     services:
       pg:
-        image: postgres:17
+        image: postgis/postgis:17-3.5
         ports:
           - 5432:5432
         env:
@@ -41,6 +41,11 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev g++ gdal-bin libpq-dev
 
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7

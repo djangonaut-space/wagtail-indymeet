@@ -513,6 +513,8 @@ dependencies = [
     { name = "django-tailwind" },
     { name = "django-tasks" },
     { name = "django-widget-tweaks" },
+    { name = "djangorestframework-gis" },
+    { name = "gdal" },
     { name = "gunicorn" },
     { name = "psycopg", extra = ["binary"] },
     { name = "puput" },
@@ -523,6 +525,7 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "urllib3" },
     { name = "wagtail" },
+    { name = "wagtailgeowidget" },
 ]
 
 [package.optional-dependencies]
@@ -559,9 +562,11 @@ requires-dist = [
     { name = "django-tailwind", extras = ["reload"], marker = "extra == 'dev'" },
     { name = "django-tasks" },
     { name = "django-widget-tweaks" },
+    { name = "djangorestframework-gis", specifier = ">=1.2.0" },
     { name = "factory-boy", marker = "extra == 'test'" },
     { name = "faker", marker = "extra == 'test'" },
     { name = "freezegun", marker = "extra == 'test'" },
+    { name = "gdal", specifier = "==3.6.2" },
     { name = "gunicorn" },
     { name = "playwright", marker = "extra == 'test'" },
     { name = "pre-commit", marker = "extra == 'dev'" },
@@ -580,6 +585,7 @@ requires-dist = [
     { name = "unittest-parametrize", marker = "extra == 'test'" },
     { name = "urllib3" },
     { name = "wagtail" },
+    { name = "wagtailgeowidget", specifier = ">=9.1.0" },
 ]
 provides-extras = ["test", "dev"]
 
@@ -593,6 +599,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8a/95/5376fe618646fde6899b3cdc85fd959716bb67542e273a76a80d9f326f27/djangorestframework-3.16.1.tar.gz", hash = "sha256:166809528b1aced0a17dc66c24492af18049f2c9420dbd0be29422029cfc3ff7", size = 1089735, upload-time = "2025-08-06T17:50:53.251Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b0/ce/bf8b9d3f415be4ac5588545b5fcdbbb841977db1c1d923f7568eeabe1689/djangorestframework-3.16.1-py3-none-any.whl", hash = "sha256:33a59f47fb9c85ede792cbf88bde71893bcda0667bc573f784649521f1102cec", size = 1080442, upload-time = "2025-08-06T17:50:50.667Z" },
+]
+
+[[package]]
+name = "djangorestframework-gis"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-filter" },
+    { name = "djangorestframework" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/fb/36b4f5d9d0fccdb17ae620c580d4b340a7b3643830e49b8cc5d8fc1eb1ee/djangorestframework_gis-1.2.0.tar.gz", hash = "sha256:702ba9ad44173b7cc70e48c6c84da48c28f6f82612cc901a77fdb54c5c57c971", size = 50983, upload-time = "2025-06-02T19:22:41.411Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/64/86/b7e85e372ecc97dc1344785f82dc0c51c2b2c8b1d2b8660d3d8752fd1b3c/djangorestframework_gis-1.2.0-py2.py3-none-any.whl", hash = "sha256:3924651b2f6dcb5a64b30df9692577af548a04725b0c2c36cbc385f7c50fc80a", size = 22254, upload-time = "2025-06-02T19:22:39.214Z" },
 ]
 
 [[package]]
@@ -666,6 +686,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/95/dd/23e2f4e357f8fd3bd
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/2e/b41d8a1a917d6581fc27a35d05561037b048e47df50f27f8ac9c7e27a710/freezegun-1.5.5-py3-none-any.whl", hash = "sha256:cd557f4a75cf074e84bc374249b9dd491eaeacd61376b9eb3c423282211619d2", size = 19266, upload-time = "2025-08-09T10:39:06.636Z" },
 ]
+
+[[package]]
+name = "gdal"
+version = "3.6.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/4f/174743caf64d1999c46ab2ee72b2cb0d77a47bd7ed04f954f863e35a25fd/GDAL-3.6.2.tar.gz", hash = "sha256:a167cde1813707d91a938dad1a22f280f5ad28c45980d42e948fb8c59f890f5a", size = 757691, upload-time = "2023-01-05T07:36:55.213Z" }
 
 [[package]]
 name = "greenlet"
@@ -1521,6 +1547,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c4/84/4d26a038ce3d71d92f219e6e2796a8a0ed12acc88224c4b7d12295b9f15f/wagtail_markdown-0.11.1.tar.gz", hash = "sha256:afcb64efac5b1b57de9f7cc475987c0c7dec5b669833e4617ec4658880de0f77", size = 127070, upload-time = "2023-08-02T18:49:08.396Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/d8/59d5db2f8c2ccfcbf4f3b731830dc7e7b6e14e5e71445f53e23c8d02389f/wagtail_markdown-0.11.1-py3-none-any.whl", hash = "sha256:3d2c5dcfac718c3fc03f2ed05aca535b2aa70f71254599505ee272c54437db21", size = 128467, upload-time = "2023-08-02T18:49:06.559Z" },
+]
+
+[[package]]
+name = "wagtailgeowidget"
+version = "9.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wagtail" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/71/9bd1d48fe61e537f47ca76f8bf96ebd95eb2b0df8b79c1170b636da8210e/wagtailgeowidget-9.1.0.tar.gz", hash = "sha256:40051187d4920be84442a999ce3f9dc6494a9fffc3dfe042aad11bc5df2356f8", size = 21090, upload-time = "2025-11-09T07:22:04.176Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/20/0b/2b669f011870ab710a647503dc6558e8d635c12083ed793f4bb3284906aa/wagtailgeowidget-9.1.0-py3-none-any.whl", hash = "sha256:6f098c052715362bd6a2526687674fe258a6ceca4fc00f27b050ffcc6f0bd3ef", size = 25398, upload-time = "2025-11-09T07:22:03.07Z" },
 ]
 
 [[package]]
