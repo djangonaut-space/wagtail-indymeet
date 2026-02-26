@@ -8,15 +8,15 @@ from home.models import Event
 
 
 @task()
-def send_event_calendar_invite(event_id: int, recipient_email: str) -> None:
-    """Send a calendar invite email with an .ics attachment to a recipient.
+def send_event_calendar_invite(event_id: int, recipients) -> None:
+    """Send a calendar invite email with an .ics attachment to recipients.
 
-    The event's extra_emails are always included alongside the primary recipient
+    The event's extra_emails are always included alongside the primary recipients
     (e.g. sessions@djangonaut.space or guest speakers configured on the event).
 
     Args:
         event_id: The ID of the Event to send an invite for.
-        recipient_email: The email address of the primary recipient.
+        recipients: A list of email addresses to send the calendar invite to.
     """
     try:
         event = Event.objects.get(pk=event_id)
@@ -28,7 +28,7 @@ def send_event_calendar_invite(event_id: int, recipient_email: str) -> None:
         "event": event,
         "cta_link": event.get_full_url(),
     }
-    recipients = [recipient_email] + list(event.extra_emails or [])
+    recipients = recipients + list(event.extra_emails or [])
     email.send(
         email_template="event_calendar_invite",
         recipient_list=recipients,

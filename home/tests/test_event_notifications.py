@@ -89,7 +89,7 @@ class SendEventCalendarInviteTaskTests(TestCase):
         """Task sends one email with correct template, recipients, context, and .ics attachment."""
         send_event_calendar_invite.call(
             event_id=self.event.pk,
-            recipient_email="participant@example.com",
+            recipients=["participant@example.com"],
         )
 
         mock_send.assert_called_once()
@@ -111,7 +111,7 @@ class SendEventCalendarInviteTaskTests(TestCase):
         """Task exits silently when the event ID does not exist."""
         send_event_calendar_invite.call(
             event_id=999_999,
-            recipient_email="participant@example.com",
+            recipients=["participant@example.com"],
         )
 
         mock_send.assert_not_called()
@@ -127,7 +127,7 @@ class SendEventCalendarInviteTaskTests(TestCase):
 
         send_event_calendar_invite.call(
             event_id=event.pk,
-            recipient_email="solo@example.com",
+            recipients=["solo@example.com"],
         )
 
         self.assertEqual(mock_send.call_args[1]["recipient_list"], ["solo@example.com"])
