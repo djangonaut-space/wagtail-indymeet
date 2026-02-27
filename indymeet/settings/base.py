@@ -102,6 +102,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "home.context_processors.alert_about_status",
+                "home.context_processors.nav_session_links",
             ],
         },
     },
