@@ -1,0 +1,34 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}Your Djangonaut Space account{% endblock preheader %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    As we transition from Google Forms and Sheets to our website, we created a Djangonaut
+    Space account for your email address to record your session participation.
+  </p>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You do not currently have a password set for this account. Use the button below to set
+    one if you would like to access or manage your account.
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}Set Password{% endblock cta_button_text %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you would prefer to have your account and all associated data removed, you can do so by:
+  </p>
+  <ol style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;">Setting a password using the button above.</li>
+    <li style="margin-bottom: 8px;">Logging in and visiting your profile.</li>
+    <li style="margin-bottom: 8px;">
+      Using the <a href="{{ delete_account_url }}" style="color: #5c0287;">"Delete Account"</a>
+      option to permanently remove your account and data.
+    </li>
+  </ol>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you have any questions, please contact us at
+    <a href="mailto:hello@djangonaut.space" style="color: #5c0287;">hello@djangonaut.space</a>.
+  </p>
+{% endblock after_cta %}
