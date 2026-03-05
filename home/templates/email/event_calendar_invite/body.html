@@ -1,4 +1,5 @@
 {% extends "email/base.html" %}
+{% load email_tags %}
 
 {% block preheader %}You're invited: {{ event.title }}{% endblock preheader %}
 
@@ -19,8 +20,8 @@
 
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
     <strong>Location:</strong> {{ event.location }}<br>
-    <strong>Start:</strong> {{ event.start_time|date:"l, F j, Y g:i A e" }}<br>
-    <strong>End:</strong> {{ event.end_time|date:"l, F j, Y g:i A e" }}
+    <strong>Start:</strong> <a href="{{ event.start_time|time_is_link }}" style="color: #5c0287;">{{ event.start_time|date:"l, F j, Y g:i A e" }}</a><br>
+    <strong>End:</strong> <a href="{{ event.end_time|time_is_link }}" style="color: #5c0287;">{{ event.end_time|date:"l, F j, Y g:i A e" }}</a>
   </p>
 
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">

@@ -1,7 +1,7 @@
 """Event-related views."""
 
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
@@ -39,11 +39,7 @@ class EventDetailView(DetailView):
             start_time__month=self.kwargs.get("month"),
         )
 
-        try:
-            obj = queryset.get()
-        except queryset.model.DoesNotExist:
-            raise Http404("No event found matching the query")
-        return obj
+        return get_object_or_404(queryset)
 
     def get_context_data(self, **kwargs):
         """Handle RSVP actions in context preparation."""

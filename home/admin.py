@@ -58,34 +58,33 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         """
         initial = super().get_changeform_initial_data(request)
         copy_from = request.GET.get("copy_from")
-        if not copy_from:
-            return initial
-        try:
-            source = Event.objects.prefetch_related(
-                "speakers", "organizers", "tags"
-            ).get(pk=copy_from)
-        except Event.DoesNotExist:
-            return initial
-
-        initial.update(
-            {
-                "title": source.title,
-                "slug": source.slug,
-                "start_time": source.start_time,
-                "end_time": source.end_time,
-                "location": source.location,
-                "description": source.description or "",
-                "status": Event.PENDING,
-                "video_link": source.video_link,
-                "is_public": source.is_public,
-                "capacity": source.capacity,
-                "extra_emails": source.extra_emails,
-                "session": source.session_id,
-                "speakers": source.speakers.all(),
-                "organizers": source.organizers.all(),
-                "tags": ", ".join(source.tags.names()),
-            }
-        )
+        if copy_from:
+            try:
+                source = Event.objects.prefetch_related("speakers", "organizers").get(
+                    pk=copy_from
+                )
+            except Event.DoesNotExist:
+                pass
+            else:
+                initial.update(
+                    {
+                        "title": source.title,
+                        "slug": source.slug,
+                        "start_time": source.start_time,
+                        "end_time": source.end_time,
+                        "location": source.location,
+                        "description": source.description or "",
+                        "status": Event.PENDING,
+                        "video_link": source.video_link,
+                        "is_public": source.is_public,
+                        "capacity": source.capacity,
+                        "extra_emails": source.extra_emails,
+                        "session": source.session_id,
+                        "speakers": source.speakers.all(),
+                        "organizers": source.organizers.all(),
+                        "tags": ", ".join(source.tags.names()),
+                    }
+                )
         return initial
 
     @admin.action(description="Copy selected event and open as new")
@@ -119,27 +118,9 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         """
         queued = 0
         for event in queryset:
-            if event.session_id:
-                recipients = list(
-                    User.objects.filter(
-                        session_memberships__session_id=event.session_id
-                    )
-                    .exclude(email="")
-                    .values_list("email", flat=True)
-                    .distinct()
-                )
-            elif event.is_public:
-                recipients = list(
-                    User.objects.filter(profile__receiving_event_updates=True)
-                    .exclude(email="")
-                    .values_list("email", flat=True)
-                )
-            else:
-                recipients = []
-
             tasks.send_event_calendar_invite.enqueue(
                 event_id=event.pk,
-                recipients=recipients,
+                recipients=event.get_calendar_invite_recipients(),
             )
             queued += 1
 
