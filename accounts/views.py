@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordResetForm, _unicode_ci_compare
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.views import PasswordResetView
@@ -37,8 +38,29 @@ from .tokens import account_activation_token
 User = get_user_model()
 
 
+class CustomPasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        """Given an email, return matching user(s) who should receive a reset.
+
+        Subclasses to allow password resets for users with unusable passwords.
+        """
+        email_field_name = User.get_email_field_name()
+        active_users = User._default_manager.filter(
+            **{
+                "%s__iexact" % email_field_name: email,
+                "is_active": True,
+            }
+        )
+        return (
+            u
+            for u in active_users
+            if _unicode_ci_compare(email, getattr(u, email_field_name))
+        )
+
+
 class CustomPasswordResetView(PasswordResetView):
     html_email_template_name = "registration/html_password_reset_email.html"
+    form_class = CustomPasswordResetForm
 
 
 class ActivateAccountView(View):
