@@ -1,4 +1,8 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -11,6 +15,10 @@ from taggit.models import TaggedItemBase
 from wagtail.snippets.models import register_snippet
 
 from home.managers import EventQuerySet
+
+
+def default_extra_emails():
+    return ["sessions@djangonaut.space"]
 
 
 class EventTag(TaggedItemBase):
@@ -62,6 +70,16 @@ class Event(ClusterableModel):
         on_delete=models.SET_NULL,
     )
     video_link = models.URLField(blank=True, default="")
+    is_public = models.BooleanField(default=True)
+    extra_emails = ArrayField(
+        models.EmailField(blank=True),
+        default=default_extra_emails,
+        help_text=(
+            "List of email addresses to include in calendar invites "
+            '(e.g. guest speakers). Defaults to ["sessions@djangonaut.space"].',
+        ),
+    )
+
     objects = EventQuerySet.as_manager()
 
     def __str__(self):
@@ -126,3 +144,26 @@ class Event(ClusterableModel):
                 "slug": self.slug,
             },
         )
+
+    def get_calendar_invite_recipients(self) -> list[str]:
+        """Return email addresses to receive a calendar invite for this event.
+
+        - Session event: all members of that session who have an email address.
+        - Public event (no session): all users opted in to event updates.
+        - Private event (no session): no recipients (extra_emails are handled by the task).
+        """
+        User = get_user_model()
+        if self.session_id:
+            return list(
+                User.objects.filter(session_memberships__session_id=self.session_id)
+                .exclude(email="")
+                .values_list("email", flat=True)
+                .distinct()
+            )
+        elif self.is_public:
+            return list(
+                User.objects.filter(profile__receiving_event_updates=True)
+                .exclude(email="")
+                .values_list("email", flat=True)
+            )
+        return []

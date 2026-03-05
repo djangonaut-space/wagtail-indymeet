@@ -27,6 +27,7 @@ dependencies = [
     "django-filter>=25.2",
     "django-tasks",
     "django-import-export",
+    "icalendar",
 ]
 
 [project.optional-dependencies]

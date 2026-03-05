@@ -1,0 +1,20 @@
+You're invited: {{ event.title }}
+
+Hello,
+
+You are invited to join us for {{ event.title }} on {{ event.start_time|date:"l, F j, Y" }} at {{ event.start_time|date:"g:i A e" }}.
+
+{% if event.description %}{{ event.description }}
+
+{% endif %}Location: {{ event.location }}
+
+Start: {{ event.start_time|date:"l, F j, Y g:i A e" }}
+End: {{ event.end_time|date:"l, F j, Y g:i A e" }}
+
+A calendar invite (.ics) is attached so you can add this event to your calendar.
+
+View event details at: {{ event.get_full_url }}
+
+Thank you,
+
+Djangonaut Space Organizers
