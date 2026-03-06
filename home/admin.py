@@ -648,6 +648,7 @@ class QuestionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     readonly_fields = ("key",)
 
     def save_model(self, request, obj: Question, form, change: bool) -> None:
+        # Re-adjust the ordering on other questions of the survey.
         Question.bump_ordering(obj.survey_id, obj.ordering, exclude_pk=obj.pk)
         super().save_model(request, obj, form, change)
 
