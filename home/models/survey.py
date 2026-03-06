@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import F
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
@@ -126,6 +127,22 @@ class Question(BaseModel):
                 fields=["survey", "key"], name="unique_question_key_per_survey"
             )
         ]
+
+    @classmethod
+    def bump_ordering(
+        cls, survey_id: int, ordering: int, exclude_pk: int | None = None
+    ) -> None:
+        """Shift questions in a survey at or above `ordering` up by one.
+
+        Only runs if another question already occupies `ordering`, making room for
+        a new or relocated question without requiring manual renumbering of the rest.
+        `exclude_pk` prevents a question from bumping itself when its position changes.
+        """
+        qs = cls.objects.filter(survey_id=survey_id, ordering__gte=ordering)
+        if exclude_pk is not None:
+            qs = qs.exclude(pk=exclude_pk)
+        if qs.filter(ordering=ordering).exists():
+            qs.update(ordering=F("ordering") + 1)
 
     def __str__(self):
         return f"{self.label}-survey-{self.survey.id}"

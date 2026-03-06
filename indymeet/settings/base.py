@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     # other
     "django_filters",
     "django_tasks",
-    "django_tasks.backends.database",
+    "django_tasks_db",
     "storages",
     "tailwind",
     "theme",
@@ -198,7 +198,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 MEDIA_URL = "/media/"
 
 # Tasks settings
-TASKS = {"default": {"BACKEND": "django_tasks.backends.database.DatabaseBackend"}}
+TASKS = {"default": {"BACKEND": "django_tasks_db.DatabaseBackend"}}
 
 
 # Wagtail settings
