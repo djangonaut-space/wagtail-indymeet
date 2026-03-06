@@ -472,6 +472,21 @@ wheels = [
 ]
 
 [[package]]
+name = "django-tasks-db"
+version = "0.12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-stubs-ext" },
+    { name = "django-tasks" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f4/25/bc21ad4a610634f0a66f4faea4522eed26b55dbd50c4ac853128d24091d3/django_tasks_db-0.12.0.tar.gz", hash = "sha256:314d486b8c1786705b4afaf03dadaf0b1b104163acce9c5d9c9bb2aef205c501", size = 26724, upload-time = "2026-02-06T16:54:33.021Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/1c/e14198615e22df28b333540f2e506d6ddef7aff16d510818e94ebc01440c/django_tasks_db-0.12.0-py3-none-any.whl", hash = "sha256:69e3a1edcbf1efeeb1268da465e8ea5296ddd80834719769acc719b82da2d62e", size = 28832, upload-time = "2026-02-06T16:54:31.564Z" },
+]
+
+[[package]]
 name = "django-treebeard"
 version = "4.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -512,6 +527,7 @@ dependencies = [
     { name = "django-storages" },
     { name = "django-tailwind" },
     { name = "django-tasks" },
+    { name = "django-tasks-db" },
     { name = "django-widget-tweaks" },
     { name = "gunicorn" },
     { name = "psycopg", extra = ["binary"] },
@@ -558,6 +574,7 @@ requires-dist = [
     { name = "django-tailwind" },
     { name = "django-tailwind", extras = ["reload"], marker = "extra == 'dev'" },
     { name = "django-tasks" },
+    { name = "django-tasks-db" },
     { name = "django-widget-tweaks" },
     { name = "factory-boy", marker = "extra == 'test'" },
     { name = "faker", marker = "extra == 'test'" },
