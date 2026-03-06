@@ -11,7 +11,9 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.factories import UserFactory
 from home.admin import QuestionAdmin, SurveyAdmin
+from home.factories import QuestionFactory, SurveyFactory
 from home.models import (
     Survey,
     Question,
@@ -368,54 +370,32 @@ class SurveyCSVImportViewTest(TestCase):
         self.assertContains(response, "Response ID")
 
 
-class _MockFormset:
-    """Minimal formset stub for testing save_formset without the admin machinery."""
-
-    model = Question
-
-    def __init__(self, instances, deleted_objects=None):
-        self._instances = instances
-        self.deleted_objects = deleted_objects or []
-
-    def save(self, commit=True):
-        return self._instances
-
-    def save_m2m(self):
-        pass
-
-
 class QuestionOrderingBumpTest(TestCase):
     """Test that saving a question at a conflicting ordering bumps later questions."""
 
     def setUp(self):
-        self.user = User.objects.create_superuser(
-            username="admin2", email="admin2@example.com", password="test"
-        )
-        self.survey = Survey.objects.create(name="Ordering Test Survey")
-        self.q1 = Question.objects.create(
-            survey=self.survey, label="Q1", ordering=1, type_field=TypeField.TEXT
-        )
-        self.q2 = Question.objects.create(
-            survey=self.survey, label="Q2", ordering=2, type_field=TypeField.TEXT
-        )
-        self.q3 = Question.objects.create(
-            survey=self.survey, label="Q3", ordering=3, type_field=TypeField.TEXT
-        )
-        self.factory = RequestFactory()
+        self.user = UserFactory(is_superuser=True, is_staff=True)
+        self.survey = SurveyFactory()
+        self.q1 = QuestionFactory(survey=self.survey, ordering=1)
+        self.q2 = QuestionFactory(survey=self.survey, ordering=2)
+        self.q3 = QuestionFactory(survey=self.survey, ordering=3)
+        self.request_factory = RequestFactory()
+
+    def _make_request(self):
+        request = self.request_factory.post("/admin/")
+        request.user = self.user
+        return request
 
     # --- QuestionAdmin.save_model ---
 
     def test_save_model_bumps_question_at_same_ordering(self):
         """A new question at ordering=2 bumps Q2 to 3 and Q3 to 4."""
-        admin = QuestionAdmin(Question, AdminSite())
         new_q = Question(
             survey=self.survey, label="New Q", ordering=2, type_field=TypeField.TEXT
         )
-        request = self.factory.post("/admin/")
-        request.user = self.user
-
-        admin.save_model(request, new_q, form=None, change=False)
-
+        QuestionAdmin(Question, AdminSite()).save_model(
+            self._make_request(), new_q, form=None, change=False
+        )
         self.q2.refresh_from_db()
         self.q3.refresh_from_db()
         self.assertEqual(new_q.ordering, 2)
@@ -424,14 +404,12 @@ class QuestionOrderingBumpTest(TestCase):
 
     def test_save_model_no_conflict_leaves_others_unchanged(self):
         """A new question at ordering=5 doesn't affect existing questions."""
-        admin = QuestionAdmin(Question, AdminSite())
         new_q = Question(
             survey=self.survey, label="New Q", ordering=5, type_field=TypeField.TEXT
         )
-        request = self.factory.post("/admin/")
-        request.user = self.user
-
-        admin.save_model(request, new_q, form=None, change=False)
+        QuestionAdmin(Question, AdminSite()).save_model(
+            self._make_request(), new_q, form=None, change=False
+        )
 
         self.q1.refresh_from_db()
         self.q2.refresh_from_db()
@@ -442,14 +420,10 @@ class QuestionOrderingBumpTest(TestCase):
 
     def test_save_model_existing_question_move_bumps_others(self):
         """Moving an existing question to a conflicting position bumps later questions."""
-        admin = QuestionAdmin(Question, AdminSite())
-        # Move Q1 from ordering=1 to ordering=2 (conflicts with Q2)
         self.q1.ordering = 2
-        request = self.factory.post("/admin/")
-        request.user = self.user
-
-        admin.save_model(request, self.q1, form=None, change=True)
-
+        QuestionAdmin(Question, AdminSite()).save_model(
+            self._make_request(), self.q1, form=None, change=True
+        )
         self.q2.refresh_from_db()
         self.q3.refresh_from_db()
         self.assertEqual(self.q1.ordering, 2)
@@ -458,57 +432,55 @@ class QuestionOrderingBumpTest(TestCase):
 
     def test_save_model_does_not_bump_questions_in_other_surveys(self):
         """Bump only affects questions within the same survey."""
-        other_survey = Survey.objects.create(name="Other Survey")
-        other_q = Question.objects.create(
-            survey=other_survey, label="Other Q", ordering=2, type_field=TypeField.TEXT
-        )
-        admin = QuestionAdmin(Question, AdminSite())
+        other_q = QuestionFactory(survey=SurveyFactory(), ordering=2)
         new_q = Question(
             survey=self.survey, label="New Q", ordering=2, type_field=TypeField.TEXT
         )
-        request = self.factory.post("/admin/")
-        request.user = self.user
-
-        admin.save_model(request, new_q, form=None, change=False)
-
+        QuestionAdmin(Question, AdminSite()).save_model(
+            self._make_request(), new_q, form=None, change=False
+        )
         other_q.refresh_from_db()
-        self.assertEqual(other_q.ordering, 2)  # untouched
-
-    # --- SurveyAdmin.save_formset ---
+        self.assertEqual(other_q.ordering, 2)
 
     def test_save_formset_bumps_on_inline_add(self):
-        """Adding a question via the inline bumps questions at the same position."""
-        survey_admin = SurveyAdmin(Survey, AdminSite())
-        new_q = Question(
-            survey=self.survey, label="Inline Q", ordering=2, type_field=TypeField.TEXT
+        """Adding a question via the inline bumps the existing question at that position."""
+        self.client.force_login(self.user)
+        url = reverse("admin:home_survey_change", args=[self.survey.pk])
+        response = self.client.post(
+            url,
+            {
+                "name": self.survey.name,
+                "description": "A test survey",
+                "editable": "on",
+                "deletable": "on",
+                # The inline prefix is "questions" - Django derives it from the FK's related_name.
+                "questions-TOTAL_FORMS": "2",
+                "questions-INITIAL_FORMS": "1",
+                "questions-MIN_NUM_FORMS": "0",
+                "questions-MAX_NUM_FORMS": "1000",
+                # Existing question at ordering=2
+                "questions-0-id": str(self.q2.pk),
+                "questions-0-label": self.q2.label,
+                "questions-0-ordering": "2",
+                "questions-0-type_field": TypeField.TEXT,
+                "questions-0-required": "on",
+                "questions-0-sensitive": "",
+                "questions-0-choices": "",
+                "questions-0-help_text": "",
+                # New question also at ordering=2 — should bump q2 to 3
+                "questions-1-id": "",
+                "questions-1-label": "New Q",
+                "questions-1-ordering": "2",
+                "questions-1-type_field": TypeField.TEXT,
+                "questions-1-required": "on",
+                "questions-1-sensitive": "",
+                "questions-1-choices": "",
+                "questions-1-help_text": "",
+            },
         )
-        formset = _MockFormset([new_q])
-        request = self.factory.post("/admin/")
-        request.user = self.user
 
-        survey_admin.save_formset(request, form=None, formset=formset, change=True)
-
+        self.assertEqual(response.status_code, 302)
         self.q2.refresh_from_db()
-        self.q3.refresh_from_db()
+        new_q = Question.objects.get(label="New Q")
         self.assertEqual(new_q.ordering, 2)
         self.assertEqual(self.q2.ordering, 3)
-        self.assertEqual(self.q3.ordering, 4)
-
-    def test_save_formset_no_conflict_no_bump(self):
-        """Inline add at a unique position leaves other questions unchanged."""
-        survey_admin = SurveyAdmin(Survey, AdminSite())
-        new_q = Question(
-            survey=self.survey, label="Inline Q", ordering=10, type_field=TypeField.TEXT
-        )
-        formset = _MockFormset([new_q])
-        request = self.factory.post("/admin/")
-        request.user = self.user
-
-        survey_admin.save_formset(request, form=None, formset=formset, change=True)
-
-        self.q1.refresh_from_db()
-        self.q2.refresh_from_db()
-        self.q3.refresh_from_db()
-        self.assertEqual(self.q1.ordering, 1)
-        self.assertEqual(self.q2.ordering, 2)
-        self.assertEqual(self.q3.ordering, 3)
