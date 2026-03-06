@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
-from home.admin import SurveyAdmin
+from home.admin import QuestionAdmin, SurveyAdmin
 from home.models import (
     Survey,
     Question,
@@ -366,3 +366,149 @@ class SurveyCSVImportViewTest(TestCase):
         # Check form is re-rendered with errors
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Response ID")
+
+
+class _MockFormset:
+    """Minimal formset stub for testing save_formset without the admin machinery."""
+
+    model = Question
+
+    def __init__(self, instances, deleted_objects=None):
+        self._instances = instances
+        self.deleted_objects = deleted_objects or []
+
+    def save(self, commit=True):
+        return self._instances
+
+    def save_m2m(self):
+        pass
+
+
+class QuestionOrderingBumpTest(TestCase):
+    """Test that saving a question at a conflicting ordering bumps later questions."""
+
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            username="admin2", email="admin2@example.com", password="test"
+        )
+        self.survey = Survey.objects.create(name="Ordering Test Survey")
+        self.q1 = Question.objects.create(
+            survey=self.survey, label="Q1", ordering=1, type_field=TypeField.TEXT
+        )
+        self.q2 = Question.objects.create(
+            survey=self.survey, label="Q2", ordering=2, type_field=TypeField.TEXT
+        )
+        self.q3 = Question.objects.create(
+            survey=self.survey, label="Q3", ordering=3, type_field=TypeField.TEXT
+        )
+        self.factory = RequestFactory()
+
+    # --- QuestionAdmin.save_model ---
+
+    def test_save_model_bumps_question_at_same_ordering(self):
+        """A new question at ordering=2 bumps Q2 to 3 and Q3 to 4."""
+        admin = QuestionAdmin(Question, AdminSite())
+        new_q = Question(
+            survey=self.survey, label="New Q", ordering=2, type_field=TypeField.TEXT
+        )
+        request = self.factory.post("/admin/")
+        request.user = self.user
+
+        admin.save_model(request, new_q, form=None, change=False)
+
+        self.q2.refresh_from_db()
+        self.q3.refresh_from_db()
+        self.assertEqual(new_q.ordering, 2)
+        self.assertEqual(self.q2.ordering, 3)
+        self.assertEqual(self.q3.ordering, 4)
+
+    def test_save_model_no_conflict_leaves_others_unchanged(self):
+        """A new question at ordering=5 doesn't affect existing questions."""
+        admin = QuestionAdmin(Question, AdminSite())
+        new_q = Question(
+            survey=self.survey, label="New Q", ordering=5, type_field=TypeField.TEXT
+        )
+        request = self.factory.post("/admin/")
+        request.user = self.user
+
+        admin.save_model(request, new_q, form=None, change=False)
+
+        self.q1.refresh_from_db()
+        self.q2.refresh_from_db()
+        self.q3.refresh_from_db()
+        self.assertEqual(self.q1.ordering, 1)
+        self.assertEqual(self.q2.ordering, 2)
+        self.assertEqual(self.q3.ordering, 3)
+
+    def test_save_model_existing_question_move_bumps_others(self):
+        """Moving an existing question to a conflicting position bumps later questions."""
+        admin = QuestionAdmin(Question, AdminSite())
+        # Move Q1 from ordering=1 to ordering=2 (conflicts with Q2)
+        self.q1.ordering = 2
+        request = self.factory.post("/admin/")
+        request.user = self.user
+
+        admin.save_model(request, self.q1, form=None, change=True)
+
+        self.q2.refresh_from_db()
+        self.q3.refresh_from_db()
+        self.assertEqual(self.q1.ordering, 2)
+        self.assertEqual(self.q2.ordering, 3)
+        self.assertEqual(self.q3.ordering, 4)
+
+    def test_save_model_does_not_bump_questions_in_other_surveys(self):
+        """Bump only affects questions within the same survey."""
+        other_survey = Survey.objects.create(name="Other Survey")
+        other_q = Question.objects.create(
+            survey=other_survey, label="Other Q", ordering=2, type_field=TypeField.TEXT
+        )
+        admin = QuestionAdmin(Question, AdminSite())
+        new_q = Question(
+            survey=self.survey, label="New Q", ordering=2, type_field=TypeField.TEXT
+        )
+        request = self.factory.post("/admin/")
+        request.user = self.user
+
+        admin.save_model(request, new_q, form=None, change=False)
+
+        other_q.refresh_from_db()
+        self.assertEqual(other_q.ordering, 2)  # untouched
+
+    # --- SurveyAdmin.save_formset ---
+
+    def test_save_formset_bumps_on_inline_add(self):
+        """Adding a question via the inline bumps questions at the same position."""
+        survey_admin = SurveyAdmin(Survey, AdminSite())
+        new_q = Question(
+            survey=self.survey, label="Inline Q", ordering=2, type_field=TypeField.TEXT
+        )
+        formset = _MockFormset([new_q])
+        request = self.factory.post("/admin/")
+        request.user = self.user
+
+        survey_admin.save_formset(request, form=None, formset=formset, change=True)
+
+        self.q2.refresh_from_db()
+        self.q3.refresh_from_db()
+        self.assertEqual(new_q.ordering, 2)
+        self.assertEqual(self.q2.ordering, 3)
+        self.assertEqual(self.q3.ordering, 4)
+
+    def test_save_formset_no_conflict_no_bump(self):
+        """Inline add at a unique position leaves other questions unchanged."""
+        survey_admin = SurveyAdmin(Survey, AdminSite())
+        new_q = Question(
+            survey=self.survey, label="Inline Q", ordering=10, type_field=TypeField.TEXT
+        )
+        formset = _MockFormset([new_q])
+        request = self.factory.post("/admin/")
+        request.user = self.user
+
+        survey_admin.save_formset(request, form=None, formset=formset, change=True)
+
+        self.q1.refresh_from_db()
+        self.q2.refresh_from_db()
+        self.q3.refresh_from_db()
+        self.assertEqual(self.q1.ordering, 1)
+        self.assertEqual(self.q2.ordering, 2)
+        self.assertEqual(self.q3.ordering, 3)
