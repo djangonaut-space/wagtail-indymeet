@@ -98,7 +98,13 @@ This is an example of how to list things you need to use the software and how to
    # On Windows
    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
-3. Create a posgresql database
+3. Install required system libraries
+   ```sh
+   # Install system libraries on Debian/Ubuntu with:
+   sudo apt install libgdal-dev gdal-bin libpq5
+   ```
+   (For Windows installation use OSGeo4W or conda for GDAL/PostGIS support. For macOS installation use Homebrew for equivalent libraries.)
+4. Create a posgresql database
    ```sh
    psql -U postgres
    ```
@@ -110,7 +116,8 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    postgres=# exit
    ```
-4. Install dependencies (this will automatically create a virtual environment)
+   Note: PostGIS extension is automatically created by Django migrations in step 7 (uv run python manage.py migrate).
+5. Install dependencies (this will automatically create a virtual environment)
    ```sh
    uv sync --extra dev --extra test
    ```
@@ -118,7 +125,7 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    uv run pre-commit install
    ```
-5. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
+6. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
    Copy in Linux:
    ```sh
    cp .env.template.local .env
@@ -127,22 +134,22 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    copy .env.template.local .env
    ```
-6. Run migrations and create superuser
+7. Run migrations and create superuser
    ```sh
    uv run python manage.py migrate
    # Potentially load data first
    # uv run python manage.py loaddata fixtures/data.json
    uv run python manage.py createsuperuser
    ```
-7. Install tailwind. You also need npm installed.
+8. Install tailwind. You also need npm installed.
    ```sh
    uv run python manage.py tailwind install
    ```
-8. Run server locally
+9. Run server locally
    ```sh
    uv run python manage.py runserver
    ```
-9. Run tailwind in another terminal locally
+10. Run tailwind in another terminal locally
    ```sh
    uv run python manage.py tailwind start
    ```
@@ -168,7 +175,7 @@ If you have docker installed, alternatively
 
 2. In a new terminal, run any setup commands you need such as
    ```sh
-   docker compose exec web python manage.py createsuperuser
+   docker compose exec web uv run python manage.py createsuperuser
    ```
 
 3. Go to: http://127.0.0.1:8000/ and enjoy!
