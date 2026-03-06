@@ -647,11 +647,31 @@ class QuestionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     )
     readonly_fields = ("key",)
 
+    def save_model(self, request, obj: Question, form, change: bool) -> None:
+        # Re-adjust the ordering on other questions of the survey.
+        Question.bump_ordering(obj.survey_id, obj.ordering, exclude_pk=obj.pk)
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(Survey)
 class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Survey
     inlines = [QuestionInline]
+
+    def save_formset(self, request, form, formset, change) -> None:
+        if formset.model is not Question:
+            return super().save_formset(request, form, formset, change)
+
+        instances = formset.save(commit=False)
+        for instance in instances:
+            Question.bump_ordering(
+                instance.survey_id, instance.ordering, exclude_pk=instance.pk
+            )
+            instance.save()
+        for obj in formset.deleted_objects:
+            obj.delete()
+        formset.save_m2m()
+
     fields = (
         "name",
         "description",
