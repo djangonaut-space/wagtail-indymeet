@@ -22,6 +22,12 @@ As a rough guide, we expect the time commitment of a Djangonaut to be around 4 h
 
 To learn more about the program you can read our documentation here: https://github.com/djangonaut-space/program
 
+This is not a good time for you? We're aware that people availability could change over in a short period of time. If it's not a good time for you we're asking to let us know before {{ membership.acceptance_deadline|date:"F d, Y" }} (12:00 UTC).
+
+If you're facing any problem to join our Session let's talk about, reply to this email, we could try to find a solution. We're more than happy to assist you.
+
+Let us know if you're not available by visiting {{ acceptance_url }}
+
 Not sure about the program? Please let us know what questions you have.
 
 All the best,
