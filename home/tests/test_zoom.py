@@ -265,7 +265,7 @@ class CreateZoomMeetingTaskTests(TestCase):
     def test_sets_video_link(self, mock_create):
         mock_create.return_value = "https://zoom.us/j/meeting"
 
-        create_zoom_meeting(event_id=self.event.pk)
+        create_zoom_meeting.call(event_id=self.event.pk)
 
         self.event.refresh_from_db()
         self.assertEqual(self.event.video_link, "https://zoom.us/j/meeting")
@@ -275,21 +275,21 @@ class CreateZoomMeetingTaskTests(TestCase):
     def test_skips_if_video_link_exists(self, mock_create):
         event = EventFactory.create(video_link="https://existing.link")
 
-        create_zoom_meeting(event_id=event.pk)
+        create_zoom_meeting.call(event_id=event.pk)
 
         mock_create.assert_not_called()
 
     @override_settings(ZOOM_ACCOUNT_ID="", ZOOM_CLIENT_ID="", ZOOM_CLIENT_SECRET="")
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
     def test_skips_when_zoom_not_configured(self, mock_create):
-        create_zoom_meeting(event_id=self.event.pk)
+        create_zoom_meeting.call(event_id=self.event.pk)
 
         mock_create.assert_not_called()
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
     def test_handles_missing_event(self, mock_create):
-        create_zoom_meeting(event_id=999999)
+        create_zoom_meeting.call(event_id=999999)
 
         mock_create.assert_not_called()
 
@@ -298,7 +298,7 @@ class CreateZoomMeetingTaskTests(TestCase):
     def test_handles_zoom_errors(self, mock_create):
         mock_create.side_effect = Exception("Zoom API error")
 
-        create_zoom_meeting(event_id=self.event.pk)
+        create_zoom_meeting.call(event_id=self.event.pk)
 
         self.event.refresh_from_db()
         self.assertEqual(self.event.video_link, "")
@@ -314,7 +314,7 @@ class CreateZoomMeetingTaskTests(TestCase):
             video_link="https://zoom.us/j/concurrent"
         )
 
-        create_zoom_meeting(event_id=event.pk)
+        create_zoom_meeting.call(event_id=event.pk)
 
         event.refresh_from_db()
 
