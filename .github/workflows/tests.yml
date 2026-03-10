@@ -13,13 +13,16 @@ on:
 jobs:
   build:
     env:
-      ENVIRONMENT: 'test'
-      DJANGO_SETTINGS_MODULE: 'indymeet.settings.test'
+      ENVIRONMENT: 'production'
       DATABASE_URL: "postgis://djangonaut:djangonaut@localhost:5432/djangonaut-space"
-      DEBUG: False
+      DATABASE_SSL: 'false'
+      DEBUG: 'False'
       SECRET_KEY: "hunter2"
       RECAPTCHA_PUBLIC_KEY: "dummy_value"
       RECAPTCHA_PRIVATE_KEY: "dummy_value"
+      EMAIL_BACKEND: "django.core.mail.backends.locmem.EmailBackend"
+      TASK_BACKEND: "django_tasks.backends.immediate.ImmediateBackend"
+      STATICFILES_BACKEND: "django.contrib.staticfiles.storage.StaticFilesStorage"
     runs-on: ubuntu-latest
     permissions:
       contents: read

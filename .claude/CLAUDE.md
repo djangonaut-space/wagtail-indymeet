@@ -192,7 +192,7 @@ def process_application(
 - Tailwind classes for styling
 - Alpine.js for interactivity
 - Forms use `widget_tweaks` for template-level customization
-- Custom form renderer: `indymeet.settings.base.FormRenderer`
+- Custom form renderer: `indymeet.settings.FormRenderer`
 
 ## Documentation Standards
 
@@ -268,8 +268,8 @@ uvx zizmor .github/workflows/           # Check all workflows
 uvx zizmor .github/workflows/tests.yml  # Check specific workflow
 
 # Production/staging locally
-uv run python manage.py runserver --settings=indymeet.settings.production
-uv run python manage.py migrate --settings=indymeet.settings.production
+uv run python manage.py runserver
+uv run python manage.py migrate
 ```
 
 ## Resources

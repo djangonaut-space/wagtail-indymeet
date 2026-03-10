@@ -35,6 +35,6 @@
     ]
   },
   "env": {
-    "DJANGO_SETTINGS_MODULE": "indymeet.settings.dev"
+    "DJANGO_SETTINGS_MODULE": "indymeet.settings"
   }
 }

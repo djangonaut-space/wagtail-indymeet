@@ -544,7 +544,7 @@ dependencies = [
     { name = "wagtailgeowidget" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "django-tailwind", extra = ["reload"] },
     { name = "pre-commit" },
@@ -575,36 +575,41 @@ requires-dist = [
     { name = "django-recaptcha", specifier = ">=4" },
     { name = "django-storages" },
     { name = "django-tailwind" },
-    { name = "django-tailwind", extras = ["reload"], marker = "extra == 'dev'" },
     { name = "django-tasks" },
     { name = "django-tasks-db" },
     { name = "django-widget-tweaks" },
-    { name = "djangorestframework-gis", specifier = ">=1.2.0" },
-    { name = "factory-boy", marker = "extra == 'test'" },
-    { name = "faker", marker = "extra == 'test'" },
-    { name = "freezegun", marker = "extra == 'test'" },
-    { name = "gdal", specifier = "==3.6.2" },
+    { name = "djangorestframework-gis" },
+    { name = "gdal" },
     { name = "gunicorn" },
-    { name = "playwright", marker = "extra == 'test'" },
-    { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "psycopg", extras = ["binary"] },
     { name = "puput" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "pytest-django", marker = "extra == 'test'" },
-    { name = "pytest-mock", marker = "extra == 'test'" },
-    { name = "pytest-playwright", marker = "extra == 'test'" },
     { name = "python-dotenv" },
     { name = "sentry-sdk", extras = ["django"] },
     { name = "six" },
     { name = "supervisor" },
     { name = "typing-extensions" },
-    { name = "unittest-parametrize", marker = "extra == 'test'" },
     { name = "urllib3" },
     { name = "wagtail" },
-    { name = "wagtailgeowidget", specifier = ">=9.1.0" },
+    { name = "wagtailgeowidget" },
 ]
-provides-extras = ["test", "dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "django-tailwind", extras = ["reload"] },
+    { name = "pre-commit" },
+]
+test = [
+    { name = "factory-boy" },
+    { name = "faker" },
+    { name = "freezegun" },
+    { name = "playwright" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-django" },
+    { name = "pytest-mock" },
+    { name = "pytest-playwright" },
+    { name = "unittest-parametrize" },
+]
 
 [[package]]
 name = "djangorestframework"
@@ -706,9 +711,9 @@ wheels = [
 
 [[package]]
 name = "gdal"
-version = "3.6.2"
+version = "3.4.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/49/4f/174743caf64d1999c46ab2ee72b2cb0d77a47bd7ed04f954f863e35a25fd/GDAL-3.6.2.tar.gz", hash = "sha256:a167cde1813707d91a938dad1a22f280f5ad28c45980d42e948fb8c59f890f5a", size = 757691, upload-time = "2023-01-05T07:36:55.213Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/f6/4fed0cacc8a6fb5d7659a05d300e01a1a13e2d9febf1911b05695057c662/GDAL-3.4.1.tar.gz", hash = "sha256:b19e8143bc2c0d3e222789a465d82b6874236eb78801aec608bf5c8c44d20fcf", size = 755854, upload-time = "2022-01-04T11:10:53.023Z" }
 
 [[package]]
 name = "greenlet"

@@ -1,5 +1,3 @@
-version: "3.7"
-
 x-app: &default-app
   build:
     context: "."
@@ -8,7 +6,7 @@ x-app: &default-app
   restart: "unless-stopped"
 
 services:
-  web:
+  django:
     <<: *default-app
     command: bash -c "uv run python manage.py migrate && uv run python manage.py runserver 0.0.0.0:8000"
     ports:
@@ -18,7 +16,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ./.env.template.docker
+      - ./.env.docker
 
   tailwind:
     <<: *default-app
@@ -33,11 +31,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
-      - ./.env.template.docker
+      - ./.env.docker
     ports:
       - "5432"
 
 volumes:
   postgres_data:
-  web:
+  django:
   tailwind:

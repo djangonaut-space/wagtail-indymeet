@@ -28,12 +28,12 @@ dependencies = [
     "django-tasks",
     "django-tasks-db",
     "django-import-export",
-    "gdal==3.6.2",
-    "wagtailgeowidget>=9.1.0",
-    "djangorestframework-gis>=1.2.0",
+    "gdal",
+    "wagtailgeowidget",
+    "djangorestframework-gis",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
     "freezegun",
     "playwright",
@@ -52,7 +52,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "indymeet.settings.test"
+DJANGO_SETTINGS_MODULE = "indymeet.settings"
 addopts = "--reuse-db -m 'not playwright'"
 markers = [
     "playwright: mark test that requires playwright",
