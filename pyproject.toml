@@ -26,6 +26,7 @@ dependencies = [
     "gunicorn",
     "django-filter>=25.2",
     "django-tasks",
+    "django-tasks-db",
     "django-import-export",
     "gdal==3.6.2",
     "wagtailgeowidget>=9.1.0",

@@ -76,6 +76,18 @@
                 <div x-cloak x-show="showDropdown">
                   <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44 z-50" aria-labelledby="user-menu-button">
                     <li class="p-2">
+                      <a href="{% url 'user_sessions' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                          {% trans "My Sessions" %}
+                      </a>
+                    </li>
+                    {% if nav_active_team_membership %}
+                    <li class="p-2 ms-2">
+                      <a href="{% url 'team_detail' session_slug=nav_active_team_membership.session.slug pk=nav_active_team_membership.team.pk %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                          {% trans "Team" %} {{ nav_active_team_membership.team.name }}
+                      </a>
+                    </li>
+                    {% endif %}
+                    <li class="p-2">
                       <a href="{% url 'profile' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
                           {% trans "Profile" %}
                       </a>
@@ -148,29 +160,43 @@
                                  {% trans "Donate" %} <i class="fa-regular fa-heart text-ds-purple"></i>
                             </a>
                         </li>
+
                         {% if user.is_authenticated %}
-                        <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'profile' %}">
-                                {% trans "Profile" %}
-                            </a>
-                        </li>
-                        <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'password_change' %}">
-                                {% trans "Update password" %}
-                            </a>
-                        </li>
-                        <li class="p-2">
-                            <form action="{% url 'logout' %}" method="post">
-                              {% csrf_token %}
-                              <button type="submit" class="block outline-link text-gray-500 transition hover:text-ds-purple">{% trans "Logout" %}</button>
-                            </form>
-                        </li>
-                        {%  else %}
-                        <li class="p-2">
-                            <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'login'%}?next={{request.path}}">
-                                {% trans "Login" %}
-                            </a>
-                        </li>
+                          <li role="separator" class="my-1 border-t border-gray-300"></li>
+                          <li class="p-2">
+                              <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'user_sessions' %}">
+                                  {% trans "My Sessions" %}
+                              </a>
+                          </li>
+                          {% if nav_active_team_membership %}
+                          <li class="p-2 ms-2">
+                              <a class="block outline-link text-gray-500 transition hover:text-ds-purple" href="{% url 'team_detail' session_slug=nav_active_team_membership.session.slug pk=nav_active_team_membership.team.pk %}">
+                                  {% trans "Team" %} {{ nav_active_team_membership.team.name }}
+                              </a>
+                          </li>
+                          {% endif %}
+                          <li class="p-2">
+                              <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'profile' %}">
+                                  {% trans "Profile" %}
+                              </a>
+                          </li>
+                          <li class="p-2">
+                              <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'password_change' %}">
+                                  {% trans "Update password" %}
+                              </a>
+                          </li>
+                          <li class="p-2">
+                              <form action="{% url 'logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="block outline-link text-gray-500 transition hover:text-ds-purple">{% trans "Logout" %}</button>
+                              </form>
+                          </li>
+                        {% else %} {# user.is_authenticated #}
+                          <li class="p-2">
+                              <a class="block outline-link text-gray-500 transition hover:text-ds-purple"  href="{% url 'login'%}?next={{request.path}}">
+                                  {% trans "Login" %}
+                              </a>
+                          </li>
                         {% endif %}
                     </ul>
                 </div>
