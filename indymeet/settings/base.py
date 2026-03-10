@@ -284,3 +284,14 @@ ALLOWED_EMAILS_FOR_TESTING = [
 # When running load tests, it's helpful to remove some functionality
 # such as confirmation emails.
 LOAD_TESTING = os.environ.get("LOAD_TESTING", False)
+
+# Zoom Server-to-Server OAuth credentials for automatic meeting creation.
+# Set all three to enable; leave unset to disable the feature.
+# Optionally set ZOOM_MEETING_TEMPLATE_ID to use a saved meeting template;
+# otherwise meetings are created with mute_upon_entry and waiting_room enabled.
+ZOOM_ACCOUNT_ID = os.environ.get("ZOOM_ACCOUNT_ID")
+ZOOM_CLIENT_ID = os.environ.get("ZOOM_CLIENT_ID")
+ZOOM_CLIENT_SECRET = os.environ.get("ZOOM_CLIENT_SECRET")
+
+# not really sure whether the template ids should be stored by us instead of in settings
+ZOOM_MEETING_TEMPLATE_ID = os.environ.get("ZOOM_MEETING_TEMPLATE_ID")
