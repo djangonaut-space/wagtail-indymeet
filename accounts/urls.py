@@ -15,7 +15,7 @@ from .views import UpdateUserView
 urlpatterns = [
     path(
         "login/",
-        auth_views.LoginView.as_view(redirect_field_name="next"),
+        auth_views.LoginView.as_view(redirect_authenticated_user=True),
         name="login",
     ),
     path(
