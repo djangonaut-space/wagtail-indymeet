@@ -16,7 +16,7 @@ class LoginViewTest(TestCase):
         response = self.client.get(url)
         self.assertRedirects(response, "/my-sessions/")
 
-    def test_authenticated_user_wihtout_next_is_redirect_to_default(self):
+    def test_authenticated_user_without_next_is_redirect_to_default(self):
         self.client.force_login(self.user)
         url = reverse("login")
         response = self.client.get(url)
