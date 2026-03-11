@@ -132,5 +132,7 @@ class AdminFilterTests(TestCase):
 
     def test_useravailability_updated_at_filter(self) -> None:
         url = reverse("admin:accounts_useravailability_changelist")
-        response = self.client.get(url, {"updated_at__gte": "2020-01-01"})
+        response = self.client.get(
+            url, {"updated_at__gte": "2020-01-01 00:00:00+00:00"}
+        )
         assert response.status_code == HTTPStatus.OK
