@@ -9,6 +9,11 @@ Otherwise, we may not be able to accommodate you this round.
 The duration of this program is {{ session.start_date|date:"F d, Y" }} - {{ session.end_date|date:"F d, Y" }}.
 To learn more about the program you can read our documentation here: https://github.com/djangonaut-space/program
 
+To ensure that everyone got their experience at best for this Session we're asking to let us know if it's not a good time for you to join Djangonaut Space in order to let other people to join.
+
+Let us know if you're not available by visiting {{ acceptance_url }}
+
+
 Don't worry if this is not of interest to you or we have reached you at a bad time. We'd appreciate you letting us know. ❤️
 
 All the best,
