@@ -1,0 +1,288 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+    .stats-summary {
+        background: var(--body-bg, #fff);
+        padding: 20px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--hairline-color, #eee);
+    }
+
+    .stats-summary h2 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        color: var(--body-fg, #333);
+        border-bottom: none;
+    }
+
+    .stats-counts {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 10px;
+    }
+
+    .stat {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat span {
+        font-size: 13px;
+        color: var(--body-quiet-color, #666);
+        text-transform: uppercase;
+    }
+
+    .stat strong {
+        font-size: 24px;
+        font-weight: normal;
+        color: var(--body-fg, #333);
+    }
+
+    h3 {
+        font-size: 14px;
+        text-transform: uppercase;
+        color: var(--body-quiet-color, #666);
+        border-bottom: 1px solid var(--hairline-color, #ccc);
+        padding-bottom: 5px;
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+
+    .merged-prs h3 {
+        color: var(--message-success-bg, #28a745);
+    }
+
+    .open-prs h3 {
+        color: var(--link-fg, #007bff);
+    }
+
+    .closed-prs h3 {
+        color: var(--body-quiet-color, #666);
+    }
+
+    .open-issues h3 {
+        color: var(--message-warning-bg, #fd7e14);
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    li {
+        background: var(--body-bg, #fff);
+        padding: 10px 0;
+        border-bottom: 1px solid var(--hairline-color, #eee);
+    }
+
+    li strong {
+        font-size: 14px;
+        font-weight: bold;
+        color: var(--body-fg, #333);
+    }
+
+    .meta-row {
+        font-size: 12px;
+        color: var(--body-quiet-color, #666);
+        margin: 3px 0;
+    }
+
+    .repo {
+        color: var(--body-fg, #444);
+        font-weight: bold;
+    }
+
+    .back-actions {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--hairline-color, #eee);
+    }
+
+    .button {
+        background: var(--primary, #79aec8);
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        color: var(--primary-fg, white);
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        display: inline-block;
+        text-decoration: none;
+    }
+
+    .button:hover {
+        background: var(--primary-hover, #609ab6);
+    }
+
+    .button.back {
+        background: var(--close-button-bg, #999);
+    }
+
+    .button.back:hover {
+        background: var(--close-button-hover-bg, #888);
+    }
+
+    .authors-row {
+        margin-top: 15px;
+        border-top: 1px solid var(--hairline-color, #eee);
+        padding-top: 10px;
+        font-size: 0.9em;
+        color: var(--body-quiet-color, #666);
+    }
+
+    .no-activity {
+        text-align: center;
+        padding: 50px;
+        color: var(--body-quiet-color, #666);
+        background: var(--darkened-bg, #f9f9f9);
+        border-radius: 8px;
+    }
+
+    a {
+        color: var(--link-fg, #007bff);
+    }
+
+    a:hover {
+        color: var(--link-hover-color, #0056b3);
+    }
+
+    .github-link {
+        font-size: 0.85em;
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url 'admin:home_session_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {% trans 'GitHub Stats Results' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Stats Results for "{{ session.title }}"</h1>
+
+    <div class="stats-summary">
+        <h2><span>Overview</span> <span>{{ report.start_date }} → {{ report.end_date }}</span></h2>
+        <div class="stats-counts">
+            <div class="stat"><span>Open PRs</span><strong>{{ report.count_open_prs }}</strong></div>
+            <div class="stat"><span>Merged PRs</span><strong>{{ report.count_merged_prs }}</strong></div>
+            <div class="stat"><span>Closed PRs</span><strong>{{ report.count_closed_prs }}</strong></div>
+            <div class="stat"><span>Issues</span><strong>{{ report.count_open_issues }}</strong></div>
+        </div>
+        {% with authors=report.get_authors %}
+        {% if authors %}
+        <div class="authors-row">
+            <strong>Djangonauts:</strong>
+            {% for author in authors %}
+            <span class="author-tag">{{ author.name }}</span>{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    {% with merged_prs=report.get_merged_prs %}
+    {% if merged_prs %}
+    <div class="merged-prs">
+        <h3>🎉 Merged Pull Requests</h3>
+        <ul>
+            {% for pr in merged_prs %}
+            <li>
+                <strong>{{ pr.title }}</strong>
+                <div class="meta-row">
+                    <span class="repo">{{ pr.repo }}</span>
+                    <span class="author">by {{ pr.author.name }}</span>
+                    <span class="date">on {{ pr.merged_at }}</span>
+                </div>
+                <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% with closed_prs=report.get_closed_prs %}
+    {% if closed_prs %}
+    <div class="closed-prs">
+        <h3>🚧 Closed Pull Requests</h3>
+        <ul>
+            {% for pr in closed_prs %}
+            <li>
+                <strong>{{ pr.title }}</strong>
+                <div class="meta-row">
+                    <span class="repo">{{ pr.repo }}</span>
+                    <span class="author">by {{ pr.author.name }}</span>
+                    <span class="date">created {{ pr.created_at }}</span>
+                </div>
+                <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% with open_prs=report.get_open_prs %}
+    {% if open_prs %}
+    <div class="open-prs">
+        <h3>✨ Open Pull Requests</h3>
+        <ul>
+            {% for pr in open_prs %}
+            <li>
+                <strong>{{ pr.title }}</strong>
+                <div class="meta-row">
+                    <span class="repo">{{ pr.repo }}</span>
+                    <span class="author">by {{ pr.author.name }}</span>
+                    <span class="date">created {{ pr.created_at }}</span>
+                </div>
+                <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% with open_issues=report.get_open_issues %}
+    {% if open_issues %}
+    <div class="open-issues">
+        <h3>✏️ Issues</h3>
+        <ul>
+            {% for issue in open_issues %}
+            <li>
+                <strong>{{ issue.title }}</strong>
+                <div class="meta-row">
+                    <span class="repo">{{ issue.repo }}</span>
+                    <span class="author">by {{ issue.author.name }}</span>
+                    <span class="date">created {{ issue.created_at }}</span>
+                </div>
+                <a href="{{ issue.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% if not report.get_merged_prs and not report.get_closed_prs and not report.get_open_prs and not report.get_open_issues %}
+    <div class="no-activity">
+        <h3>No GitHub activity found</h3>
+        <p>Try selecting a different date range.</p>
+    </div>
+    {% endif %}
+
+    <div class="back-actions">
+        <a href="{% url 'admin:home_session_changelist' %}" class="button back">Back to Sessions</a>
+    </div>
+</div>
+{% endblock %}
