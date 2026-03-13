@@ -319,3 +319,27 @@ class CreateZoomMeetingTaskTests(TestCase):
         event.refresh_from_db()
 
         self.assertEqual(event.video_link, "https://zoom.us/j/concurrent")
+
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
+    def test_uses_select_for_update_in_transaction(self, mock_create):
+        """Task uses select_for_update inside an atomic transaction."""
+        from django.db import transaction
+
+        mock_create.return_value = "https://zoom.us/j/meeting"
+
+        with (
+            patch("django.db.transaction.atomic") as mock_atomic,
+            patch(
+                "home.tasks.create_zoom_meeting.Event.objects.select_for_update"
+            ) as mock_select,
+        ):
+
+            # Setup the chain: Event.objects.select_for_update().get(pk=...)
+            mock_select.return_value.get.return_value = self.event
+
+            create_zoom_meeting.call(event_id=self.event.pk)
+
+            mock_atomic.assert_called_once()
+            mock_select.assert_called_once()
+            mock_select.return_value.get.assert_called_with(pk=self.event.pk)

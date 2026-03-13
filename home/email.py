@@ -11,6 +11,7 @@ def send(
     recipient_list,
     context=None,
     from_email=None,
+    bcc_list: list[str] | None = None,
     attachments: list[tuple[str, bytes, str]] | None = None,
 ):
     """Send a templated email, optionally with file attachments.
@@ -20,6 +21,7 @@ def send(
         recipient_list: List of recipient email addresses.
         context: Template context dict.
         from_email: Sender address; defaults to DEFAULT_FROM_EMAIL.
+        bcc_list: Optional list of BCC recipient email addresses.
         attachments: Optional list of (filename, content, mimetype) tuples
             to attach to the email.
     """
@@ -59,6 +61,7 @@ def send(
         body=text,
         from_email=from_email or settings.DEFAULT_FROM_EMAIL,
         to=recipient_list,
+        bcc=bcc_list,
     )
     msg.attach_alternative(html, "text/html")
     for filename, content, mimetype in attachments or []:

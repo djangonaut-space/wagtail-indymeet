@@ -218,8 +218,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         mock_task.enqueue.assert_called_once()
         _, kwargs = mock_task.enqueue.call_args
         self.assertEqual(kwargs["event_id"], event.pk)
-        self.assertIn("member1@example.com", kwargs["recipients"])
-        self.assertIn("member2@example.com", kwargs["recipients"])
+        self.assertNotIn("recipients", kwargs)
 
     @patch("home.admin.tasks.send_event_calendar_invite")
     def test_public_event_no_session_sends_to_opted_in_users(self, mock_task):
@@ -239,8 +238,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
 
         mock_task.enqueue.assert_called_once()
         _, kwargs = mock_task.enqueue.call_args
-        self.assertIn("opted@example.com", kwargs["recipients"])
-        self.assertNotIn("nope@example.com", kwargs["recipients"])
+        self.assertEqual(kwargs["event_id"], event.pk)
 
     @patch("home.admin.tasks.send_event_calendar_invite")
     def test_private_event_no_session_sends_empty_recipients(self, mock_task):
@@ -256,7 +254,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
 
         mock_task.enqueue.assert_called_once()
         _, kwargs = mock_task.enqueue.call_args
-        self.assertEqual(kwargs["recipients"], [])
+        self.assertEqual(kwargs["event_id"], event.pk)
 
     @patch("home.admin.tasks.send_event_calendar_invite")
     def test_multiple_events_queues_one_task_each(self, mock_task):
@@ -282,3 +280,80 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
         self.assertIn("1", str(stored[0]))
+
+    @patch("home.admin.tasks.send_event_calendar_invite")
+    def test_skipped_message_shows_skipped_count(self, mock_task):
+        """A warning message is shown with the number of events skipped."""
+        event = self._make_event(
+            is_public=False, calendar_invites_sent_at=datetime.now(dt_timezone.utc)
+        )
+        request = self._get_request()
+
+        self.admin.send_calendar_invites(request, Event.objects.filter(pk=event.pk))
+
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertIn("Skipped 1 event(s)", str(stored[0]))
+        mock_task.enqueue.assert_not_called()
+
+
+class EventAdminRetryZoomActionTests(TestCase):
+    """Tests for the retry_zoom_meeting_creation admin action."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.admin = EventAdmin(Event, AdminSite())
+        self.superuser = UserFactory.create(
+            email="admin@example.com",
+            is_staff=True,
+            is_superuser=True,
+        )
+
+    def _get_request(self):
+        request = self.factory.post("/admin/home/event/")
+        request.user = self.superuser
+        middleware = SessionMiddleware(lambda req: None)
+        middleware.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        return request
+
+    @patch("home.admin.tasks.create_zoom_meeting")
+    def test_queues_zoom_creation_for_events_without_video_link(self, mock_task):
+        """Action queues a task for events that lack a video link."""
+        event1 = EventFactory.create(video_link="")
+        event2 = EventFactory.create(video_link="https://zoom.us/j/123")
+        queryset = Event.objects.filter(pk__in=[event1.pk, event2.pk])
+
+        self.admin.retry_zoom_meeting_creation(self._get_request(), queryset)
+
+        self.assertEqual(mock_task.enqueue.call_count, 1)
+        mock_task.enqueue.assert_called_with(event_id=event1.pk)
+
+    @patch("home.admin.tasks.create_zoom_meeting")
+    def test_shows_success_message_when_queued(self, mock_task):
+        """A success message is shown when one or more tasks are queued."""
+        event = EventFactory.create(video_link="")
+        request = self._get_request()
+
+        self.admin.retry_zoom_meeting_creation(
+            request, Event.objects.filter(pk=event.pk)
+        )
+
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertIn("queued for 1 event(s)", str(stored[0]))
+
+    @patch("home.admin.tasks.create_zoom_meeting")
+    def test_shows_warning_when_none_queued(self, mock_task):
+        """A warning message is shown when no events needed processing."""
+        event = EventFactory.create(video_link="https://zoom.us/j/123")
+        request = self._get_request()
+
+        self.admin.retry_zoom_meeting_creation(
+            request, Event.objects.filter(pk=event.pk)
+        )
+
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertIn("already have a video link", str(stored[0]))

@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Exists, F, Max, Count, OuterRef
 from django.http import HttpRequest, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import path, reverse
 from django.utils import timezone
@@ -46,7 +46,7 @@ User = get_user_model()
 class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
     filter_horizontal = ("speakers", "rsvped_members", "organizers")
-    actions = ["copy_event", "send_calendar_invites"]
+    actions = ["copy_event", "send_calendar_invites", "retry_zoom_meeting_creation"]
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Pre-populate the add form with data from an existing event.
@@ -59,32 +59,29 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         initial = super().get_changeform_initial_data(request)
         copy_from = request.GET.get("copy_from")
         if copy_from:
-            try:
-                source = Event.objects.prefetch_related("speakers", "organizers").get(
-                    pk=copy_from
-                )
-            except Event.DoesNotExist:
-                pass
-            else:
-                initial.update(
-                    {
-                        "title": source.title,
-                        "slug": source.slug,
-                        "start_time": source.start_time,
-                        "end_time": source.end_time,
-                        "location": source.location,
-                        "description": source.description or "",
-                        "status": Event.PENDING,
-                        "video_link": source.video_link,
-                        "is_public": source.is_public,
-                        "capacity": source.capacity,
-                        "extra_emails": source.extra_emails,
-                        "session": source.session_id,
-                        "speakers": source.speakers.all(),
-                        "organizers": source.organizers.all(),
-                        "tags": ", ".join(source.tags.names()),
-                    }
-                )
+            source = get_object_or_404(
+                Event.objects.prefetch_related("speakers", "organizers"), pk=copy_from
+            )
+
+            initial.update(
+                {
+                    "title": source.title,
+                    "slug": source.slug,
+                    "start_time": source.start_time,
+                    "end_time": source.end_time,
+                    "location": source.location,
+                    "description": source.description or "",
+                    "status": Event.PENDING,
+                    "video_link": source.video_link,
+                    "is_public": source.is_public,
+                    "capacity": source.capacity,
+                    "extra_emails": source.extra_emails,
+                    "session": source.session_id,
+                    "speakers": source.speakers.all(),
+                    "organizers": source.organizers.all(),
+                    "tags": ", ".join(source.tags.names()),
+                }
+            )
         return initial
 
     @admin.action(description="Copy selected event and open as new")
@@ -117,18 +114,49 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
           to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
         """
         queued = 0
+        skipped = 0
         for event in queryset:
-            tasks.send_event_calendar_invite.enqueue(
-                event_id=event.pk,
-                recipients=event.get_calendar_invite_recipients(),
-            )
+            if event.calendar_invites_sent_at:
+                skipped += 1
+                continue
+            tasks.send_event_calendar_invite.enqueue(event_id=event.pk)
             queued += 1
 
-        self.message_user(
-            request,
-            f"Calendar invites queued for {queued} event(s).",
-            messages.SUCCESS,
-        )
+        if queued:
+            self.message_user(
+                request,
+                f"Calendar invites queued for {queued} event(s).",
+                messages.SUCCESS,
+            )
+        if skipped:
+            self.message_user(
+                request,
+                f"Skipped {skipped} event(s) that already had invites sent.",
+                messages.WARNING,
+            )
+
+    @admin.action(description="Retry Zoom meeting creation")
+    def retry_zoom_meeting_creation(self, request, queryset) -> None:
+        """Retry creating a Zoom meeting for events that don't have one."""
+        queued = 0
+        for event in queryset:
+            if event.video_link:
+                continue
+            tasks.create_zoom_meeting.enqueue(event_id=event.pk)
+            queued += 1
+
+        if queued:
+            self.message_user(
+                request,
+                f"Zoom meeting creation queued for {queued} event(s).",
+                messages.SUCCESS,
+            )
+        else:
+            self.message_user(
+                request,
+                "All selected events already have a video link.",
+                messages.WARNING,
+            )
 
 
 @admin.register(Project)

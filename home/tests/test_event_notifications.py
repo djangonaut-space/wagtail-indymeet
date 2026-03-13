@@ -86,18 +86,22 @@ class SendEventCalendarInviteTaskTests(TestCase):
 
     @patch("home.tasks.event_notifications.email.send")
     def test_sends_calendar_invite_email(self, mock_send):
-        """Task sends one email with correct template, recipients, context, and .ics attachment."""
-        send_event_calendar_invite.call(
-            event_id=self.event.pk,
-            recipients=["participant@example.com"],
-        )
+        """Task sends one email with correct template, bcc_list, context, and .ics attachment."""
+        # Mock get_calendar_invite_recipients to return a known list
+        with patch.object(
+            self.event,
+            "get_calendar_invite_recipients",
+            return_value=["participant@example.com", "sessions@djangonaut.space"],
+        ):
+            send_event_calendar_invite.call(event_id=self.event.pk)
 
         mock_send.assert_called_once()
         call_kwargs = mock_send.call_args[1]
 
         self.assertEqual(call_kwargs["email_template"], "event_calendar_invite")
-        self.assertIn("participant@example.com", call_kwargs["recipient_list"])
-        self.assertIn("sessions@djangonaut.space", call_kwargs["recipient_list"])
+        self.assertEqual(call_kwargs["recipient_list"], [])
+        self.assertIn("participant@example.com", call_kwargs["bcc_list"])
+        self.assertIn("sessions@djangonaut.space", call_kwargs["bcc_list"])
         self.assertEqual(call_kwargs["context"]["event"], self.event)
         self.assertIn("cta_link", call_kwargs["context"])
 
@@ -107,27 +111,26 @@ class SendEventCalendarInviteTaskTests(TestCase):
         self.assertEqual(str(_get_vevent(content)["SUMMARY"]), "Sprint Planning")
 
     @patch("home.tasks.event_notifications.email.send")
+    def test_idempotency(self, mock_send):
+        """Task only sends email once even if called multiple times."""
+        # First call
+        send_event_calendar_invite.call(event_id=self.event.pk)
+        self.assertEqual(mock_send.call_count, 1)
+
+        # Second call
+        send_event_calendar_invite.call(event_id=self.event.pk)
+        self.assertEqual(mock_send.call_count, 1)
+
+    @patch("home.tasks.event_notifications.email.send")
     def test_does_nothing_for_nonexistent_event(self, mock_send):
         """Task exits silently when the event ID does not exist."""
-        send_event_calendar_invite.call(
-            event_id=999_999,
-            recipients=["participant@example.com"],
-        )
-
+        send_event_calendar_invite.call(event_id=999_999)
         mock_send.assert_not_called()
 
     @patch("home.tasks.event_notifications.email.send")
-    def test_only_primary_recipient_when_extra_emails_empty(self, mock_send):
-        """When extra_emails is empty, only the primary recipient is in the list."""
-        event = EventFactory.create(
-            start_time=datetime(2024, 6, 1, 10, 0, tzinfo=dt_timezone.utc),
-            end_time=datetime(2024, 6, 1, 11, 0, tzinfo=dt_timezone.utc),
-            extra_emails=[],
-        )
-
-        send_event_calendar_invite.call(
-            event_id=event.pk,
-            recipients=["solo@example.com"],
-        )
-
-        self.assertEqual(mock_send.call_args[1]["recipient_list"], ["solo@example.com"])
+    def test_does_nothing_if_no_recipients(self, mock_send):
+        """Task exits silently if no recipients are found."""
+        event = EventFactory.create(extra_emails=[])
+        with patch.object(event, "get_calendar_invite_recipients", return_value=[]):
+            send_event_calendar_invite.call(event_id=event.pk)
+        mock_send.assert_not_called()

@@ -80,6 +80,12 @@ class Event(ClusterableModel):
         ),
     )
 
+    calendar_invites_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="The date and time calendar invites were successfully sent.",
+    )
+
     objects = EventQuerySet.as_manager()
 
     def __str__(self):
@@ -154,12 +160,13 @@ class Event(ClusterableModel):
         """
         User = get_user_model()
         if self.session_id:
-            return list(
+            emails = list(
                 User.objects.filter(session_memberships__session_id=self.session_id)
                 .exclude(email="")
                 .values_list("email", flat=True)
                 .distinct()
             )
+            return list(set(emails + (self.extra_emails or [])))
         elif self.is_public:
             return list(
                 User.objects.filter(profile__receiving_event_updates=True)
