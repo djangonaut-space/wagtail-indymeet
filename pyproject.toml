@@ -28,6 +28,8 @@ dependencies = [
     "django-tasks",
     "django-tasks-db",
     "django-import-export",
+    "icalendar",
+    "requests>=2.32.5",
 ]
 
 [project.optional-dependencies]

@@ -1,19 +1,89 @@
 """Tests for custom QuerySet methods."""
 
+from datetime import datetime
 from datetime import timedelta
+from datetime import timezone as dt_timezone
 
+from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from django.utils import timezone
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home.factories import (
+    EventFactory,
     SessionFactory,
     SessionMembershipFactory,
     SurveyFactory,
     TeamFactory,
     UserSurveyResponseFactory,
 )
-from home.models import Session, SessionMembership, UserSurveyResponse, Waitlist
+from home.models import Event, Session, SessionMembership, UserSurveyResponse, Waitlist
+
+
+class EventQuerySetTestCase(TestCase):
+    """Test EventQuerySet methods."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.session = SessionFactory.create()
+        cls.member_user = UserFactory.create()
+        cls.non_member_user = UserFactory.create()
+
+        SessionMembershipFactory.create(
+            user=cls.member_user,
+            session=cls.session,
+            role=SessionMembership.DJANGONAUT,
+            accepted=True,
+        )
+
+        cls.public_event = EventFactory.create(
+            is_public=True,
+            start_time=datetime(2025, 1, 1, 10, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2025, 1, 1, 11, 0, tzinfo=dt_timezone.utc),
+        )
+        cls.private_event = EventFactory.create(
+            is_public=False,
+            session=cls.session,
+            start_time=datetime(2025, 2, 1, 10, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2025, 2, 1, 11, 0, tzinfo=dt_timezone.utc),
+        )
+
+    def test_public_returns_only_public_events(self):
+        qs = Event.objects.public()
+        self.assertIn(self.public_event, qs)
+        self.assertNotIn(self.private_event, qs)
+
+    def test_private_returns_only_private_events(self):
+        qs = Event.objects.private()
+        self.assertIn(self.private_event, qs)
+        self.assertNotIn(self.public_event, qs)
+
+    def test_for_user_anonymous_returns_only_public(self):
+        anon = AnonymousUser()
+        qs = Event.objects.for_user(anon)
+        self.assertIn(self.public_event, qs)
+        self.assertNotIn(self.private_event, qs)
+
+    def test_for_user_member_sees_public_and_session_private(self):
+        qs = Event.objects.for_user(self.member_user)
+        self.assertIn(self.public_event, qs)
+        self.assertIn(self.private_event, qs)
+
+    def test_for_user_non_member_sees_only_public(self):
+        qs = Event.objects.for_user(self.non_member_user)
+        self.assertIn(self.public_event, qs)
+        self.assertNotIn(self.private_event, qs)
+
+    def test_for_user_private_event_without_session_not_visible_to_non_member(self):
+        """A private event with no session is not visible to any authenticated user."""
+        orphan_private = EventFactory.create(
+            is_public=False,
+            session=None,
+            start_time=datetime(2025, 3, 1, 10, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2025, 3, 1, 11, 0, tzinfo=dt_timezone.utc),
+        )
+        qs = Event.objects.for_user(self.member_user)
+        self.assertNotIn(orphan_private, qs)
 
 
 class UserSurveyResponseQuerySetTestCase(TestCase):
