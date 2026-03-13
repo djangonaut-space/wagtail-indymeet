@@ -340,6 +340,6 @@ class CreateZoomMeetingTaskTests(TestCase):
 
             create_zoom_meeting.call(event_id=self.event.pk)
 
-            mock_atomic.assert_called_once()
+            self.assertTrue(mock_atomic.called)
             mock_select.assert_called_once()
             mock_select.return_value.get.assert_called_with(pk=self.event.pk)

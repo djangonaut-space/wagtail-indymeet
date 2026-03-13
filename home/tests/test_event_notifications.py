@@ -75,9 +75,8 @@ class GenerateICalendarTests(TestCase):
 class SendEventCalendarInviteTaskTests(TestCase):
     """Tests for the send_event_calendar_invite task."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.event = EventFactory.create(
+    def setUp(self):
+        self.event = EventFactory.create(
             title="Sprint Planning",
             start_time=datetime(2024, 5, 10, 15, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2024, 5, 10, 16, 0, tzinfo=dt_timezone.utc),
@@ -87,10 +86,9 @@ class SendEventCalendarInviteTaskTests(TestCase):
     @patch("home.tasks.event_notifications.email.send")
     def test_sends_calendar_invite_email(self, mock_send):
         """Task sends one email with correct template, bcc_list, context, and .ics attachment."""
-        # Mock get_calendar_invite_recipients to return a known list
-        with patch.object(
-            self.event,
-            "get_calendar_invite_recipients",
+        # Mock get_calendar_invite_recipients on the Event class
+        with patch(
+            "home.tasks.event_notifications.Event.get_calendar_invite_recipients",
             return_value=["participant@example.com", "sessions@djangonaut.space"],
         ):
             send_event_calendar_invite.call(event_id=self.event.pk)
@@ -113,13 +111,18 @@ class SendEventCalendarInviteTaskTests(TestCase):
     @patch("home.tasks.event_notifications.email.send")
     def test_idempotency(self, mock_send):
         """Task only sends email once even if called multiple times."""
-        # First call
-        send_event_calendar_invite.call(event_id=self.event.pk)
-        self.assertEqual(mock_send.call_count, 1)
+        # Mock recipients so it doesn't return early
+        with patch(
+            "home.tasks.event_notifications.Event.get_calendar_invite_recipients",
+            return_value=["test@example.com"],
+        ):
+            # First call
+            send_event_calendar_invite.call(event_id=self.event.pk)
+            self.assertEqual(mock_send.call_count, 1)
 
-        # Second call
-        send_event_calendar_invite.call(event_id=self.event.pk)
-        self.assertEqual(mock_send.call_count, 1)
+            # Second call
+            send_event_calendar_invite.call(event_id=self.event.pk)
+            self.assertEqual(mock_send.call_count, 1)
 
     @patch("home.tasks.event_notifications.email.send")
     def test_does_nothing_for_nonexistent_event(self, mock_send):

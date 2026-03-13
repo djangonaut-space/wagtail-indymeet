@@ -6,7 +6,7 @@ from unittest.mock import patch
 from django.contrib.admin.sites import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -165,12 +165,11 @@ class EventAdminGetChangeformInitialDataTests(TestCase):
         self.assertNotIn("title", initial)
         self.assertNotIn("speakers", initial)
 
-    def test_invalid_copy_from_returns_normal_initial(self):
-        """A non-existent copy_from pk is silently ignored."""
+    def test_invalid_copy_from_raises_404(self):
+        """A non-existent copy_from pk raises Http404."""
         request = self._get_add_request(copy_from=999_999)
-        initial = self.admin.get_changeform_initial_data(request)
-
-        self.assertNotIn("title", initial)
+        with self.assertRaises(Http404):
+            self.admin.get_changeform_initial_data(request)
 
 
 class EventAdminSendCalendarInvitesTests(TestCase):
