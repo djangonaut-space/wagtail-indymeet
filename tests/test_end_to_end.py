@@ -20,6 +20,8 @@ from django.urls import reverse
 from playwright.sync_api import expect, BrowserContext
 from playwright.sync_api import Page
 
+from tests.conftest import drag_select
+
 from accounts.factories import UserFactory, UserAvailabilityFactory
 from accounts.models import CustomUser
 from home.factories import (
@@ -419,12 +421,7 @@ class TestAvailabilityPage:
         monday_10am = page.locator('.time-slot[data-day="1"][data-hour="10"]')
         monday_1030am = page.locator('.time-slot[data-day="1"][data-hour="10.5"]')
 
-        # Use drag selection to select the block
-        # Drag from the first cell to the last cell
-        monday_9am.drag_to(monday_1030am)
-
-        # Wait for selection to be processed
-        page.wait_for_timeout(200)
+        drag_select(page, monday_9am, monday_1030am)
 
         # Wait for the first cell to have the selected class
         # (indicates JS has processed the selection)
@@ -491,12 +488,7 @@ class TestAvailabilityPage:
         tuesday_230pm = page.locator('.time-slot[data-day="2"][data-hour="14.5"]')
         tuesday_3pm = page.locator('.time-slot[data-day="2"][data-hour="15"]')
 
-        # Use drag selection to select the new block
-        # Drag from the first cell to the last cell
-        tuesday_2pm.drag_to(tuesday_3pm)
-
-        # Wait for selection to be processed
-        page.wait_for_timeout(200)
+        drag_select(page, tuesday_2pm, tuesday_3pm)
 
         # Verify all cells in the new block are selected
         expect(tuesday_2pm).to_have_class(re.compile(r".*\bselected\b.*"))
