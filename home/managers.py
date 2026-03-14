@@ -137,6 +137,21 @@ class SessionMembershipQuerySet(QuerySet):
         """Filter to only Organizers."""
         return self.filter(role=self.model.ORGANIZER)
 
+    def enforce_djangonaut_access_control(self) -> SessionMembershipQuerySet:
+        """Exclude Djangonaut memberships whose team pages aren't yet accessible.
+
+        Djangonauts can access their team page when the session's
+        djangonauts_have_access flag is True or the session start date
+        has passed. Non-Djangonaut roles and memberships without teams
+        are always included.
+        """
+        today = timezone.now().date()
+        return self.filter(
+            ~Q(role=self.model.DJANGONAUT)
+            | Q(session__djangonauts_have_access=True)
+            | Q(session__start_date__lte=today)
+        )
+
     def accepted(self):
         """
         Filter to memberships that are considered accepted/active.

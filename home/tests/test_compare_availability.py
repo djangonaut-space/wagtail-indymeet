@@ -15,6 +15,7 @@ from home.factories import (
     SessionMembershipFactory,
 )
 from home.models import SessionMembership, Team
+from home.availability import slot_to_datetime
 from home.views.compare_availability import (
     build_grid_data,
     get_slot_color,
@@ -89,6 +90,29 @@ class BuildGridDataTests(TestCase):
         # Second row (0:30) should not have time label
         self.assertFalse(rows[1].show_time_label)
         self.assertEqual(rows[1].time_label, "")
+
+    def test_cells_have_display_time(self) -> None:
+        """Each cell has a formatted display time string."""
+        rows, _ = build_grid_data([], {}, 0)
+        self.assertEqual(rows[0].cells[0].display_time, "Sun 12:00 AM")
+        self.assertEqual(rows[0].cells[1].display_time, "Mon 12:00 AM")
+        self.assertEqual(rows[1].cells[0].display_time, "Sun 12:30 AM")
+
+    def test_cells_have_utc_datetime(self) -> None:
+        """Each cell has a utc_datetime matching slot_to_datetime."""
+        rows, _ = build_grid_data([], {}, 0)
+        cell = rows[0].cells[0]
+        self.assertEqual(cell.utc_datetime, slot_to_datetime(0.0))
+
+    def test_utc_datetime_accounts_for_offset(self) -> None:
+        """utc_datetime converts back to UTC when an offset is applied."""
+        rows_utc, _ = build_grid_data([], {}, 0)
+        rows_offset, _ = build_grid_data([], {}, 5)
+        # With +5 offset, local slot Sun 00:00 maps to UTC slot Sat 19:00
+        utc_dt = rows_offset[0].cells[0].utc_datetime
+        self.assertEqual(utc_dt, slot_to_datetime(24 * 6 + 19.0))
+        # Display time should still show local time
+        self.assertEqual(rows_offset[0].cells[0].display_time, "Sun 12:00 AM")
 
 
 @freeze_time("2024-06-15")
@@ -200,3 +224,72 @@ class CompareAvailabilityTests(TestCase):
         captain_option_end = content.find(">", captain_option_start)
         captain_option = content[captain_option_start:captain_option_end]
         self.assertIn("selected", captain_option)
+
+
+@freeze_time("2024-06-15")
+class CompareAvailabilityGridTests(TestCase):
+    """Tests for the compare_availability_grid view."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.session = SessionFactory.create(
+            start_date=datetime(2024, 6, 1).date(),
+            end_date=datetime(2024, 8, 30).date(),
+        )
+        cls.project = ProjectFactory.create(name="Django")
+        cls.team = Team.objects.create(
+            session=cls.session, project=cls.project, name="Team Alpha"
+        )
+
+        cls.user_a, cls.user_b = UserFactory.create_batch(
+            2,
+            first_name=factory.Iterator(["Alice", "Bob"]),
+            last_name=factory.Iterator(["Available", "Busy"]),
+        )
+        UserAvailabilityFactory.create(user=cls.user_a, slots=[0.0, 0.5])
+        UserAvailabilityFactory.create(user=cls.user_b, slots=[0.0])
+
+        SessionMembershipFactory.create_batch(
+            2,
+            session=cls.session,
+            team=cls.team,
+            accepted=True,
+            user=factory.Iterator([cls.user_a, cls.user_b]),
+            role=SessionMembership.DJANGONAUT,
+        )
+        cls.url = reverse("compare_availability_grid")
+
+    def setUp(self) -> None:
+        self.client = Client()
+        self.organizer = OrganizerFactory.create()
+        self.client.force_login(self.organizer.user)
+
+    def test_grid_contains_display_time_data_attribute(self) -> None:
+        """Grid cells have data-display-time attributes."""
+        response = self.client.get(
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+        )
+        self.assertContains(response, 'data-display-time="Sun 12:00 AM"')
+
+    def test_grid_contains_time_is_url_data_attribute(self) -> None:
+        """Grid cells have data-time-is-url attributes linking to time.is."""
+        response = self.client.get(
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+        )
+        self.assertContains(response, 'data-time-is-url="https://time.is/compare/')
+
+    def test_grid_contains_click_handler(self) -> None:
+        """Grid cells have click handlers for pinning."""
+        response = self.client.get(
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+        )
+        self.assertContains(response, "@click=")
+        self.assertContains(response, "fixedSlot")
+
+    def test_grid_contains_time_info_section(self) -> None:
+        """Grid contains the time info display section with time.is link."""
+        response = self.client.get(
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+        )
+        self.assertContains(response, "activeDisplayTime")
+        self.assertContains(response, "View on time.is")

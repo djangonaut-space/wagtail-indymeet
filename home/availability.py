@@ -57,11 +57,16 @@ class AvailabilityWindow:
         return ", ".join(role_parts)
 
     @property
+    def unavailable_member_ids(self) -> list[int]:
+        return [user.id for user in self.unavailable_users]
+
+    @property
     def admin_unavailable_url(self) -> str | None:
         """Build admin URL for filtering unavailable members."""
-        if not self.unavailable_users:
+        ids = [str(id) for id in self.unavailable_member_ids]
+        if not ids:
             return None
-        ids_str = ",".join(str(id) for id in self.unavailable_users)
+        ids_str = ",".join(ids)
         return (
             reverse("admin:home_sessionmembership_changelist")
             + f"?user_id__in={ids_str}"
@@ -78,22 +83,38 @@ class AvailabilityWindow:
         Returns:
             UTC datetime for the start of this availability window
         """
-        today = datetime.now().date()
-        days_until_sunday = (6 - today.weekday()) % 7
-        if days_until_sunday == 0:
-            days_until_sunday = 7
-        next_sunday = today + timedelta(days=days_until_sunday)
+        return slot_to_datetime(self.slot_range[0])
 
-        start_slot = self.slot_range[0]
-        day_offset = int(start_slot // 24)
-        hour_in_day = start_slot % 24
-        hours = int(hour_in_day)
-        minutes = int((hour_in_day % 1) * 60)
 
-        target_date = next_sunday + timedelta(days=day_offset)
-        return datetime.combine(target_date, datetime.min.time()).replace(
-            hour=hours, minute=minutes
-        )
+def slot_to_datetime(slot: float) -> datetime:
+    """
+    Convert a slot value to a datetime using the next Sunday as a reference date.
+
+    This creates a concrete datetime that can be used with templatetags like
+    time_is_link. The date is arbitrary (next Sunday from today) since
+    availability is weekly and recurring.
+
+    Args:
+        slot: Time slot value (0.0 = Sunday 00:00, 167.5 = Saturday 23:30)
+
+    Returns:
+        A datetime for the given slot, anchored to the upcoming week
+    """
+    today = datetime.now().date()
+    days_until_sunday = (6 - today.weekday()) % 7
+    if days_until_sunday == 0:
+        days_until_sunday = 7
+    next_sunday = today + timedelta(days=days_until_sunday)
+
+    day_offset = int(slot // 24)
+    hour_in_day = slot % 24
+    hours = int(hour_in_day)
+    minutes = int((hour_in_day % 1) * 60)
+
+    target_date = next_sunday + timedelta(days=day_offset)
+    return datetime.combine(target_date, datetime.min.time()).replace(
+        hour=hours, minute=minutes
+    )
 
 
 def _convert_to_12hour_format(hour_24: int) -> tuple[int, str]:
@@ -585,5 +606,4 @@ def find_best_one_hour_windows_with_roles(
             role_counts[role] += 1
 
         window.role_counts = role_counts
-        window.unavailable_member_ids = [user.id for user in window.unavailable_users]
     return windows

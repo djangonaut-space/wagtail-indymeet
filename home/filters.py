@@ -33,6 +33,12 @@ class ApplicantFilterSet(django_filters.FilterSet):
         field_name="selection_rank", lookup_expr="lte", label="Maximum Selection Rank"
     )
 
+    project_preferences = django_filters.ModelChoiceFilter(
+        field_name="user__project_preferences__project",
+        queryset=Project.objects.none(),
+        label="Project Preference",
+    )
+
     team = django_filters.ModelChoiceFilter(
         field_name="user__session_memberships__team",
         queryset=Team.objects.none(),
@@ -90,6 +96,9 @@ class ApplicantFilterSet(django_filters.FilterSet):
             self.filters["team"].queryset = team_queryset
             self.filters["overlap_with_navigators"].queryset = team_queryset
             self.filters["overlap_with_captain"].queryset = team_queryset
+            self.filters["project_preferences"].queryset = (
+                session.available_projects.all().order_by("name")
+            )
 
     def filter_by_team(
         self, queryset: QuerySet, name: str, value: Team | None

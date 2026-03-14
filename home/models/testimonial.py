@@ -18,6 +18,9 @@ class Testimonial(BaseModel):
     Testimonials require admin approval (is_published) before being displayed publicly.
     """
 
+    # Prevent pytest from collecting this as a test class due to the "Test" prefix.
+    __test__ = False
+
     title = models.CharField(
         max_length=200,
         help_text=_("A title for your testimonial"),

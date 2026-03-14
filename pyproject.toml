@@ -27,6 +27,7 @@ dependencies = [
     "django-filter>=25.2",
     "pygithub>=2.8.1",
     "django-tasks",
+    "django-tasks-db",
     "django-import-export",
 ]
 
@@ -57,6 +58,7 @@ markers = [
 filterwarnings = [
     "ignore:The FORMS_URLFIELD_ASSUME_HTTPS transitional setting is deprecated:django.utils.deprecation.RemovedInDjango60Warning",
     "ignore:The usage of `WidgetWithScript` hook is deprecated:wagtail.utils.deprecation.RemovedInWagtail70Warning",
+    "ignore:'locale.getdefaultlocale' is deprecated and slated for removal in Python 3.15:DeprecationWarning:l18n.translation",
 ]
 
 [tool.coverage.run]

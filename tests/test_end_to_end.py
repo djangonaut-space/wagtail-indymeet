@@ -959,6 +959,64 @@ class TestCompareAvailability:
             arg=slot_0_0_1.element_handle(),
         )
 
+    def assert_hover_shows_time_display(self, page: Page):
+        """Verify hovering a cell shows the time and time.is link."""
+        cell = page.locator('td.time-slot[title*="1/2"]').first
+        cell.hover()
+
+        time_display = page.locator("[x-text='activeDisplayTime']")
+        expect(time_display).to_be_visible()
+        expect(time_display).not_to_have_text("")
+
+        time_is_link = page.get_by_role("link", name="View on time.is")
+        expect(time_is_link).to_be_visible()
+        expect(time_is_link).to_have_attribute(
+            "href", re.compile(r"https://time\.is/compare/")
+        )
+
+    def assert_click_pins_slot(self, page: Page):
+        """Verify clicking a cell pins it and persists after mouse leaves."""
+        cell = page.locator('td.time-slot[title*="2/2"]').first
+        cell.click()
+
+        # Move cursor away from grid
+        page.get_by_role("heading", name="Compare Availability").hover()
+
+        # Time display should persist
+        time_display = page.locator("[x-text='activeDisplayTime']")
+        expect(time_display).to_be_visible()
+        expect(time_display).not_to_have_text("")
+
+        # Bob should still show as available (2/2 slot)
+        bob_card = page.locator(".user-card").filter(has_text="Bob Busy")
+        expect(bob_card).not_to_have_class(re.compile(r"unavailable"))
+
+    def assert_click_same_cell_unpins(self, page: Page):
+        """Verify clicking the same pinned cell unpins it."""
+        cell = page.locator('td.time-slot[title*="2/2"]').first
+        cell.click()
+
+        # Move cursor away
+        page.get_by_role("heading", name="Compare Availability").hover()
+
+        # Time display should be hidden
+        time_display = page.locator("[x-text='activeDisplayTime']")
+        expect(time_display).not_to_be_visible()
+
+    def assert_unpin_button_clears_fixed_slot(self, page: Page):
+        """Verify the X button unpins the fixed slot."""
+        cell = page.locator('td.time-slot[title*="1/2"]').first
+        cell.click()
+
+        # Click the unpin button
+        unpin_button = page.get_by_title("Unpin time slot")
+        expect(unpin_button).to_be_visible()
+        unpin_button.click()
+
+        # Time display should be hidden
+        time_display = page.locator("[x-text='activeDisplayTime']")
+        expect(time_display).not_to_be_visible()
+
     @pytest.mark.playwright
     def test_compare_availability_interactivity(self, page: Page, setup_compare_data):
         """
@@ -981,3 +1039,7 @@ class TestCompareAvailability:
         self.assert_available_user_readable_on_hover(page, data)
         self.assert_mouseleave_resets_availability(page)
         self.assert_user_hover_shows_single_availability(page, data)
+        self.assert_hover_shows_time_display(page)
+        self.assert_click_pins_slot(page)
+        self.assert_click_same_cell_unpins(page)
+        self.assert_unpin_button_clears_fixed_slot(page)

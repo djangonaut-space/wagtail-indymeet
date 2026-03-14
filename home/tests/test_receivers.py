@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
+from django.utils import timezone
+from datetime import timedelta
 
 from accounts.factories import UserFactory
 from home.factories import SessionFactory, SessionMembershipFactory
@@ -13,14 +15,26 @@ class OrganizerReceiversHandlersTestCase(TestCase):
     def setUp(self):
         call_command("setup_session_organizers_group")
         self.group = Group.objects.get(name="Session Organizers")
+        self.today = timezone.now().date()
+        self.start_date = self.today - timedelta(days=10)
+        self.end_date = self.today + timedelta(days=30)
+        self.invitation_date = self.today - timedelta(days=20)
+        self.application_start_date = self.today - timedelta(days=30)
+        self.application_end_date = self.today - timedelta(days=25)
+        self.session = SessionFactory.create(
+            start_date=self.start_date,
+            end_date=self.end_date,
+            invitation_date=self.invitation_date,
+            application_start_date=self.application_start_date,
+            application_end_date=self.application_end_date,
+        )
 
     def test_adds_regular_user_to_group_when_organizer_created(self):
         """Test that creating organizer membership adds user to group."""
         user = UserFactory(is_staff=False, is_superuser=False)
-        session = SessionFactory()
 
         SessionMembershipFactory(
-            user=user, session=session, role=SessionMembership.ORGANIZER
+            user=user, session=self.session, role=SessionMembership.ORGANIZER
         )
 
         user.refresh_from_db()
@@ -30,10 +44,9 @@ class OrganizerReceiversHandlersTestCase(TestCase):
     def test_makes_user_staff_when_organizer_created(self):
         """Test that creating organizer membership makes user staff."""
         user = UserFactory(is_staff=False, is_superuser=False)
-        session = SessionFactory()
 
         SessionMembershipFactory(
-            user=user, session=session, role=SessionMembership.ORGANIZER
+            user=user, session=self.session, role=SessionMembership.ORGANIZER
         )
 
         user.refresh_from_db()
@@ -54,10 +67,9 @@ class OrganizerReceiversHandlersTestCase(TestCase):
     def test_signal_is_idempotent(self):
         """Test that saving membership multiple times doesn't cause issues."""
         user = UserFactory(is_staff=False, is_superuser=False)
-        session = SessionFactory()
 
         membership = SessionMembershipFactory(
-            user=user, session=session, role=SessionMembership.ORGANIZER
+            user=user, session=self.session, role=SessionMembership.ORGANIZER
         )
 
         user.refresh_from_db()
