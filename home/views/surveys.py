@@ -1,7 +1,5 @@
 """Survey-related views."""
 
-from gettext import gettext
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Prefetch
@@ -9,6 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.translation import gettext
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormMixin, ModelFormMixin
 

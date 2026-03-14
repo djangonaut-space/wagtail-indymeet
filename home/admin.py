@@ -38,6 +38,7 @@ from .views.session_notifications import (
     send_session_results_view,
     send_team_welcome_emails_view,
 )
+from .views.sessions import collect_stats_view
 
 User = get_user_model()
 
@@ -430,7 +431,7 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             ),
             path(
                 "<int:session_id>/collect-stats/",
-                self.admin_site.admin_view(self.collect_stats_view),
+                self.admin_site.admin_view(collect_stats_view),
                 name="session_collect_stats",
             ),
             path(

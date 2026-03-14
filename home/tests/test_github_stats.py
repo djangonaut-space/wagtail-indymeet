@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
-from django.test import Client, TestCase, override_settings
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.factories import UserFactory
@@ -21,7 +21,7 @@ from home.services.github_stats import (
 User = get_user_model()
 
 
-class GitHubStatsCollectorTests(TestCase):
+class GitHubStatsCollectorTests(SimpleTestCase):
     def setUp(self):
         self.mock_github = Mock()
         self.mock_token = "ghp_test_token"
@@ -49,7 +49,6 @@ class GitHubStatsCollectorTests(TestCase):
     def test_collect_prs_for_repo(self, mock_github_class):
         mock_user = Mock()
         mock_user.login = "testuser"
-        mock_user.name = "Test User"
 
         mock_pr = Mock()
         mock_pr.title = "Test PR"
@@ -58,6 +57,8 @@ class GitHubStatsCollectorTests(TestCase):
         mock_pr.user = mock_user
         mock_pr.created_at = date(2024, 1, 15)
         mock_pr.state = "open"
+        mock_pr.pull_request = Mock(merged_at=datetime(2024, 1, 16, 12, 0, 0))
+        mock_pr.as_pull_request = Mock()
 
         mock_github_instance = mock_github_class.return_value
         mock_github_instance.search_issues.return_value = [mock_pr]
@@ -79,12 +80,19 @@ class GitHubStatsCollectorTests(TestCase):
         self.assertEqual(prs[0].author.github_username, "testuser")
         self.assertEqual(prs[0].state, "open")
         self.assertEqual(prs[0].repo, "org/repo")
+        self.assertEqual(prs[0].merged_at, date(2024, 1, 16))
+        mock_pr.as_pull_request.assert_not_called()
+        self.assertIn(
+            "repo:org/repo", mock_github_instance.search_issues.call_args.args[0]
+        )
+        self.assertIn(
+            "author:testuser", mock_github_instance.search_issues.call_args.args[0]
+        )
 
     @patch("home.services.github_stats.Github")
     def test_collect_issues_for_repo(self, mock_github_class):
         mock_user = Mock()
         mock_user.login = "testuser"
-        mock_user.name = "Test User"
 
         mock_issue = Mock()
         mock_issue.title = "Test Issue"
@@ -113,6 +121,12 @@ class GitHubStatsCollectorTests(TestCase):
         self.assertEqual(issues[0].number, 456)
         self.assertEqual(issues[0].author.github_username, "testuser")
         self.assertEqual(issues[0].state, "open")
+        self.assertIn(
+            "repo:org/repo", mock_github_instance.search_issues.call_args.args[0]
+        )
+        self.assertIn(
+            "author:testuser", mock_github_instance.search_issues.call_args.args[0]
+        )
 
     @patch("home.services.github_stats.Github")
     def test_get_repos_from_config_wildcard(self, mock_github_class):
@@ -145,10 +159,6 @@ class GitHubStatsCollectorTests(TestCase):
     def test_collect_all_stats(self, mock_github_class):
         mock_user = Mock()
         mock_user.login = "testuser"
-        mock_user.name = "Test User"
-
-        mock_repo = Mock()
-        mock_repo.full_name = "test-org/test-repo"
 
         mock_pr = Mock()
         mock_pr.title = "Test PR"
@@ -157,7 +167,9 @@ class GitHubStatsCollectorTests(TestCase):
         mock_pr.user = mock_user
         mock_pr.created_at = date(2024, 1, 15)
         mock_pr.state = "open"
-        mock_pr.repository = mock_repo
+        mock_pr.repository_url = "https://api.github.com/repos/test-org/test-repo"
+        mock_pr.pull_request = Mock(merged_at=datetime(2024, 1, 16, 12, 0, 0))
+        mock_pr.as_pull_request = Mock()
 
         mock_issue = Mock()
         mock_issue.title = "Test Issue"
@@ -166,7 +178,7 @@ class GitHubStatsCollectorTests(TestCase):
         mock_issue.user = mock_user
         mock_issue.created_at = date(2024, 1, 20)
         mock_issue.state = "open"
-        mock_issue.repository = mock_repo
+        mock_issue.repository_url = "https://api.github.com/repos/test-org/test-repo"
 
         mock_github_instance = mock_github_class.return_value
         mock_github_instance.search_issues.side_effect = [[mock_pr], [mock_issue]]
@@ -186,6 +198,53 @@ class GitHubStatsCollectorTests(TestCase):
         self.assertEqual(len(report.issues), 1)
         self.assertEqual(report.count_open_prs(), 1)
         self.assertEqual(report.count_open_issues(), 1)
+        self.assertEqual(report.prs[0].merged_at, date(2024, 1, 16))
+        self.assertEqual(report.prs[0].repo, "test-org/test-repo")
+        self.assertEqual(report.prs[0].author.name, "testuser")
+        mock_pr.as_pull_request.assert_not_called()
+
+    @patch("home.services.github_stats.Github")
+    def test_collect_all_stats_scopes_queries_per_user(self, mock_github_class):
+        mock_github_instance = mock_github_class.return_value
+        mock_github_instance.search_issues.side_effect = [[], [], [], []]
+
+        collector = GitHubStatsCollector(self.mock_token)
+        collector.github = mock_github_instance
+
+        collector.collect_all_stats(
+            repos=[{"owner": "test-org", "repos": ["test-repo"]}],
+            usernames=["testuser", "otheruser"],
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+        )
+
+        self.assertEqual(mock_github_instance.search_issues.call_count, 4)
+        pr_query = mock_github_instance.search_issues.call_args_list[0].args[0]
+        second_pr_query = mock_github_instance.search_issues.call_args_list[1].args[0]
+        issue_query = mock_github_instance.search_issues.call_args_list[2].args[0]
+        second_issue_query = mock_github_instance.search_issues.call_args_list[3].args[
+            0
+        ]
+
+        self.assertIn("repo:test-org/test-repo", pr_query)
+        self.assertIn("author:testuser", pr_query)
+        self.assertIn("type:pr", pr_query)
+        self.assertNotIn(" OR ", pr_query)
+
+        self.assertIn("repo:test-org/test-repo", second_pr_query)
+        self.assertIn("author:otheruser", second_pr_query)
+        self.assertIn("type:pr", second_pr_query)
+        self.assertNotIn(" OR ", second_pr_query)
+
+        self.assertIn("repo:test-org/test-repo", issue_query)
+        self.assertIn("author:testuser", issue_query)
+        self.assertIn("type:issue", issue_query)
+        self.assertNotIn(" OR ", issue_query)
+
+        self.assertIn("repo:test-org/test-repo", second_issue_query)
+        self.assertIn("author:otheruser", second_issue_query)
+        self.assertIn("type:issue", second_issue_query)
+        self.assertNotIn(" OR ", second_issue_query)
 
     def test_parse_date(self):
         """Test _parse_date helper method."""
@@ -203,7 +262,7 @@ class GitHubStatsCollectorTests(TestCase):
         self.assertIsNone(collector._parse_date(None))
 
 
-class DataClassesTests(TestCase):
+class DataClassesTests(SimpleTestCase):
     def setUp(self):
         self.author = Author(github_username="test", name="Test")
 
@@ -279,7 +338,7 @@ class DataClassesTests(TestCase):
         self.assertFalse(issue_closed.is_open)
 
 
-class StatsReportTests(TestCase):
+class StatsReportTests(SimpleTestCase):
     def setUp(self):
         self.author1 = Author(github_username="user1", name="User One")
         self.author2 = Author(github_username="user2", name="User Two")
@@ -334,28 +393,28 @@ class StatsReportTests(TestCase):
             issues=[self.issue_open],
         )
 
-    def test_get_open_prs(self):
-        open_prs = self.report.get_open_prs()
+    def test_open_prs(self):
+        open_prs = self.report.open_prs
         self.assertEqual(len(open_prs), 1)
         self.assertEqual(open_prs[0].title, "Open PR")
 
-    def test_get_merged_prs(self):
-        merged_prs = self.report.get_merged_prs()
+    def test_merged_prs(self):
+        merged_prs = self.report.merged_prs
         self.assertEqual(len(merged_prs), 1)
         self.assertEqual(merged_prs[0].title, "Merged PR")
 
-    def test_get_closed_prs(self):
-        closed_prs = self.report.get_closed_prs()
+    def test_closed_prs(self):
+        closed_prs = self.report.closed_prs
         self.assertEqual(len(closed_prs), 1)
         self.assertEqual(closed_prs[0].title, "Closed PR")
 
-    def test_get_open_issues(self):
-        open_issues = self.report.get_open_issues()
+    def test_open_issues(self):
+        open_issues = self.report.open_issues
         self.assertEqual(len(open_issues), 1)
         self.assertEqual(open_issues[0].title, "Open Issue")
 
-    def test_get_authors(self):
-        authors = self.report.get_authors()
+    def test_authors(self):
+        authors = self.report.authors
         self.assertEqual(len(authors), 2)
         author_names = {author.name for author in authors}
         self.assertEqual(author_names, {"User One", "User Two"})

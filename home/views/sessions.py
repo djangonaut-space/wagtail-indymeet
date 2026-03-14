@@ -5,13 +5,13 @@ from typing import Any
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
+from github import GithubException
 
 from home.forms import CollectStatsForm
 from home.models import Session, SessionMembership
@@ -81,14 +81,16 @@ class UserSessionListView(LoginRequiredMixin, ListView):
         return context
 
 
-@staff_member_required
 def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     """
     Collect and display GitHub stats for Djangonauts in a session.
 
-    Protected by staff_member_required to ensure admin-only access.
+    Access is controlled by admin_site.admin_view() in SessionAdmin.get_urls().
+    Additionally checks that the user is authorized for this specific session.
     """
-    session = get_object_or_404(Session, id=session_id)
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user), id=session_id
+    )
 
     repos = getattr(settings, "DJANGONAUT_MONITORED_REPOS", [])
     if not repos:
@@ -114,12 +116,16 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     if request.method == "POST":
         form = CollectStatsForm(request.POST)
         if form.is_valid():
-            report = GitHubStatsCollector().collect_all_stats(
-                repos=repos,
-                usernames=github_usernames,
-                start_date=form.cleaned_data["start_date"],
-                end_date=form.cleaned_data["end_date"],
-            )
+            try:
+                report = GitHubStatsCollector().collect_all_stats(
+                    repos=repos,
+                    usernames=github_usernames,
+                    start_date=form.cleaned_data["start_date"],
+                    end_date=form.cleaned_data["end_date"],
+                )
+            except (GithubException, ValueError) as e:
+                messages.error(request, f"GitHub API error: {e}")
+                return redirect("admin:home_session_changelist")
 
             messages.success(
                 request,

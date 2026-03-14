@@ -178,7 +178,7 @@
             <div class="stat"><span>Closed PRs</span><strong>{{ report.count_closed_prs }}</strong></div>
             <div class="stat"><span>Issues</span><strong>{{ report.count_open_issues }}</strong></div>
         </div>
-        {% with authors=report.get_authors %}
+        {% with authors=report.authors %}
         {% if authors %}
         <div class="authors-row">
             <strong>Djangonauts:</strong>
@@ -190,7 +190,7 @@
         {% endwith %}
     </div>
 
-    {% with merged_prs=report.get_merged_prs %}
+    {% with merged_prs=report.merged_prs %}
     {% if merged_prs %}
     <div class="merged-prs">
         <h3>🎉 Merged Pull Requests</h3>
@@ -211,7 +211,7 @@
     {% endif %}
     {% endwith %}
 
-    {% with closed_prs=report.get_closed_prs %}
+    {% with closed_prs=report.closed_prs %}
     {% if closed_prs %}
     <div class="closed-prs">
         <h3>🚧 Closed Pull Requests</h3>
@@ -232,7 +232,7 @@
     {% endif %}
     {% endwith %}
 
-    {% with open_prs=report.get_open_prs %}
+    {% with open_prs=report.open_prs %}
     {% if open_prs %}
     <div class="open-prs">
         <h3>✨ Open Pull Requests</h3>
@@ -253,7 +253,7 @@
     {% endif %}
     {% endwith %}
 
-    {% with open_issues=report.get_open_issues %}
+    {% with open_issues=report.open_issues %}
     {% if open_issues %}
     <div class="open-issues">
         <h3>✏️ Issues</h3>
@@ -274,7 +274,7 @@
     {% endif %}
     {% endwith %}
 
-    {% if not report.get_merged_prs and not report.get_closed_prs and not report.get_open_prs and not report.get_open_issues %}
+    {% if not report.merged_prs and not report.closed_prs and not report.open_prs and not report.open_issues %}
     <div class="no-activity">
         <h3>No GitHub activity found</h3>
         <p>Try selecting a different date range.</p>
