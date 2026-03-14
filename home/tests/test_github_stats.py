@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from accounts.factories import UserFactory
 from accounts.models import UserProfile
-from home.factories import SessionFactory, SessionMembershipFactory
+from home.factories import ProjectFactory, SessionFactory, SessionMembershipFactory
 from home.models.session import SessionMembership
 from home.services.github_stats import (
     Author,
@@ -441,6 +441,9 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.client.force_login(self.staff_user)
 
         self.session = SessionFactory.create(title="Test Session")
+        self.session.available_projects.add(
+            ProjectFactory.create(url="https://github.com/test-org/test-repo")
+        )
 
         self.djangonaut1 = UserFactory.create()
         UserProfile.objects.filter(user=self.djangonaut1).update(
@@ -466,10 +469,7 @@ class CollectStatsViewIntegrationTests(TestCase):
             "admin:session_collect_stats", kwargs={"session_id": self.session.id}
         )
 
-    @override_settings(
-        GITHUB_TOKEN="test_token",
-        DJANGONAUT_MONITORED_REPOS=[{"owner": "test-org", "repos": ["test-repo"]}],
-    )
+    @override_settings(GITHUB_TOKEN="test_token")
     @patch("home.views.sessions.GitHubStatsCollector")
     def test_displays_mixed_pr_states(self, mock_collector_class):
         """Verify view correctly displays open, merged, and closed PRs."""
@@ -536,11 +536,14 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertIn("🚧 Closed Pull Requests", content)
         self.assertIn("✨ Open Pull Requests", content)
         self.assertIn("✏️ Issues", content)
+        mock_collector.collect_all_stats.assert_called_once_with(
+            repos=[{"owner": "test-org", "repos": ["test-repo"]}],
+            usernames=["djangonaut1", "djangonaut2"],
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+        )
 
-    @override_settings(
-        GITHUB_TOKEN="test_token",
-        DJANGONAUT_MONITORED_REPOS=[{"owner": "test-org", "repos": ["test-repo"]}],
-    )
+    @override_settings(GITHUB_TOKEN="test_token")
     @patch("home.views.sessions.GitHubStatsCollector")
     def test_hides_empty_sections(self, mock_collector_class):
         """Verify sections without data are not displayed."""
@@ -577,10 +580,7 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertNotIn("✨ Open Pull Requests", content)
         self.assertNotIn("✏️ Issues", content)
 
-    @override_settings(
-        GITHUB_TOKEN="test_token",
-        DJANGONAUT_MONITORED_REPOS=[{"owner": "test-org", "repos": ["test-repo"]}],
-    )
+    @override_settings(GITHUB_TOKEN="test_token")
     def test_form_display(self):
         """GET request shows the date selection form."""
         response = self.client.get(self.url)
@@ -591,19 +591,21 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertIn("end_date", content)
         self.assertIn(self.session.title, content)
 
-    @override_settings(GITHUB_TOKEN="test_token", DJANGONAUT_MONITORED_REPOS=[])
-    def test_redirects_when_no_repos_configured(self):
-        """Redirects with error when DJANGONAUT_MONITORED_REPOS is empty."""
+    @override_settings(GITHUB_TOKEN="test_token")
+    def test_redirects_when_session_has_no_github_projects(self):
+        """Redirects with error when the session has no GitHub projects configured."""
+        self.session.available_projects.clear()
+
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 302)
         messages = list(get_messages(response.wsgi_request))
-        self.assertIn("No repositories configured", str(messages[0]))
+        self.assertIn(
+            "No GitHub repositories are configured for this session",
+            str(messages[0]),
+        )
 
-    @override_settings(
-        GITHUB_TOKEN="test_token",
-        DJANGONAUT_MONITORED_REPOS=[{"owner": "test-org", "repos": ["test-repo"]}],
-    )
+    @override_settings(GITHUB_TOKEN="test_token")
     def test_redirects_when_no_github_usernames(self):
         """Redirects with warning when no Djangonauts have GitHub usernames."""
         UserProfile.objects.filter(

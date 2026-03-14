@@ -3,7 +3,6 @@
 from datetime import date, timedelta
 from typing import Any
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, QuerySet
@@ -89,18 +88,22 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     Additionally checks that the user is authorized for this specific session.
     """
     session = get_object_or_404(
-        Session.objects.for_admin_site(request.user), id=session_id
+        Session.objects.for_admin_site(request.user).prefetch_related(
+            "available_projects"
+        ),
+        id=session_id,
     )
 
-    repos = getattr(settings, "DJANGONAUT_MONITORED_REPOS", [])
+    repos = session.get_monitored_github_repos()
     if not repos:
         messages.error(
             request,
-            "No repositories configured. Please set DJANGONAUT_MONITORED_REPOS in settings.",
+            "No GitHub repositories are configured for this session. "
+            "Add GitHub project URLs to the session's available projects.",
         )
         return redirect("admin:home_session_changelist")
 
-    github_usernames = list(
+    github_usernames = sorted(
         session.session_memberships.djangonauts()
         .filter(~Q(user__profile__github_username=""))
         .values_list("user__profile__github_username", flat=True)

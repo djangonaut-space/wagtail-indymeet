@@ -135,16 +135,8 @@ CACHES = {
 
 
 # GitHub API Configuration
-# Used for collecting Djangonaut stats (Issue #615)
+# Used for collecting Djangonaut stats
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-
-# Repositories to monitor for Djangonaut stats
-DJANGONAUT_MONITORED_REPOS = [
-    {"owner": "django", "repos": ["django"]},
-    {"owner": "wagtail", "repos": ["wagtail"]},
-    {"owner": "django-commons", "repos": ["*"]},  # All repos in django-commons
-    {"owner": "djangopackages", "repos": ["djangopackages"]},
-]
 
 
 # Password validation

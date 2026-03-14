@@ -475,6 +475,33 @@ class UserSurveyResponseTests(TestCase):
         self.assertIn(response.get_full_url(), mail.outbox[0].body)
 
 
+class ProjectTests(TestCase):
+    """Tests for Project GitHub metadata helpers."""
+
+    def test_github_repo_returns_owner_and_repo(self):
+        project = ProjectFactory.create(
+            url="https://github.com/django/django/contributors"
+        )
+
+        self.assertEqual(project.github_repo, ("django", "django"))
+
+    def test_github_repo_returns_none_for_non_github_url(self):
+        project = ProjectFactory.create(url="https://www.djangoproject.com/")
+
+        self.assertIsNone(project.github_repo)
+
+    def test_github_repo_config_uses_org_wide_flag(self):
+        project = ProjectFactory.create(
+            url="https://github.com/django-cms/django-cms",
+            monitor_all_organization_repos=True,
+        )
+
+        self.assertEqual(
+            project.github_repo_config,
+            {"owner": "django-cms", "repos": ["*"]},
+        )
+
+
 class SessionMembershipTests(TestCase):
     """Tests for SessionMembership model."""
 
@@ -497,3 +524,44 @@ class TeamTests(TestCase):
 
         expected_url = f"/sessions/spring-2024/teams/{team.pk}/"
         self.assertEqual(team.get_absolute_url(), expected_url)
+
+
+class SessionGitHubRepoTests(TestCase):
+    """Tests for session GitHub repo configuration helpers."""
+
+    def test_get_monitored_github_repos_uses_session_projects(self):
+        session = SessionFactory.create()
+        session.available_projects.add(
+            ProjectFactory.create(url="https://github.com/django/django"),
+            ProjectFactory.create(url="https://github.com/wagtail/wagtail"),
+            ProjectFactory.create(
+                url="https://github.com/django-commons/membership",
+                monitor_all_organization_repos=True,
+            ),
+            ProjectFactory.create(url="https://www.djangoproject.com/"),
+            ProjectFactory.create(url="https://github.com/django/django"),
+        )
+
+        self.assertEqual(
+            session.get_monitored_github_repos(),
+            [
+                {"owner": "django", "repos": ["django"]},
+                {"owner": "django-commons", "repos": ["*"]},
+                {"owner": "wagtail", "repos": ["wagtail"]},
+            ],
+        )
+
+    def test_get_monitored_github_repos_org_flag_overrides_repo_entries(self):
+        session = SessionFactory.create()
+        session.available_projects.add(
+            ProjectFactory.create(url="https://github.com/django-commons/membership"),
+            ProjectFactory.create(
+                url="https://github.com/django-commons/awesome-package",
+                monitor_all_organization_repos=True,
+            ),
+        )
+
+        self.assertEqual(
+            session.get_monitored_github_repos(),
+            [{"owner": "django-commons", "repos": ["*"]}],
+        )

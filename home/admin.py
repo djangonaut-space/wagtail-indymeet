@@ -51,8 +51,9 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
-    list_display = ("name", "url")
-    search_fields = ("name",)
+    list_display = ("name", "url", "monitor_all_organization_repos")
+    list_filter = ("monitor_all_organization_repos",)
+    search_fields = ("name", "url")
     ordering = ("name",)
 
 
