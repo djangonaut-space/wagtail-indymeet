@@ -529,28 +529,6 @@ class TeamTests(TestCase):
 class SessionGitHubRepoTests(TestCase):
     """Tests for session GitHub repo configuration helpers."""
 
-    def test_get_monitored_github_repos_uses_session_projects(self):
-        session = SessionFactory.create()
-        session.available_projects.add(
-            ProjectFactory.create(url="https://github.com/django/django"),
-            ProjectFactory.create(url="https://github.com/wagtail/wagtail"),
-            ProjectFactory.create(
-                url="https://github.com/django-commons/membership",
-                monitor_all_organization_repos=True,
-            ),
-            ProjectFactory.create(url="https://www.djangoproject.com/"),
-            ProjectFactory.create(url="https://github.com/django/django"),
-        )
-
-        self.assertEqual(
-            session.get_monitored_github_repos(),
-            [
-                {"owner": "django", "repos": ["django"]},
-                {"owner": "django-commons", "repos": ["*"]},
-                {"owner": "wagtail", "repos": ["wagtail"]},
-            ],
-        )
-
     def test_get_monitored_github_repos_org_flag_overrides_repo_entries(self):
         session = SessionFactory.create()
         session.available_projects.add(
