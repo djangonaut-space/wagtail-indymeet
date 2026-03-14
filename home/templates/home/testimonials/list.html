@@ -12,7 +12,7 @@
 {% endblock social_share %}
 
 {% block content %}
-<main class="section my-3 mx-5">
+<main class="section my-3 md:mx-5">
     <div class="section-container">
         <header class="flex flex-wrap justify-between items-center gap-4 mb-8">
             <div>
@@ -27,24 +27,24 @@
         </header>
 
         {% if testimonials %}
-        <section class="space-y-4">
+        <section class="flex-container ">
             {% for testimonial in testimonials %}
             <article id="{{ testimonial.slug }}"
-                     class="grid grid-cols-4 gap-6 p-6 bg-white rounded-lg border border-gray-200 scroll-mt-24">
-                <figure>
+                     class=" flex flex-col md:flex-row bg-white rounded-lg border border-gray-200 scroll-mt-24 mb-8 md:p-4">
+                <figure class="w-full md:w-1/3 flex flex-col p-6 mb-2 md:mb-0">
                     {% if testimonial.image %}
                     <img src="{{ testimonial.image.url }}"
                          alt="{{ testimonial.image_description }}"
                          class="w-full max-h-48 rounded object-cover mb-3">
                     {% endif %}
-                    <figcaption>
+                    <figcaption >
                         <h5 class="text-xl font-semibold text-gray-800">{{ testimonial.author.get_full_name|default:testimonial.author.email }}</h5>
                         <small class="text-sm text-gray-500">Participant of {{ testimonial.session.title }}</small>
                     </figcaption>
                 </figure>
-                <div class="col-span-3 flex flex-col">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-3">{{ testimonial.title }}</h2>
-                    <blockquote class="relative bg-purple-50 border-l-4 border-ds-purple rounded-r-lg p-5">
+                <div class="w-full md:w-2/3 flex flex-col">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-2 md:mx-3 pl-2 md:pt-6 ">{{ testimonial.title }}</h2>
+                    <blockquote class="relative bg-purple-50 border-l-4 border-ds-purple rounded-r-lg p-5 md:mx-4 md:mb-4">
                         <i class="fa-solid fa-quote-left absolute -top-2 left-2 text-3xl text-purple-400" aria-hidden="true"></i>
                         <p class="text-gray-700 italic pl-6">
                             {{ testimonial.text|linebreaksbr|urlizetrunc:25 }}
@@ -54,7 +54,7 @@
                 </div>
             </article>
             {% endfor %}
-        </section>
+        </div>
         {% else %}
         <section class="text-center py-12 bg-white rounded-lg border border-gray-200">
             <i class="fa-solid fa-comment-dots text-5xl text-gray-300 mb-4"></i>

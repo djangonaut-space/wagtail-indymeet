@@ -18,13 +18,13 @@
         {% endfor %}
     </div>
 {% elif analysis_type == 'overlap-navigator' %}
-    {% include "admin/partials/overlap_result_item.html" with is_sufficient=is_sufficient title="Navigator(s) Overlap" team=team hour_blocks=hour_blocks time_ranges=time_ranges navigators=navigators selected_users=selected_users %}
+    {% include "admin/partials/overlap_result_item.html" with is_sufficient=is_sufficient title="Navigator(s) Overlap" team=team hour_blocks=hour_blocks time_ranges=time_ranges navigators=navigators existing_djangonauts=existing_djangonauts selected_users=selected_users compare_availability_url=compare_availability_url %}
 {% elif analysis_type == 'overlap-captain' %}
     <div class="overlap-result">
         <strong>{% trans "Captain Overlap" %}</strong> (Team: {{ team.name }})<br>
         <em>{% trans "Captain:" %} {{ captain.get_full_name }}</em>
     </div>
     {% for result in results %}
-        {% include "admin/partials/overlap_result_item.html" with is_sufficient=result.is_sufficient title=result.user.get_full_name hour_blocks=result.hour_blocks time_ranges=result.time_ranges is_nested=True %}
+        {% include "admin/partials/overlap_result_item.html" with is_sufficient=result.is_sufficient title=result.user.get_full_name hour_blocks=result.hour_blocks time_ranges=result.time_ranges is_nested=True compare_availability_url=result.compare_availability_url %}
     {% endfor %}
 {% endif %}

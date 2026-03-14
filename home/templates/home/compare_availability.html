@@ -96,107 +96,54 @@
             </div>
         </form>
 
-        {% if selected_users %}
-        <!-- Timezone and Legend -->
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-sm text-gray-600">
-                {% trans "Timezone:" %} <span x-text="timezone" class="font-bold"></span>
-            </span>
-            <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-500">{% trans "Legend:" %}</span>
-                <span class="inline-flex items-center gap-1">
-                    <span class="w-4 h-4 rounded border border-gray-200 bg-ds-purple"></span>
-                    <span class="text-xs">{% trans "All available" %}</span>
-                </span>
-                <span class="inline-flex items-center gap-1">
-                    <span class="w-4 h-4 rounded bg-gray-50 border border-gray-200"></span>
-                    <span class="text-xs">{% trans "None available" %}</span>
-                </span>
+        {% comment %}
+            The grid is loaded via htmx so we can inject the browser's UTC offset
+            (not available server-side) into the request via hx-vals.
+            After htmx settles the response, we hydrate Alpine.js state from the
+            JSON script tags rendered by the grid partial and reset any pinned
+            slot since the grid contents have changed.
+        {% endcomment %}
+        <div id="availability-grid-container"
+             hx-get="{% url 'compare_availability_grid' %}?{{ request.GET.urlencode }}"
+             hx-trigger="load"
+             hx-vals='js:{"offset": -new Date().getTimezoneOffset() / 60}'
+             hx-swap="innerHTML"
+             hx-disinherit="*"
+             @htmx:after-settle="
+                 const sa = document.getElementById('slot-availabilities');
+                 const su = document.getElementById('selected-users');
+                 if (sa) slotAvailabilities = JSON.parse(sa.textContent);
+                 if (su) users = JSON.parse(su.textContent);
+                 fixedSlot = null;
+                 activeDisplayTime = '';
+                 activeTimeIsUrl = '';
+             ">
+            <div class="text-center py-12 text-gray-500">
+                <p>{% trans "Loading availability..." %}</p>
             </div>
         </div>
-
-        <!-- Main Content Area -->
-        <div class="flex flex-col lg:flex-row gap-6">
-            <!-- Grid -->
-            <div class="flex-grow">
-                <div class="overflow-x-auto">
-                    <table id="availability-grid" class="w-full border-collapse">
-                        <thead>
-                            <tr>
-                                <th class="bg-gray-50 border border-gray-200 p-1 w-16"></th>
-                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Sun" %}</th>
-                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Mon" %}</th>
-                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Tue" %}</th>
-                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Wed" %}</th>
-                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Thu" %}</th>
-                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Fri" %}</th>
-                                <th class="bg-gray-50 p-2 font-semibold text-xs text-center border border-b-2 border-gray-200">{% trans "Sat" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody @mouseleave="hoveredSlot = null">
-                            {% for row in grid_rows %}
-                            <tr>
-                                {% if row.show_time_label %}
-                                <th rowspan="2" class="border border-gray-200 text-xs text-right pr-2 bg-gray-50">
-                                    {{ row.time_label }}
-                                </th>
-                                {% endif %}
-                                {% for cell in row.cells %}
-                                <td class="time-slot h-4 border border-gray-200 cursor-pointer"
-                                    :style="getCellStyle('{{ cell.slot_key }}', '{{ cell.color|default:'' }}')"
-                                    title="{{ cell.available_count }}/{{ cell.total_count }} {% trans 'available' %}"
-                                    @mouseenter="hoveredSlot = '{{ cell.slot_key }}'">
-                                </td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Users Panel -->
-            <div class="w-full lg:w-64 flex-shrink-0">
-                <div class="bg-white border border-gray-200 rounded-lg p-4 sticky top-4">
-                    <h3 class="font-bold text-gray-900 mb-3">{% trans "Selected Users" %}</h3>
-                    <div class="space-y-2">
-                        <template x-for="user in users" :key="user.id">
-                            <div class="user-card p-2 rounded border border-gray-100 cursor-pointer"
-                                 :class="{ 'unavailable': isUnavailable(user.id), 'bg-purple-100 border-purple-300': hoveredUser === user.id }"
-                                 @mouseenter="hoveredUser = user.id"
-                                 @mouseleave="hoveredUser = null">
-                                <span class="user-name text-sm text-gray-900 truncate" x-text="user.display_name"></span>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="text-center py-12 text-gray-500">
-            <p>{% trans "Select users above and click Apply to compare availability." %}</p>
-        </div>
-        {% endif %}
     </div>
 </main>
-{{ slot_availabilities|json_script:"slot-availabilities" }}
-{{ selected_users|json_script:"selected-users" }}
-
 <script>
 function availabilityGrid() {
-    const slotAvailabilities = JSON.parse(document.getElementById('slot-availabilities').textContent);
-    const users = JSON.parse(document.getElementById('selected-users').textContent);
     return {
-        slotAvailabilities: slotAvailabilities,
-        users: users,
+        slotAvailabilities: {},
+        users: [],
         hoveredSlot: null,
+        fixedSlot: null,
         hoveredUser: null,
+        activeDisplayTime: '',
+        activeTimeIsUrl: '',
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         offsetHours: -new Date().getTimezoneOffset() / 60,
 
+        get activeSlot() {
+            return this.fixedSlot || this.hoveredSlot;
+        },
+
         isUnavailable(userId) {
-            if (this.hoveredSlot === null) return false;
-            const available = this.slotAvailabilities[this.hoveredSlot] || [];
+            if (this.activeSlot === null) return false;
+            const available = this.slotAvailabilities[this.activeSlot] || [];
             return !available.includes(userId);
         },
 

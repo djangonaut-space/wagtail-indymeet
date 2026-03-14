@@ -51,7 +51,7 @@
     </a>
   {% endif %}
 
-  <a href="{% url 'compare_availability' %}?session={{ team.session.id }}&users={{ membership.user.id }}" class="text-sm mt-2 inline-block ml-3">
+  <a href="{% url 'compare_availability' %}?session={{ team.session.id }}&users={{ membership.user.id }},{{ user.id }}" class="text-sm mt-2 inline-block ml-3">
     <i class="fas fa-calendar-alt mr-1"></i>{% trans "Compare Availability" %}
   </a>
 </div>

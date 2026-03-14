@@ -3,7 +3,30 @@ from datetime import timedelta
 from django.utils import timezone
 
 from accounts.models import UserAvailability
-from home.models import Session
+from home.models import Session, SessionMembership
+
+
+def nav_session_links(request):
+    """
+    Provide session-related nav link context for authenticated users.
+
+    Determines whether to show 'My Sessions' (user has any session membership)
+    and 'My Team' (user has a membership with a team on an active session).
+    """
+    context = {}
+    if request.user.is_authenticated:
+        today = timezone.now().date()
+        active_team_membership = (
+            SessionMembership.objects.for_user(request.user)
+            .filter(team__isnull=False, session__end_date__gte=today)
+            .select_related("team", "session")
+            .order_by("-session__start_date")
+            .first()
+        )
+        if active_team_membership is not None:
+            context["nav_active_team_membership"] = active_team_membership
+
+    return context
 
 
 def alert_about_status(request):

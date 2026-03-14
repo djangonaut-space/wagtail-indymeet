@@ -9,14 +9,68 @@ from django.contrib.auth.admin import (
 from django.contrib.auth.models import Group
 from django.contrib import admin as django_admin
 from django.core.management import call_command
+from django.db.models import Exists, OuterRef, QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
-from accounts.models import CustomUser
-from accounts.models import Link
-from accounts.models import UserAvailability
-from accounts.models import UserProfile
+from accounts.models import CustomUser, Link, UserAvailability, UserProfile
+from home.models.session import SessionMembership
 from indymeet.admin import DescriptiveSearchMixin
+
+
+class PastSessionMembershipFilter(admin.SimpleListFilter):
+    """Base filter for users with a membership in a past session.
+
+    Subclasses set ``title``, ``parameter_name``, and optionally override
+    ``membership_queryset``.  Set ``user_field`` to the FK path from the
+    filtered model to the user (empty string when the model *is* the user).
+    """
+
+    title: str
+    parameter_name: str
+    user_field: str = ""
+    membership_queryset = SessionMembership.objects.all()
+
+    def lookups(
+        self, request: admin.ModelAdmin, model_admin: admin.ModelAdmin
+    ) -> list[tuple[str, str]]:
+        return [
+            ("yes", "Yes"),
+            ("no", "No"),
+        ]
+
+    def queryset(self, request: admin.ModelAdmin, queryset: QuerySet) -> QuerySet:
+        if self.value() not in ("yes", "no"):
+            return queryset
+
+        outer_ref = self.user_field or "pk"
+        annotated = queryset.annotate(
+            **{
+                self.parameter_name: Exists(
+                    self.membership_queryset.filter(user=OuterRef(outer_ref))
+                )
+            }
+        )
+        return annotated.filter(**{self.parameter_name: self.value() == "yes"})
+
+
+class PastDjangonautFilter(PastSessionMembershipFilter):
+    title = "past djangonaut"
+    parameter_name = "past_djangonaut"
+    membership_queryset = SessionMembership.objects.djangonauts()
+
+
+class PastSessionMemberFilter(PastSessionMembershipFilter):
+    title = "past session member"
+    parameter_name = "past_session_member"
+
+
+class RelatedUserPastDjangonautFilter(PastDjangonautFilter):
+    user_field = "user"
+
+
+class RelatedUserPastSessionMemberFilter(PastSessionMemberFilter):
+    user_field = "user"
 
 
 class ExportCsvMixin:
@@ -73,6 +127,7 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "profile__github_username",
         "date_joined",
     )
+    list_filter = (PastDjangonautFilter, PastSessionMemberFilter)
 
     @admin.action(description="Compare availability of selected users")
     def compare_availability_action(
@@ -97,6 +152,7 @@ class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin)
     inlines = (LinksInline,)
     model = UserProfile
     actions = ["export_as_csv"]
+    list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)
 
 
 @admin.register(UserAvailability)
@@ -109,6 +165,11 @@ class UserAvailabilityAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "user__email",
         "user__first_name",
         "user__last_name",
+    )
+    list_filter = (
+        RelatedUserPastDjangonautFilter,
+        RelatedUserPastSessionMemberFilter,
+        "updated_at",
     )
     readonly_fields = ("updated_at",)
     raw_id_fields = ("user",)

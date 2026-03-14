@@ -727,6 +727,87 @@ class SessionMembershipQuerySetTestCase(TestCase):
         self.assertIn(membership2, qs)
 
 
+class EnforceDjangonautAccessControlTestCase(TestCase):
+    """Test SessionMembershipQuerySet.enforce_djangonaut_access_control()."""
+
+    def setUp(self):
+        today = timezone.now().date()
+        self.upcoming_session = SessionFactory(
+            start_date=today + timedelta(days=30),
+            end_date=today + timedelta(days=90),
+            djangonauts_have_access=False,
+        )
+        self.active_session = SessionFactory(
+            start_date=today - timedelta(days=10),
+            end_date=today + timedelta(days=60),
+            djangonauts_have_access=False,
+        )
+        self.upcoming_team = TeamFactory(session=self.upcoming_session)
+        self.active_team = TeamFactory(session=self.active_session)
+
+    def test_excludes_djangonaut_before_start_without_access(self):
+        """Djangonaut on upcoming session without access flag is excluded."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertNotIn(membership, qs)
+
+    def test_includes_djangonaut_when_access_flag_set(self):
+        """Djangonaut is included when djangonauts_have_access is True."""
+        self.upcoming_session.djangonauts_have_access = True
+        self.upcoming_session.save()
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_djangonaut_after_start_date(self):
+        """Djangonaut is included when session start date has passed."""
+        membership = SessionMembershipFactory.create(
+            session=self.active_session,
+            team=self.active_team,
+            role=SessionMembership.DJANGONAUT,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_captain_regardless(self):
+        """Captains are always included even without access."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.CAPTAIN,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_navigator_regardless(self):
+        """Navigators are always included even without access."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=self.upcoming_team,
+            role=SessionMembership.NAVIGATOR,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+    def test_includes_organizer_regardless(self):
+        """Organizers are always included even without access."""
+        membership = SessionMembershipFactory.create(
+            session=self.upcoming_session,
+            team=None,
+            role=SessionMembership.ORGANIZER,
+        )
+        qs = SessionMembership.objects.enforce_djangonaut_access_control()
+        self.assertIn(membership, qs)
+
+
 class SessionQuerySetTestCase(TestCase):
     """Test SessionQuerySet methods."""
 

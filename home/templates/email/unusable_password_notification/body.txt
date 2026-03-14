@@ -1,0 +1,21 @@
+Hi {{ name }},
+
+As we transition from Google Forms and Sheets to our website, we created a Djangonaut Space account for your email address to record your session participation.
+
+You do not currently have a password set for this account. If you would like to access or manage your account, you can set a password using the link below:
+
+{{ cta_link }}
+
+If you would prefer to have your account and all associated data removed, you can do so by:
+
+1. Setting a password using the link above.
+2. Logging in and visiting your profile.
+3. Using the "Delete Account" option to permanently remove your account and data.
+
+Delete account page (requires login): {{ delete_account_url }}
+
+If you have any questions, please contact us at hello@djangonaut.space.
+
+Thank you,
+
+Djangonaut Space Organizers

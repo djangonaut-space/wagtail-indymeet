@@ -10,37 +10,40 @@
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section my-3 mx-5">
-    <div class="section-container">
+    <main class="mx-auto max-w-xl px-2 py-8 md:px-4">
         {% if next %}
-            <div class="row pt-4 pb-4">
-                <div class="col">
+            <div class="mb-4 border-l-4 border-red-500 bg-red-100 p-4 text-red-700">
                 {% if user.is_authenticated %}
                     <p>{% translate "Your account doesn't have access to this page. To proceed, please login with an account that has access." %}</p>
                 {% else %}
                     <p>{% translate "Please login to see this page." %}</p>
                 {% endif %}
-                </div>
             </div>
         {% endif %}
 
-        <div class="row">
-          <div class="col">
-            <form method="post">
-              {% csrf_token %}
-
-              {{ form }}
-              <button type="submit" class="action-button">Login</button>
-              <input type="hidden" name="next" value="{{ next }}">
-            </form>
-          </div>
-          <div class="row pt-4 pb-4">
-            <div class="col">
-                <p>{% translate "Forgotten your password?" %} <a href="{% url 'password_reset' %}" class="text-ds-purple hover:underline">{% translate "Reset password." %}</a></p>
-            </div>
-          </div>
-          <div class="col"></div>
+        <!-- Header -->
+        <div class="mb-10 text-center">
+            <h1 class="mb-2 text-5xl font-bold text-gray-800">Login</h1>
         </div>
-    </div>
-</main>
+        <!-- Box with shadow-->
+        <div class="mb-4 rounded-xl md:mb-8 md:p-16 md:shadow-lg">
+            <form method="post">
+                {% csrf_token %}
+
+                {{ form }}
+                <button type="submit" class="action-button">Login</button>
+                <input type="hidden" name="next" value="{{ next }}">
+            </form>
+        </div>
+        <div class="flex flex-col gap-1 md:flex-row">
+            <div>
+                <p>{% translate "Forgotten your password?" %} </p>
+            </div>
+            <div>
+                <p><a href="{% url 'password_reset' %}"
+                      class="text-ds-purple hover:underline">{% translate "Reset password." %}</a></p>
+            </div>
+        </div>
+    </main>
+
 {% endblock content %}
