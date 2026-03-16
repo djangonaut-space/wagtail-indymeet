@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+from github import GithubException
 
 from accounts.factories import UserFactory
 from accounts.models import UserProfile
@@ -598,6 +599,36 @@ class CollectStatsViewIntegrationTests(TestCase):
             "No GitHub repositories are configured for this session",
             str(messages[0]),
         )
+
+    @override_settings(GITHUB_TOKEN="test_token")
+    @patch("home.views.sessions.GitHubStatsCollector")
+    def test_github_api_error_redirects_with_message(self, mock_collector_class):
+        """Redirects with error message when GitHub API raises an exception."""
+        mock_collector = Mock()
+        mock_collector_class.return_value = mock_collector
+        mock_collector.collect_all_stats.side_effect = GithubException(
+            500, "API error", None
+        )
+
+        response = self.client.post(
+            self.url,
+            {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        msgs = list(get_messages(response.wsgi_request))
+        self.assertIn("GitHub API error", str(msgs[0]))
+
+    @override_settings(GITHUB_TOKEN="test_token")
+    def test_invalid_form_redisplays_form(self):
+        """POST with invalid dates re-renders the form with errors."""
+        response = self.client.post(
+            self.url,
+            {"start_date": "", "end_date": ""},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "start_date")
 
     @override_settings(GITHUB_TOKEN="test_token")
     def test_redirects_when_no_github_usernames(self):
