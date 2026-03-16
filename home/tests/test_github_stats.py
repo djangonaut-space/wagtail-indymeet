@@ -129,7 +129,7 @@ class GitHubStatsCollectorTests(SimpleTestCase):
         )
 
     @patch("home.services.github_stats.Github")
-    def test_get_repos_from_config_wildcard(self, mock_github_class):
+    def test_resolve_wildcard_repos(self, mock_github_class):
         mock_repo1 = Mock()
         mock_repo1.name = "repo1"
         mock_repo2 = Mock()
@@ -144,16 +144,10 @@ class GitHubStatsCollectorTests(SimpleTestCase):
         collector = GitHubStatsCollector(self.mock_token)
         collector.github = mock_github_instance
 
-        repos = collector._get_repos_from_config("test-org", ["*"])
+        repos = collector._resolve_wildcard_repos("test-org")
 
         self.assertEqual(repos, ["repo1", "repo2"])
         mock_org.get_repos.assert_called_once_with(type="sources")
-
-    @patch("home.services.github_stats.Github")
-    def test_get_repos_from_config_specific(self, mock_github_class):
-        collector = GitHubStatsCollector(self.mock_token)
-        repos = collector._get_repos_from_config("test-org", ["repo1", "repo2"])
-        self.assertEqual(repos, ["repo1", "repo2"])
 
     @patch("home.services.github_stats.Github")
     def test_collect_all_stats(self, mock_github_class):
@@ -246,20 +240,20 @@ class GitHubStatsCollectorTests(SimpleTestCase):
         self.assertIn("type:issue", second_issue_query)
         self.assertNotIn(" OR ", second_issue_query)
 
-    def test_parse_date(self):
-        """Test _parse_date helper method."""
+    def test_to_date(self):
+        """Test _to_date helper method."""
         collector = GitHubStatsCollector(self.mock_token)
 
         # Test datetime conversion
         dt = datetime(2024, 1, 15, 12, 0, 0)
-        self.assertEqual(collector._parse_date(dt), date(2024, 1, 15))
+        self.assertEqual(collector._to_date(dt), date(2024, 1, 15))
 
         # Test date pass-through
         d = date(2024, 1, 15)
-        self.assertEqual(collector._parse_date(d), d)
+        self.assertEqual(collector._to_date(d), d)
 
         # Test None
-        self.assertIsNone(collector._parse_date(None))
+        self.assertIsNone(collector._to_date(None))
 
 
 class DataClassesTests(SimpleTestCase):
