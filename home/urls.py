@@ -1,11 +1,6 @@
-from django.urls import path
 from django.conf import settings
+from django.urls import path
 from django.views.generic import TemplateView
-from .views.dev_email_preview import (
-    preview_acceptance_reminder,
-    preview_session_accepted,
-)
-
 
 from home.views.compare_availability import (
     compare_availability,
@@ -30,6 +25,11 @@ from home.views.testimonials import (
     TestimonialDeleteView,
     TestimonialListView,
     TestimonialUpdateView,
+)
+
+from .views.dev_email_preview import (
+    preview_acceptance_reminder,
+    preview_session_accepted,
 )
 
 urlpatterns = [
