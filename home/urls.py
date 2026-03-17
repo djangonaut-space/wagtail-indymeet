@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.urls import path
 from django.views.generic import TemplateView
 
@@ -25,11 +24,6 @@ from home.views.testimonials import (
     TestimonialDeleteView,
     TestimonialListView,
     TestimonialUpdateView,
-)
-
-from .views.dev_email_preview import (
-    preview_acceptance_reminder,
-    preview_session_accepted,
 )
 
 urlpatterns = [
@@ -113,15 +107,3 @@ urlpatterns = [
         name="testimonial_delete",
     ),
 ]
-
-if settings.DEBUG:
-    urlpatterns += [
-        path(
-            "dev/email/acceptance-reminder/",
-            preview_acceptance_reminder,
-        ),
-        path(
-            "dev/email/session-accepted/",
-            preview_session_accepted,
-        ),
-    ]
