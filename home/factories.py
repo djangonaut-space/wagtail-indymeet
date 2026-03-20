@@ -107,7 +107,7 @@ class ProjectFactory(factory.django.DjangoModelFactory):
         model = Project
 
     name = factory.Sequence(lambda n: "Project %d" % n)
-    url = factory.Sequence(lambda n: "https://github.com/project-%d" % n)
+    url = factory.Sequence(lambda n: "https://github.com/test-org/project-%d" % n)
 
 
 class TeamFactory(factory.django.DjangoModelFactory):

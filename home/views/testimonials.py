@@ -1,5 +1,6 @@
 """Testimonial-related views."""
 
+import random
 from typing import Any
 
 from django.contrib import messages
@@ -33,9 +34,16 @@ class TestimonialListView(ListView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add hero testimonial and highlight info to context."""
         context = super().get_context_data(**kwargs)
-        context["hero_testimonial"] = (
-            Testimonial.objects.published().order_by("?").first()
+        published_ids = list(
+            Testimonial.objects.published().values_list("pk", flat=True)
         )
+        if published_ids:
+            hero_pk = random.choice(published_ids)
+            context["hero_testimonial"] = Testimonial.objects.select_related(
+                "author", "session"
+            ).get(pk=hero_pk)
+        else:
+            context["hero_testimonial"] = None
 
         # Check if user can create testimonials (has session memberships with available sessions)
         context["can_create_testimonial"] = False
@@ -104,20 +112,28 @@ class TestimonialCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView)
         return context
 
 
-class TestimonialUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """Update an existing testimonial. Only the author can edit."""
+class AuthorTestimonialMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Mixin that restricts testimonial access to the author."""
 
     model = Testimonial
-    form_class = TestimonialForm
-    template_name = "home/testimonials/form.html"
-    success_url = reverse_lazy("profile")
     slug_field = "slug"
     slug_url_kwarg = "slug"
 
+    def get_queryset(self) -> QuerySet[Testimonial]:
+        """Limit queryset to testimonials authored by the current user."""
+        return super().get_queryset().filter(author=self.request.user)
+
     def test_func(self) -> bool:
         """Check if user is the author of the testimonial."""
-        testimonial = self.get_object()
-        return testimonial.author == self.request.user
+        return self.get_queryset().filter(slug=self.kwargs["slug"]).exists()
+
+
+class TestimonialUpdateView(AuthorTestimonialMixin, UpdateView):
+    """Update an existing testimonial. Only the author can edit."""
+
+    form_class = TestimonialForm
+    template_name = "home/testimonials/form.html"
+    success_url = reverse_lazy("profile")
 
     def get_form_kwargs(self) -> dict[str, Any]:
         """Pass user to form."""
@@ -127,12 +143,11 @@ class TestimonialUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView)
 
     def form_valid(self, form: TestimonialForm) -> HttpResponse:
         """Unpublish on edit and trigger notification."""
-        # Capture old values before saving
-        old_testimonial = Testimonial.objects.get(pk=self.object.pk)
+        # Capture old values from the already-loaded object before saving
         old_values = {
-            "title": old_testimonial.title,
-            "text": old_testimonial.text,
-            "session_id": old_testimonial.session_id,
+            "title": self.object.title,
+            "text": self.object.text,
+            "session_id": self.object.session_id,
         }
 
         # Unpublish on edit - requires re-approval
@@ -164,21 +179,13 @@ class TestimonialUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView)
         return context
 
 
-class TestimonialDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class TestimonialDeleteView(AuthorTestimonialMixin, DeleteView):
     """Delete a testimonial. Only the author can delete."""
 
-    model = Testimonial
     template_name = "home/testimonials/confirm_delete.html"
     success_url = reverse_lazy("profile")
-    slug_field = "slug"
-    slug_url_kwarg = "slug"
 
-    def test_func(self) -> bool:
-        """Check if user is the author of the testimonial."""
-        testimonial = self.get_object()
-        return testimonial.author == self.request.user
-
-    def form_valid(self, form) -> HttpResponse:
+    def form_valid(self, form: TestimonialForm) -> HttpResponse:
         """Add success message on deletion."""
         messages.success(
             self.request,

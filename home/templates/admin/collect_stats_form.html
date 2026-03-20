@@ -1,0 +1,72 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url 'admin:home_session_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; {% trans 'Collect GitHub Stats' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Collect GitHub Stats for "{{ session.title }}"</h1>
+
+    <div class="module">
+        <h2>{% trans "Configuration" %}</h2>
+        <p>
+            {% blocktrans with count=github_usernames|length %}
+                Found {{ count }} Djangonauts with configured GitHub usernames.
+            {% endblocktrans %}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <p class="errornote">
+                {% for error in form.non_field_errors %}
+                {{ error }}
+                {% endfor %}
+            </p>
+            {% endif %}
+
+            <fieldset class="module aligned">
+                <div class="form-row{% if form.start_date.errors %} errors{% endif %}">
+                    {{ form.start_date.errors }}
+                    <label for="{{ form.start_date.id_for_label }}">{% trans "Start Date:" %}</label>
+                    {{ form.start_date }}
+                </div>
+
+                <div class="form-row{% if form.end_date.errors %} errors{% endif %}">
+                    {{ form.end_date.errors }}
+                    <label for="{{ form.end_date.id_for_label }}">{% trans "End Date:" %}</label>
+                    {{ form.end_date }}
+                </div>
+
+                <div class="form-row">
+                    <label>{% trans "Tracking Users:" %}</label>
+                    <div class="readonly">
+                        {{ github_usernames|join:", " }}
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="submit-row">
+                <input type="submit" value="{% trans 'Collect Stats' %}" class="default">
+                <a href="{% url 'admin:home_session_changelist' %}" class="button" style="float: right;">{% trans "Cancel" %}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
