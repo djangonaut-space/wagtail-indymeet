@@ -383,7 +383,19 @@ class TestAvailabilityPage:
         user.profile.save()
         return user
 
-    def test_availability_workflow(self, page: Page, authenticated_user):
+    @pytest.fixture
+    def mobile_page(self, new_context, live_server):
+        context = new_context(
+            base_url=live_server.url,
+            viewport={"width": 375, "height": 812},
+            has_touch=True,
+        )
+        page = context.new_page()
+        yield page
+        page.close()
+        context.close()
+
+    def test_availability_workflow(self, page: Page, authenticated_user, mobile_page):
         """
         Complete workflow test for availability page:
         1. Select a block of time and save
@@ -392,6 +404,8 @@ class TestAvailabilityPage:
         4. Go back and confirm block is removed
         5. Select multiple scattered slots and save
         6. Go back and confirm slots remain
+        7. Mobile — tap to select, then tap to deselect
+        8. Mobile — tap to select, save, and confirm persistence after reload
         """
         # Login with the authenticated user
         page.goto(reverse("login"))
@@ -427,9 +441,6 @@ class TestAvailabilityPage:
         # Use drag selection to select the block
         # Drag from the first cell to the last cell
         monday_9am.drag_to(monday_1030am)
-
-        # Wait for selection to be processed
-        page.wait_for_timeout(200)
 
         # Wait for the first cell to have the selected class
         # (indicates JS has processed the selection)
@@ -500,9 +511,6 @@ class TestAvailabilityPage:
         # Drag from the first cell to the last cell
         tuesday_2pm.drag_to(tuesday_3pm)
 
-        # Wait for selection to be processed
-        page.wait_for_timeout(200)
-
         # Verify all cells in the new block are selected
         expect(tuesday_2pm).to_have_class(re.compile(r".*\bselected\b.*"))
         expect(tuesday_230pm).to_have_class(re.compile(r".*\bselected\b.*"))
@@ -527,6 +535,50 @@ class TestAvailabilityPage:
         # Verify the original Monday slots are still not selected
         expect(monday_9am).not_to_have_class(re.compile(r".*\bselected\b.*"))
         expect(monday_10am).not_to_have_class(re.compile(r".*\bselected\b.*"))
+
+        # Step 7: Mobile — tap to select and deselect
+        mobile_page.goto(reverse("login"))
+        mobile_page.get_by_label("Username").fill("availabilitytest")
+        mobile_page.get_by_label("Password").fill("testpass123")
+        mobile_page.get_by_role("button", name="Login").click()
+        mobile_page.wait_for_load_state("networkidle")
+
+        mobile_page.goto(reverse("availability"))
+        mobile_page.wait_for_load_state("networkidle")
+        mobile_page.locator("#availability-grid tbody tr").first.wait_for(
+            state="visible"
+        )
+        mobile_page.locator(".time-slot[data-day][data-hour]").first.wait_for(
+            state="visible"
+        )
+
+        mobile_monday_10am = mobile_page.locator(
+            '.time-slot[data-day="1"][data-hour="10"]'
+        )
+        mobile_monday_10am.tap()
+        expect(mobile_monday_10am).to_have_class(re.compile(r".*\bselected\b.*"))
+
+        mobile_monday_10am.tap()
+        expect(mobile_monday_10am).not_to_have_class(re.compile(r".*\bselected\b.*"))
+
+        # Step 8: Mobile — tap to select, save, and verify persistence
+        mobile_monday_10am.tap()
+        expect(mobile_monday_10am).to_have_class(re.compile(r".*\bselected\b.*"))
+
+        mobile_page.get_by_role("button", name="Save Availability").first.click()
+        mobile_page.wait_for_load_state("networkidle")
+        expect(mobile_page).to_have_url(re.compile(r".*/profile/?$"))
+
+        mobile_page.goto(reverse("availability"))
+        mobile_page.wait_for_load_state("networkidle")
+        mobile_page.locator("#availability-grid tbody tr").first.wait_for(
+            state="visible"
+        )
+
+        mobile_monday_10am = mobile_page.locator(
+            '.time-slot[data-day="1"][data-hour="10"]'
+        )
+        expect(mobile_monday_10am).to_have_class(re.compile(r".*\bselected\b.*"))
 
 
 class TestTeamFormation:
