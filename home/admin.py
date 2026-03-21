@@ -47,6 +47,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
     filter_horizontal = ("speakers", "rsvped_members", "organizers")
     actions = ["copy_event", "send_calendar_invites", "retry_zoom_meeting_creation"]
+    list_display = ["title", "start_time", "calendar_invites_sent_at"]
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Pre-populate the add form with data from an existing event.

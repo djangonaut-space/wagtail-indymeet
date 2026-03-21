@@ -40,7 +40,12 @@ def send(
             for recipient in recipient_list
             if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
         ]
-        if not recipient_list:
+        bcc_list = [
+            recipient
+            for recipient in (bcc_list or [])
+            if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
+        ]
+        if not recipient_list and not bcc_list:
             return
 
     email_context = context.copy() if context else {}
