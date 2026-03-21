@@ -523,6 +523,70 @@ class TestAvailabilityPage:
         expect(monday_9am).not_to_have_class(re.compile(r".*\bselected\b.*"))
         expect(monday_10am).not_to_have_class(re.compile(r".*\bselected\b.*"))
 
+    def test_availability_mobile_tap_toggle(
+        self, new_context, live_server, authenticated_user
+    ):
+        """
+        Mobile tap-to-toggle workflow:
+        1. Tap a cell to select it
+        2. Tap the same cell to deselect it
+        3. Tap to select, save, and confirm it persists after reload
+        """
+        context = new_context(
+            base_url=live_server.url,
+            viewport={"width": 375, "height": 812},
+            has_touch=True,
+        )
+        page = context.new_page()
+
+        # Login with the authenticated user
+        page.goto(reverse("login"))
+        page.get_by_label("Username").fill("availabilitytest")
+        page.get_by_label("Password").fill("testpass123")
+        page.get_by_role("button", name="Login").click()
+        page.wait_for_load_state("networkidle")
+
+        # Step 1: Navigate to availability page and tap a cell to select it
+        page.goto(reverse("availability"))
+        page.wait_for_load_state("networkidle")
+
+        # Wait for the grid to be fully rendered
+        page.locator("#availability-grid tbody tr").first.wait_for(state="visible")
+        page.locator(".time-slot[data-day][data-hour]").first.wait_for(state="visible")
+
+        # Tap Monday 10:00 AM to select it
+        monday_10am = page.locator('.time-slot[data-day="1"][data-hour="10"]')
+        monday_10am.tap()
+        page.wait_for_timeout(200)
+        expect(monday_10am).to_have_class(re.compile(r".*\bselected\b.*"))
+
+        # Step 2: Tap again to deselect
+        monday_10am.tap()
+        page.wait_for_timeout(200)
+        expect(monday_10am).not_to_have_class(re.compile(r".*\bselected\b.*"))
+
+        # Step 3: Tap to select, save, and verify persistence
+        monday_10am.tap()
+        page.wait_for_timeout(200)
+
+        # Save
+        page.get_by_role("button", name="Save Availability").first.click()
+        page.wait_for_load_state("networkidle")
+
+        # Should redirect to profile
+        expect(page).to_have_url(re.compile(r".*/profile/?$"))
+
+        # Go back and confirm the slot is still selected
+        page.goto(reverse("availability"))
+        page.wait_for_load_state("networkidle")
+        page.locator("#availability-grid tbody tr").first.wait_for(state="visible")
+
+        monday_10am = page.locator('.time-slot[data-day="1"][data-hour="10"]')
+        expect(monday_10am).to_have_class(re.compile(r".*\bselected\b.*"))
+
+        page.close()
+        context.close()
+
 
 class TestTeamFormation:
 
