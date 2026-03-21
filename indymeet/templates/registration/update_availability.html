@@ -50,7 +50,7 @@
             <p class="text-sm">
                 <strong>{% translate "Instructions:" %}</strong>
                 {% blocktranslate %}
-                    Click and drag to select time slots when you're generally available each week. To remove selections, click the cell. Mobile devices require a long click. Times are shown in your local timezone<span id="local-timezone"></span>.
+                    Click and drag to select time slots when you're generally available each week. To remove selections, click the cell. On mobile, tap a cell to toggle it on or off, or swipe to select a range. Times are shown in your local timezone<span id="local-timezone"></span>.
                 {% endblocktranslate %}
             </p>
         </div>
@@ -71,13 +71,13 @@
               <table>
                 <tr id="time-row-template">
                     <th class="border border-gray-200"></th>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
                 </tr>
               </table>
             </div>
@@ -248,6 +248,52 @@
     })
     selection.select('.time-slot.selected', true)
 
+    // Tap-to-toggle on touch devices so users don't need a long press to deselect
+    const grid = document.querySelector('#availability-grid');
+    let touchStartPos = null;
+    let touchStartTime = 0;
+
+    grid.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            touchStartPos = { x: touch.clientX, y: touch.clientY };
+            touchStartTime = Date.now();
+        } else {
+            touchStartPos = null;
+        }
+    }, { passive: true });
+
+    grid.addEventListener('touchend', (e) => {
+        if (!touchStartPos) return;
+
+        const touch = e.changedTouches[0];
+        const dx = Math.abs(touch.clientX - touchStartPos.x);
+        const dy = Math.abs(touch.clientY - touchStartPos.y);
+        const duration = Date.now() - touchStartTime;
+        touchStartPos = null;
+
+        // Ignore if finger moved too far (scroll) or held too long (long press)
+        if (dx > 15 || dy > 15 || duration > 300) return;
+
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (!target || !target.classList.contains('time-slot')) return;
+
+        e.preventDefault();
+        selection.cancel(false);
+
+        const day = parseInt(target.dataset.day);
+        const hour = parseFloat(target.dataset.hour);
+
+        if (target.classList.contains('selected')) {
+            target.classList.remove('selected');
+            availabilityData.removeSlot(day, hour);
+            selection.deselect(target, true);
+        } else {
+            target.classList.add('selected');
+            availabilityData.addSlot(day, hour);
+            selection.select(target, true);
+        }
+    });
 
     // Show preview highlighting during selection
     selection.on('move', ({ store: { changed: { added, removed } } }) => {
