@@ -9,7 +9,7 @@
 
 {% block before_cta %}
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
-    You are invited to join us for <strong>{{ event.title }}</strong> on <strong>{{ event.start_time|date:"l, F j, Y" }}</strong> at <strong>{{ event.start_time|date:"g:i A e" }}</strong>.
+    You are invited to join us for <strong>{{ event.title }}</strong> on <strong><a href="{{ event.start_time|time_is_link }}" style="color: #5c0287;">{{ event.start_time|date:"l, F j, Y" }}</a></strong> at <strong><a href="{{ event.start_time|time_is_link }}" style="color: #5c0287;">{{ event.start_time|date:"g:i A e" }}</a></strong>.
   </p>
 
   {% if event.description %}
