@@ -9,7 +9,7 @@
   </p>
 
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
-    Please confirm your acceptance by <strong>{{ membership.acceptance_deadline|date:"l F jS" }}</strong> (<a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">12:00 UTC</a>).
+    Please confirm your acceptance by <strong><a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">{{ membership.acceptance_deadline|date:"l F jS" }}</a></strong> (12:00 UTC).
   </p>
 
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
