@@ -13,7 +13,7 @@
   </p>
 
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
-    We hope you are as excited as we are and can commit to join this program! Please confirm your acceptance by <strong>{{ membership.acceptance_deadline|date:"F d, Y" }}</strong> (<a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">12:00 UTC</a>).
+    We hope you are as excited as we are and can commit to join this program! Please confirm your acceptance by <strong><a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">{{ membership.acceptance_deadline|date:"F d, Y" }}</a></strong> (12:00 UTC).
   </p>
 {% endblock before_cta %}
 
@@ -50,7 +50,7 @@
   </p>
 
     <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
-    Is this no longer a good time for you? Please let us know before <i>{{ membership.acceptance_deadline|date:"F d, Y" }}</i> (<a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">12:00 UTC</a>)
+    Is this no longer a good time for you? Please let us know before <i><a href="{{ membership.acceptance_deadline|time_is_link:'1200' }}" style="color: #5c0287;">{{ membership.acceptance_deadline|date:"F d, Y" }}</a></i> (12:00 UTC)
 
     </p>
 
