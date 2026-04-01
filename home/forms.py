@@ -1314,10 +1314,7 @@ class CollectStatsForm(forms.Form):
         start_date = self.cleaned_data["start_date"]
         today = date.today()
         if start_date > today:
-            raise forms.ValidationError(
-                _("Start date cannot be in the future. Today is %(today)s."),
-                params={"today": today},
-            )
+            return today
         return start_date
 
     def clean_end_date(self) -> date:

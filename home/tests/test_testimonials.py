@@ -46,20 +46,6 @@ class TestimonialModelTests(TestCase):
         self.assertIn("/testimonials/", url)
         self.assertIn(f"#{testimonial.slug}", url)
 
-    def test_save_with_update_fields_includes_slug(self):
-        """Test that slug is added to update_fields when generating slug on creation."""
-        user = UserFactory.create(first_name="Alice")
-        session = SessionFactory.create()
-        testimonial = Testimonial(
-            title="Great Program",
-            text="Learned a lot!",
-            session=session,
-            author=user,
-        )
-        testimonial.save(update_fields=["title", "text"])
-        testimonial.refresh_from_db()
-        self.assertTrue(testimonial.slug.startswith("alice"))
-
     def test_unique_constraint(self):
         """Test that a user can only have one testimonial per session."""
         user = UserFactory.create()

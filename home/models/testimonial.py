@@ -78,13 +78,12 @@ class Testimonial(BaseModel):
     def save(
         self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
-        if not self.slug:
-            # Generate slug only on creation
-            name = self.author.first_name or "anon"
-            unique = secrets.token_hex(3)
-            self.slug = slugify(f"{name}-{self.title}-{unique}")
-            if update_fields is not None:
-                update_fields = {"slug"}.union(update_fields)
+        # Generate slug from author name, title, and random code for uniqueness
+        name = self.author.first_name or "anon"
+        unique = secrets.token_hex(3)
+        self.slug = slugify(f"{name}-{self.title}-{unique}")
+        if update_fields is not None and "title" in update_fields:
+            update_fields = {"slug"}.union(update_fields)
         super().save(
             force_insert=force_insert,
             force_update=force_update,

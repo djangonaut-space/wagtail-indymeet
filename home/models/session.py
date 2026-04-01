@@ -226,9 +226,9 @@ class Session(models.Model):
                 continue
 
             repos_by_owner.setdefault(owner, [])
-            for repo_name in configured_repos:
-                if repo_name not in repos_by_owner[owner]:
-                    repos_by_owner[owner].append(repo_name)
+            repos_by_owner[owner] = list(
+                dict.fromkeys(repos_by_owner[owner] + configured_repos)
+            )
 
         return [
             {"owner": owner, "repos": repos} for owner, repos in repos_by_owner.items()
