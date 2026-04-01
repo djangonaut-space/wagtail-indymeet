@@ -1,5 +1,6 @@
 import csv
 import io
+from datetime import date
 
 from django import forms
 from django.core import validators
@@ -1202,6 +1203,138 @@ class MembershipAcceptanceForm(forms.Form):
             )
 
         return is_accepted
+
+
+class CompareAvailabilityForm(forms.Form):
+    """
+    Form for handling compare availability querystring parameters.
+
+    Validates session_id, user selection, and offset parameters.
+    Also determines which users the current user can select for comparison.
+    """
+
+    session = forms.ModelChoiceField(
+        queryset=Session.objects.all(),
+        required=False,
+    )
+    users = forms.CharField(required=False)
+    offset = forms.FloatField(required=False, initial=0)
+
+    def __init__(self, *args, user: CustomUser, **kwargs):
+        """
+        Initialize form with the requesting user.
+
+        Args:
+            user: The currently logged-in user making the request
+        """
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self._session = None
+        self._session_membership = None
+
+    def clean_offset(self) -> float:
+        """Return offset value, defaulting to 0 if not provided or invalid."""
+        offset = self.cleaned_data.get("offset")
+        return offset if offset is not None else 0.0
+
+    def clean_users(self) -> set[int]:
+        """Parse user IDs from form data, handling both comma-separated and multiple params."""
+        result = set()
+        # Handle multiple params (from select multiple) and comma-separated values
+        values = (
+            self.data.getlist("users")
+            if hasattr(self.data, "getlist")
+            else [self.data.get("users", "")]
+        )
+        for value in values:
+            for uid in str(value).split(","):
+                if uid.strip().isdigit():
+                    result.add(int(uid.strip()))
+        return result
+
+    def clean_session(self) -> Session | None:
+        if session := self.cleaned_data.get("session"):
+            self._session_membership = (
+                SessionMembership.objects.for_session(session)
+                .for_user(self.user)
+                .first()
+            )
+        self._session = session
+        return self._session
+
+    def get_selectable_users(self) -> list[CustomUser]:
+        """
+        Get users that the current user can select for comparison.
+
+        Returns:
+            List of CustomUser objects the user can compare
+        """
+        return list(
+            CustomUser.objects.for_comparing_availability(
+                user=self.user,
+                session=self._session,
+                session_membership=self._session_membership,
+            )
+        )
+
+    def get_selected_users(
+        self, selectable_users: list[CustomUser]
+    ) -> list[CustomUser]:
+        """
+        Get the users that are currently selected from the selectable users.
+
+        Args:
+            selectable_users: List of users that can be selected
+
+        Returns:
+            List of selected CustomUser objects
+        """
+        if not self.cleaned_data["users"]:
+            return []
+        return [u for u in selectable_users if u.id in self.cleaned_data["users"]]
+
+    def get_offset_hours(self) -> float:
+        """Return the validated offset hours value."""
+        return self.cleaned_data.get("offset", 0)
+
+
+class CollectStatsForm(forms.Form):
+    """Form for collecting GitHub stats with date range selection."""
+
+    start_date = forms.DateField(
+        label=_("Start Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    end_date = forms.DateField(
+        label=_("End Date"),
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    def clean_start_date(self) -> date:
+        start_date = self.cleaned_data["start_date"]
+        today = date.today()
+        if start_date > today:
+            return today
+        return start_date
+
+    def clean_end_date(self) -> date:
+        end_date = self.cleaned_data["end_date"]
+        today = date.today()
+        if end_date > today:
+            return today
+        return end_date
+
+    def clean(self) -> dict:
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError(
+                _("Start date must be before or equal to end date.")
+            )
+
+        return cleaned_data
 
 
 class TestimonialFormRenderer(DjangoTemplates):

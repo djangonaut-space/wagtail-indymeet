@@ -3,11 +3,11 @@
 from dataclasses import asdict, dataclass
 from datetime import datetime
 
-from django import forms
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from accounts.models import CustomUser
+from home.forms import CompareAvailabilityForm
 from home.availability import (
     convert_slot_with_offset,
     format_slot_as_time,
@@ -16,7 +16,7 @@ from home.availability import (
 )
 from home.models import Session, SessionMembership
 
-slotAvailabilities = dict[str, list[int]]
+SlotAvailabilities = dict[str, list[int]]
 
 
 @dataclass
@@ -71,7 +71,7 @@ def build_grid_data(
     selected_users: list[CustomUser],
     user_slots: dict[int, set[float]],
     offset_hours: float = 0,
-) -> tuple[list[GridRow], slotAvailabilities]:
+) -> tuple[list[GridRow], SlotAvailabilities]:
     """
     Build grid rows and slot availability mapping.
 
@@ -80,7 +80,7 @@ def build_grid_data(
         contains availability data for each slot for Alpine.js
     """
     rows = []
-    slot_availabilities: slotAvailabilities = {}
+    slot_availabilities: SlotAvailabilities = {}
     total_count = len(selected_users)
 
     for hour in range(24):
@@ -122,99 +122,6 @@ def build_grid_data(
             )
 
     return rows, slot_availabilities
-
-
-class CompareAvailabilityForm(forms.Form):
-    """
-    Form for handling compare availability querystring parameters.
-
-    Validates session_id, user selection, and offset parameters.
-    Also determines which users the current user can select for comparison.
-    """
-
-    session = forms.ModelChoiceField(
-        queryset=Session.objects.all(),
-        required=False,
-    )
-    users = forms.CharField(required=False)
-    offset = forms.FloatField(required=False, initial=0)
-
-    def __init__(self, *args, user: CustomUser, **kwargs):
-        """
-        Initialize form with the requesting user.
-
-        Args:
-            user: The currently logged-in user making the request
-        """
-        super().__init__(*args, **kwargs)
-        self.user = user
-        self._session = None
-        self._session_membership = None
-
-    def clean_offset(self) -> float:
-        """Return offset value, defaulting to 0 if not provided or invalid."""
-        offset = self.cleaned_data.get("offset")
-        return offset if offset is not None else 0.0
-
-    def clean_users(self) -> set[int]:
-        """Parse user IDs from form data, handling both comma-separated and multiple params."""
-        result = set()
-        # Handle multiple params (from select multiple) and comma-separated values
-        values = (
-            self.data.getlist("users")
-            if hasattr(self.data, "getlist")
-            else [self.data.get("users", "")]
-        )
-        for value in values:
-            for uid in str(value).split(","):
-                if uid.strip().isdigit():
-                    result.add(int(uid.strip()))
-        return result
-
-    def clean_session(self) -> Session | None:
-        if session := self.cleaned_data.get("session"):
-            self._session_membership = (
-                SessionMembership.objects.for_session(session)
-                .for_user(self.user)
-                .first()
-            )
-        self._session = session
-        return self._session
-
-    def get_selectable_users(self) -> list[CustomUser]:
-        """
-        Get users that the current user can select for comparison.
-
-        Returns:
-            List of CustomUser objects the user can compare
-        """
-        return list(
-            CustomUser.objects.for_comparing_availability(
-                user=self.user,
-                session=self._session,
-                session_membership=self._session_membership,
-            )
-        )
-
-    def get_selected_users(
-        self, selectable_users: list[CustomUser]
-    ) -> list[CustomUser]:
-        """
-        Get the users that are currently selected from the selectable users.
-
-        Args:
-            selectable_users: List of users that can be selected
-
-        Returns:
-            List of selected CustomUser objects
-        """
-        if not self.cleaned_data["users"]:
-            return []
-        return [u for u in selectable_users if u.id in self.cleaned_data["users"]]
-
-    def get_offset_hours(self) -> float:
-        """Return the validated offset hours value."""
-        return self.cleaned_data.get("offset", 0)
 
 
 @login_required

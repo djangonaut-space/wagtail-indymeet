@@ -1,4 +1,5 @@
 import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import models
@@ -34,9 +35,43 @@ class Project(models.Model):
     url = models.URLField(
         help_text=_("The URL for the project repository or website"),
     )
+    monitor_all_organization_repos = models.BooleanField(
+        default=False,
+        help_text=_(
+            "When enabled, GitHub stats collection searches all source "
+            "repositories in this GitHub organization instead of only this "
+            "repository."
+        ),
+    )
 
     class Meta:
         ordering = ["name"]
+
+    @property
+    def github_repo(self) -> tuple[str, str] | None:
+        """Return the GitHub org, repo pair from the configured project URL."""
+        parsed_url = urlparse(self.url)
+        if parsed_url.netloc != "github.com":
+            return None
+
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        if len(path_parts) < 2:
+            return None
+
+        return path_parts[0], path_parts[1]
+
+    @property
+    def github_repo_config(self) -> dict[str, list[str]] | None:
+        """Return repo configuration in the format expected by stats collection."""
+        github_repo = self.github_repo
+        if github_repo is None:
+            return None
+
+        owner, repo_name = github_repo
+        if self.monitor_all_organization_repos:
+            return {"owner": owner, "repos": ["*"]}
+
+        return {"owner": owner, "repos": [repo_name]}
 
     def __str__(self) -> str:
         return self.name
@@ -164,6 +199,40 @@ class Session(models.Model):
     def is_current_or_upcoming(self) -> bool:
         """Check if the session is currently active or upcoming (before end dates)."""
         return timezone.now().date() <= self.end_date
+
+    def get_monitored_github_repos(self) -> list[dict[str, list[str]]]:
+        """
+        Return GitHub repository configuration for this session's available projects.
+
+        Non-GitHub project URLs are ignored. When a project is configured to monitor an
+        entire organization, that owner takes precedence over any repo-specific entries.
+        """
+        repos_by_owner: dict[str, list[str]] = {}
+
+        for project in self.available_projects.all():
+            repo_config = project.github_repo_config
+            if repo_config is None:
+                continue
+
+            owner = repo_config["owner"]
+            configured_repos = repo_config["repos"]
+            existing_repos = repos_by_owner.get(owner)
+
+            if configured_repos == ["*"]:
+                repos_by_owner[owner] = ["*"]
+                continue
+
+            if existing_repos == ["*"]:
+                continue
+
+            repos_by_owner.setdefault(owner, [])
+            repos_by_owner[owner] = list(
+                dict.fromkeys(repos_by_owner[owner] + configured_repos)
+            )
+
+        return [
+            {"owner": owner, "repos": repos} for owner, repos in repos_by_owner.items()
+        ]
 
     @property
     def current_week(self) -> int | None:

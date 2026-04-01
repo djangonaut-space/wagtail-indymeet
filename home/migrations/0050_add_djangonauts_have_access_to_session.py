@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name="djangonauts_have_access",
             field=models.BooleanField(
                 default=False,
-                help_text="Whether team detail pages are visible to Djangonauts. Automatically set to True when team welcome emails are sent. This will be ignored once session start date is in the past.",
+                help_text="Whether Djangonauts can access their team detail pages. Automatically set to True when team welcome emails are sent. This will be ignored once session start date is in the past.",
             ),
         ),
     ]
