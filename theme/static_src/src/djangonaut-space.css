@@ -104,6 +104,11 @@
 
 
 /* Light animation */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -117,7 +122,10 @@
 
 .animate-fade-up {
   animation: fade-up 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  opacity: 0; /* Ensures elements stay hidden before animation starts */
+}
+
+.animate-fade-in {
+  animation: fade-in 1.5s ease-out forwards;
 }
 
 
