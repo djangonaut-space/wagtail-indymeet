@@ -44,6 +44,15 @@
                       class="text-ds-purple hover:underline">{% translate "Reset password." %}</a></p>
             </div>
         </div>
+        <div class="flex flex-col gap-1 md:flex-row">
+            <div>
+                <p>{% translate "Don't have an account?" %}</p>
+            </div>
+            <div>
+                <p><a href="{% url 'signup' %}{% if next %}?next={{ next }}{% endif %}"
+                      class="text-ds-purple hover:underline">{% translate "Sign up." %}</a></p>
+            </div>
+        </div>
     </main>
 
 {% endblock content %}

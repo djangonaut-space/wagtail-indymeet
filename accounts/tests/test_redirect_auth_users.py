@@ -27,3 +27,5 @@ class LoginViewTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "registration/login.html")
+        self.assertContains(response, "Don't have an account?")
+        self.assertContains(response, f"{reverse('signup')}?next=/my-sessions/")
