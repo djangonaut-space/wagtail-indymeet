@@ -129,6 +129,19 @@
 }
 
 
+.animate-fade-up {
+  animation: fade-up 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 1.5s ease-out forwards;
+}
+
+/* Ensure these are defined! */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 0.6; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+
 
 ul.links {
     @apply flex mt-3;
