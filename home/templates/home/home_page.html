@@ -10,13 +10,222 @@ This is used directly by Wagtail. Don't delete it.
 {% block title %}Djangonaut Space - Where contributors launch!{% endblock %}
 {% block body_class %}landing{% endblock %}
 {% block content %}
+<header>
+
+    <nav class="p-[2vh]">
+        <ul class="links">
+            <li>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white" href="{% url "session_list" %}">Sessions</a>
+            </li>
+            <li>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white" href="{% url "event_list" %}">About</a>
+            </li>
+            <li>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white" href="{% slugurl "comms" %}">Blog</a>
+            </li>
+            <li>
+                <a class="" href="/" class="inline-block text-center">
+                    <img class="inline-block w-full max-w-[140px]" alt="Djangonaut Space" src="{% static 'img/main-white-transparent.png' %}" />
+                </a>
+            </li>
+            <li>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white" href="{% slugurl "media-talks" %}">Media</a>
+            </li>
+            <li>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white" href="{% url "event_list" %}">Login</a>
+            </li>
+            <li>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white" href="{% url "event_list" %}">Sign up</a>
+            </li>
+
+        </ul>
+
+
+    </nav>
+</header>
 <main class="landing-page flex grow flex-col items-center justify-center z-[2]">
-    <a href="/" class="inline-block text-center">
-        <img class="inline-block w-full max-w-[140px]" alt="Djangonaut Space" src="{% static 'img/main-white-transparent.png' %}" />
-    </a>
-    <h1 class="p-0 text-[10vw] leading-[10vw] font-fraunces font-bold text-center">Where contributors launch</h1>
-    <p class="p-3 text-xl">Ready for take-off?</p>
-    <div class="flex flex-wrap flex-row links justify-center w-full lg:w-2/5 gap-2">
+    <section class="hero p-20">
+        <h1 class="p-0 text-[10vw] leading-[10vw] font-fraunces font-bold text-center">Where contributors launch</h1>
+        <p class="p- text-xl">Get in for a lift-off into the open-source space, the Django way</p>
+        <a href="" class="button-secondary text-black bg-white hover:bg-ds-purple hover:text-white">Join the next session</a>
+
+        <div class="landing-page-overlay fixed bottom-0 left-0 w-100 h-[45%] z-[2] bg-[url('{% static 'img/background.svg' %}')] bg-no-repeat"></div>
+    </section>
+
+
+    <section class="bg-white w-full py-16 px-5 font-inter ">
+        <div class="max-w-[1200px] mx-auto text-center">
+
+            <span class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">PROJECTS WHERE WE CONTRIBUTE</span>
+            <div>
+                <ul class="links mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center">
+
+                    <li class="flex items-center justify-center">
+                        <img src="{% static 'img/logo-djangocms.png' %}" alt="DjangoCMS" class="h-10 lg:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition duration-300">
+
+                    </li>
+
+                    <li>
+                        <img src="{% static 'img/logo-wagtail.png' %}" alt="Wagtail" class="h-10 lg:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition duration-300">
+                    </li>
+
+                    <li>
+                        <img src="{% static 'img/logo-djangounicorn.png' %}" alt="Django Unicorn" class="h-10 lg:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition duration-300">
+                    </li>
+
+                    <li>
+                        <img src="{% static 'img/logo-django.png' %}" alt="Django" class="h-10 lg:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition duration-300">
+                    </li>
+
+                    <li>
+                        <img src="{% static 'img/logo-djangopackages.png' %}" alt="Django Packages" class="h-10 lg:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition duration-300">
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="w-full bg-[#e4e4e4] text-[#202020]  py-[5vh] px-[5vw] lg:px-[14vw] font-inter">
+        <div class="mx-auto max-w-[1200px]">
+            <h2 class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">About the Program</h2>
+            <div class="flex flex-col lg:flex-row gap-y-10 items-center">
+                <div class="w-full lg:w-[60%] text-xl">
+                    <p class="pb-[2vh]">Djangonaut Space is a free, 8-week group mentoring program where individuals will work self-paced in a semi-structured learning environment. It seeks to help members of the community who wish to level up their current Django code contributions and potentially take on leadership roles in Django in the future.
+                    </p>
+                    <p class="pb-[4vh]">
+                    The programme has run since January 2024 and it is currently in its 6th session. Previous mentees in the programme have gone on to become maintainers, Django foundation board members and join various teams.</p>
+                    <a href="" class="button-secondary text-black bg-white hover:bg-ds-purple hover:text-white">See full program docs</a>
+                </div>
+                <div class=" lg:w-2/5">
+                    <img class="w-full max-w-[547px] h-auto object-contain aspect-[3/2] rounded-xl" src="{% static 'img/group-calls.png' %}" alt="Group-calls">
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="w-full bg-[#f0f0f0] text-[#202020]  py-[5vh] px-[5vw] lg:px-[14vw] font-inter">
+        <div class="mx-auto max-w-[1200px]">
+            <h2 class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">Get Involved</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-16">
+
+                <div class="flex gap-6 items-start">
+                    <div class="flex-shrink-0">
+                        <span><img class="w-16 h-16 object-contain" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Stay informed about program news</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-6 items-start">
+                    <div class="flex-shrink-0">
+                        <span><img class="w-16 h-16 object-contain" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Stay informed about program news</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-6 items-start">
+                    <div class="flex-shrink-0">
+                        <span><img class="w-16 h-16 object-contain" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Stay informed about program news</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-6 items-start">
+                    <div class="flex-shrink-0">
+                        <span><img class="w-16 h-16 object-contain" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Stay informed about program news</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+
+
+    <section class="bg-white w-full py-16 px-5 font-inter ">
+        <div class="max-w-[1200px] mx-auto text-center">
+
+            <span class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR FINANCIAL SPONSORS</span>
+            <div>
+                <ul class="links mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center">
+
+                    <li class="flex items-center justify-center">
+                        <img src="{% static 'img/logo-django.png' %}" alt="Django" class="h-10 lg:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition duration-300">
+
+                    </li>
+
+                    <li>
+                        <img src="{% static 'img/logo-aspiredu.png' %}" alt="Aspiredu" class="h-10 lg:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition duration-300">
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="w-full bg-[#EDE2F0] text-[#202020]  py-[5vh] px-[5vw] lg:px-[14vw] font-inter">
+        <div class="mx-auto max-w-[1200px]">
+            <h2 class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">More...</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-10">
+
+                <div class="flex gap-6 items-start bg-white border-pink-300 p-10 rounded-2xl border-2">
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Programme Docs</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Find out more about the program  and contributor guides.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-6 items-start bg-white border-pink-300 p-10 rounded-2xl border-2">
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Programme Docs</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Find out more about the program  and contributor guides.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-6 items-start bg-white border-pink-300 p-10 rounded-2xl border-2">
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Programme Docs</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Find out more about the program  and contributor guides.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-6 items-start bg-white border-pink-300 p-10 rounded-2xl border-2">
+                    <div class="flex flex-col gap-3">
+                        <span class="font-bold text-2xl">Programme Docs</span>
+                        <p class="text-lg leading-relaxed text-gray-800">Find out more about the program  and contributor guides.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+
+
+
+</main>
+
+
+
+
+
+    <!-- <div class="flex flex-wrap flex-row links justify-center w-full lg:w-2/5 gap-2">
         <a class="button-secondary text-black bg-white hover:bg-ds-purple hover:text-white" href="{% url "session_list" %}">Sessions</a>
         <a class="button-secondary" href="{% url "event_list" %}">Events</a>
         <a class="button-secondary" href="https://github.com/djangonaut-space/program/blob/main/README.md">Program</a>
@@ -25,14 +234,17 @@ This is used directly by Wagtail. Don't delete it.
         <a class="button-secondary" href="{% slugurl "partnerships-sponsors" %}">Sponsors</a>
         <a class="button-secondary" href="{% slugurl "uniform-supply-office" %}">Store</a>
         <a class="button-secondary" href="https://opencollective.com/djangonaut-space"><i class="fa-solid fa-heart pr-2"></i>  Donate</a>
-    </div>
-    {% comment %} <form class="d-flex form-row">
+    </div> -->
+    <!-- {% comment %} <form class="d-flex form-row">
         <input type="email" name="email" aria-label="email" class="mr-1" placeholder="example@email.com">
         <button type="submit" class="btn btn-outline-primary">Register</button>
-    </form> {% endcomment %}
-</main>
+    </form> {% endcomment %} -->
+
+<!-- </main> -->
+
 <footer class="landing-page-footer text-base text-white items-center mt-2 md:mt-0 flex flex-col md:flex-row justify-evenly space-y-3 md:space-y-0">
-    <span class="design-credits">Djangonaut Space. Designed by <a class='text-white' href='https://hope-adoli.netlify.app/'>Hope Adoli</a></span>
+
+    <!-- <span class="design-credits">Djangonaut Space. Designed by <a class='text-white' href='https://hope-adoli.netlify.app/'>Hope Adoli</a></span> -->
     <a class='text-white' href="https://github.com/djangonaut-space/program/blob/main/CODE_OF_CONDUCT.md">
       Code of Conduct
     </a>
