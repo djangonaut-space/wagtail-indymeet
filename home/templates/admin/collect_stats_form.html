@@ -25,8 +25,8 @@
     <div class="module">
         <h2>{% trans "Configuration" %}</h2>
         <p>
-            {% blocktrans with count=github_usernames|length %}
-                Found {{ count }} Djangonauts with configured GitHub usernames.
+            {% blocktrans with team_count=scopes|length %}
+                Tracking {{ djangonaut_count }} Djangonauts across {{ team_count }} teams.
             {% endblocktrans %}
         </p>
 
@@ -55,9 +55,21 @@
                 </div>
 
                 <div class="form-row">
-                    <label>{% trans "Tracking Users:" %}</label>
+                    <label>{% trans "Teams:" %}</label>
                     <div class="readonly">
-                        {{ github_usernames|join:", " }}
+                        {% for scope in scopes %}
+                        <div style="margin-bottom: 10px;">
+                            <strong>{{ scope.label|default:scope.scope_term }}</strong>
+                            <div style="font-size: 12px; color: var(--body-quiet-color, #666);">
+                                {{ scope.scope_term }}
+                            </div>
+                            <div style="margin-top: 3px;">
+                                {% for member in scope.members %}
+                                {{ member.name }} (<code>{{ member.github_username }}</code>){% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </fieldset>

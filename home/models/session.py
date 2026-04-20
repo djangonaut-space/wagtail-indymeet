@@ -60,19 +60,6 @@ class Project(models.Model):
 
         return path_parts[0], path_parts[1]
 
-    @property
-    def github_repo_config(self) -> dict[str, list[str]] | None:
-        """Return repo configuration in the format expected by stats collection."""
-        github_repo = self.github_repo
-        if github_repo is None:
-            return None
-
-        owner, repo_name = github_repo
-        if self.monitor_all_organization_repos:
-            return {"owner": owner, "repos": ["*"]}
-
-        return {"owner": owner, "repos": [repo_name]}
-
     def __str__(self) -> str:
         return self.name
 
@@ -199,40 +186,6 @@ class Session(models.Model):
     def is_current_or_upcoming(self) -> bool:
         """Check if the session is currently active or upcoming (before end dates)."""
         return timezone.now().date() <= self.end_date
-
-    def get_monitored_github_repos(self) -> list[dict[str, list[str]]]:
-        """
-        Return GitHub repository configuration for this session's available projects.
-
-        Non-GitHub project URLs are ignored. When a project is configured to monitor an
-        entire organization, that owner takes precedence over any repo-specific entries.
-        """
-        repos_by_owner: dict[str, list[str]] = {}
-
-        for project in self.available_projects.all():
-            repo_config = project.github_repo_config
-            if repo_config is None:
-                continue
-
-            owner = repo_config["owner"]
-            configured_repos = repo_config["repos"]
-            existing_repos = repos_by_owner.get(owner)
-
-            if configured_repos == ["*"]:
-                repos_by_owner[owner] = ["*"]
-                continue
-
-            if existing_repos == ["*"]:
-                continue
-
-            repos_by_owner.setdefault(owner, [])
-            repos_by_owner[owner] = list(
-                dict.fromkeys(repos_by_owner[owner] + configured_repos)
-            )
-
-        return [
-            {"owner": owner, "repos": repos} for owner, repos in repos_by_owner.items()
-        ]
 
     @property
     def current_week(self) -> int | None:

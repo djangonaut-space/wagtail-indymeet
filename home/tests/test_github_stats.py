@@ -9,7 +9,12 @@ from github import GithubException
 
 from accounts.factories import UserFactory
 from accounts.models import UserProfile
-from home.factories import ProjectFactory, SessionFactory, SessionMembershipFactory
+from home.factories import (
+    ProjectFactory,
+    SessionFactory,
+    SessionMembershipFactory,
+    TeamFactory,
+)
 from home.models.session import SessionMembership
 from home.services.github_stats import (
     Author,
@@ -17,27 +22,90 @@ from home.services.github_stats import (
     Issue,
     PR,
     StatsReport,
+    TeamReport,
+    TeamScope,
 )
 
 User = get_user_model()
 
 
+def _build_mock_pr(
+    *,
+    number: int,
+    login: str = "testuser",
+    created_at=None,
+    merged_at=None,
+    state: str = "open",
+    repo: str = "test-org/test-repo",
+):
+    """Build a mock search-result PR item suitable for ``collect_all_stats``."""
+    mock_user = Mock()
+    mock_user.login = login
+
+    mock_pr = Mock()
+    mock_pr.title = f"PR {number}"
+    mock_pr.number = number
+    mock_pr.html_url = f"https://github.com/{repo}/pull/{number}"
+    mock_pr.user = mock_user
+    mock_pr.created_at = created_at or date(2024, 1, 15)
+    mock_pr.state = state
+    mock_pr.repository_url = f"https://api.github.com/repos/{repo}"
+    mock_pr.pull_request = Mock(merged_at=merged_at)
+    return mock_pr
+
+
+def _build_mock_issue(
+    *,
+    number: int,
+    login: str = "testuser",
+    created_at=None,
+    state: str = "open",
+    repo: str = "test-org/test-repo",
+):
+    mock_user = Mock()
+    mock_user.login = login
+
+    mock_issue = Mock()
+    mock_issue.title = f"Issue {number}"
+    mock_issue.number = number
+    mock_issue.html_url = f"https://github.com/{repo}/issues/{number}"
+    mock_issue.user = mock_user
+    mock_issue.created_at = created_at or date(2024, 1, 20)
+    mock_issue.state = state
+    mock_issue.repository_url = f"https://api.github.com/repos/{repo}"
+    return mock_issue
+
+
 class GitHubStatsCollectorTests(SimpleTestCase):
     def setUp(self):
-        self.mock_github = Mock()
         self.mock_token = "ghp_test_token"
+        self.author = Author(github_username="testuser", name="Test User")
+        self.scope = TeamScope(
+            scope_term="repo:test-org/test-repo",
+            members=(self.author,),
+            label="Team Alpha - Django",
+        )
 
     @patch("home.services.github_stats.Github")
     def test_init_with_token(self, mock_github_class):
         collector = GitHubStatsCollector(self.mock_token)
-        mock_github_class.assert_called_once_with(self.mock_token)
+        mock_github_class.assert_called_once()
+        self.assertEqual(mock_github_class.call_args.args[0], self.mock_token)
         self.assertIsNotNone(collector.github)
 
     @patch("home.services.github_stats.Github")
     def test_init_with_settings_token(self, mock_github_class):
         with override_settings(GITHUB_TOKEN="settings_token"):
-            collector = GitHubStatsCollector()
-            mock_github_class.assert_called_once_with("settings_token")
+            GitHubStatsCollector()
+            mock_github_class.assert_called_once()
+            self.assertEqual(mock_github_class.call_args.args[0], "settings_token")
+
+    @patch("home.services.github_stats.Github")
+    def test_init_disables_retries_for_loud_rate_limit_failure(self, mock_github_class):
+        """A total=0 urllib3 Retry is passed so rate-limit 403s raise instead of sleep."""
+        GitHubStatsCollector(self.mock_token)
+        retry = mock_github_class.call_args.kwargs["retry"]
+        self.assertEqual(retry.total, 0)
 
     @patch("home.services.github_stats.Github")
     def test_init_without_token_raises_error(self, mock_github_class):
@@ -47,199 +115,197 @@ class GitHubStatsCollectorTests(SimpleTestCase):
             self.assertIn("GitHub token is required", str(context.exception))
 
     @patch("home.services.github_stats.Github")
-    def test_collect_prs_for_repo(self, mock_github_class):
-        mock_user = Mock()
-        mock_user.login = "testuser"
-
-        mock_pr = Mock()
-        mock_pr.title = "Test PR"
-        mock_pr.number = 123
-        mock_pr.html_url = "https://github.com/org/repo/pull/123"
-        mock_pr.user = mock_user
-        mock_pr.created_at = date(2024, 1, 15)
-        mock_pr.state = "open"
-        mock_pr.pull_request = Mock(merged_at=datetime(2024, 1, 16, 12, 0, 0))
-        mock_pr.as_pull_request = Mock()
+    def test_collect_all_stats_returns_pr_and_issue(self, mock_github_class):
+        mock_pr = _build_mock_pr(
+            number=123,
+            login="testuser",
+            created_at=date(2024, 1, 15),
+            merged_at=datetime(2024, 1, 16, 12, 0, 0),
+            state="open",
+        )
+        mock_issue = _build_mock_issue(
+            number=456, login="testuser", created_at=date(2024, 1, 20)
+        )
 
         mock_github_instance = mock_github_class.return_value
-        mock_github_instance.search_issues.return_value = [mock_pr]
+        # created-PR query, merged-PR query (empty), issue query
+        mock_github_instance.search_issues.side_effect = [
+            [mock_pr],
+            [],
+            [mock_issue],
+        ]
 
         collector = GitHubStatsCollector(self.mock_token)
-        collector.github = mock_github_instance
-
-        prs = collector.collect_prs_for_repo(
-            owner="org",
-            repo_name="repo",
-            usernames=["testuser"],
-            start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31),
-        )
-
-        self.assertEqual(len(prs), 1)
-        self.assertEqual(prs[0].title, "Test PR")
-        self.assertEqual(prs[0].number, 123)
-        self.assertEqual(prs[0].author.github_username, "testuser")
-        self.assertEqual(prs[0].state, "open")
-        self.assertEqual(prs[0].repo, "org/repo")
-        self.assertEqual(prs[0].merged_at, date(2024, 1, 16))
-        mock_pr.as_pull_request.assert_not_called()
-        self.assertIn(
-            "repo:org/repo", mock_github_instance.search_issues.call_args.args[0]
-        )
-        self.assertIn(
-            "author:testuser", mock_github_instance.search_issues.call_args.args[0]
-        )
-
-    @patch("home.services.github_stats.Github")
-    def test_collect_issues_for_repo(self, mock_github_class):
-        mock_user = Mock()
-        mock_user.login = "testuser"
-
-        mock_issue = Mock()
-        mock_issue.title = "Test Issue"
-        mock_issue.number = 456
-        mock_issue.html_url = "https://github.com/org/repo/issues/456"
-        mock_issue.user = mock_user
-        mock_issue.created_at = date(2024, 1, 20)
-        mock_issue.state = "open"
-
-        mock_github_instance = mock_github_class.return_value
-        mock_github_instance.search_issues.return_value = [mock_issue]
-
-        collector = GitHubStatsCollector(self.mock_token)
-        collector.github = mock_github_instance
-
-        issues = collector.collect_issues_for_repo(
-            owner="org",
-            repo_name="repo",
-            usernames=["testuser"],
-            start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31),
-        )
-
-        self.assertEqual(len(issues), 1)
-        self.assertEqual(issues[0].title, "Test Issue")
-        self.assertEqual(issues[0].number, 456)
-        self.assertEqual(issues[0].author.github_username, "testuser")
-        self.assertEqual(issues[0].state, "open")
-        self.assertIn(
-            "repo:org/repo", mock_github_instance.search_issues.call_args.args[0]
-        )
-        self.assertIn(
-            "author:testuser", mock_github_instance.search_issues.call_args.args[0]
-        )
-
-    @patch("home.services.github_stats.Github")
-    def test_resolve_wildcard_repos(self, mock_github_class):
-        mock_repo1 = Mock()
-        mock_repo1.name = "repo1"
-        mock_repo2 = Mock()
-        mock_repo2.name = "repo2"
-
-        mock_org = Mock()
-        mock_org.get_repos.return_value = [mock_repo1, mock_repo2]
-
-        mock_github_instance = mock_github_class.return_value
-        mock_github_instance.get_organization.return_value = mock_org
-
-        collector = GitHubStatsCollector(self.mock_token)
-        collector.github = mock_github_instance
-
-        repos = collector._resolve_wildcard_repos("test-org")
-
-        self.assertEqual(repos, ["repo1", "repo2"])
-        mock_org.get_repos.assert_called_once_with(type="sources")
-
-    @patch("home.services.github_stats.Github")
-    def test_collect_all_stats(self, mock_github_class):
-        mock_user = Mock()
-        mock_user.login = "testuser"
-
-        mock_pr = Mock()
-        mock_pr.title = "Test PR"
-        mock_pr.number = 123
-        mock_pr.html_url = "https://github.com/test-org/test-repo/pull/123"
-        mock_pr.user = mock_user
-        mock_pr.created_at = date(2024, 1, 15)
-        mock_pr.state = "open"
-        mock_pr.repository_url = "https://api.github.com/repos/test-org/test-repo"
-        mock_pr.pull_request = Mock(merged_at=datetime(2024, 1, 16, 12, 0, 0))
-        mock_pr.as_pull_request = Mock()
-
-        mock_issue = Mock()
-        mock_issue.title = "Test Issue"
-        mock_issue.number = 456
-        mock_issue.html_url = "https://github.com/test-org/test-repo/issues/456"
-        mock_issue.user = mock_user
-        mock_issue.created_at = date(2024, 1, 20)
-        mock_issue.state = "open"
-        mock_issue.repository_url = "https://api.github.com/repos/test-org/test-repo"
-
-        mock_github_instance = mock_github_class.return_value
-        mock_github_instance.search_issues.side_effect = [[mock_pr], [mock_issue]]
-
-        collector = GitHubStatsCollector(self.mock_token)
-        collector.github = mock_github_instance
-
         report = collector.collect_all_stats(
-            repos=[{"owner": "test-org", "repos": ["test-repo"]}],
-            usernames=["testuser"],
+            scopes=[self.scope],
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
         )
 
         self.assertIsInstance(report, StatsReport)
-        self.assertEqual(len(report.prs), 1)
-        self.assertEqual(len(report.issues), 1)
-        self.assertEqual(report.count_open_prs(), 1)
-        self.assertEqual(report.count_open_issues(), 1)
-        self.assertEqual(report.prs[0].merged_at, date(2024, 1, 16))
-        self.assertEqual(report.prs[0].repo, "test-org/test-repo")
-        self.assertEqual(report.prs[0].author.name, "testuser")
-        mock_pr.as_pull_request.assert_not_called()
+        self.assertEqual(len(report.teams), 1)
+        team = report.teams[0]
+        self.assertEqual(team.label, "Team Alpha - Django")
+        self.assertEqual(team.scope_term, "repo:test-org/test-repo")
+        self.assertEqual(len(team.prs), 1)
+        self.assertEqual(len(team.issues), 1)
+        self.assertEqual(team.prs[0].merged_at, date(2024, 1, 16))
+        self.assertEqual(team.prs[0].repo, "test-org/test-repo")
+        # Author carries the real display name from the scope, not the login.
+        self.assertEqual(team.prs[0].author.name, "Test User")
+        self.assertEqual(team.issues[0].author.name, "Test User")
 
     @patch("home.services.github_stats.Github")
-    def test_collect_all_stats_scopes_queries_per_user(self, mock_github_class):
+    def test_collect_all_stats_runs_created_merged_and_issue_queries(
+        self, mock_github_class
+    ):
         mock_github_instance = mock_github_class.return_value
-        mock_github_instance.search_issues.side_effect = [[], [], [], []]
+        mock_github_instance.search_issues.side_effect = [[], [], []]
 
         collector = GitHubStatsCollector(self.mock_token)
-        collector.github = mock_github_instance
-
         collector.collect_all_stats(
-            repos=[{"owner": "test-org", "repos": ["test-repo"]}],
-            usernames=["testuser", "otheruser"],
+            scopes=[self.scope],
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
         )
 
-        self.assertEqual(mock_github_instance.search_issues.call_count, 4)
-        pr_query = mock_github_instance.search_issues.call_args_list[0].args[0]
-        second_pr_query = mock_github_instance.search_issues.call_args_list[1].args[0]
+        self.assertEqual(mock_github_instance.search_issues.call_count, 3)
+        created_pr_query = mock_github_instance.search_issues.call_args_list[0].args[0]
+        merged_pr_query = mock_github_instance.search_issues.call_args_list[1].args[0]
         issue_query = mock_github_instance.search_issues.call_args_list[2].args[0]
-        second_issue_query = mock_github_instance.search_issues.call_args_list[3].args[
-            0
-        ]
 
-        self.assertIn("repo:test-org/test-repo", pr_query)
-        self.assertIn("author:testuser", pr_query)
-        self.assertIn("type:pr", pr_query)
-        self.assertNotIn(" OR ", pr_query)
+        self.assertIn("repo:test-org/test-repo", created_pr_query)
+        self.assertIn("author:testuser", created_pr_query)
+        self.assertIn("type:pr", created_pr_query)
+        self.assertIn("created:2024-01-01..2024-01-31", created_pr_query)
 
-        self.assertIn("repo:test-org/test-repo", second_pr_query)
-        self.assertIn("author:otheruser", second_pr_query)
-        self.assertIn("type:pr", second_pr_query)
-        self.assertNotIn(" OR ", second_pr_query)
+        self.assertIn("repo:test-org/test-repo", merged_pr_query)
+        self.assertIn("author:testuser", merged_pr_query)
+        self.assertIn("type:pr", merged_pr_query)
+        self.assertIn("merged:2024-01-01..2024-01-31", merged_pr_query)
 
         self.assertIn("repo:test-org/test-repo", issue_query)
-        self.assertIn("author:testuser", issue_query)
         self.assertIn("type:issue", issue_query)
-        self.assertNotIn(" OR ", issue_query)
+        self.assertIn("created:2024-01-01..2024-01-31", issue_query)
 
-        self.assertIn("repo:test-org/test-repo", second_issue_query)
-        self.assertIn("author:otheruser", second_issue_query)
-        self.assertIn("type:issue", second_issue_query)
-        self.assertNotIn(" OR ", second_issue_query)
+    @patch("home.services.github_stats.Github")
+    def test_collect_all_stats_deduplicates_pr_across_created_and_merged(
+        self, mock_github_class
+    ):
+        """A PR returned by both the ``created:`` and ``merged:`` query is counted once."""
+        mock_pr = _build_mock_pr(
+            number=42,
+            login="testuser",
+            created_at=date(2024, 1, 15),
+            merged_at=datetime(2024, 1, 18, 12, 0, 0),
+            state="closed",
+        )
+
+        mock_github_instance = mock_github_class.return_value
+        # Same PR returned by the created query AND the merged query, plus empty issues.
+        mock_github_instance.search_issues.side_effect = [[mock_pr], [mock_pr], []]
+
+        collector = GitHubStatsCollector(self.mock_token)
+        report = collector.collect_all_stats(
+            scopes=[self.scope],
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+        )
+
+        prs = report.teams[0].prs
+        self.assertEqual(len(prs), 1)
+        self.assertEqual(prs[0].number, 42)
+        self.assertTrue(prs[0].is_merged)
+
+    @patch("home.services.github_stats.Github")
+    def test_collect_all_stats_captures_pr_merged_but_not_created_in_window(
+        self, mock_github_class
+    ):
+        """PRs created before the window but merged inside it are still captured."""
+        mock_pr = _build_mock_pr(
+            number=7,
+            login="testuser",
+            created_at=date(2023, 12, 28),
+            merged_at=datetime(2024, 1, 5, 10, 0, 0),
+            state="closed",
+        )
+
+        mock_github_instance = mock_github_class.return_value
+        # The created:<window> query doesn't find it; the merged:<window> query does.
+        mock_github_instance.search_issues.side_effect = [[], [mock_pr], []]
+
+        collector = GitHubStatsCollector(self.mock_token)
+        report = collector.collect_all_stats(
+            scopes=[self.scope],
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+        )
+
+        prs = report.teams[0].prs
+        self.assertEqual(len(prs), 1)
+        self.assertEqual(prs[0].number, 7)
+        self.assertTrue(prs[0].is_merged)
+
+    @patch("home.services.github_stats.Github")
+    def test_collect_all_stats_runs_one_query_per_member_per_qualifier(
+        self, mock_github_class
+    ):
+        """GitHub Search rejects OR'd author clauses (422), so we query per member."""
+        scope = TeamScope(
+            scope_term="repo:test-org/test-repo",
+            members=(
+                Author(github_username="alice", name="Alice A"),
+                Author(github_username="bob", name="Bob B"),
+            ),
+            label="Team Alpha",
+        )
+        mock_github_instance = mock_github_class.return_value
+        mock_github_instance.search_issues.return_value = []
+
+        collector = GitHubStatsCollector(self.mock_token)
+        collector.collect_all_stats(
+            scopes=[scope],
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+        )
+
+        # 2 members × (created PR + merged PR + issue) = 6 queries.
+        self.assertEqual(mock_github_instance.search_issues.call_count, 6)
+        queries = [c.args[0] for c in mock_github_instance.search_issues.call_args_list]
+        for q in queries:
+            self.assertNotIn(" OR ", q)
+        self.assertTrue(any("author:alice" in q for q in queries))
+        self.assertTrue(any("author:bob" in q for q in queries))
+
+    @patch("home.services.github_stats.Github")
+    def test_collect_all_stats_runs_per_scope(self, mock_github_class):
+        """Two scopes run their own created+merged+issue query sets."""
+        scope_a = TeamScope(
+            scope_term="repo:org-a/repo-a",
+            members=(Author(github_username="alice", name="Alice A"),),
+        )
+        scope_b = TeamScope(
+            scope_term="org:org-b",
+            members=(Author(github_username="bob", name="Bob B"),),
+        )
+
+        mock_github_instance = mock_github_class.return_value
+        mock_github_instance.search_issues.return_value = []
+
+        collector = GitHubStatsCollector(self.mock_token)
+        collector.collect_all_stats(
+            scopes=[scope_a, scope_b],
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+        )
+
+        # 3 queries per scope (created PR, merged PR, issues) × 2 scopes = 6.
+        self.assertEqual(mock_github_instance.search_issues.call_count, 6)
+        queries = [c.args[0] for c in mock_github_instance.search_issues.call_args_list]
+        self.assertTrue(
+            any("repo:org-a/repo-a" in q and "author:alice" in q for q in queries)
+        )
+        self.assertTrue(any("org:org-b" in q and "author:bob" in q for q in queries))
 
     def test_to_date(self):
         """Test _to_date helper method."""
@@ -381,36 +447,38 @@ class StatsReportTests(SimpleTestCase):
             repo="org/repo",
         )
 
-        self.report = StatsReport(
-            start_date=date(2024, 1, 1),
-            end_date=date(2024, 1, 31),
+        self.team_report = TeamReport(
+            label="Team A - Project X",
+            scope_term="repo:org/repo",
             prs=[self.pr_open, self.pr_merged, self.pr_closed],
             issues=[self.issue_open],
         )
+        self.report = StatsReport(
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+            teams=[self.team_report],
+        )
 
-    def test_open_prs(self):
-        open_prs = self.report.open_prs
-        self.assertEqual(len(open_prs), 1)
-        self.assertEqual(open_prs[0].title, "Open PR")
+    def test_team_open_prs(self):
+        self.assertEqual([pr.title for pr in self.team_report.open_prs], ["Open PR"])
 
-    def test_merged_prs(self):
-        merged_prs = self.report.merged_prs
-        self.assertEqual(len(merged_prs), 1)
-        self.assertEqual(merged_prs[0].title, "Merged PR")
+    def test_team_merged_prs(self):
+        self.assertEqual(
+            [pr.title for pr in self.team_report.merged_prs], ["Merged PR"]
+        )
 
-    def test_closed_prs(self):
-        closed_prs = self.report.closed_prs
-        self.assertEqual(len(closed_prs), 1)
-        self.assertEqual(closed_prs[0].title, "Closed PR")
+    def test_team_closed_prs(self):
+        self.assertEqual(
+            [pr.title for pr in self.team_report.closed_prs], ["Closed PR"]
+        )
 
-    def test_open_issues(self):
-        open_issues = self.report.open_issues
-        self.assertEqual(len(open_issues), 1)
-        self.assertEqual(open_issues[0].title, "Open Issue")
+    def test_team_open_issues(self):
+        self.assertEqual(
+            [i.title for i in self.team_report.open_issues], ["Open Issue"]
+        )
 
     def test_authors(self):
         authors = self.report.authors
-        self.assertEqual(len(authors), 2)
         author_names = {author.name for author in authors}
         self.assertEqual(author_names, {"User One", "User Two"})
 
@@ -419,6 +487,29 @@ class StatsReportTests(SimpleTestCase):
         self.assertEqual(self.report.count_merged_prs(), 1)
         self.assertEqual(self.report.count_closed_prs(), 1)
         self.assertEqual(self.report.count_open_issues(), 1)
+
+    def test_count_methods_sum_across_teams(self):
+        second_team = TeamReport(
+            label="Team B",
+            scope_term="repo:org/other",
+            prs=[self.pr_open],
+        )
+        report = StatsReport(
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+            teams=[self.team_report, second_team],
+        )
+        self.assertEqual(report.count_open_prs(), 2)
+        self.assertEqual(report.count_merged_prs(), 1)
+
+    def test_has_activity(self):
+        self.assertTrue(self.report.has_activity)
+        empty = StatsReport(
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 1, 31),
+            teams=[TeamReport(label="Empty", scope_term="repo:o/r")],
+        )
+        self.assertFalse(empty.has_activity)
 
     def test_pr_is_closed(self):
         """Test that is_closed property correctly identifies closed PRs."""
@@ -436,27 +527,35 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.client.force_login(self.staff_user)
 
         self.session = SessionFactory.create(title="Test Session")
-        self.session.available_projects.add(
-            ProjectFactory.create(url="https://github.com/test-org/test-repo")
+        self.project = ProjectFactory.create(
+            name="Django",
+            url="https://github.com/test-org/test-repo",
+        )
+        self.session.available_projects.add(self.project)
+
+        self.team = TeamFactory.create(
+            session=self.session, project=self.project, name="Team Alpha"
         )
 
-        self.djangonaut1 = UserFactory.create()
+        self.djangonaut1 = UserFactory.create(first_name="Jane", last_name="Doe")
         UserProfile.objects.filter(user=self.djangonaut1).update(
             github_username="djangonaut1"
         )
         SessionMembershipFactory.create(
             session=self.session,
             user=self.djangonaut1,
+            team=self.team,
             role=SessionMembership.DJANGONAUT,
         )
 
-        self.djangonaut2 = UserFactory.create()
+        self.djangonaut2 = UserFactory.create(first_name="John", last_name="Smith")
         UserProfile.objects.filter(user=self.djangonaut2).update(
             github_username="djangonaut2"
         )
         SessionMembershipFactory.create(
             session=self.session,
             user=self.djangonaut2,
+            team=self.team,
             role=SessionMembership.DJANGONAUT,
         )
 
@@ -473,48 +572,62 @@ class CollectStatsViewIntegrationTests(TestCase):
         mock_collector.collect_all_stats.return_value = StatsReport(
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
-            prs=[
-                PR(
-                    title="Open PR",
-                    number=1,
-                    url="https://github.com/test-org/test-repo/pull/1",
-                    author=Author(github_username="djangonaut1", name="Djangonaut1"),
-                    created_at=date(2024, 1, 15),
-                    merged_at=None,
-                    state="open",
-                    repo="test-org/test-repo",
+            teams=[
+                TeamReport(
+                    label="Team Alpha - Django",
+                    scope_term="repo:test-org/test-repo",
+                    prs=[
+                        PR(
+                            title="Open PR",
+                            number=1,
+                            url="https://github.com/test-org/test-repo/pull/1",
+                            author=Author(
+                                github_username="djangonaut1", name="Jane Doe"
+                            ),
+                            created_at=date(2024, 1, 15),
+                            merged_at=None,
+                            state="open",
+                            repo="test-org/test-repo",
+                        ),
+                        PR(
+                            title="Merged PR",
+                            number=2,
+                            url="https://github.com/test-org/test-repo/pull/2",
+                            author=Author(
+                                github_username="djangonaut2", name="John Smith"
+                            ),
+                            created_at=date(2024, 1, 10),
+                            merged_at=date(2024, 1, 20),
+                            state="closed",
+                            repo="test-org/test-repo",
+                        ),
+                        PR(
+                            title="Closed PR",
+                            number=3,
+                            url="https://github.com/test-org/test-repo/pull/3",
+                            author=Author(
+                                github_username="djangonaut1", name="Jane Doe"
+                            ),
+                            created_at=date(2024, 1, 12),
+                            merged_at=None,
+                            state="closed",
+                            repo="test-org/test-repo",
+                        ),
+                    ],
+                    issues=[
+                        Issue(
+                            title="Test Issue",
+                            number=10,
+                            url="https://github.com/test-org/test-repo/issues/10",
+                            author=Author(
+                                github_username="djangonaut1", name="Jane Doe"
+                            ),
+                            created_at=date(2024, 1, 18),
+                            state="open",
+                            repo="test-org/test-repo",
+                        ),
+                    ],
                 ),
-                PR(
-                    title="Merged PR",
-                    number=2,
-                    url="https://github.com/test-org/test-repo/pull/2",
-                    author=Author(github_username="djangonaut2", name="Djangonaut2"),
-                    created_at=date(2024, 1, 10),
-                    merged_at=date(2024, 1, 20),
-                    state="closed",
-                    repo="test-org/test-repo",
-                ),
-                PR(
-                    title="Closed PR",
-                    number=3,
-                    url="https://github.com/test-org/test-repo/pull/3",
-                    author=Author(github_username="djangonaut1", name="Djangonaut1"),
-                    created_at=date(2024, 1, 12),
-                    merged_at=None,
-                    state="closed",
-                    repo="test-org/test-repo",
-                ),
-            ],
-            issues=[
-                Issue(
-                    title="Test Issue",
-                    number=10,
-                    url="https://github.com/test-org/test-repo/issues/10",
-                    author=Author(github_username="djangonaut1", name="Djangonaut1"),
-                    created_at=date(2024, 1, 18),
-                    state="open",
-                    repo="test-org/test-repo",
-                )
             ],
         )
 
@@ -526,17 +639,51 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
 
-        # Verify all sections appear
         self.assertIn("🎉 Merged Pull Requests", content)
         self.assertIn("🚧 Closed Pull Requests", content)
         self.assertIn("✨ Open Pull Requests", content)
         self.assertIn("✏️ Issues", content)
-        mock_collector.collect_all_stats.assert_called_once_with(
-            repos=[{"owner": "test-org", "repos": ["test-repo"]}],
-            usernames=["djangonaut1", "djangonaut2"],
+
+        # The collector was called once with a list of TeamScopes derived from
+        # the session's teams, not a flat repo/username list.
+        mock_collector.collect_all_stats.assert_called_once()
+        call_kwargs = mock_collector.collect_all_stats.call_args.kwargs
+        self.assertEqual(call_kwargs["start_date"], date(2024, 1, 1))
+        self.assertEqual(call_kwargs["end_date"], date(2024, 1, 31))
+        scopes = call_kwargs["scopes"]
+        self.assertEqual(len(scopes), 1)
+        scope = scopes[0]
+        self.assertEqual(scope.scope_term, "repo:test-org/test-repo")
+        self.assertEqual(
+            {m.github_username for m in scope.members},
+            {"djangonaut1", "djangonaut2"},
+        )
+        self.assertEqual(
+            {m.name for m in scope.members},
+            {"Jane Doe", "John Smith"},
+        )
+
+    @override_settings(GITHUB_TOKEN="test_token")
+    @patch("home.views.sessions.GitHubStatsCollector")
+    def test_uses_org_scope_when_project_monitors_whole_org(self, mock_collector_class):
+        self.project.monitor_all_organization_repos = True
+        self.project.save()
+
+        mock_collector = Mock()
+        mock_collector_class.return_value = mock_collector
+        mock_collector.collect_all_stats.return_value = StatsReport(
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
+            teams=[],
         )
+
+        self.client.post(
+            self.url,
+            {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        )
+
+        scope = mock_collector.collect_all_stats.call_args.kwargs["scopes"][0]
+        self.assertEqual(scope.scope_term, "org:test-org")
 
     @override_settings(GITHUB_TOKEN="test_token")
     @patch("home.views.sessions.GitHubStatsCollector")
@@ -547,19 +694,26 @@ class CollectStatsViewIntegrationTests(TestCase):
         mock_collector.collect_all_stats.return_value = StatsReport(
             start_date=date(2024, 1, 1),
             end_date=date(2024, 1, 31),
-            prs=[
-                PR(
-                    title="Closed PR",
-                    number=1,
-                    url="https://github.com/test-org/test-repo/pull/1",
-                    author=Author(github_username="djangonaut1", name="Djangonaut1"),
-                    created_at=date(2024, 1, 15),
-                    merged_at=None,
-                    state="closed",
-                    repo="test-org/test-repo",
+            teams=[
+                TeamReport(
+                    label="Team Alpha - Django",
+                    scope_term="repo:test-org/test-repo",
+                    prs=[
+                        PR(
+                            title="Closed PR",
+                            number=1,
+                            url="https://github.com/test-org/test-repo/pull/1",
+                            author=Author(
+                                github_username="djangonaut1", name="Jane Doe"
+                            ),
+                            created_at=date(2024, 1, 15),
+                            merged_at=None,
+                            state="closed",
+                            repo="test-org/test-repo",
+                        ),
+                    ],
                 ),
             ],
-            issues=[],
         )
 
         response = self.client.post(
@@ -587,16 +741,16 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertIn(self.session.title, content)
 
     @override_settings(GITHUB_TOKEN="test_token")
-    def test_redirects_when_session_has_no_github_projects(self):
-        """Redirects with error when the session has no GitHub projects configured."""
-        self.session.available_projects.clear()
+    def test_redirects_when_session_has_no_teams_with_github_projects(self):
+        """Redirects with error when no team has a GitHub-backed project."""
+        self.session.teams.all().delete()
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 302)
         messages = list(get_messages(response.wsgi_request))
         self.assertIn(
-            "No GitHub repositories are configured for this session",
+            "No teams with GitHub projects",
             str(messages[0]),
         )
 
@@ -632,7 +786,7 @@ class CollectStatsViewIntegrationTests(TestCase):
 
     @override_settings(GITHUB_TOKEN="test_token")
     def test_redirects_when_no_github_usernames(self):
-        """Redirects with warning when no Djangonauts have GitHub usernames."""
+        """Redirects with message when no team Djangonauts have GitHub usernames."""
         UserProfile.objects.filter(
             user__in=[self.djangonaut1, self.djangonaut2]
         ).update(github_username="")
@@ -641,4 +795,4 @@ class CollectStatsViewIntegrationTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         messages = list(get_messages(response.wsgi_request))
-        self.assertIn("No Djangonauts", str(messages[0]))
+        self.assertIn("No teams with GitHub projects", str(messages[0]))

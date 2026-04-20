@@ -94,6 +94,18 @@
         font-weight: bold;
     }
 
+    .author {
+        color: var(--link-fg, #79aec8);
+        font-weight: 600;
+    }
+
+    .author code {
+        font-size: 0.9em;
+        color: var(--body-quiet-color, #888);
+        background: transparent;
+        padding: 0;
+    }
+
     .back-actions {
         margin-top: 30px;
         padding-top: 20px;
@@ -132,6 +144,30 @@
         padding-top: 10px;
         font-size: 0.9em;
         color: var(--body-quiet-color, #666);
+    }
+
+    .team-group {
+        margin-top: 30px;
+        padding: 20px;
+        background: var(--darkened-bg, #f9f9f9);
+        border-radius: 8px;
+    }
+
+    .team-group h2 {
+        margin: 0 0 5px 0;
+        font-size: 16px;
+        color: var(--body-fg, #333);
+        border-bottom: none;
+    }
+
+    .team-group .team-counts {
+        font-size: 12px;
+        color: var(--body-quiet-color, #666);
+        margin-bottom: 10px;
+    }
+
+    .team-group h3 {
+        margin-top: 20px;
     }
 
     .no-activity {
@@ -183,98 +219,102 @@
         <div class="authors-row">
             <strong>Djangonauts:</strong>
             {% for author in authors %}
-            <span class="author-tag">{{ author.name }}</span>{% if not forloop.last %}, {% endif %}
+            <span class="author-tag">{{ author.name }} <code>@{{ author.github_username }}</code></span>{% if not forloop.last %}, {% endif %}
             {% endfor %}
         </div>
         {% endif %}
         {% endwith %}
     </div>
 
-    {% with merged_prs=report.merged_prs %}
-    {% if merged_prs %}
-    <div class="merged-prs">
-        <h3>🎉 Merged Pull Requests</h3>
-        <ul>
-            {% for pr in merged_prs %}
-            <li>
-                <strong>{{ pr.title }}</strong>
-                <div class="meta-row">
-                    <span class="repo">{{ pr.repo }}</span>
-                    <span class="author">by {{ pr.author.name }}</span>
-                    <span class="date">on {{ pr.merged_at }}</span>
-                </div>
-                <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
-            </li>
-            {% endfor %}
-        </ul>
+    {% for team in report.teams %}
+    {% if team.has_activity %}
+    <div class="team-group">
+        <h2>{{ team.label|default:"Unassigned" }}</h2>
+        <div class="team-counts">
+            {{ team.open_prs|length }} open PRs · {{ team.merged_prs|length }} merged PRs ·
+            {{ team.closed_prs|length }} closed PRs · {{ team.open_issues|length }} issues
+        </div>
+
+        {% if team.merged_prs %}
+        <div class="merged-prs">
+            <h3>🎉 Merged Pull Requests</h3>
+            <ul>
+                {% for pr in team.merged_prs %}
+                <li>
+                    <strong>{{ pr.title }}</strong>
+                    <div class="meta-row">
+                        <span class="repo">{{ pr.repo }}</span>
+                        <span class="author">by {{ pr.author.name }} <code>@{{ pr.author.github_username }}</code></span>
+                        <span class="date">on {{ pr.merged_at }}</span>
+                    </div>
+                    <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if team.closed_prs %}
+        <div class="closed-prs">
+            <h3>🚧 Closed Pull Requests</h3>
+            <ul>
+                {% for pr in team.closed_prs %}
+                <li>
+                    <strong>{{ pr.title }}</strong>
+                    <div class="meta-row">
+                        <span class="repo">{{ pr.repo }}</span>
+                        <span class="author">by {{ pr.author.name }} <code>@{{ pr.author.github_username }}</code></span>
+                        <span class="date">created {{ pr.created_at }}</span>
+                    </div>
+                    <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if team.open_prs %}
+        <div class="open-prs">
+            <h3>✨ Open Pull Requests</h3>
+            <ul>
+                {% for pr in team.open_prs %}
+                <li>
+                    <strong>{{ pr.title }}</strong>
+                    <div class="meta-row">
+                        <span class="repo">{{ pr.repo }}</span>
+                        <span class="author">by {{ pr.author.name }} <code>@{{ pr.author.github_username }}</code></span>
+                        <span class="date">created {{ pr.created_at }}</span>
+                    </div>
+                    <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if team.open_issues %}
+        <div class="open-issues">
+            <h3>✏️ Issues</h3>
+            <ul>
+                {% for issue in team.open_issues %}
+                <li>
+                    <strong>{{ issue.title }}</strong>
+                    <div class="meta-row">
+                        <span class="repo">{{ issue.repo }}</span>
+                        <span class="author">by {{ issue.author.name }} <code>@{{ issue.author.github_username }}</code></span>
+                        <span class="date">created {{ issue.created_at }}</span>
+                    </div>
+                    <a href="{{ issue.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
-    {% endwith %}
+    {% endfor %}
 
-    {% with closed_prs=report.closed_prs %}
-    {% if closed_prs %}
-    <div class="closed-prs">
-        <h3>🚧 Closed Pull Requests</h3>
-        <ul>
-            {% for pr in closed_prs %}
-            <li>
-                <strong>{{ pr.title }}</strong>
-                <div class="meta-row">
-                    <span class="repo">{{ pr.repo }}</span>
-                    <span class="author">by {{ pr.author.name }}</span>
-                    <span class="date">created {{ pr.created_at }}</span>
-                </div>
-                <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-    {% endwith %}
-
-    {% with open_prs=report.open_prs %}
-    {% if open_prs %}
-    <div class="open-prs">
-        <h3>✨ Open Pull Requests</h3>
-        <ul>
-            {% for pr in open_prs %}
-            <li>
-                <strong>{{ pr.title }}</strong>
-                <div class="meta-row">
-                    <span class="repo">{{ pr.repo }}</span>
-                    <span class="author">by {{ pr.author.name }}</span>
-                    <span class="date">created {{ pr.created_at }}</span>
-                </div>
-                <a href="{{ pr.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-    {% endwith %}
-
-    {% with open_issues=report.open_issues %}
-    {% if open_issues %}
-    <div class="open-issues">
-        <h3>✏️ Issues</h3>
-        <ul>
-            {% for issue in open_issues %}
-            <li>
-                <strong>{{ issue.title }}</strong>
-                <div class="meta-row">
-                    <span class="repo">{{ issue.repo }}</span>
-                    <span class="author">by {{ issue.author.name }}</span>
-                    <span class="date">created {{ issue.created_at }}</span>
-                </div>
-                <a href="{{ issue.url }}" target="_blank" class="github-link">View on GitHub &rarr;</a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-    {% endwith %}
-
-    {% if not report.merged_prs and not report.closed_prs and not report.open_prs and not report.open_issues %}
+    {% if not report.has_activity %}
     <div class="no-activity">
         <h3>No GitHub activity found</h3>
         <p>Try selecting a different date range.</p>

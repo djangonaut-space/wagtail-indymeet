@@ -495,33 +495,6 @@ class ProjectTests(TestCase):
 
         self.assertIsNone(project.github_repo)
 
-    def test_github_repo_config_returns_none_for_non_github(self):
-        project = ProjectFactory.create(url="https://gitlab.com/org/repo")
-
-        self.assertIsNone(project.github_repo_config)
-
-    def test_github_repo_config_returns_single_repo(self):
-        project = ProjectFactory.create(
-            url="https://github.com/django/django",
-            monitor_all_organization_repos=False,
-        )
-
-        self.assertEqual(
-            project.github_repo_config,
-            {"owner": "django", "repos": ["django"]},
-        )
-
-    def test_github_repo_config_uses_org_wide_flag(self):
-        project = ProjectFactory.create(
-            url="https://github.com/django-cms/django-cms",
-            monitor_all_organization_repos=True,
-        )
-
-        self.assertEqual(
-            project.github_repo_config,
-            {"owner": "django-cms", "repos": ["*"]},
-        )
-
 
 class SessionMembershipTests(TestCase):
     """Tests for SessionMembership model."""
@@ -545,52 +518,3 @@ class TeamTests(TestCase):
 
         expected_url = f"/sessions/spring-2024/teams/{team.pk}/"
         self.assertEqual(team.get_absolute_url(), expected_url)
-
-
-class SessionGitHubRepoTests(TestCase):
-    """Tests for session GitHub repo configuration helpers."""
-
-    def test_get_monitored_github_repos_org_flag_overrides_repo_entries(self):
-        session = SessionFactory.create()
-        session.available_projects.add(
-            ProjectFactory.create(url="https://github.com/django-commons/membership"),
-            ProjectFactory.create(
-                url="https://github.com/django-commons/awesome-package",
-                monitor_all_organization_repos=True,
-            ),
-        )
-
-        self.assertEqual(
-            session.get_monitored_github_repos(),
-            [{"owner": "django-commons", "repos": ["*"]}],
-        )
-
-    def test_get_monitored_github_repos_skips_non_github_projects(self):
-        session = SessionFactory.create()
-        session.available_projects.add(
-            ProjectFactory.create(url="https://gitlab.com/org/repo"),
-            ProjectFactory.create(url="https://github.com/django/django"),
-        )
-
-        self.assertEqual(
-            session.get_monitored_github_repos(),
-            [{"owner": "django", "repos": ["django"]}],
-        )
-
-    def test_get_monitored_github_repos_deduplicates_same_owner(self):
-        session = SessionFactory.create()
-        session.available_projects.add(
-            ProjectFactory.create(url="https://github.com/django/django"),
-            ProjectFactory.create(url="https://github.com/django/channels"),
-        )
-
-        result = session.get_monitored_github_repos()
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["owner"], "django")
-        self.assertIn("django", result[0]["repos"])
-        self.assertIn("channels", result[0]["repos"])
-
-    def test_get_monitored_github_repos_empty_when_no_projects(self):
-        session = SessionFactory.create()
-
-        self.assertEqual(session.get_monitored_github_repos(), [])

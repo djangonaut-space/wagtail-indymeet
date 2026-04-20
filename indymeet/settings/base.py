@@ -258,6 +258,11 @@ LOGGING = {
     },
     "loggers": {
         "django.request": {"handlers": [], "level": "ERROR"},
+        "home.services.github_stats": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
 
