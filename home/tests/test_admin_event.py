@@ -38,7 +38,7 @@ class EventAdminCopyActionTests(TestCase):
             slug="original-event",
             start_time=datetime(2025, 6, 1, 18, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2025, 6, 1, 20, 0, tzinfo=dt_timezone.utc),
-            location="https://zoom.example.com",
+            location="The internet",
             status=Event.SCHEDULED,
         )
 
@@ -109,7 +109,7 @@ class EventAdminCopyActionTests(TestCase):
                 "start_time_1": "18:00:00",
                 "end_time_0": "2025-07-01",
                 "end_time_1": "20:00:00",
-                "location": "https://zoom.example.com",
+                "location": "The internet",
                 "status": Event.PENDING,
                 "is_public": True,
                 "extra_emails": "sessions@djangonaut.space",
@@ -151,9 +151,10 @@ class EventAdminGetChangeformInitialDataTests(TestCase):
             slug="source-event",
             start_time=datetime(2025, 6, 1, 18, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2025, 6, 1, 20, 0, tzinfo=dt_timezone.utc),
-            location="https://zoom.example.com",
+            location="The internet",
             description="A great event.",
             status=Event.SCHEDULED,
+            zoom_link="https://zoom.us/j/existing",
             video_link="https://youtube.example.com/watch?v=abc",
             is_public=True,
             capacity=50,
@@ -175,11 +176,10 @@ class EventAdminGetChangeformInitialDataTests(TestCase):
 
         self.assertEqual(initial["title"], "Source Event")
         self.assertEqual(initial["slug"], "source-event")
-        self.assertEqual(initial["location"], "https://zoom.example.com")
+        self.assertEqual(initial["location"], "The internet")
         self.assertEqual(initial["description"], "A great event.")
-        self.assertEqual(
-            initial["video_link"], "https://youtube.example.com/watch?v=abc"
-        )
+        self.assertEqual(initial["zoom_link"], "")
+        self.assertEqual(initial["video_link"], "")
         self.assertTrue(initial["is_public"])
         self.assertEqual(initial["capacity"], 50)
         self.assertEqual(initial["extra_emails"], ["sessions@djangonaut.space"])
@@ -393,24 +393,24 @@ class EventAdminRetryZoomActionTests(TestCase):
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_queues_zoom_creation_for_events_without_video_link(self, mock_create):
-        """Action creates a meeting for events that lack a video link and skips others."""
+    def test_queues_zoom_creation_for_events_without_zoom_link(self, mock_create):
+        """Action creates a meeting for events that lack a Zoom link and skips others."""
         mock_create.return_value = "https://zoom.us/j/new"
-        event1 = EventFactory.create(video_link="")
-        event2 = EventFactory.create(video_link="https://zoom.us/j/123")
+        event1 = EventFactory.create(zoom_link="")
+        event2 = EventFactory.create(zoom_link="https://zoom.us/j/123")
         queryset = Event.objects.filter(pk__in=[event1.pk, event2.pk])
 
         self.admin.retry_zoom_meeting_creation(self._get_request(), queryset)
 
         event1.refresh_from_db()
         event2.refresh_from_db()
-        self.assertEqual(event1.video_link, "https://zoom.us/j/new")
-        self.assertEqual(event2.video_link, "https://zoom.us/j/123")
+        self.assertEqual(event1.zoom_link, "https://zoom.us/j/new")
+        self.assertEqual(event2.zoom_link, "https://zoom.us/j/123")
         mock_create.assert_called_once()
 
     def test_shows_success_message_when_queued(self):
         """A success message is shown when one or more tasks are queued."""
-        event = EventFactory.create(video_link="")
+        event = EventFactory.create(zoom_link="")
         request = self._get_request()
 
         self.admin.retry_zoom_meeting_creation(
@@ -423,7 +423,7 @@ class EventAdminRetryZoomActionTests(TestCase):
 
     def test_shows_warning_when_none_queued(self):
         """A warning message is shown when no events needed processing."""
-        event = EventFactory.create(video_link="https://zoom.us/j/123")
+        event = EventFactory.create(zoom_link="https://zoom.us/j/123")
         request = self._get_request()
 
         self.admin.retry_zoom_meeting_creation(
@@ -432,4 +432,4 @@ class EventAdminRetryZoomActionTests(TestCase):
 
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
-        self.assertIn("already have a video link", str(stored[0]))
+        self.assertIn("already have a Zoom link", str(stored[0]))

@@ -47,7 +47,7 @@ def create_zoom_meeting(event_id: int) -> None:
             logger.warning("Event %s no longer exists", event_id)
             return
 
-        if event.video_link:
+        if event.zoom_link:
             # Already set (maybe manually)
             return
 
@@ -61,7 +61,7 @@ def create_zoom_meeting(event_id: int) -> None:
             )
             return
 
-        event.video_link = join_url
-        event.save(update_fields=["video_link"])
+        event.zoom_link = join_url
+        event.save(update_fields=["zoom_link"])
 
     logger.info("Zoom meeting created for event %s", event_id)

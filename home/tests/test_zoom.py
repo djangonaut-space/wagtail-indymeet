@@ -199,7 +199,7 @@ class CreateEventMeetingTests(TestCase):
             title="Django Office Hours",
             start_time=dt(2024, 7, 1, 17, 0, tzinfo=UTC),
             end_time=dt(2024, 7, 1, 18, 30, tzinfo=UTC),
-            video_link="",
+            zoom_link="",
         )
 
     @patch("home.integrations.zoom.service.zoom_client.create_meeting")
@@ -225,7 +225,7 @@ class CreateEventMeetingTests(TestCase):
         event = EventFactory.create(
             start_time=dt(2024, 8, 1, 10, 0, tzinfo=UTC),
             end_time=dt(2024, 8, 1, 10, 0, tzinfo=UTC),
-            video_link="",
+            zoom_link="",
         )
 
         mock_create.return_value = {
@@ -245,23 +245,23 @@ class CreateZoomMeetingTaskTests(TestCase):
         cls.event = EventFactory.create(
             start_time=dt(2024, 9, 1, 10, 0, tzinfo=UTC),
             end_time=dt(2024, 9, 1, 11, 0, tzinfo=UTC),
-            video_link="",
+            zoom_link="",
         )
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_sets_video_link(self, mock_create):
+    def test_sets_zoom_link(self, mock_create):
         mock_create.return_value = "https://zoom.us/j/meeting"
 
         create_zoom_meeting.call(event_id=self.event.pk)
 
         self.event.refresh_from_db()
-        self.assertEqual(self.event.video_link, "https://zoom.us/j/meeting")
+        self.assertEqual(self.event.zoom_link, "https://zoom.us/j/meeting")
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_skips_if_video_link_exists(self, mock_create):
-        event = EventFactory.create(video_link="https://existing.link")
+    def test_skips_if_zoom_link_exists(self, mock_create):
+        event = EventFactory.create(zoom_link="https://existing.link")
 
         create_zoom_meeting.call(event_id=event.pk)
 
@@ -289,24 +289,24 @@ class CreateZoomMeetingTaskTests(TestCase):
         create_zoom_meeting.call(event_id=self.event.pk)
 
         self.event.refresh_from_db()
-        self.assertEqual(self.event.video_link, "")
+        self.assertEqual(self.event.zoom_link, "")
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
     def test_concurrent_update_preserved(self, mock_create):
         mock_create.return_value = "https://zoom.us/j/new"
 
-        event = EventFactory.create(video_link="")
+        event = EventFactory.create(zoom_link="")
 
         Event.objects.filter(pk=event.pk).update(
-            video_link="https://zoom.us/j/concurrent"
+            zoom_link="https://zoom.us/j/concurrent"
         )
 
         create_zoom_meeting.call(event_id=event.pk)
 
         event.refresh_from_db()
 
-        self.assertEqual(event.video_link, "https://zoom.us/j/concurrent")
+        self.assertEqual(event.zoom_link, "https://zoom.us/j/concurrent")
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
@@ -338,8 +338,8 @@ class ZoomSignalTests(TestCase):
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_new_event_without_video_link_creates_meeting(self, mock_create):
-        """Creating a new event with no video_link triggers Zoom meeting creation."""
+    def test_new_event_without_zoom_link_creates_meeting(self, mock_create):
+        """Creating a new event with no zoom_link triggers Zoom meeting creation."""
         mock_create.return_value = "https://zoom.us/j/new"
         event = Event.objects.create(
             title="Signal Test Event",
@@ -347,10 +347,10 @@ class ZoomSignalTests(TestCase):
             start_time=dt(2025, 6, 1, 18, 0, tzinfo=UTC),
             end_time=dt(2025, 6, 1, 19, 0, tzinfo=UTC),
             location="https://zoom.example.com",
-            video_link="",
+            zoom_link="",
         )
         event.refresh_from_db()
-        self.assertEqual(event.video_link, "https://zoom.us/j/new")
+        self.assertEqual(event.zoom_link, "https://zoom.us/j/new")
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.tasks.create_zoom_meeting.create_event_meeting")
@@ -363,7 +363,7 @@ class ZoomSignalTests(TestCase):
             start_time=dt(2025, 6, 1, 18, 0, tzinfo=UTC),
             end_time=dt(2025, 6, 1, 19, 0, tzinfo=UTC),
             location="https://zoom.example.com",
-            video_link="",
+            zoom_link="",
         )
         mock_create.reset_mock()
 

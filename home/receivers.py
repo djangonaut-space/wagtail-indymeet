@@ -12,9 +12,9 @@ def create_zoom_meeting_on_event_creation(
     """
     Queue Zoom meeting creation when a new event is created.
 
-    Only triggers if the event does not already have a video link.
+    Only triggers if the event does not already have a Zoom link.
     """
-    if not created or instance.video_link:
+    if not created or instance.zoom_link:
         return
 
     tasks.create_zoom_meeting.enqueue(event_id=instance.pk)

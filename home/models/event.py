@@ -67,7 +67,16 @@ class Event(ClusterableModel):
         related_name="events",
         on_delete=models.SET_NULL,
     )
-    video_link = models.URLField(blank=True, default="")
+    zoom_link = models.URLField(
+        blank=True,
+        default="",
+        help_text="Zoom join URL for this event. Set automatically when the event is created.",
+    )
+    video_link = models.URLField(
+        blank=True,
+        default="",
+        help_text="Link to the recording (e.g. YouTube) after the event has taken place.",
+    )
     is_public = models.BooleanField(default=True)
     extra_emails = ArrayField(
         models.EmailField(blank=True),

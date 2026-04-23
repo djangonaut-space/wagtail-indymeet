@@ -73,7 +73,8 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                     "location": source.location,
                     "description": source.description or "",
                     "status": Event.PENDING,
-                    "video_link": source.video_link,
+                    "zoom_link": "",
+                    "video_link": "",
                     "is_public": source.is_public,
                     "capacity": source.capacity,
                     "extra_emails": source.extra_emails,
@@ -141,7 +142,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         """Retry creating a Zoom meeting for events that don't have one."""
         queued = 0
         for event in queryset:
-            if event.video_link:
+            if event.zoom_link:
                 continue
             tasks.create_zoom_meeting.enqueue(event_id=event.pk)
             queued += 1
@@ -155,7 +156,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         else:
             self.message_user(
                 request,
-                "All selected events already have a video link.",
+                "All selected events already have a Zoom link.",
                 messages.WARNING,
             )
 
