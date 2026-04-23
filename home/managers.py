@@ -56,6 +56,30 @@ class EventQuerySet(QuerySet):
     def past(self):
         return self.filter(start_time__lte=timezone.now())
 
+    def public(self):
+        return self.filter(is_public=True)
+
+    def private(self):
+        return self.filter(is_public=False)
+
+    def for_user(self, user):
+        """Return events visible to the given user.
+
+        Public events are visible to everyone.
+        Private events are only visible to authenticated users with a
+        SessionMembership for the event's linked session.
+        """
+        if user.is_anonymous:
+            return self.public()
+        return self.filter(
+            Q(is_public=True)
+            | Q(
+                is_public=False,
+                session__isnull=False,
+                session__session_memberships__user=user,
+            )
+        ).distinct()
+
 
 class SessionQuerySet(QuerySet):
     def for_admin_site(self, user):
