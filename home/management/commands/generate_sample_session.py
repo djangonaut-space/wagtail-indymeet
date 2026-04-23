@@ -50,7 +50,9 @@ class Command(BaseCommand):
             )
             session.available_projects.add(project)
 
-            team = TeamFactory.create(session=session, name="Team Alpha", project=project)
+            team = TeamFactory.create(
+                session=session, name="Team Alpha", project=project
+            )
             self.stdout.write(f"Created team: {team.name}")
 
             organizer = self._get_superuser()
@@ -71,7 +73,11 @@ class Command(BaseCommand):
                 SessionMembership.objects.get_or_create(
                     user=user,
                     session=session,
-                    defaults={"team": team, "role": SessionMembership.DJANGONAUT, "accepted": True},
+                    defaults={
+                        "team": team,
+                        "role": SessionMembership.DJANGONAUT,
+                        "accepted": True,
+                    },
                 )
                 self.stdout.write(f"Added djangonaut: {user.username}")
 
@@ -88,7 +94,11 @@ class Command(BaseCommand):
             SessionMembership.objects.get_or_create(
                 user=navigator,
                 session=session,
-                defaults={"team": team, "role": SessionMembership.NAVIGATOR, "accepted": True},
+                defaults={
+                    "team": team,
+                    "role": SessionMembership.NAVIGATOR,
+                    "accepted": True,
+                },
             )
             self.stdout.write(f"Added navigator: {navigator.username}")
 
@@ -105,7 +115,11 @@ class Command(BaseCommand):
             SessionMembership.objects.get_or_create(
                 user=captain,
                 session=session,
-                defaults={"team": team, "role": SessionMembership.CAPTAIN, "accepted": True},
+                defaults={
+                    "team": team,
+                    "role": SessionMembership.CAPTAIN,
+                    "accepted": True,
+                },
             )
             self.stdout.write(f"Added captain: {captain.username}")
 
@@ -115,7 +129,9 @@ class Command(BaseCommand):
                 )
             )
             self.stdout.write(f"  Organizer:    {organizer.username}")
-            self.stdout.write(f"  Djangonauts:  sample_djangonaut_{date_str}_1, sample_djangonaut_{date_str}_2")
+            self.stdout.write(
+                f"  Djangonauts:  sample_djangonaut_{date_str}_1, sample_djangonaut_{date_str}_2"
+            )
             self.stdout.write(f"  Navigator:    {navigator.username}")
             self.stdout.write(f"  Captain:      {captain.username}")
             self.stdout.write(f"  Team:         {team.name}")
