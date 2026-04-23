@@ -2,7 +2,7 @@ Hello,
 
 We emailed you an invitation to join the Djangonaut Program and it's not too late to confirm your place as a Djangonaut! ⏰
 
-Please confirm your acceptance by visiting {{ acceptance_url }} and let us know whether you can be one of our Djangonauts by {{ membership.acceptance_deadline|date:"l F jS" }} (12:00 UTC).
+Please confirm your acceptance by visiting {{ acceptance_url }} and let us know whether you can be one of our Djangonauts by {{ membership.acceptance_deadline|date:"l F jS" }} at 12:00pm UTC ({{ membership.acceptance_deadline|time_is_link:"1200" }}).
 
 Otherwise, we may not be able to accommodate you this round.
 
