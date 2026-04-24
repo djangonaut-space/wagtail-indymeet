@@ -186,125 +186,41 @@ This is used directly by Wagtail. Don't delete it.
             <h2 class="text-6xl font-bold mb-16">What People Say</h2>
 
             <div class="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+                {% for testimonial in testimonials %}
+                    <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
+                        <blockquote class="m-0">
+                            <p class="text-gray-300 leading-relaxed italic">
+                                "{{ testimonial.text|truncatewords:30 }}"
+                            </p>
+                        </blockquote>
 
-                <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
-                    <blockquote class="m-0">
-                        <p class="text-gray-300 leading-relaxed italic">
-                            "Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more."
-                        </p>
-                    </blockquote>
-
-                    <figcaption class="flex items-center gap-3">
-                        <img src="{% static 'img/avatar.png' %}"
-                            class="w-12 h-12 rounded-full border-2 border-white/20"
-                            alt="Garba Shehu's Quote"
-                            aria-hidden="true">
-                        <div>
-                            <span class="block font-bold">Garba Shamsudeen</span>
-                            <cite class="text-sm text-gray-400 not-italic">Djangonaut S7</cite>
-                        </div>
-                    </figcaption>
-                </figure>
-
-                <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
-                    <blockquote class="m-0">
-                        <p class="text-gray-300 leading-relaxed italic">
-                            "Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more..."
-                        </p>
-                    </blockquote>
-
-                    <figcaption class="flex items-center gap-3">
-                        <img src="{% static 'img/avatar.png' %}"
-                            class="w-12 h-12 rounded-full border-2 border-white/20"
-                            alt="Garba Shehu's Quote"
-                            aria-hidden="true">
-                        <div>
-                            <span class="block font-bold">Garba Shamsudeen</span>
-                            <cite class="text-sm text-gray-400 not-italic">Djangonaut S7</cite>
-                        </div>
-                    </figcaption>
-                </figure>
-
-
-                <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
-                    <blockquote class="m-0">
-                        <p class="text-gray-300 leading-relaxed italic">
-                            "Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more."
-                        </p>
-                    </blockquote>
-
-                    <figcaption class="flex items-center gap-3">
-                        <img src="{% static 'img/avatar.png' %}"
-                            class="w-12 h-12 rounded-full border-2 border-white/20"
-                            alt="Garba Shehu's Quote"
-                            aria-hidden="true">
-                        <div>
-                            <span class="block font-bold">Garba Shamsudeen</span>
-                            <cite class="text-sm text-gray-400 not-italic">Djangonaut S7</cite>
-                        </div>
-                    </figcaption>
-                </figure>
-
-                <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
-                    <blockquote class="m-0">
-                        <p class="text-gray-300 leading-relaxed italic">
-                            "Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. "
-                        </p>
-                    </blockquote>
-
-                    <figcaption class="flex items-center gap-3">
-                        <img src="{% static 'img/avatar.png' %}"
-                            class="w-12 h-12 rounded-full border-2 border-white/20"
-                            alt="Garba Shehu's Quote"
-                            aria-hidden="true">
-                        <div>
-                            <span class="block font-bold">Garba Shamsudeen</span>
-                            <cite class="text-sm text-gray-400 not-italic">Djangonaut S7</cite>
-                        </div>
-                    </figcaption>
-                </figure>
-
-                <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
-                    <blockquote class="m-0">
-                        <p class="text-gray-300 leading-relaxed italic">
-                            "Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more."
-                        </p>
-                    </blockquote>
-
-                    <figcaption class="flex items-center gap-3">
-                        <img src="{% static 'img/avatar.png' %}"
-                            class="w-12 h-12 rounded-full border-2 border-white/20"
-                            alt="Garba Shehu's Quote"
-                            aria-hidden="true">
-                        <div>
-                            <span class="block font-bold">Garba Shamsudeen</span>
-                            <cite class="text-sm text-gray-400 not-italic">Djangonaut S7</cite>
-                        </div>
-                    </figcaption>
-                </figure>
-
-                <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
-                    <blockquote class="m-0">
-                        <p class="text-gray-300 leading-relaxed italic">
-                            "Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more. "
-                        </p>
-                    </blockquote>
-
-                    <figcaption class="flex items-center gap-3">
-                        <img src="{% static 'img/avatar.png' %}"
-                            class="w-12 h-12 rounded-full border-2 border-white/20"
-                            alt="Garba Shehu's Quote"
-                            aria-hidden="true">
-                        <div>
-                            <span class="block font-bold">Garba Shamsudeen</span>
-                            <cite class="text-sm text-gray-400 not-italic">Djangonaut S7</cite>
-                        </div>
-                    </figcaption>
-                </figure>
-
+                        <figcaption class="flex items-center gap-3">
+                            {% if testimonial.image %}
+                                <img src="{{ testimonial.image.url }}"
+                                    class="w-12 h-12 rounded-full border-2 border-white/20"
+                                    alt="{{ testimonial.image_description }}"
+                                    aria-hidden="true">
+                            {% else %}
+                                <img src="{% static 'img/avatar.png' %}"
+                                class="w-12 h-12 rounded-full border-2 border-white/20"
+                                alt="{{ testimonial.author.get_full_name|default:testimonial.author.email }}">
+                            {% endif %}
+                            <div>
+                                <span class="block font-bold">
+                                    {{ testimonial.author.get_full_name|default:testimonial.author.email}}
+                                </span>
+                                <cite class="text-sm text-gray-400 not-italic">
+                                    {{ testimonial.session.title }}
+                                </cite>
+                            </div>
+                        </figcaption>
+                    </figure>
+                    {% empty %}
+                    <p class="text-gray-400">No testimonials yet.</p>
+                {% endfor %}
+                <a href="{% url 'testimonial_list' %}">View all testimonials →</a>
             </div>
         </div>
-
     </section>
 
 
@@ -386,22 +302,6 @@ This is used directly by Wagtail. Don't delete it.
 
 </main>
 
-    <!-- <div class="flex flex-wrap flex-row links justify-center w-full lg:w-2/5 gap-2">
-        <a class="button-secondary text-black bg-white hover:bg-ds-purple hover:text-white" href="{% url "session_list" %}">Sessions</a>
-        <a class="button-secondary" href="{% url "event_list" %}">Events</a>
-        <a class="button-secondary" href="https://github.com/djangonaut-space/program/blob/main/README.md">Program</a>
-        <a class="button-secondary" href="{% slugurl "comms" %}">Blog</a>
-        <a class="button-secondary" href="{% slugurl "media-talks" %}">Media</a>
-        <a class="button-secondary" href="{% slugurl "partnerships-sponsors" %}">Sponsors</a>
-        <a class="button-secondary" href="{% slugurl "uniform-supply-office" %}">Store</a>
-        <a class="button-secondary" href="https://opencollective.com/djangonaut-space"><i class="fa-solid fa-heart pr-2"></i>  Donate</a>
-    </div> -->
-    <!-- {% comment %} <form class="d-flex form-row">
-        <input type="email" name="email" aria-label="email" class="mr-1" placeholder="example@email.com">
-        <button type="submit" class="btn btn-outline-primary">Register</button>
-    </form> {% endcomment %} -->
-
-<!-- </main> -->
 
 <footer class="landing-page-footer text-base text-white items-center pt-2 md:pt-0 flex flex-col md:flex-row justify-evenly space-y-3 md:space-y-0">
 
