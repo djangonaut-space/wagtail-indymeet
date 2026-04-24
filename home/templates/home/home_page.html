@@ -135,6 +135,51 @@ This is used directly by Wagtail. Don't delete it.
 
     </section>
 
+    <section class="w-full bg-[#f0f0f0] text-[#202020]  py-20 px-6 lg:px-16 font-inter">
+        <div class="mx-auto max-w-[1200px]">
+            <h2 class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">Get Involved</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-16">
+
+                <div class="items-start">
+                    <a href="{% url "event_list" %}" aria-labelledby="card-title-1" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
+                        <div class="flex-shrink-0" aria-hidden="true">
+                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110"" src="{% static 'img/icon-loudspeaker.png' %}" alt="" ></span>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <span id="card-title-1" class="font-bold text-2xl">Volunteer</span>
+                            <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="items-start">
+                    <a href="{% url "event_list" %}"  aria-labelledby="card-title-2" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
+                        <div class="flex-shrink-0" aria-hidden="true">
+                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <span id="card-title-2" class="font-bold text-2xl">Sponsor</span>
+                            <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="items-start">
+                    <a href="{% url "event_list" %}"  aria-labelledby="card-title-3" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
+                        <div class="flex-shrink-0" aria-hidden="true">
+                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <span id="card-title-3" class="font-bold text-2xl">Djangonaut</span>
+                            <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </section>
 
     <section class="w-full bg-[#202020] text-gray-100 py-20 px-6">
         <div class="max-w-[1200px] mx-auto">
@@ -256,66 +301,6 @@ This is used directly by Wagtail. Don't delete it.
                         </div>
                     </figcaption>
                 </figure>
-
-            </div>
-        </div>
-
-    </section>
-
-
-    <section class="w-full bg-[#f0f0f0] text-[#202020]  py-20 px-6 lg:px-16 font-inter">
-        <div class="mx-auto max-w-[1200px]">
-            <h2 class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">Get Involved</h2>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-16">
-
-                <div class="items-start">
-                    <a href="{% url "event_list" %}" aria-labelledby="card-title-1" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
-                        <div class="flex-shrink-0" aria-hidden="true">
-                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110"" src="{% static 'img/icon-loudspeaker.png' %}" alt="" ></span>
-                        </div>
-                        <div class="flex flex-col gap-3">
-                            <span id="card-title-1" class="font-bold text-2xl">Stay informed about program news</span>
-                            <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="items-start">
-                    <a href="{% url "event_list" %}"  aria-labelledby="card-title-2" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
-                        <div class="flex-shrink-0" aria-hidden="true">
-                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
-                        </div>
-                        <div class="flex flex-col gap-3">
-                            <span id="card-title-2" class="font-bold text-2xl">Stay informed about program news</span>
-                            <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="items-start">
-                    <a href="{% url "event_list" %}"  aria-labelledby="card-title-3" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
-                        <div class="flex-shrink-0" aria-hidden="true">
-                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
-                        </div>
-                        <div class="flex flex-col gap-3">
-                            <span id="card-title-3" class="font-bold text-2xl">Stay informed about program news</span>
-                            <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="items-start">
-                    <a href="{% url "event_list" %}"  aria-labelledby="card-title-4" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
-                        <div class="flex-shrink-0" aria-hidden="true">
-                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
-                        </div>
-                        <div class="flex flex-col gap-3">
-                            <span id="card-title-4" class="font-bold text-2xl">Stay informed about program news</span>
-                            <p class="text-lg leading-relaxed text-gray-800">Join our newsletter to be notified first of upcoming session applications, in-programme updates, contributions from our djangonauts and more.</p>
-                        </div>
-                    </a>
-                </div>
 
             </div>
         </div>
