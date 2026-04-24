@@ -14,8 +14,7 @@ This is used directly by Wagtail. Don't delete it.
     <nav class="max-w-[1200px] mx-auto px-6 py-4" aria-label="Main navigation">
         <div class="flex items-center justify-between lg:grid lg:grid-cols-3 lg:items-center">
 
-            <div class="hidden lg:flex gap-6 justify-start">
-                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "session_list" %}">Sessions</a>
+            <div class="hidden lg:flex gap-6 justify-end">
                 <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">About</a>
                 <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% slugurl "comms" %}">Blog</a>
             </div>
@@ -27,9 +26,8 @@ This is used directly by Wagtail. Don't delete it.
                 </a>
             </div>
 
-            <div class="flex items-center justify-end">
+            <div class="flex items-center justify-start">
                 <div class="hidden lg:flex gap-6 items-center">
-                    <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% slugurl "media-talks" %}">Media</a>
 
                     <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">Login</a>
 
