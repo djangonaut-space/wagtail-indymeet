@@ -27,11 +27,56 @@ This is used directly by Wagtail. Don't delete it.
             </div>
 
             <div class="flex items-center justify-start">
+
                 <div class="hidden lg:flex gap-6 items-center">
+                    {% if not user.is_authenticated %}
+                        <div>
+                            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">Login</a>
 
-                    <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">Login</a>
-
-                    <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">Sign up</a>
+                            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">Sign up</a>
+                        </div>
+                    {% else %}
+                    <div class="relative hidden md:block" x-data="{ showDropdown: false }">
+                        <button type="button" class="block bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" @click="showDropdown = !showDropdown">
+                        <span class="sr-only">Open user menu</span>
+                        <img class="w-8 h-8 rounded-full" src={%  if user.profile.bio_image %}"{{ user.profile.bio_image }}"{% else %}"{% static 'img/favicon.png' %}"{% endif %} alt="Profile photo">
+                        </button>
+                        <div x-cloak x-show="showDropdown">
+                        <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44 z-50" aria-labelledby="user-menu-button">
+                            <li class="p-2">
+                            <a href="{% url 'user_sessions' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                                {% trans "My Sessions" %}
+                            </a>
+                            </li>
+                            {% if nav_active_team_membership %}
+                            <li class="p-2 ms-2">
+                            <a href="{% url 'team_detail' session_slug=nav_active_team_membership.session.slug pk=nav_active_team_membership.team.pk %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                                {% trans "Team" %} {{ nav_active_team_membership.team.name }}
+                            </a>
+                            </li>
+                            {% endif %}
+                            <li class="p-2">
+                            <a href="{% url 'profile' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                                {% trans "Profile" %}
+                            </a>
+                            </li>
+                            <li class="p-2">
+                            <a href="{% url 'password_change' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                                {% trans "Update password" %}
+                            </a>
+                            </li>
+                            <li class="p-2">
+                            <form action="{% url 'logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="block outline-link text-gray-500 transition hover:text-ds-purple">
+                                {% trans "Logout" %}
+                                </button>
+                            </form>
+                            </li>
+                        </ul>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <button class="lg:hidden text-white p-2" id="mobile-menu-button" aria-label="Open main menu" aria-expanded="false" aria-controls="mobile-menu">
@@ -48,10 +93,14 @@ This is used directly by Wagtail. Don't delete it.
             <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% slugurl "comms" %}">Blog</a>
 
             <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% slugurl "media-talks" %}">Media</a>
+            {% if not user.is_authenticated %}
+                <div>
+                    <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Login</a>
 
-            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Login</a>
+                    <a class="bg-white text-[#202020] text-center py-3 rounded-xl font-bold hover:bg-ds-purple no-underline hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Sign up</a>
+                </div>
+            {% endif %}
 
-            <a class="bg-white text-[#202020] text-center py-3 rounded-xl font-bold hover:bg-ds-purple no-underline hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Sign up</a>
         </div>
     </nav>
 </header>
