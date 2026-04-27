@@ -41,7 +41,7 @@ This is used directly by Wagtail. Don't delete it.
                         <span class="sr-only">Open user menu</span>
                         <img class="w-8 h-8 rounded-full" src={%  if user.profile.bio_image %}"{{ user.profile.bio_image }}"{% else %}"{% static 'img/favicon.png' %}"{% endif %} alt="Profile photo">
                         </button>
-                        <div x-cloak x-show="showDropdown">
+                        <div x-cloak x-show="showDropdown" @click.away="showDropdown = false">
                         <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44 z-50" aria-labelledby="user-menu-button">
                             <li class="p-2">
                             <a href="{% url 'user_sessions' %}" class="block outline-link text-gray-500 transition hover:text-ds-purple">
@@ -88,17 +88,46 @@ This is used directly by Wagtail. Don't delete it.
         </div>
 
         <div class="hidden flex-col gap-4 pt-6 pb-4 lg:hidden" id="mobile-menu">
-            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "session_list" %}">Sessions</a>
             <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">About</a>
             <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% slugurl "comms" %}">Blog</a>
 
-            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% slugurl "media-talks" %}">Media</a>
             {% if not user.is_authenticated %}
-                <div>
                     <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Login</a>
 
                     <a class="bg-white text-[#202020] text-center py-3 rounded-xl font-bold hover:bg-ds-purple no-underline hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Sign up</a>
-                </div>
+            {% else %}
+
+                <span role="separator" class="my-1 border-t border-gray-500"></span>
+                <a href="{% url 'user_sessions' %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+                    {% trans "My Sessions" %}
+                </a>
+                <!-- </li> -->
+                {% if nav_active_team_membership %}
+                <!-- <li class="p-2 ms-2"> -->
+                <a href="{% url 'team_detail' session_slug=nav_active_team_membership.session.slug pk=nav_active_team_membership.team.pk %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+                    {% trans "Team" %} {{ nav_active_team_membership.team.name }}
+                </a>
+                <!-- </li> -->
+                {% endif %}
+                <!-- <li class="p-2"> -->
+                <a href="{% url 'profile' %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+                    {% trans "Profile" %}
+                </a>
+                <!-- </li> -->
+                <!-- <li class="p-2"> -->
+                <a href="{% url 'password_change' %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+                    {% trans "Update password" %}
+                </a>
+                <!-- </li> -->
+                <!-- <li class="p-2"> -->
+                <form action="{% url 'logout' %}" method="post" class="flex flex-col">
+                    {% csrf_token %}
+                    <button type="submit" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+                    {% trans "Logout" %}
+                    </button>
+                </form>
+                <!-- </li> -->
+
             {% endif %}
 
         </div>
