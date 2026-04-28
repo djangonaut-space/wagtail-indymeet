@@ -425,36 +425,6 @@ This is used directly by Wagtail. Don't delete it.
                 </div>
               </figcaption>
             </figure>
-            <figure class="flex gap-6 items-start bg-white/5 rounded-2xl p-6 m-0">
-              <div class="flex-shrink-0">
-                {% if testimonial.image %}
-                  <img src="{{ testimonial.image.url }}"
-                       class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
-                       alt="{{ testimonial.image_description }}"
-                  >
-                {% else %}
-                  <img src="{% static 'img/avatar.png' %}"
-                       class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
-                       alt="{{ testimonial.author.get_full_name|default:testimonial.author.username }}"
-                  >
-                {% endif %}
-              </div>
-              <figcaption class="flex flex-col justify-between gap-4 min-w-0">
-                <blockquote class="m-0">
-                  <p class="text-gray-300 leading-relaxed italic">
-                    "{{ testimonial.text|truncatewords:30 }}"
-                  </p>
-                </blockquote>
-                <div>
-                  <span class="block font-bold">
-                      {{ testimonial.author.get_full_name|default:testimonial.author.username }}
-                  </span>
-                  <cite class="text-sm text-gray-400 not-italic">
-                    {{ testimonial.session.title }}
-                  </cite>
-                </div>
-              </figcaption>
-            </figure>
           {% endfor %}
         </div>
 
