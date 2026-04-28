@@ -176,17 +176,17 @@ This is used directly by Wagtail. Don't delete it.
 
 <main class="landing-page flex grow flex-col items-center justify-center z-[2]">
 
-    <section class="hero relative w-full min-h-[70vh] flex flex-col items-center justify-center text-center px-6 pt-32 pb-20 md:py-20 text-white overflow-hidden font-inter">
+    <section class="hero relative w-full min-h-[70vh] flex flex-col items-center justify-center text-center px-6 pt-32 pb-20 md:py-20 text-white overflow-hidden">
 
         <div id="particules-js" class="absolute w-[100%] h-[100%] "></div>
 
         <div class="relative z-20 max-w-[1200px] mx-auto flex flex-col items-center">
             <h1 class="animate-fade-up p-0 text-5xl md:text-9xl leading-tight md:leading-[1.1] font-fraunces font-bold text-center max-w">Where contributors launch</h1>
             <p class="animate-fade-up mt-4 text-lg md:text-xl max-w-[600px] opacity-90" style="animation-delay: 200ms;">Ready for take-off?</p>
-            <div class="">
-                <a href="{% url 'signup' %}" class="animate-fade-up button-secondary  mt-4 md:mt-10 text-[#202020] bg-white px-8 py-4 rounded-full font-bold hover:bg-ds-purple hover:text-white transition-all transform hover:scale-105 shadow-xl" style="animation-delay: 400ms;">Get Involved</a>
+            <div class="flex gap-4 mt-4 md:mt-10">
+                <a href="{% url 'signup' %}" class="animate-fade-up action-button inline-block no-underline hover:text-white px-8 py-4" style="animation-delay: 400ms;">🚀 Get Involved</a>
 
-                <a href="https://opencollective.com/djangonaut-space" class="animate-fade-up button-secondary mt-4 md:mt-10 text-[#202020] bg-white px-8 py-4 rounded-full font-bold hover:bg-ds-purple hover:text-white transition-all transform hover:scale-105 shadow-xl" style="animation-delay: 400ms;">Donate</a>
+                <a href="https://opencollective.com/djangonaut-space" class="animate-fade-up action-button inline-block no-underline hover:text-white px-8 py-4" style="animation-delay: 400ms;">🤍 Donate</a>
             </div>
         </div>
 
@@ -195,7 +195,7 @@ This is used directly by Wagtail. Don't delete it.
     </section>
 
 
-    <section class="bg-white w-full py-16 px-5 font-inter" aria-labelledby="contribution-heading">
+    <section class="bg-white w-full py-16 px-5" aria-labelledby="contribution-heading">
         <div class="max-w-[1200px] mx-auto text-center">
 
             <h2 id="contribution-heading" class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">Projects We Have Contributed To</h2>
@@ -224,7 +224,7 @@ This is used directly by Wagtail. Don't delete it.
         </div>
     </section>
 
-    <section class="w-full bg-[#e4e4e4] text-[#202020]  py-16 px-[5vw] lg:px-[14vw] font-inter">
+    <section class="w-full bg-[#e4e4e4] text-[#202020]  py-16 px-[5vw] lg:px-[14vw]">
         <div class="mx-auto max-w-[1200px]">
             <h2 class="text-4xl md:text-6xl font-extrabold mb-8 pt-16 xl:pt-8 pb-8">About the Program</h2>
             <div class="flex flex-col lg:flex-row gap-10 items-center">
@@ -236,7 +236,7 @@ This is used directly by Wagtail. Don't delete it.
                     <p class="mb-8">
                     The programme has run since January 2024 and it is currently in its 6th session. Previous mentees in the programme have gone on to become maintainers, Django foundation board members and join various teams.</p>
 
-                    <a href="https://github.com/djangonaut-space/program/blob/main/README.md" class="button-secondary inline-block px-8 py-3 rounded-full font-bold border-2 border-[#202020] text-[#202020] bg-white transition-all hover:bg-ds-purple hover:border-ds-purple hover:text-white focus-visible:ring-4 focus-visible:ring-ds-purple/50 outline-none duration-300">See full program docs</a>
+                    <a href="https://github.com/djangonaut-space/program/blob/main/README.md" class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Read program documentation</a>
 
                 </div>
                 <div class="w-full lg:w-2/5">
@@ -247,7 +247,7 @@ This is used directly by Wagtail. Don't delete it.
 
     </section>
 
-    <section class="w-full bg-[#f0f0f0] text-[#202020]  py-20 px-6 lg:px-16 font-inter">
+    <section class="w-full bg-[#f0f0f0] text-[#202020]  py-20 px-6 lg:px-16">
         <div class="mx-auto max-w-[1200px]">
             <h2 class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">Get Involved</h2>
 
@@ -328,12 +328,12 @@ This is used directly by Wagtail. Don't delete it.
                         </figcaption>
                     </figure>
                 {% endfor %}
-                <a href="{% url 'testimonial_list' %}">View all testimonials →</a>
+                <a href="{% url 'testimonial_list' %}">Read more testimonials</a>
             </div>
         </div>
     </section>
 
-    <section class="bg-white w-full py-16 px-5 font-inter ">
+    <section class="bg-white w-full py-16 px-5">
         <div class="max-w-[1200px] mx-auto text-center">
 
             <h2 id="sponsors-heading" class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR FINANCIAL SPONSORS</h2>
@@ -354,7 +354,7 @@ This is used directly by Wagtail. Don't delete it.
     </section>
 
 
-    <section class="w-full bg-[#EDE2F0] text-[#202020]  py-20 px-6 lg:px-[14vw] font-inter" aria-labelledby="resources-heading">
+    <section class="w-full bg-[#EDE2F0] text-[#202020]  py-20 px-6 lg:px-[14vw]" aria-labelledby="resources-heading">
         <div class="mx-auto max-w-[1200px]">
             <h2 id="resources-heading" class="text-4xl md:text-6xl font-extrabold mb-12">More Resources</h2>
 
