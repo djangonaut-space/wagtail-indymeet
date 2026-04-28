@@ -17,9 +17,10 @@ This is used directly by Wagtail. Don't delete it.
             <div class="hidden lg:flex gap-6 justify-end">
                  <div class="relative inline-block" x-data="{ aboutOpen: false }" @mouseleave="aboutOpen = false">
                     <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple flex items-center gap-1"
-                    href="{% url 'event_list' %}"
-                    @mouseenter="aboutOpen = true"
-                    @focus="aboutOpen = true">
+                       href="{% url 'event_list' %}"
+                       @mouseenter="aboutOpen = true"
+                       @focus="aboutOpen = true"
+                    >
                         About
                         <svg class="w-4 h-4 transition-transform duration-200" :class="aboutOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -27,12 +28,12 @@ This is used directly by Wagtail. Don't delete it.
                     </a>
 
                     <div x-show="aboutOpen"
-                        x-cloak
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        class="absolute left-0 mt-1 w-48 bg-white rounded-md shadow-xl z-50 py-2 border border-gray-100">
-
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="absolute left-0 w-48 bg-white rounded-md shadow-xl z-50 py-2 border border-gray-100"
+                    >
                         <a href="https://buttondown.com/djangonaut-space" target="_blank" class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
                             Newsletter
                         </a>
@@ -45,7 +46,6 @@ This is used directly by Wagtail. Don't delete it.
                         <a href="{% url 'session_list' %}" class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
                             Sessions
                         </a>
-                        <!-- <hr class="my-1 border-gray-100"> -->
                         <a href="mailto:contact@djangonaut.space" class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
                             Contact
                         </a>
@@ -72,15 +72,16 @@ This is used directly by Wagtail. Don't delete it.
                         </div>
                     {% else %}
                     <div class="relative hidden md:block" x-data="{ showDropdown: false }">
-                        <button type="button" class="block bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" @click="showDropdown = !showDropdown">
-                        <span class="sr-only">Open user menu</span>
-                        <img class="w-8 h-8 rounded-full" src={%  if user.profile.bio_image %}"{{ user.profile.bio_image }}"{% else %}"{% static 'img/favicon.png' %}"{% endif %} alt="Profile photo">
+                        <button type="button" class="block cursor-pointer bg-gray-800 rounded-full md:me-0 hover:ring-4 hover:ring-ds-purple/60 focus:ring-4 focus:ring-gray-300 transition-all" id="user-menu-button" aria-expanded="false" @click="showDropdown = !showDropdown">
+                          <span class="sr-only">Open user menu</span>
+                          <img class="w-12 h-12 rounded-full" src="{%  if user.profile.bio_image %}{{ user.profile.bio_image }}{% else %}{% static 'img/favicon.png' %}{% endif %}" alt="Profile photo" />
                         </button>
-                        <div x-cloak x-show="showDropdown" @click.away="showDropdown = false"
-                            x-cloak
-                            x-transition:enter="transition ease-out duration-200"
-                            x-transition:enter-start="opacity-0 translate-y-1"
-                            x-transition:enter-end="opacity-100 translate-y-0"
+                        <div x-cloak
+                             x-show="showDropdown"
+                             @click.away="showDropdown = false"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
                         >
                         <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44 z-50" aria-labelledby="user-menu-button">
                             <a href="{% url 'user_sessions' %}" class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
@@ -174,7 +175,7 @@ This is used directly by Wagtail. Don't delete it.
     </nav>
 </header>
 
-<main class="landing-page flex grow flex-col items-center justify-center z-[2]">
+<main class="landing-page flex grow flex-col items-center justify-center w-full z-[2]">
 
     <section class="hero relative w-full min-h-[70vh] flex flex-col items-center justify-center text-center px-6 pt-32 pb-20 md:py-20 text-white overflow-hidden">
 
@@ -186,7 +187,7 @@ This is used directly by Wagtail. Don't delete it.
             <div class="flex gap-4 mt-4 md:mt-10">
                 <a href="{% url 'signup' %}" class="animate-fade-up action-button inline-block no-underline hover:text-white px-8 py-4" style="animation-delay: 400ms;">🚀 Get Involved</a>
 
-                <a href="https://opencollective.com/djangonaut-space" class="animate-fade-up action-button inline-block no-underline hover:text-white px-8 py-4" style="animation-delay: 400ms;">🤍 Donate</a>
+                <a href="https://opencollective.com/djangonaut-space" target="_blank" class="animate-fade-up action-button inline-block no-underline hover:text-white px-8 py-4" style="animation-delay: 400ms;">🤍 Donate</a>
             </div>
         </div>
 
@@ -244,46 +245,67 @@ This is used directly by Wagtail. Don't delete it.
 
     </section>
 
-    <section class="w-full bg-[#f0f0f0] text-[#202020]  py-20 px-6 lg:px-16">
+    <section class="w-full bg-[#EDE2F0] text-[#202020]  py-20 px-6 lg:px-16">
         <div class="mx-auto max-w-[1200px]">
             <h2 class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">Get Involved</h2>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-16">
 
-                <div class="items-start">
-                    <a href="{% url "event_list" %}" aria-labelledby="card-title-1" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
-                        <div class="flex-shrink-0" aria-hidden="true">
-                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110"" src="{% static 'img/icon-loudspeaker.png' %}" alt="" ></span>
+
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+                    <div class="flex-shrink-0" aria-hidden="true">
+                        <i class="fas fa-user-astronaut text-4xl text-ds-purple"></i>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <h3 class="font-bold text-2xl">Be a Djangonaut</h3>
+                        <p class="text-lg leading-relaxed text-gray-800">Join your crew contribute to Django and the community! Be part of an amazing community of passionate contributors, maintainers, and mentors.</p>
+                        <div class="flex gap-3 flex-wrap mt-2">
+                            <a target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space" class="action-button inline-block no-underline px-8 py-3">Subscribe</a>
+                            <a target="_blank" rel="noopener" href="https://github.com/djangonaut-space/program/blob/main/getting-started-participants.md" class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Learn more</a>
                         </div>
-                        <div class="flex flex-col gap-3">
-                            <span id="card-title-1" class="font-bold text-2xl">Volunteer</span>
-                            <p class="text-lg leading-relaxed text-gray-800">You can help lead and captain teams contributing in the program, handle admin and organizing duties, design media assets or write releases and more. There are several ways you can volunteer in the program.</p>
-                        </div>
-                    </a>
+                    </div>
                 </div>
 
-                <div class="items-start">
-                    <a href="{% url "event_list" %}"  aria-labelledby="card-title-2" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
-                        <div class="flex-shrink-0" aria-hidden="true">
-                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+                    <div class="flex-shrink-0" aria-hidden="true">
+                        <i class="fas fa-compass text-4xl text-ds-purple"></i>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <h3 class="font-bold text-2xl">Be a Navigator</h3>
+                        <p class="text-lg leading-relaxed text-gray-800">Do you regularly contribute to a project and guide others to learn how to contribute? Our program is limited by the number of navigators we have.</p>
+                        <div class="flex gap-3 flex-wrap mt-2">
+                            <a target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space" class="action-button inline-block no-underline px-8 py-3">Subscribe</a>
+                            <a href="#" class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Learn more</a>
                         </div>
-                        <div class="flex flex-col gap-3">
-                            <span id="card-title-2" class="font-bold text-2xl">Sponsor</span>
-                            <p class="text-lg leading-relaxed text-gray-800">Support the program financially and in other ways possible.</p>
-                        </div>
-                    </a>
+                    </div>
                 </div>
 
-                <div class="items-start">
-                    <a href="{% url "event_list" %}"  aria-labelledby="card-title-3" class="group flex gap-4 md:gap-6 items-start p-4 -m-4 rounded-xl transition-all hover:bg-white/50 no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
-                        <div class="flex-shrink-0" aria-hidden="true">
-                            <span><img class="w-12 h-12 lg:w-16 lg:h-16 object-contain transition-transform group-hover:scale-110" src="{% static 'img/icon-loudspeaker.png' %}" alt=""></span>
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+                    <div class="flex-shrink-0" aria-hidden="true">
+                        <i class="fas fa-satellite-dish text-4xl text-ds-purple"></i>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <h3 class="font-bold text-2xl">Be a Captain</h3>
+                        <p class="text-lg leading-relaxed text-gray-800">Are you a member of the Django community and want to welcome others in? Captains provide support to make Djangonauts feel welcome.</p>
+                        <div class="flex gap-3 flex-wrap mt-2">
+                            <a target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space" class="action-button inline-block no-underline px-8 py-3">Subscribe</a>
+                            <a target="_blank" rel="noopener" href="https://github.com/djangonaut-space/program/blob/main/getting-started-volunteer.md" class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Learn more</a>
                         </div>
-                        <div class="flex flex-col gap-3">
-                            <span id="card-title-3" class="font-bold text-2xl">Djangonaut</span>
-                            <p class="text-lg leading-relaxed text-gray-800">Join the program to collaborate with fellow djangonauts and contribute to interesting projects in the Django ecosystem. Be part of an amazing community of passionate contributors, maintainers, and mentors.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+                    <div class="flex-shrink-0" aria-hidden="true">
+                        <i class="fas fa-heart text-4xl text-ds-purple"></i>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <h3 class="font-bold text-2xl">Sponsor</h3>
+                        <p class="text-lg leading-relaxed text-gray-800">Support the community and its members financially. Your financial support sends people to conferences and more!</p>
+                        <div class="flex gap-3 flex-wrap mt-2">
+                            <a target="_blank" rel="noopener" href="https://opencollective.com/djangonaut-space" class="action-button inline-block no-underline px-8 py-3">🤍 Donate</a>
+                            <a target="_blank" rel="noopener" href="/comms/tag/finances/" class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Financial reports</a>
                         </div>
-                    </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -292,31 +314,63 @@ This is used directly by Wagtail. Don't delete it.
 
     <section class="w-full bg-[#202020] text-gray-100 py-20 px-6">
         <div class="max-w-[1200px] mx-auto">
-            <h2 class="text-6xl font-bold mb-16">What People Say</h2>
+            <h2 class="text-6xl font-bold mb-16">Hear from our community</h2>
 
-            <div class="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {% for testimonial in testimonials %}
-                    <figure class="break-inside-avoid bg-transparent flex flex-col gap-4 mb-8 p-1">
-                        <blockquote class="m-0">
-                            <p class="text-gray-300 leading-relaxed italic">
-                                "{{ testimonial.text|truncatewords:30 }}"
-                            </p>
-                        </blockquote>
-
-                        <figcaption class="flex items-center gap-3">
+                    <figure class="flex gap-6 items-start bg-white/5 rounded-2xl p-6 m-0">
+                        <div class="flex-shrink-0">
                             {% if testimonial.image %}
                                 <img src="{{ testimonial.image.url }}"
-                                    class="w-12 h-12 rounded-full border-2 border-white/20"
-                                    alt="{{ testimonial.image_description }}"
-                                    aria-hidden="true">
+                                     class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
+                                     alt="{{ testimonial.image_description }}"
+                                >
                             {% else %}
                                 <img src="{% static 'img/avatar.png' %}"
-                                class="w-12 h-12 rounded-full border-2 border-white/20"
-                                alt="{{ testimonial.author.get_full_name|default:testimonial.author.username }}">
+                                     class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
+                                     alt="{{ testimonial.author.get_full_name|default:testimonial.author.username }}"
+                                >
                             {% endif %}
+                        </div>
+                        <figcaption class="flex flex-col justify-between gap-4 min-w-0">
+                            <blockquote class="m-0">
+                                <p class="text-gray-300 leading-relaxed italic">
+                                    "{{ testimonial.text|truncatewords:30 }}"
+                                </p>
+                            </blockquote>
                             <div>
                                 <span class="block font-bold">
-                                    {{ testimonial.author.get_full_name|default:testimonial.author.username}}
+                                    {{ testimonial.author.get_full_name|default:testimonial.author.username }}
+                                </span>
+                                <cite class="text-sm text-gray-400 not-italic">
+                                    {{ testimonial.session.title }}
+                                </cite>
+                            </div>
+                        </figcaption>
+                    </figure>
+                    <figure class="flex gap-6 items-start bg-white/5 rounded-2xl p-6 m-0">
+                        <div class="flex-shrink-0">
+                            {% if testimonial.image %}
+                                <img src="{{ testimonial.image.url }}"
+                                     class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
+                                     alt="{{ testimonial.image_description }}"
+                                >
+                            {% else %}
+                                <img src="{% static 'img/avatar.png' %}"
+                                     class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
+                                     alt="{{ testimonial.author.get_full_name|default:testimonial.author.username }}"
+                                >
+                            {% endif %}
+                        </div>
+                        <figcaption class="flex flex-col justify-between gap-4 min-w-0">
+                            <blockquote class="m-0">
+                                <p class="text-gray-300 leading-relaxed italic">
+                                    "{{ testimonial.text|truncatewords:30 }}"
+                                </p>
+                            </blockquote>
+                            <div>
+                                <span class="block font-bold">
+                                    {{ testimonial.author.get_full_name|default:testimonial.author.username }}
                                 </span>
                                 <cite class="text-sm text-gray-400 not-italic">
                                     {{ testimonial.session.title }}
@@ -325,8 +379,9 @@ This is used directly by Wagtail. Don't delete it.
                         </figcaption>
                     </figure>
                 {% endfor %}
-                <a href="{% url 'testimonial_list' %}">Read more testimonials</a>
             </div>
+
+            <a href="{% url 'testimonial_list' %}" class="action-button inline-block no-underline mt-5">Read more testimonials</a>
         </div>
     </section>
 
@@ -353,48 +408,42 @@ This is used directly by Wagtail. Don't delete it.
 
     <section class="w-full bg-[#EDE2F0] text-[#202020]  py-20 px-6 lg:px-[14vw]" aria-labelledby="resources-heading">
         <div class="mx-auto max-w-[1200px]">
-            <h2 id="resources-heading" class="text-4xl md:text-6xl font-extrabold mb-12">More Resources</h2>
+            <h2 id="resources-heading" class="text-4xl md:text-6xl font-extrabold mb-12">Explore our universe!</h2>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-10">
 
-                <div class="items-start bg-white border-pink-300 p-8 rounded-2xl border-2 transition-transform hover:scale-[1.01]">
-
-                    <a href="{% slugurl "uniform-supply-office" %}" aria-labelledby="resource-1" class="group flex gap-6 items-start p-4 -m-4 transition-colors hover:bg-white/50 no-underline text-inherit focus-visible:ring-4 focus-visible:ring-pink-400 outline-none">
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+                    <a href="{% slugurl "comms" %}" aria-labelledby="resource-3" class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
                     <div class="flex flex-col gap-3">
-                        <span id="resource-1" class="font-bold text-2xl group-hover:text-pink-600 transition-colors">Store</span>
-                        <p class="text-lg leading-relaxed text-gray-800">Get your cool merch and stickers.</p>
+                        <span id="resource-3" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Communication Center</span>
+                        <p class="text-lg leading-relaxed text-gray-800">📡 Space travel can be lonely without a comms antenna. We use our blog to write about our sessions, members and the community.</p>
                     </div>
                     </a>
                 </div>
 
-                <div class="items-start bg-white border-pink-300 p-8 rounded-2xl border-2 transition-transform hover:scale-[1.01]">
-
-                    <a href="{% slugurl "media-talks" %}" aria-labelledby="resource-2" class="group flex gap-6 items-start p-4 -m-4 transition-colors hover:bg-white/50 no-underline text-inherit focus-visible:ring-4 focus-visible:ring-pink-400 outline-none">
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+                    <a href="{% slugurl "media-talks" %}" aria-labelledby="resource-2" class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
                     <div class="flex flex-col gap-3">
-                        <span id="resource-2" class="font-bold text-2xl group-hover:text-pink-600 transition-colors">Media</span>
-                        <p class="text-lg leading-relaxed text-gray-800">See pictureas and other media assets from the program.</p>
+                        <span id="resource-2" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Djangonaut Space Content</span>
+                        <p class="text-lg leading-relaxed text-gray-800">🥰 Our members are all over the Django community. We've got blog posts, talks and podcasts galore.</p>
                     </div>
                     </a>
                 </div>
 
-
-                <div class="items-start bg-white border-pink-300 p-8 rounded-2xl border-2 transition-transform hover:scale-[1.01]">
-
-                    <a href="{% slugurl "comms" %}" aria-labelledby="resource-3" class="group flex gap-6 items-start p-4 -m-4 transition-colors hover:bg-white/50 no-underline text-inherit focus-visible:ring-4 focus-visible:ring-pink-400 outline-none">
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+                    <a href="{% url 'session_list' %}" aria-labelledby="resource-4" class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
                     <div class="flex flex-col gap-3">
-                        <span id="resource-3" class="font-bold text-2xl group-hover:text-pink-600 transition-colors">Blog</span>
-                        <p class="text-lg leading-relaxed text-gray-800">Read about the latest updates from the program.</p>
+                        <span id="resource-4" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Sessions</span>
+                        <p class="text-lg leading-relaxed text-gray-800">🚀 Find out more about past and upcoming sessions. Join the next mission!</p>
                     </div>
                     </a>
                 </div>
 
-
-                <div class="items-start bg-white border-pink-300 p-8 rounded-2xl border-2 transition-transform hover:scale-[1.01]">
-
-                    <a href="{% url 'session_list' %}" aria-labelledby="resource-4" class="group flex gap-6 items-start p-4 -m-4 transition-colors hover:bg-white/50 no-underline text-inherit focus-visible:ring-4 focus-visible:ring-pink-400 outline-none">
+                <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+                    <a href="{% slugurl "uniform-supply-office" %}" aria-labelledby="resource-1" class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
                     <div class="flex flex-col gap-3">
-                        <span id="resource-4" class="font-bold text-2xl group-hover:text-pink-600 transition-colors">Sessions</span>
-                        <p class="text-lg leading-relaxed text-gray-800">See past sessions and their details.</p>
+                        <span id="resource-1" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Uniform Supply Office</span>
+                        <p class="text-lg leading-relaxed text-gray-800">🏪 Otherwise known as the "Store". Get your Djangonaut Space t-shirts, hoodies, and other merchandise here. </p>
                     </div>
                     </a>
                 </div>
@@ -413,11 +462,11 @@ This is used directly by Wagtail. Don't delete it.
 
     <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
         <nav class="flex flex-wrap justify-center gap-6" aria-label="Footer navigation">
-            <a class="text-gray-300 hover:text-white  transition-all"
+            <a class="text-gray-300 hover:text-white transition-all"
                href="https://github.com/djangonaut-space/program/blob/main/CODE_OF_CONDUCT.md">
                 Code of Conduct
             </a>
-            <a class="text-gray-300 hover:text-white  transition-all"
+            <a class="text-gray-300 hover:text-white transition-all"
                target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space">
                 Newsletter <span class="sr-only">(opens in new tab)</span>
             </a>
@@ -428,32 +477,31 @@ This is used directly by Wagtail. Don't delete it.
             <script src="https://djangowebring.com/static/webring.js"></script>
         </div>
 
-        <div class="flex flex-wrap justify-center gap-4">
-            <a class="p-2 rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none"
+        <div class="flex items-center justify-center gap-4">
+            <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
                href="https://twitter.com/djangonautspace" target="_blank" rel="noopener" aria-label="Follow us on Twitter">
                 <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
             </a>
-            <a rel="me" class="p-2 rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none"
+            <a rel="me" class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
                href="https://indieweb.social/@djangonaut" target="_blank" rel="noopener" aria-label="Follow us on Mastodon">
                 <i class="fa-brands fa-mastodon" aria-hidden="true"></i>
             </a>
-            <a class="p-2 rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none"
+            <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
                href="https://github.com/djangonaut-space/" target="_blank" rel="noopener" aria-label="View our GitHub profile">
                 <i class="fa-brands fa-github" aria-hidden="true"></i>
             </a>
-            <a class="p-2 rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none"
+            <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
                href="https://www.linkedin.com/company/djangonaut-space/" target="_blank" rel="noopener" aria-label="View our LinkedIn profile">
                 <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
             </a>
-            <a class="p-2 rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none"
+            <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
                href="https://www.youtube.com/@djangonautspace" target="_blank" rel="noopener" aria-label="View our YouTube profile">
                 <i class="fa-brands fa-youtube" aria-hidden="true"></i>
             </a>
-            <a class="p-2 rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none"
+            <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
                href="https://bsky.app/profile/djangonaut.space" target="_blank" rel="noopener" aria-label="View our Bluesky profile">
                 <i class="fa-brands fa-bluesky" aria-hidden="true"></i>
             </a>
-
         </div>
 
     </div>
