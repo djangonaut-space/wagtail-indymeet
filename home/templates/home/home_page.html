@@ -15,7 +15,6 @@ This is used directly by Wagtail. Don't delete it.
         <div class="flex items-center justify-between lg:grid lg:grid-cols-3 lg:items-center">
 
             <div class="hidden lg:flex gap-6 justify-end">
-                <!-- <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">About</a> -->
                  <div class="relative inline-block" x-data="{ aboutOpen: false }" @mouseleave="aboutOpen = false">
                     <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple flex items-center gap-1"
                     href="{% url 'event_list' %}"
@@ -46,7 +45,7 @@ This is used directly by Wagtail. Don't delete it.
                         <a href="{% url 'session_list' %}" class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
                             Sessions
                         </a>
-                        <hr class="my-1 border-gray-100">
+                        <!-- <hr class="my-1 border-gray-100"> -->
                         <a href="mailto:contact@djangonaut.space" class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
                             Contact
                         </a>
@@ -67,9 +66,9 @@ This is used directly by Wagtail. Don't delete it.
                 <div class="hidden lg:flex gap-6 items-center">
                     {% if not user.is_authenticated %}
                         <div>
-                            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">Login</a>
+                            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url 'login' %}">Login</a>
 
-                            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url "event_list" %}">Sign up</a>
+                            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple" href="{% url 'signup' %}">Sign up</a>
                         </div>
                     {% else %}
                     <div class="relative hidden md:block" x-data="{ showDropdown: false }">
@@ -98,9 +97,9 @@ This is used directly by Wagtail. Don't delete it.
                             <a href="{% url 'password_change' %}" class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
                                 {% trans "Update password" %}
                             </a>
-                            <form action="{% url 'logout' %}" method="post">
+                            <form action="{% url 'logout' %}" method="post" class="block">
                                 {% csrf_token %}
-                                <button type="submit" class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                                <button type="submit" class="w-full h-full no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors cursor-pointer text-left px-4 py-2">
                                 {% trans "Logout" %}
                                 </button>
                             </form>
@@ -118,47 +117,57 @@ This is used directly by Wagtail. Don't delete it.
             </div>
         </div>
 
-        <div class="hidden flex-col gap-4 pt-6 pb-4 lg:hidden" id="mobile-menu">
-            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">About</a>
+        <div class="hidden flex-col gap-4 p-2 lg:hidden" id="mobile-menu">
+
+            <div class="flex flex-col" x-data="{ mobileAboutOpen: false }">
+
+
+                <button type="button" @click="mobileAboutOpen = !mobileAboutOpen"
+                    class="button-secondary text-white font-bold flex flex-col justify-center items-center hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+                        <span>About</span>
+                        <svg class="w-5 h-5 transition-transform" :class="mobileAboutOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                </button>
+
+                <div x-cloak x-show="mobileAboutOpen" x-cloak x-transition @click.away="mobileAboutOpen = false" class="flex flex-col justify-center items-center pl-4 mt-2 gap-2 border-l-2 border-ds-purple/30">
+
+                    <a href="https://buttondown.com/djangonaut-space" target="_blank" class="no-underline text-gray-300 hover:text-white py-1">Newsletter</a>
+                    <a href="{% slugurl 'uniform-supply-office' %}" class="no-underline text-gray-300 hover:text-white py-1">Store</a>
+                    <a href="{% slugurl 'media-talks' %}" class="no-underline text-gray-300 hover:text-white py-1">Media</a>
+                    <a href="{% url 'session_list' %}" class="no-underline text-gray-300 hover:text-white py-1">Sessions</a>
+                    <a href="mailto:contact@djangonaut.space" class="no-underline text-gray-300 hover:text-white py-1">Contact</a>
+                </div>
+            </div>
+
             <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% slugurl "comms" %}">Blog</a>
 
             {% if not user.is_authenticated %}
-                    <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Login</a>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Login</a>
 
-                    <a class="bg-white text-[#202020] text-center py-3 rounded-xl font-bold hover:bg-ds-purple no-underline hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Sign up</a>
+                <a class="bg-white text-[#202020] text-center py-3 rounded-xl font-bold hover:bg-ds-purple no-underline hover:text-white focus-visible:ring-2" href="{% url "event_list" %}">Sign up</a>
             {% else %}
-
                 <span role="separator" class="my-1 border-t border-gray-500"></span>
                 <a href="{% url 'user_sessions' %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
                     {% trans "My Sessions" %}
                 </a>
-                <!-- </li> -->
                 {% if nav_active_team_membership %}
-                <!-- <li class="p-2 ms-2"> -->
                 <a href="{% url 'team_detail' session_slug=nav_active_team_membership.session.slug pk=nav_active_team_membership.team.pk %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
                     {% trans "Team" %} {{ nav_active_team_membership.team.name }}
                 </a>
-                <!-- </li> -->
                 {% endif %}
-                <!-- <li class="p-2"> -->
                 <a href="{% url 'profile' %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
                     {% trans "Profile" %}
                 </a>
-                <!-- </li> -->
-                <!-- <li class="p-2"> -->
                 <a href="{% url 'password_change' %}" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
                     {% trans "Update password" %}
                 </a>
-                <!-- </li> -->
-                <!-- <li class="p-2"> -->
                 <form action="{% url 'logout' %}" method="post" class="flex flex-col">
                     {% csrf_token %}
                     <button type="submit" class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
                     {% trans "Logout" %}
                     </button>
                 </form>
-                <!-- </li> -->
-
             {% endif %}
 
         </div>
