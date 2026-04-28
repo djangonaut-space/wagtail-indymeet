@@ -315,11 +315,11 @@ This is used directly by Wagtail. Don't delete it.
                             {% else %}
                                 <img src="{% static 'img/avatar.png' %}"
                                 class="w-12 h-12 rounded-full border-2 border-white/20"
-                                alt="{{ testimonial.author.get_full_name|default:testimonial.author.email }}">
+                                alt="{{ testimonial.author.get_full_name|default:testimonial.author.username }}">
                             {% endif %}
                             <div>
                                 <span class="block font-bold">
-                                    {{ testimonial.author.get_full_name|default:testimonial.author.email}}
+                                    {{ testimonial.author.get_full_name|default:testimonial.author.username}}
                                 </span>
                                 <cite class="text-sm text-gray-400 not-italic">
                                     {{ testimonial.session.title }}
@@ -327,14 +327,11 @@ This is used directly by Wagtail. Don't delete it.
                             </div>
                         </figcaption>
                     </figure>
-                    {% empty %}
-                    <p class="text-gray-400">No testimonials yet.</p>
                 {% endfor %}
                 <a href="{% url 'testimonial_list' %}">View all testimonials →</a>
             </div>
         </div>
     </section>
-
 
     <section class="bg-white w-full py-16 px-5 font-inter ">
         <div class="max-w-[1200px] mx-auto text-center">

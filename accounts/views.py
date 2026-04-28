@@ -163,8 +163,10 @@ class SignUpView(CreateView):
 def profile(request):
     testimonials = None
     if request.user.session_memberships.exists():
-        testimonials = Testimonial.objects.for_user(request.user).select_related(
-            "session"
+        testimonials = (
+            Testimonial.objects.for_user(request.user)
+            .select_related("session")
+            .order_by("?")
         )
     context = {
         "user_responses": request.user.usersurveyresponse_set.select_related("survey"),
