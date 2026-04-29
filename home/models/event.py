@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -61,7 +62,32 @@ class Event(ClusterableModel):
         related_name="events",
         on_delete=models.SET_NULL,
     )
-    video_link = models.URLField(blank=True, default="")
+    zoom_link = models.URLField(
+        blank=True,
+        default="",
+        help_text="Zoom join URL for this event. Set automatically when the event is created.",
+    )
+    video_link = models.URLField(
+        blank=True,
+        default="",
+        help_text="Link to the recording (e.g. YouTube) after the event has taken place.",
+    )
+    is_public = models.BooleanField(default=True)
+    extra_emails = ArrayField(
+        models.EmailField(blank=True),
+        default=list,
+        help_text=(
+            "List of email addresses to include in calendar invites "
+            "(e.g. guest speakers).",
+        ),
+    )
+
+    calendar_invites_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="The date and time calendar invites were successfully sent.",
+    )
+
     objects = EventQuerySet.as_manager()
 
     def __str__(self):
@@ -126,3 +152,29 @@ class Event(ClusterableModel):
                 "slug": self.slug,
             },
         )
+
+    def get_calendar_invite_recipients(self) -> list[str]:
+        """Return email addresses to receive a calendar invite for this event.
+
+        - Session event: all members of that session who have an email address plus extra_emails.
+        - Public event (no session): all users opted in to event updates plus extra_emails.
+        - Private event (no session): Only extra_emails.
+        """
+        from home.models import SessionMembership
+
+        recipients = self.extra_emails or []
+        emails = []
+        if self.session_id:
+            emails = list(
+                SessionMembership.objects.for_session(self.session)
+                .accepted()
+                .values_list("user__email", flat=True)
+                .distinct()
+            )
+        elif self.is_public:
+            emails = list(
+                SessionMembership.objects.accepted()
+                .values_list("user__email", flat=True)
+                .distinct()
+            )
+        return list(set(emails + recipients))

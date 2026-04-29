@@ -30,6 +30,7 @@ from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
 from .forms import DeleteAccountForm
 from .forms import EmailSubscriptionsChangeForm
+from .forms import INTERESTED_IN_FIELDS
 from .forms import UserAvailabilityForm
 from .models import UserAvailability
 from .tasks import delete_user_account
@@ -129,12 +130,7 @@ class SignUpView(CreateView):
         user = self.object
         user.profile.accepted_coc = form.cleaned_data["accepted_coc"]
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
-        user.profile.receiving_program_updates = form.cleaned_data[
-            "receive_program_updates"
-        ]
-        user.profile.receiving_event_updates = form.cleaned_data[
-            "receive_event_updates"
-        ]
+        user.profile.interested_in = form.cleaned_data["interested_in"]
         if settings.LOAD_TESTING:
             user.profile.email_confirmed = True
             user.profile.save(
@@ -142,8 +138,7 @@ class SignUpView(CreateView):
                     "email_confirmed",
                     "accepted_coc",
                     "receiving_newsletter",
-                    "receiving_program_updates",
-                    "receiving_event_updates",
+                    "interested_in",
                 ]
             )
         else:
@@ -151,8 +146,7 @@ class SignUpView(CreateView):
                 update_fields=[
                     "accepted_coc",
                     "receiving_newsletter",
-                    "receiving_program_updates",
-                    "receiving_event_updates",
+                    "interested_in",
                 ]
             )
             send_user_confirmation_email(self.request, user)
@@ -163,8 +157,10 @@ class SignUpView(CreateView):
 def profile(request):
     testimonials = None
     if request.user.session_memberships.exists():
-        testimonials = Testimonial.objects.for_user(request.user).select_related(
-            "session"
+        testimonials = (
+            Testimonial.objects.for_user(request.user)
+            .select_related("session")
+            .order_by("?")[:4]
         )
     context = {
         "user_responses": request.user.usersurveyresponse_set.select_related("survey"),
@@ -197,13 +193,9 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         Returns the initial data to use for forms on this view.
         """
         initial = super().get_initial()
-        initial["receive_program_updates"] = (
-            self.request.user.profile.receiving_program_updates
-        )
-        initial["receive_event_updates"] = (
-            self.request.user.profile.receiving_event_updates
-        )
         initial["receive_newsletter"] = self.request.user.profile.receiving_newsletter
+        for field_name, role in INTERESTED_IN_FIELDS:
+            initial[field_name] = role in self.request.user.profile.interested_in
         return initial
 
     def get_success_url(self):
@@ -218,17 +210,11 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         self.object = form.save()
         user = self.object
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
-        user.profile.receiving_program_updates = form.cleaned_data[
-            "receive_program_updates"
-        ]
-        user.profile.receiving_event_updates = form.cleaned_data[
-            "receive_event_updates"
-        ]
+        user.profile.interested_in = form.cleaned_data["interested_in"]
         user.profile.save(
             update_fields=[
                 "receiving_newsletter",
-                "receiving_program_updates",
-                "receiving_event_updates",
+                "interested_in",
             ]
         )
         """sends a link for a user to activate their account after changing their email"""

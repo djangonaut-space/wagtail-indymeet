@@ -22,6 +22,7 @@ from playwright.sync_api import Page
 
 from accounts.factories import UserFactory, UserAvailabilityFactory
 from accounts.models import CustomUser
+from home import constants
 from home.factories import (
     ProjectFactory,
     SessionFactory,
@@ -567,7 +568,7 @@ class TestTeamFormation:
                 session=session,
                 user=applicant["user"],
                 team=team_alpha,
-                role=SessionMembership.DJANGONAUT,
+                role=constants.DJANGONAUT,
             )
 
         # Create navigators for both teams
@@ -581,7 +582,7 @@ class TestTeamFormation:
             session=session,
             user=navigator_alpha,
             team=team_alpha,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         navigator_beta = UserFactory(
@@ -594,7 +595,7 @@ class TestTeamFormation:
             session=session,
             user=navigator_beta,
             team=team_beta,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         return TeamFormationTestData(

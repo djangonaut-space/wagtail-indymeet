@@ -1,5 +1,6 @@
 """Tests for BulkWaitlistForm and waitlist functionality."""
 
+from home import constants
 from django.test import TestCase
 
 from accounts.factories import UserFactory
@@ -69,7 +70,7 @@ class BulkWaitlistFormTestCase(TestCase):
         """Test that users who are session members can be waitlisted."""
         # Make user1 a session member
         membership = SessionMembership.objects.create(
-            user=self.user1, session=self.session, role=SessionMembership.DJANGONAUT
+            user=self.user1, session=self.session, role=constants.DJANGONAUT
         )
 
         form = BulkWaitlistForm(
@@ -94,7 +95,7 @@ class BulkWaitlistFormTestCase(TestCase):
         """Test that mixed scenarios with session members are handled correctly."""
         # Make user1 a session member
         membership = SessionMembership.objects.create(
-            user=self.user1, session=self.session, role=SessionMembership.DJANGONAUT
+            user=self.user1, session=self.session, role=constants.DJANGONAUT
         )
         # User2 is already on waitlist (valid - idempotent operation)
         Waitlist.objects.create(user=self.user2, session=self.session)

@@ -1,3 +1,4 @@
+from home import constants
 from unittest.mock import patch
 
 from django.core import mail
@@ -6,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.factories import UserFactory
-from accounts.models import CustomUser
+from accounts.models import CustomUser, UserProfile
 
 
 class SignUpViewTests(TestCase):
@@ -33,8 +34,8 @@ class SignUpViewTests(TestCase):
                 "email_consent": True,
                 "accepted_coc": True,
                 "receive_newsletter": True,
-                "receive_program_updates": True,
-                "receive_event_updates": True,
+                "interested_in_djangonaut": True,
+                "interested_in_navigator": True,
                 "g-recaptcha-response": "dummy-response",
             },
             follow=True,
@@ -57,8 +58,10 @@ class SignUpViewTests(TestCase):
         self.assertTrue(created_user.is_active)
         self.assertTrue(created_user.profile.accepted_coc)
         self.assertTrue(created_user.profile.receiving_newsletter)
-        self.assertTrue(created_user.profile.receiving_program_updates)
-        self.assertTrue(created_user.profile.receiving_event_updates)
+        self.assertEqual(
+            created_user.profile.interested_in,
+            [constants.DJANGONAUT, constants.NAVIGATOR],
+        )
 
     @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)
     def test_signup_template_post_success(self, mock_captcha):
@@ -75,8 +78,6 @@ class SignUpViewTests(TestCase):
                 "email_consent": True,
                 "accepted_coc": True,
                 "receive_newsletter": True,
-                "receive_program_updates": True,
-                "receive_event_updates": True,
                 "g-recaptcha-response": "dummy-response",
             },
             follow=True,

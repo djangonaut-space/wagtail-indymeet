@@ -49,8 +49,6 @@ class ProfileViewTests(TestCase):
                 "first_name": "Jane",
                 "last_name": "Doe",
                 "receive_newsletter": True,
-                "receive_program_updates": True,
-                "receive_event_updates": True,
             },
             follow=True,
         )
@@ -58,5 +56,3 @@ class ProfileViewTests(TestCase):
         self.assertContains(response, "Profile Info")
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.receiving_newsletter, True)
-        self.assertEqual(self.user.profile.receiving_event_updates, True)
-        self.assertEqual(self.user.profile.receiving_program_updates, True)

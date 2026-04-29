@@ -1,5 +1,6 @@
 """Tests for team-related views."""
 
+from home import constants
 from datetime import datetime, timedelta
 
 from django.test import Client, TestCase
@@ -81,28 +82,28 @@ class TeamDetailViewTests(TestCase):
             user=self.captain,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=True,
         )
         self.navigator_membership = SessionMembershipFactory.create(
             user=self.navigator,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=True,
         )
         self.djangonaut1_membership = SessionMembershipFactory.create(
             user=self.djangonaut1,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
         self.djangonaut2_membership = SessionMembershipFactory.create(
             user=self.djangonaut2,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -184,7 +185,7 @@ class TeamDetailViewTests(TestCase):
             user=organizer,
             session=self.current_session,
             team=None,  # No team assigned
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
 
@@ -209,7 +210,7 @@ class TeamDetailViewTests(TestCase):
             user=organizer,
             session=other_session,
             team=None,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
 
@@ -235,7 +236,7 @@ class TeamDetailViewTests(TestCase):
             user=other_team_member,
             session=self.current_session,
             team=other_team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=True,
         )
 
@@ -342,7 +343,7 @@ class TeamDetailViewTests(TestCase):
             user=declined_user,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=False,  # Declined
         )
 
@@ -382,7 +383,7 @@ class TeamDetailViewTests(TestCase):
             user=organizer,
             session=self.current_session,
             team=None,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
 
@@ -427,7 +428,7 @@ class UserSessionListViewTests(TestCase):
             user=self.user,
             session=self.past_session,
             team=self.past_team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -447,7 +448,7 @@ class UserSessionListViewTests(TestCase):
             user=self.user,
             session=self.current_session,
             team=self.current_team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=True,
         )
 
@@ -467,7 +468,7 @@ class UserSessionListViewTests(TestCase):
             user=self.user,
             session=self.upcoming_session,
             team=self.upcoming_team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=True,
         )
 
@@ -607,7 +608,7 @@ class UserSessionListViewTests(TestCase):
             user=self.user,
             session=organizer_session,
             team=None,  # No team assigned
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
         )
 
         self.client.force_login(self.user)
@@ -628,7 +629,7 @@ class UserSessionListViewTests(TestCase):
         SessionMembershipFactory.create(
             user=self.user,
             session=pending_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,  # Pending
         )
 
@@ -637,7 +638,7 @@ class UserSessionListViewTests(TestCase):
         SessionMembershipFactory.create(
             user=self.user,
             session=declined_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=False,  # Declined
         )
 
@@ -661,7 +662,7 @@ class UserSessionListViewTests(TestCase):
         SessionMembershipFactory.create(
             user=self.user,
             session=captain_session,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=None,  # Not accepted, but should still be shown
         )
 
@@ -670,7 +671,7 @@ class UserSessionListViewTests(TestCase):
         SessionMembershipFactory.create(
             user=self.user,
             session=navigator_session,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=False,  # Declined, but should still be shown
         )
 
@@ -742,21 +743,21 @@ class DjangonautSurveyResponseViewTests(TestCase):
             user=self.captain,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=True,
         )
         SessionMembershipFactory.create(
             user=self.navigator,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=True,
         )
         SessionMembershipFactory.create(
             user=self.djangonaut,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -770,7 +771,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
             user=self.other_djangonaut,
             session=self.current_session,
             team=self.other_team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -830,7 +831,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
             user=teammate,
             session=self.current_session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -850,7 +851,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
             user=organizer,
             session=self.current_session,
             team=None,  # No team assigned
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
 
@@ -877,7 +878,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
             user=organizer,
             session=other_session,
             team=None,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
 
@@ -896,7 +897,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
             user=other_team_member,
             session=self.current_session,
             team=self.other_team,  # Different team
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=True,
         )
 

@@ -1,5 +1,6 @@
 """Tests for waitlist management functionality."""
 
+from home import constants
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -148,13 +149,13 @@ class SessionMembershipAdminActionsTests(TestCase):
         membership1 = SessionMembershipFactory.create(
             user=user1,
             session=self.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,
         )
         membership2 = SessionMembershipFactory.create(
             user=user2,
             session=self.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,
         )
 
@@ -185,19 +186,19 @@ class SessionMembershipAdminActionsTests(TestCase):
         djangonaut_membership = SessionMembershipFactory.create(
             user=djangonaut,
             session=self.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,
         )
         navigator_membership = SessionMembershipFactory.create(
             user=navigator,
             session=self.session,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=None,
         )
         captain_membership = SessionMembershipFactory.create(
             user=captain,
             session=self.session,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=None,
         )
 

@@ -25,6 +25,7 @@ IMPORTANT - Cumulative Overlap Constraint:
 """
 
 from __future__ import annotations
+from home import constants
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -262,7 +263,7 @@ def get_allocation_candidates(
         )
         .exclude(
             user__session_memberships__session=session,
-            user__session_memberships__role=SessionMembership.DJANGONAUT,
+            user__session_memberships__role=constants.DJANGONAUT,
         )
         .filter(
             selection_rank__lte=max_rank,
@@ -469,7 +470,7 @@ def apply_allocation(allocation: AllocationState, session: Session) -> dict[str,
             user=candidate.user,
             session=session,
             team=team_slot.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         for candidate, team_slot in allocation.allocated_candidates
     ]

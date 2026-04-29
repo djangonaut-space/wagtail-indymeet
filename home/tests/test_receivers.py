@@ -1,3 +1,4 @@
+from home import constants
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
@@ -34,7 +35,7 @@ class OrganizerReceiversHandlersTestCase(TestCase):
         user = UserFactory(is_staff=False, is_superuser=False)
 
         SessionMembershipFactory(
-            user=user, session=self.session, role=SessionMembership.ORGANIZER
+            user=user, session=self.session, role=constants.ORGANIZER
         )
 
         user.refresh_from_db()
@@ -46,7 +47,7 @@ class OrganizerReceiversHandlersTestCase(TestCase):
         user = UserFactory(is_staff=False, is_superuser=False)
 
         SessionMembershipFactory(
-            user=user, session=self.session, role=SessionMembership.ORGANIZER
+            user=user, session=self.session, role=constants.ORGANIZER
         )
 
         user.refresh_from_db()
@@ -57,9 +58,7 @@ class OrganizerReceiversHandlersTestCase(TestCase):
         user = UserFactory(is_staff=True, is_superuser=True)
         session = SessionFactory()
 
-        SessionMembershipFactory(
-            user=user, session=session, role=SessionMembership.ORGANIZER
-        )
+        SessionMembershipFactory(user=user, session=session, role=constants.ORGANIZER)
 
         user.refresh_from_db()
         self.assertNotIn(self.group, user.groups.all())
@@ -69,7 +68,7 @@ class OrganizerReceiversHandlersTestCase(TestCase):
         user = UserFactory(is_staff=False, is_superuser=False)
 
         membership = SessionMembershipFactory(
-            user=user, session=self.session, role=SessionMembership.ORGANIZER
+            user=user, session=self.session, role=constants.ORGANIZER
         )
 
         user.refresh_from_db()
@@ -87,9 +86,7 @@ class OrganizerReceiversHandlersTestCase(TestCase):
         user = UserFactory(is_staff=False, is_superuser=False)
         session = SessionFactory()
 
-        SessionMembershipFactory(
-            user=user, session=session, role=SessionMembership.DJANGONAUT
-        )
+        SessionMembershipFactory(user=user, session=session, role=constants.DJANGONAUT)
 
         user.refresh_from_db()
         self.assertNotIn(self.group, user.groups.all())

@@ -4,6 +4,7 @@ Email preview utilities for testing email templates.
 Provides functions to send preview emails to admin users for visual testing.
 """
 
+from home import constants
 from django.conf import settings
 from django.contrib import admin, messages
 from django.urls import reverse
@@ -93,7 +94,7 @@ def rejection_email(recipient_email: str, session: Session) -> None:
         survey=session.application_survey
     ).count()
     accepted_count = SessionMembership.objects.filter(
-        session=session, role=SessionMembership.DJANGONAUT
+        session=session, role=constants.DJANGONAUT
     ).count()
 
     context = {
@@ -132,7 +133,7 @@ def waitlist_email(recipient_email: str, session: Session) -> None:
         else 0
     )
     accepted_count = SessionMembership.objects.filter(
-        session=session, role=SessionMembership.DJANGONAUT
+        session=session, role=constants.DJANGONAUT
     ).count()
 
     context = {
@@ -175,9 +176,9 @@ def team_welcome_email(recipient_email: str, session: Session) -> None:
         .order_by("role", "user__first_name")
     )
 
-    djangonauts = [m for m in team_members if m.role == SessionMembership.DJANGONAUT]
-    navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
-    captains = [m for m in team_members if m.role == SessionMembership.CAPTAIN]
+    djangonauts = [m for m in team_members if m.role == constants.DJANGONAUT]
+    navigators = [m for m in team_members if m.role == constants.NAVIGATOR]
+    captains = [m for m in team_members if m.role == constants.CAPTAIN]
 
     context = {
         "session": session,
@@ -201,7 +202,7 @@ def team_welcome_email(recipient_email: str, session: Session) -> None:
 @admin.action(description="Preview acceptance email (send to me)")
 def acceptance_email_action(modeladmin, request, queryset):
     """Send a preview of the acceptance email to the logged-in admin user."""
-    membership = queryset.filter(role=SessionMembership.DJANGONAUT).first()
+    membership = queryset.filter(role=constants.DJANGONAUT).first()
     if not membership:
         modeladmin.message_user(
             request,
@@ -222,7 +223,7 @@ def acceptance_email_action(modeladmin, request, queryset):
 @admin.action(description="Preview reminder email (send to me)")
 def reminder_email_action(modeladmin, request, queryset):
     """Send a preview of the acceptance reminder email to the logged-in admin user."""
-    membership = queryset.filter(role=SessionMembership.DJANGONAUT).first()
+    membership = queryset.filter(role=constants.DJANGONAUT).first()
     if not membership:
         modeladmin.message_user(
             request,

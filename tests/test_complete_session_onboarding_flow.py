@@ -162,6 +162,7 @@ class TestCompleteSessionOnboardingFlow:
     def set_availability(self, page: Page, username: str):
         """Helper to login and set availability for a user."""
         # Login
+        self.logout(page)
         page.goto(reverse("login"))
         page.locator("#id_username").fill(username)
         page.locator("#id_password").fill("testpass123")
@@ -412,7 +413,6 @@ class TestCompleteSessionOnboardingFlow:
             page, "navigator1", "navigator1@test.com", "Nav", "One"
         )
         self.set_availability(page, "navigator1")
-        self.logout(page)
         return navigator
 
     def _captain_signs_up_and_sets_availability(self, page: Page) -> CustomUser:
@@ -421,7 +421,6 @@ class TestCompleteSessionOnboardingFlow:
             page, "captain1", "captain1@test.com", "Cap", "One"
         )
         self.set_availability(page, "captain1")
-        self.logout(page)
         return captain
 
     def _admin_creates_session(self, page: Page) -> tuple[CustomUser, Session]:
@@ -584,9 +583,6 @@ class TestCompleteSessionOnboardingFlow:
             team_id=None,
         )
 
-        # Logout admin
-        self.logout(page)
-
     def _djangonaut_a_applies_to_session(
         self, page: Page, survey: Survey
     ) -> CustomUser:
@@ -621,8 +617,6 @@ class TestCompleteSessionOnboardingFlow:
 
         # Set availability and logout
         self.set_availability(page, "djangonaut_a")
-        self.logout(page)
-
         return djangonaut_a
 
     def _djangonaut_b_applies_to_session(
@@ -656,8 +650,6 @@ class TestCompleteSessionOnboardingFlow:
 
         # Set availability and logout
         self.set_availability(page, "djangonaut_b")
-        self.logout(page)
-
         return djangonaut_b
 
     def _djangonaut_c_applies_to_session(
@@ -693,8 +685,6 @@ class TestCompleteSessionOnboardingFlow:
 
         # Set availability and logout
         self.set_availability(page, "djangonaut_c")
-        self.logout(page)
-
         return djangonaut_c
 
     def _admin_assigns_djangonaut_a_to_team(
@@ -792,12 +782,10 @@ class TestCompleteSessionOnboardingFlow:
         # Verify success message
         expect(page.locator(".messagelist")).to_contain_text("Successfully queued")
 
-        # Logout admin
-        self.logout(page)
-
     def _djangonaut_a_accepts_invitation(self, page: Page, session: Session):
         """Djangonaut A logs in, accepts invitation, and logs out."""
         # Login as djangonaut A
+        self.logout(page)
         page.goto(reverse("login"))
         page.locator("#id_username").fill("djangonaut_a")
         page.locator("#id_password").fill("testpass123")
@@ -816,12 +804,10 @@ class TestCompleteSessionOnboardingFlow:
         # Verify acceptance message
         expect(page.locator("body")).to_contain_text("confirmed your participation")
 
-        # Logout
-        self.logout(page)
-
     def _djangonaut_b_accepts_invitation(self, page: Page, session: Session):
         """Djangonaut B logs in, accepts invitation, and logs out."""
         # Login as djangonaut B
+        self.logout(page)
         page.goto(reverse("login"))
         page.locator("#id_username").fill("djangonaut_b")
         page.locator("#id_password").fill("testpass123")
@@ -839,9 +825,6 @@ class TestCompleteSessionOnboardingFlow:
 
         # Verify acceptance message
         expect(page.locator("body")).to_contain_text("confirmed your participation")
-
-        # Logout
-        self.logout(page)
 
     def _admin_promotes_djangonaut_b_from_waitlist_to_team(
         self,
@@ -914,9 +897,6 @@ class TestCompleteSessionOnboardingFlow:
         # Verify success message
         expect(page.locator(".messagelist")).to_contain_text("Successfully queued")
 
-        # Logout admin
-        self.logout(page)
-
     def _admin_send_team_welcome_emails(
         self, page: Page, superuser: CustomUser, session: Session
     ):
@@ -954,9 +934,6 @@ class TestCompleteSessionOnboardingFlow:
         # Verify success message
         expect(page.locator(".messagelist")).to_contain_text("Successfully queued")
 
-        # Logout admin
-        self.logout(page)
-
     def _verify_all_team_members_can_access_team(
         self, page: Page, session: Session, team: Team, pause_at_end: bool
     ):
@@ -973,6 +950,7 @@ class TestCompleteSessionOnboardingFlow:
 
         # Helper function to login and access team
         def verify_team_access(username: str, expected_members: list[str], logout=True):
+            self.logout(page)
             page.goto(reverse("login"))
             page.locator("#id_username").fill(username)
             page.locator("#id_password").fill("testpass123")
@@ -1204,6 +1182,7 @@ class TestCompleteSessionOnboardingFlow:
         # ======================================================================
 
         # Login as navigator (who has availability and overlaps with team members)
+        self.logout(page)
         page.goto(reverse("login"))
         page.locator("#id_username").fill("navigator1")
         page.locator("#id_password").fill("testpass123")

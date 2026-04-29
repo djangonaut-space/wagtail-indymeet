@@ -1,5 +1,6 @@
 """Tests for team allocation algorithm."""
 
+from home import constants
 from django.test import TestCase
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
@@ -51,7 +52,7 @@ class TeamSlotTestCase(TestCase):
             user=self.navigator,
             session=self.session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         # Create captain with availability
@@ -64,7 +65,7 @@ class TeamSlotTestCase(TestCase):
             user=self.captain,
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
 
         self.team_slot = TeamSlot(
@@ -423,7 +424,7 @@ class GetAllocationCandidatesTestCase(TestCase):
             user=user,
             session=self.session,
             team=team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         candidates = get_allocation_candidates(self.session, max_rank=2)
@@ -534,7 +535,7 @@ class GetTeamSlotsTestCase(TestCase):
             user=navigator,
             session=self.session,
             team=team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         # Add 3 Djangonauts
@@ -544,7 +545,7 @@ class GetTeamSlotsTestCase(TestCase):
                 user=user,
                 session=self.session,
                 team=team,
-                role=SessionMembership.DJANGONAUT,
+                role=constants.DJANGONAUT,
             )
 
         team_slots = get_team_slots(self.session)
@@ -558,7 +559,7 @@ class GetTeamSlotsTestCase(TestCase):
             user=navigator,
             session=self.session,
             team=team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         # Add 1 Djangonaut
@@ -567,7 +568,7 @@ class GetTeamSlotsTestCase(TestCase):
             user=user,
             session=self.session,
             team=team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         team_slots = get_team_slots(self.session)
@@ -583,16 +584,16 @@ class GetTeamSlotsTestCase(TestCase):
         captain = UserFactory(username="captain")
 
         SessionMembership.objects.create(
-            user=nav1, session=self.session, team=team, role=SessionMembership.NAVIGATOR
+            user=nav1, session=self.session, team=team, role=constants.NAVIGATOR
         )
         SessionMembership.objects.create(
-            user=nav2, session=self.session, team=team, role=SessionMembership.NAVIGATOR
+            user=nav2, session=self.session, team=team, role=constants.NAVIGATOR
         )
         SessionMembership.objects.create(
             user=captain,
             session=self.session,
             team=team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
 
         team_slots = get_team_slots(self.session)
@@ -686,7 +687,7 @@ class AllocateTeamsBoundedSearchTestCase(TestCase):
             user=self.navigator,
             session=self.session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         self.captain = UserFactory(username="captain")
@@ -698,7 +699,7 @@ class AllocateTeamsBoundedSearchTestCase(TestCase):
             user=self.captain,
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
 
     def test_no_candidates(self):
@@ -969,7 +970,7 @@ class ApplyAllocationTestCase(TestCase):
         self.assertEqual(stats["created"], 2)
         self.assertEqual(
             SessionMembership.objects.filter(
-                session=self.session, role=SessionMembership.DJANGONAUT
+                session=self.session, role=constants.DJANGONAUT
             ).count(),
             2,
         )
@@ -977,11 +978,11 @@ class ApplyAllocationTestCase(TestCase):
         # Verify the memberships
         membership1 = SessionMembership.objects.get(user=user1)
         self.assertEqual(membership1.team, self.team)
-        self.assertEqual(membership1.role, SessionMembership.DJANGONAUT)
+        self.assertEqual(membership1.role, constants.DJANGONAUT)
 
         membership2 = SessionMembership.objects.get(user=user2)
         self.assertEqual(membership2.team, self.team)
-        self.assertEqual(membership2.role, SessionMembership.DJANGONAUT)
+        self.assertEqual(membership2.role, constants.DJANGONAUT)
 
     def test_returns_statistics(self):
         """Test that statistics are returned correctly."""

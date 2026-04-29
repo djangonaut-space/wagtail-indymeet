@@ -8,6 +8,8 @@ from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
+from home import constants
+
 
 class UserQuestionResponseQuerySet(QuerySet):
     """QuerySet for UserQuestionResponse with filtering methods."""
@@ -28,7 +30,7 @@ class UserQuestionResponseQuerySet(QuerySet):
                 SessionMembership.objects.filter(
                     session=OuterRef("user_survey_response__survey__session"),
                     user=user,
-                    role=SessionMembership.ORGANIZER,
+                    role=constants.ORGANIZER,
                 )
             )
         )
@@ -56,6 +58,30 @@ class EventQuerySet(QuerySet):
     def past(self):
         return self.filter(start_time__lte=timezone.now())
 
+    def public(self):
+        return self.filter(is_public=True)
+
+    def private(self):
+        return self.filter(is_public=False)
+
+    def for_user(self, user):
+        """Return events visible to the given user.
+
+        Public events are visible to everyone.
+        Private events are only visible to authenticated users with a
+        SessionMembership for the event's linked session.
+        """
+        if user.is_anonymous:
+            return self.public()
+        return self.filter(
+            Q(is_public=True)
+            | Q(
+                is_public=False,
+                session__isnull=False,
+                session__session_memberships__user=user,
+            )
+        ).distinct()
+
 
 class SessionQuerySet(QuerySet):
     def for_admin_site(self, user):
@@ -68,7 +94,7 @@ class SessionQuerySet(QuerySet):
         return self.filter(
             Exists(
                 SessionMembership.objects.filter(
-                    session=OuterRef("pk"), user=user, role=SessionMembership.ORGANIZER
+                    session=OuterRef("pk"), user=user, role=constants.ORGANIZER
                 )
             )
         )
@@ -108,7 +134,7 @@ class SessionMembershipQuerySet(QuerySet):
         return self.filter(
             Exists(
                 self.model.objects.filter(
-                    session=OuterRef("session"), user=user, role=self.model.ORGANIZER
+                    session=OuterRef("session"), user=user, role=constants.ORGANIZER
                 )
             )
         )
@@ -123,19 +149,19 @@ class SessionMembershipQuerySet(QuerySet):
 
     def djangonauts(self):
         """Filter to only Djangonauts."""
-        return self.filter(role=self.model.DJANGONAUT)
+        return self.filter(role=constants.DJANGONAUT)
 
     def navigators(self):
         """Filter to only Navigators."""
-        return self.filter(role=self.model.NAVIGATOR)
+        return self.filter(role=constants.NAVIGATOR)
 
     def captains(self):
         """Filter to only Captains."""
-        return self.filter(role=self.model.CAPTAIN)
+        return self.filter(role=constants.CAPTAIN)
 
     def organizers(self):
         """Filter to only Organizers."""
-        return self.filter(role=self.model.ORGANIZER)
+        return self.filter(role=constants.ORGANIZER)
 
     def enforce_djangonaut_access_control(self) -> SessionMembershipQuerySet:
         """Exclude Djangonaut memberships whose team pages aren't yet accessible.
@@ -147,7 +173,7 @@ class SessionMembershipQuerySet(QuerySet):
         """
         today = timezone.now().date()
         return self.filter(
-            ~Q(role=self.model.DJANGONAUT)
+            ~Q(role=constants.DJANGONAUT)
             | Q(session__djangonauts_have_access=True)
             | Q(session__start_date__lte=today)
         )
@@ -165,12 +191,12 @@ class SessionMembershipQuerySet(QuerySet):
         # Djangonauts must have accepted=True
         # All other roles are automatically members (accepted can be None, True, or False)
         return self.filter(
-            Q(role=self.model.DJANGONAUT, accepted=True)
+            Q(role=constants.DJANGONAUT, accepted=True)
             | Q(
                 role__in=[
-                    self.model.CAPTAIN,
-                    self.model.NAVIGATOR,
-                    self.model.ORGANIZER,
+                    constants.CAPTAIN,
+                    constants.NAVIGATOR,
+                    constants.ORGANIZER,
                 ]
             )
         )
@@ -207,7 +233,7 @@ class UserSurveyResponseQuerySet(QuerySet):
                 SessionMembership.objects.filter(
                     session=OuterRef("survey__session"),
                     user=user,
-                    role=SessionMembership.ORGANIZER,
+                    role=constants.ORGANIZER,
                 )
             )
         )
@@ -359,7 +385,7 @@ class UserSurveyResponseQuerySet(QuerySet):
         from home.models import SessionMembership
         from home.availability import get_role_slots
 
-        navigator_slots = get_role_slots(team, role=SessionMembership.NAVIGATOR)
+        navigator_slots = get_role_slots(team, role=constants.NAVIGATOR)
         if not navigator_slots:
             return self.none()
         return self.with_availability_overlap(navigator_slots)
@@ -374,7 +400,7 @@ class UserSurveyResponseQuerySet(QuerySet):
         from home.models import SessionMembership
         from home.availability import get_role_slots
 
-        captain_slots = get_role_slots(team, role=SessionMembership.CAPTAIN)
+        captain_slots = get_role_slots(team, role=constants.CAPTAIN)
         if not captain_slots:
             return self.none()
         return self.with_availability_overlap(captain_slots)
@@ -438,7 +464,7 @@ class TeamQuerySet(QuerySet):
                 SessionMembership.objects.filter(
                     session=OuterRef("session"),
                     user=user,
-                    role=SessionMembership.ORGANIZER,
+                    role=constants.ORGANIZER,
                 )
             )
         )
@@ -459,7 +485,7 @@ class SurveyQuerySet(QuerySet):
                 SessionMembership.objects.filter(
                     session=OuterRef("session"),
                     user=user,
-                    role=SessionMembership.ORGANIZER,
+                    role=constants.ORGANIZER,
                 )
             )
         )
@@ -493,7 +519,7 @@ class TestimonialQuerySet(QuerySet):
                 SessionMembership.objects.filter(
                     session=OuterRef("session"),
                     user=user,
-                    role=SessionMembership.ORGANIZER,
+                    role=constants.ORGANIZER,
                 )
             )
         )

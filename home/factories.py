@@ -1,11 +1,13 @@
-from datetime import timedelta
+from datetime import timedelta, timezone as dt_timezone
 
 import factory
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import post_save
 from django.utils import timezone
 
 from accounts.factories import UserFactory
+from home import constants
 from home.models import (
     Event,
     Project,
@@ -24,14 +26,15 @@ from home.models import (
 )
 
 
+@factory.django.mute_signals(post_save)
 class EventFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Event
 
     title = factory.Sequence(lambda n: "Event %d" % n)
     slug = factory.Sequence(lambda n: "event-%d" % n)
-    start_time = factory.Faker("date_time")
-    end_time = factory.Faker("date_time")
+    start_time = factory.Faker("date_time", tzinfo=dt_timezone.utc)
+    end_time = factory.Faker("date_time", tzinfo=dt_timezone.utc)
     location = "https://zoom.link"
     status = Event.SCHEDULED
 
@@ -126,7 +129,10 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
     team = factory.SubFactory(TeamFactory)
-    role = SessionMembership.DJANGONAUT
+    role = constants.DJANGONAUT
+    accepted = factory.LazyAttribute(
+        lambda o: True if o.role == constants.DJANGONAUT else None
+    )
 
 
 class OrganizerFactory(factory.django.DjangoModelFactory):
@@ -139,7 +145,7 @@ class OrganizerFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
     team = None
-    role = SessionMembership.ORGANIZER
+    role = constants.ORGANIZER
     accepted = True
 
     @factory.post_generation

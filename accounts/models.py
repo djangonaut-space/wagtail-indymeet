@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Optional
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
 from django.core.signing import TimestampSigner
@@ -15,6 +17,7 @@ from wagtail.models import Orderable
 from django.utils.translation import gettext_lazy as _
 
 from accounts.fields import DefaultOneToOneField
+from home import constants
 
 if TYPE_CHECKING:
     from home.models import Session, SessionMembership
@@ -105,10 +108,7 @@ class CustomUserQuerySet(QuerySet):
         if session:
             q_filter &= Q(session_memberships__session=session)
 
-        if (
-            session_membership
-            and session_membership.role != SessionMembership.ORGANIZER
-        ):
+        if session_membership and session_membership.role != constants.ORGANIZER:
             q_filter &= Q(session_memberships__team=session_membership.team)
         elif not user.has_perm("home.compare_org_availability"):
             # No session for this user, so check if they can view org-wide availability
@@ -140,56 +140,38 @@ class CustomUser(AbstractUser):
         return self.username
 
 
+def validate_interested_in_choice(value: str) -> None:
+    if value not in constants.ROLES:
+        raise ValidationError(f"'{value}' is not a valid interest.")
+
+
+def _default_interested_in():
+    return [constants.DJANGONAUT]
+
+
 class UserProfile(models.Model):
-    PARTICIPANT = "Participant"
-    SPEAKER = "Speaker"
-    MENTOR = "Mentor"
-    EXPERT = "Expert"
-    PROJECT_OWNER = "Project Owner"
-    VOLUNTEER = "Volunteer"
-    ORGANIZER = "Organizer"
-    MEMBER_ROLES = (
-        (PARTICIPANT, "Participant"),
-        (SPEAKER, "Speaker"),
-        (MENTOR, "Mentor"),
-        (EXPERT, "Expert"),
-        (PROJECT_OWNER, "Project Owner"),
-        (VOLUNTEER, "Volunteer"),
-        (ORGANIZER, "Organizer"),
-    )
-
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-
-    MEMBER_STATUS = (
-        (ACTIVE, "Active"),
-        (INACTIVE, "Inactive"),
-    )
     user = DefaultOneToOneField(
         "CustomUser", create=True, on_delete=models.CASCADE, related_name="profile"
-    )
-    member_status = models.CharField(
-        choices=MEMBER_STATUS, default=ACTIVE, max_length=50
-    )
-    member_role = models.CharField(
-        choices=MEMBER_ROLES, default=PARTICIPANT, max_length=50
     )
     pronouns = models.CharField(max_length=20, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     bio_image = models.ImageField(blank=True, null=True)
-    session_participant = models.BooleanField(default=False)
-    recruitment_interest = models.BooleanField(default=False)
     accepted_coc = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
     receiving_newsletter = models.BooleanField(default=False)
-    receiving_event_updates = models.BooleanField(default=False)
-    receiving_program_updates = models.BooleanField(default=False)
     github_username = models.CharField(
         max_length=39,
         blank=True,
         null=False,
         default="",
         help_text="Your GitHub username (required for participation)",
+    )
+    interested_in = ArrayField(
+        models.CharField(max_length=64, validators=[validate_interested_in_choice]),
+        default=_default_interested_in,
+        blank=True,
+        help_text="The roles you are interested in. Djangonaut is the mentee role, "
+        "the rest are volunteer roles.",
     )
 
     def __str__(self):
