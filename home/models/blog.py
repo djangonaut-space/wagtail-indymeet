@@ -17,6 +17,7 @@ from wagtail.models import Page
 from home import blocks as blog_blocks
 from home.blocks import BaseStreamBlock
 from home.models.event import Event
+from home.models.testimonial import Testimonial
 
 # BLOG PUPUT IMPORTS
 
@@ -35,6 +36,13 @@ class HomePage(Page):
         context["past_events"] = past_events[:6]
         context["future_events"] = future_events[:6]
         context["show_rsvp"] = show_rsvp
+
+        context["testimonials"] = (
+            Testimonial.objects.published()
+            .select_related("author", "session")
+            .order_by("?")[:6]  # random order
+        )
+
         return context
 
 

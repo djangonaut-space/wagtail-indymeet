@@ -39,6 +39,7 @@
         {% tailwind_css %}
 
         <script defer data-domain="djangonaut.space" src="https://plausible.io/js/script.js"></script>
+        <script src="{% static "js/alpine.min.js" %}" defer></script>
         {% endblock css %}
     </head>
 
@@ -51,7 +52,7 @@
         {% block content %}
             {# other page stuff goes here #}
         {% endblock %}
-        <div class="landing-page-overlay fixed bottom-0 left-0 w-100 h-[45%] z-[2] bg-[url('{% static 'img/background.svg' %}')] bg-no-repeat"></div>
+        <!-- <div class="landing-page-overlay fixed bottom-0 left-0 w-100 h-[45%] z-[2] bg-[url('{% static 'img/background.svg' %}')] bg-no-repeat"></div> -->
         {# Global javascript #}
         <script type="text/javascript" src="{% static 'js/particles/particles.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/load_particles.js' %}"></script>

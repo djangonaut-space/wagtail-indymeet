@@ -83,6 +83,8 @@
         <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
         <link href='//fonts.googleapis.com/css?family=Roboto:400,300,300italic,100italic,100,400italic,500,500italic,700,900,700italic,900italic' rel='stylesheet' type='text/css'>
         <script defer data-domain="djangonaut.space" src="https://plausible.io/js/script.js"></script>
+        <script src="{% static "js/alpine.min.js" %}" defer></script>
+        <script src="{% static "js/htmx.min.js" %}"></script>
     </head>
 
     <body class="flex flex-col h-screen {% block body_class %}{% endblock %}">
@@ -90,8 +92,6 @@
         {% if 'Home' not in page.title  %}
             {% include 'includes/breadcrumbs.html' %}
         {% endif %}
-        <script src="{% static "js/alpine.min.js" %}" defer></script>
-        <script src="{% static "js/htmx.min.js" %}"></script>
         {% wagtailuserbar %}
         <div class="{% if not blog_page %}container flex justify-center mb-auto mx-auto max-w-screen-xl {% endif %}">
             <div class="{% if not blog_page %}w-3/4{% endif %}">

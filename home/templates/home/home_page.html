@@ -10,60 +10,583 @@ This is used directly by Wagtail. Don't delete it.
 {% block title %}Djangonaut Space - Where contributors launch!{% endblock %}
 {% block body_class %}landing{% endblock %}
 {% block content %}
-<main class="landing-page flex grow flex-col items-center justify-center z-[2]">
-    <a href="/" class="inline-block text-center">
-        <img class="inline-block w-full max-w-[140px]" alt="Djangonaut Space" src="{% static 'img/main-white-transparent.png' %}" />
-    </a>
-    <h1 class="p-0 text-[10vw] leading-[10vw] font-fraunces font-bold text-center">Where contributors launch</h1>
-    <p class="p-3 text-xl">Ready for take-off?</p>
-    <div class="flex flex-wrap flex-row links justify-center w-full lg:w-2/5 gap-2">
-        <a class="button-secondary text-black bg-white hover:bg-ds-purple hover:text-white" href="{% url "session_list" %}">Sessions</a>
-        <a class="button-secondary" href="{% url "event_list" %}">Events</a>
-        <a class="button-secondary" href="https://github.com/djangonaut-space/program/blob/main/README.md">Program</a>
-        <a class="button-secondary" href="{% slugurl "comms" %}">Blog</a>
-        <a class="button-secondary" href="{% slugurl "media-talks" %}">Media</a>
-        <a class="button-secondary" href="{% slugurl "partnerships-sponsors" %}">Sponsors</a>
-        <a class="button-secondary" href="{% slugurl "uniform-supply-office" %}">Store</a>
-        <a class="button-secondary" href="https://opencollective.com/djangonaut-space"><i class="fa-solid fa-heart pr-2"></i>  Donate</a>
-    </div>
-    {% comment %} <form class="d-flex form-row">
-        <input type="email" name="email" aria-label="email" class="mr-1" placeholder="example@email.com">
-        <button type="submit" class="btn btn-outline-primary">Register</button>
-    </form> {% endcomment %}
-</main>
-<footer class="landing-page-footer text-base text-white items-center mt-2 md:mt-0 flex flex-col md:flex-row justify-evenly space-y-3 md:space-y-0">
-    <span class="design-credits">Djangonaut Space. Designed by <a class='text-white' href='https://hope-adoli.netlify.app/'>Hope Adoli</a></span>
-    <a class='text-white' href="https://github.com/djangonaut-space/program/blob/main/CODE_OF_CONDUCT.md">
-      Code of Conduct
-    </a>
-    <a class='text-white' target="_blank" href="https://buttondown.com/djangonaut-space">
-      Newsletter
-    </a>
-     <div>
-        <webring-css site="https://djangonaut.space" class="-my-5 -mx-8 scale-75 md:scale-50"></webring-css>
-        <script src="https://djangowebring.com/static/webring.js"></script>
-    </div>
-    <div class="flex gap-2 social-links">
-        <a class="outline-link twitter" href="https://twitter.com/djangonautspace" target="_blank" aria-label="Twitter">
-            <i class="fa-brands fa-twitter" aria-hidden="true"></i>
-        </a>
-        <a rel="me" class="outline-link mastodon" href="https://indieweb.social/@djangonaut" target="_blank" aria-label="Mastodon">
-            <i class="fa-brands fa-mastodon" aria-hidden="true"></i>
-        </a>
-        <a class="outline-link github" href="https://github.com/djangonaut-space/" target="_blank" aria-label="GitHub">
-            <i class="fa-brands fa-github" aria-hidden="true"></i>
-        </a>
-        <a class="outline-link linkedin" href="https://www.linkedin.com/company/djangonaut-space/" target="_blank" aria-label="LinkedIn">
-            <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
-        </a>
-        <a class="outline-link youtube" href="https://www.youtube.com/@djangonautspace" target="_blank" aria-label="YouTube">
-            <i class="fa-brands fa-youtube" aria-hidden="true"></i>
-        </a>
-        <a class="outline-link bluesky" href="https://bsky.app/profile/djangonaut.space" target="_blank" aria-label="Bluesky">
-            <i class="fa-brands fa-bluesky" aria-hidden="true"></i>
-        </a>
-    </div>
-</footer>
+  <header class="w-full bg-gray-950/80 backdrop-blur-md fixed top-0 z-50 font-inter">
+    <nav class="max-w-[1200px] mx-auto px-6 py-4" aria-label="Main navigation">
+      <div class="flex items-center justify-between lg:grid lg:grid-cols-3 lg:items-center">
 
-<div id="particules-js" class="absolute w-[100%] h-[100%] "></div>
+        <div class="hidden lg:flex gap-6 justify-end">
+          <div class="relative inline-block" x-data="{ aboutOpen: false }" @mouseleave="aboutOpen = false">
+            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple flex items-center gap-1"
+               href="{% url 'event_list' %}"
+               @mouseenter="aboutOpen = true"
+               @focus="aboutOpen = true"
+            >
+              About
+              <svg class="w-4 h-4 transition-transform duration-200" :class="aboutOpen ? 'rotate-180' : ''" fill="none"
+                   stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </a>
+
+            <div x-show="aboutOpen"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="absolute left-0 w-48 bg-white rounded-md shadow-xl z-50 py-2 border border-gray-100"
+            >
+              <a href="https://buttondown.com/djangonaut-space" target="_blank"
+                 class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                Newsletter
+              </a>
+              <a href="{% slugurl "uniform-supply-office" %}"
+                 class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                Store
+              </a>
+              <a href="{% slugurl "media-talks" %}"
+                 class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                Media
+              </a>
+              <a href="{% url 'session_list' %}"
+                 class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                Sessions
+              </a>
+              <a href="mailto:contact@djangonaut.space"
+                 class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                Contact
+              </a>
+            </div>
+          </div>
+          <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple"
+             href="{% slugurl "comms" %}">Blog</a>
+        </div>
+
+
+        <div class="flex justify-start lg:justify-center">
+          <a class="" href="/" class="inline-block text-center">
+            <img class="inline-block w-full max-w-[140px]" alt="Djangonaut Space"
+                 src="{% static 'img/main-white-transparent.png' %}"/>
+          </a>
+        </div>
+
+        <div class="flex items-center justify-start">
+
+          <div class="hidden lg:flex gap-6 items-center">
+            {% if not user.is_authenticated %}
+              <div>
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple"
+                   href="{% url 'login' %}">Login</a>
+
+                <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple"
+                   href="{% url 'signup' %}">Sign up</a>
+              </div>
+            {% else %}
+              <div class="relative hidden md:block" x-data="{ showDropdown: false }">
+                <button type="button"
+                        class="block cursor-pointer bg-gray-800 rounded-full md:me-0 hover:ring-4 hover:ring-ds-purple/60 focus:ring-4 focus:ring-gray-300 transition-all"
+                        id="user-menu-button" aria-expanded="false" @click="showDropdown = !showDropdown">
+                  <span class="sr-only">Open user menu</span>
+                  <img class="w-12 h-12 rounded-full" src="
+                      {% if user.profile.bio_image %}{{ user.profile.bio_image }}{% else %}{% static 'img/favicon.png' %}{% endif %}"
+                       alt="Profile photo"/>
+                </button>
+                <div x-cloak
+                     x-show="showDropdown"
+                     @click.away="showDropdown = false"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                >
+                  <ul class="py-2 absolute right-0 py-2 mt-2 bg-gray-100 rounded-md shadow-xl w-44 z-50"
+                      aria-labelledby="user-menu-button">
+                    <a href="{% url 'user_sessions' %}"
+                       class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                      {% trans "My Sessions" %}
+                    </a>
+                    {% if nav_active_team_membership %}
+                      <a href="{% url 'team_detail' session_slug=nav_active_team_membership.session.slug pk=nav_active_team_membership.team.pk %}"
+                         class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                        {% trans "Team" %} {{ nav_active_team_membership.team.name }}
+                      </a>
+                    {% endif %}
+                    <a href="{% url 'profile' %}"
+                       class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                      {% trans "Profile" %}
+                    </a>
+                    <a href="{% url 'password_change' %}"
+                       class="block px-4 py-2  no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                      {% trans "Update password" %}
+                    </a>
+                    <form action="{% url 'logout' %}" method="post" class="block">
+                      {% csrf_token %}
+                      <button type="submit"
+                              class="w-full h-full no-underline text-sm text-gray-700 hover:bg-ds-purple hover:text-white transition-colors cursor-pointer text-left px-4 py-2">
+                        {% trans "Logout" %}
+                      </button>
+                    </form>
+                  </ul>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          <button class="lg:hidden text-white p-2" id="mobile-menu-button" aria-label="Open main menu"
+                  aria-expanded="false" aria-controls="mobile-menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="hidden flex-col gap-4 p-2 lg:hidden" id="mobile-menu">
+
+        <div class="flex flex-col" x-data="{ mobileAboutOpen: false }">
+
+
+          <button type="button" @click="mobileAboutOpen = !mobileAboutOpen"
+                  class="button-secondary text-white font-bold flex flex-col justify-center items-center hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+            <span>About</span>
+            <svg class="w-5 h-5 transition-transform" :class="mobileAboutOpen ? 'rotate-180' : ''" fill="none"
+                 stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+
+          <div x-cloak x-show="mobileAboutOpen" x-cloak x-transition @click.away="mobileAboutOpen = false"
+               class="flex flex-col justify-center items-center pl-4 mt-2 gap-2 border-l-2 border-ds-purple/30">
+
+            <a href="https://buttondown.com/djangonaut-space" target="_blank"
+               class="no-underline text-gray-300 hover:text-white py-1">Newsletter</a>
+            <a href="{% slugurl 'uniform-supply-office' %}" class="no-underline text-gray-300 hover:text-white py-1">Store</a>
+            <a href="{% slugurl 'media-talks' %}" class="no-underline text-gray-300 hover:text-white py-1">Media</a>
+            <a href="{% url 'session_list' %}" class="no-underline text-gray-300 hover:text-white py-1">Sessions</a>
+            <a href="mailto:contact@djangonaut.space"
+               class="no-underline text-gray-300 hover:text-white py-1">Contact</a>
+          </div>
+        </div>
+
+        <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2"
+           href="{% slugurl "comms" %}">Blog</a>
+
+        {% if not user.is_authenticated %}
+          <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2"
+             href="{% url "event_list" %}">Login</a>
+
+          <a class="bg-white text-[#202020] text-center py-3 rounded-xl font-bold hover:bg-ds-purple no-underline hover:text-white focus-visible:ring-2"
+             href="{% url "event_list" %}">Sign up</a>
+        {% else %}
+          <span role="separator" class="my-1 border-t border-gray-500"></span>
+          <a href="{% url 'user_sessions' %}"
+             class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+            {% trans "My Sessions" %}
+          </a>
+          {% if nav_active_team_membership %}
+            <a href="{% url 'team_detail' session_slug=nav_active_team_membership.session.slug pk=nav_active_team_membership.team.pk %}"
+               class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+              {% trans "Team" %} {{ nav_active_team_membership.team.name }}
+            </a>
+          {% endif %}
+          <a href="{% url 'profile' %}"
+             class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+            {% trans "Profile" %}
+          </a>
+          <a href="{% url 'password_change' %}"
+             class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+            {% trans "Update password" %}
+          </a>
+          <form action="{% url 'logout' %}" method="post" class="flex flex-col">
+            {% csrf_token %}
+            <button type="submit"
+                    class="button-secondary text-gray-200 font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2">
+              {% trans "Logout" %}
+            </button>
+          </form>
+        {% endif %}
+
+      </div>
+    </nav>
+  </header>
+
+  <main class="landing-page flex grow flex-col items-center justify-center w-full z-[2]">
+
+    <section
+        class="hero relative w-full min-h-[70vh] flex flex-col items-center justify-center text-center px-6 pt-32 pb-20 md:py-20 text-white overflow-hidden">
+
+      <div id="particules-js" class="absolute w-[100%] h-[100%] "></div>
+
+      <div class="relative z-20 max-w-[1200px] mx-auto flex flex-col items-center">
+        <h1 class="animate-fade-up p-0 text-5xl md:text-9xl leading-tight md:leading-[1.1] font-fraunces font-bold text-center max-w">
+          Where contributors launch</h1>
+        <p class="animate-fade-up mt-4 text-lg md:text-xl max-w-[600px] opacity-90" style="animation-delay: 200ms;">
+          Ready for take-off?</p>
+        <div class="flex gap-4 mt-4 md:mt-10">
+          <a href="#get-involved"
+             class="animate-fade-up action-button inline-block no-underline hover:text-white px-8 py-4"
+             style="animation-delay: 400ms;">🚀 Get Involved</a>
+
+          <a href="https://opencollective.com/djangonaut-space" target="_blank"
+             class="animate-fade-up action-button inline-block no-underline hover:text-white px-8 py-4"
+             style="animation-delay: 400ms;">🤍 Donate</a>
+        </div>
+      </div>
+
+      <div
+          class="landing-page-overlay absolute bottom-0 left-0 w-full h-[60%] z-10 bg-[url('{% static 'img/background.svg' %}')] bg-bottom bg-no-repeat bg-cover pointer-events-none opacity-0 animate-[fade-in_1.5s_ease-out_forwards]"
+          style="animation-delay: 600ms;"></div>
+
+    </section>
+
+
+    <section class="bg-white w-full py-16 px-5" aria-labelledby="contribution-heading">
+      <div class="max-w-[1200px] mx-auto text-center">
+
+        <h2 id="contribution-heading"
+            class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">Projects We
+          Have Contributed To</h2>
+        <div>
+          <ul class="mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center"
+              aria-label="Partner organization logos">
+            <li>
+              <img src="{% static 'img/logo-django.png' %}" alt="Django"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+            </li>
+            <li class="flex items-center justify-center">
+              <img src="{% static 'img/logo-djangocms.png' %}" alt="django CMS"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+            </li>
+            <li>
+              <img src="{% static 'img/logo-wagtail.png' %}" alt="Wagtail"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+            </li>
+            <li>
+              <img src="{% static 'img/logo-djangopackages.png' %}" alt="Django Packages"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+            </li>
+            <li>
+              <img src="{% static 'img/logo-beeware.png' %}" alt="BeeWare"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="w-full bg-[#e4e4e4] text-[#202020]  py-16 px-[5vw] lg:px-[14vw]">
+      <div class="mx-auto max-w-[1200px]">
+        <h2 class="text-4xl md:text-6xl font-extrabold mb-8 pt-16 xl:pt-8 pb-8">About the Program</h2>
+        <div class="flex flex-col lg:flex-row gap-10 items-center">
+          <div class="w-full lg:w-[60%] text-xl">
+
+            <p class="mb-4">Djangonaut Space is a free, 8-week group mentoring program where individuals will work
+              self-paced in a semi-structured learning environment. It seeks to help members of the community who wish
+              to level up their current Django code contributions and potentially take on leadership roles in Django in
+              the future.
+            </p>
+
+            <p class="mb-8">
+              The programme has run since January 2024 and it is currently in its 6th session. Previous mentees in the
+              programme have gone on to become maintainers, Django foundation board members and join various teams.</p>
+
+            <a href="https://github.com/djangonaut-space/program/blob/main/README.md"
+               class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Read
+              program documentation</a>
+
+          </div>
+          <div class="w-full lg:w-2/5">
+            <img class="w-full max-w-[547px] h-auto object-contain aspect-[3/2] rounded-xl"
+                 src="{% static 'img/group-calls.png' %}"
+                 alt="A grid of diverse Djangonauts smiling during an online launch session">
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="w-full bg-[#EDE2F0] text-[#202020]  py-20 px-6 lg:px-16">
+      <div class="mx-auto max-w-[1200px]">
+        <h2 id="get-involved" class="text-6xl font-extrabold pt-[8vh] xl:pt-[2vh] pb-[4vh]">Get Involved</h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-y-16">
+
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+            <div class="flex-shrink-0" aria-hidden="true">
+              <i class="fas fa-user-astronaut text-4xl text-ds-purple"></i>
+            </div>
+            <div class="flex flex-col gap-3">
+              <h3 class="font-bold text-2xl">Be a Djangonaut</h3>
+              <p class="text-lg leading-relaxed text-gray-800">Join your crew contribute to Django and the community! Be
+                part of an amazing community of passionate contributors, maintainers, and mentors.</p>
+              <div class="flex gap-3 flex-wrap mt-2">
+                <a target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space"
+                   class="action-button inline-block no-underline px-8 py-3">Subscribe</a>
+                <a target="_blank" rel="noopener"
+                   href="https://github.com/djangonaut-space/program/blob/main/getting-started-participants.md"
+                   class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Learn
+                  more</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+            <div class="flex-shrink-0" aria-hidden="true">
+              <i class="fas fa-compass text-4xl text-ds-purple"></i>
+            </div>
+            <div class="flex flex-col gap-3">
+              <h3 class="font-bold text-2xl">Be a Navigator</h3>
+              <p class="text-lg leading-relaxed text-gray-800">Do you regularly contribute to a project and guide others
+                to learn how to contribute? Our program is limited by the number of navigators we have.</p>
+              <div class="flex gap-3 flex-wrap mt-2">
+                <a target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space"
+                   class="action-button inline-block no-underline px-8 py-3">Subscribe</a>
+                <a href="#"
+                   class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Learn
+                  more</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+            <div class="flex-shrink-0" aria-hidden="true">
+              <i class="fas fa-satellite-dish text-4xl text-ds-purple"></i>
+            </div>
+            <div class="flex flex-col gap-3">
+              <h3 class="font-bold text-2xl">Be a Captain</h3>
+              <p class="text-lg leading-relaxed text-gray-800">Are you a member of the Django community and want to
+                welcome others in? Captains provide support to make Djangonauts feel welcome.</p>
+              <div class="flex gap-3 flex-wrap mt-2">
+                <a target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space"
+                   class="action-button inline-block no-underline px-8 py-3">Subscribe</a>
+                <a target="_blank" rel="noopener"
+                   href="https://github.com/djangonaut-space/program/blob/main/getting-started-volunteer.md"
+                   class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Learn
+                  more</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl flex gap-4 md:gap-6 items-start">
+            <div class="flex-shrink-0" aria-hidden="true">
+              <i class="fas fa-heart text-4xl text-ds-purple"></i>
+            </div>
+            <div class="flex flex-col gap-3">
+              <h3 class="font-bold text-2xl">Sponsor</h3>
+              <p class="text-lg leading-relaxed text-gray-800">Support the community and its members financially. Your
+                financial support sends people to conferences and more!</p>
+              <div class="flex gap-3 flex-wrap mt-2">
+                <a target="_blank" rel="noopener" href="https://opencollective.com/djangonaut-space"
+                   class="action-button inline-block no-underline px-8 py-3">🤍 Donate</a>
+                <a target="_blank" rel="noopener" href="/comms/tag/finances/"
+                   class="outline-link inline-block no-underline font-medium text-ds-purple border-2 border-ds-purple rounded px-8 py-3 hover:bg-ds-purple hover:text-white transition-colors">Financial
+                  reports</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="w-full bg-[#202020] text-gray-100 py-20 px-6">
+      <div class="max-w-[1200px] mx-auto">
+        <h2 class="text-6xl font-bold mb-16">Hear from our community</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {% for testimonial in testimonials %}
+            <figure class="flex gap-6 items-start bg-white/5 rounded-2xl p-6 m-0">
+              <div class="flex-shrink-0">
+                {% if testimonial.image %}
+                  <img src="{{ testimonial.image.url }}"
+                       class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
+                       alt="{{ testimonial.image_description }}"
+                  >
+                {% else %}
+                  <img src="{% static 'img/avatar.png' %}"
+                       class="w-36 h-36 rounded-xl border-2 border-white/20 object-contain"
+                       alt="{{ testimonial.author.get_full_name|default:testimonial.author.username }}"
+                  >
+                {% endif %}
+              </div>
+              <figcaption class="flex flex-col justify-between gap-4 min-w-0">
+                <blockquote class="m-0">
+                  <p class="text-gray-300 leading-relaxed italic">
+                    "{{ testimonial.text|truncatewords:30 }}"
+                  </p>
+                </blockquote>
+                <div>
+                  <span class="block font-bold">
+                      {{ testimonial.author.get_full_name|default:testimonial.author.username }}
+                  </span>
+                  <cite class="text-sm text-gray-400 not-italic">
+                    {{ testimonial.session.title }}
+                  </cite>
+                </div>
+              </figcaption>
+            </figure>
+          {% endfor %}
+        </div>
+
+        <a href="{% url 'testimonial_list' %}" class="action-button inline-block no-underline mt-5">Read more
+          testimonials</a>
+      </div>
+    </section>
+
+    <section class="bg-white w-full py-16 px-5">
+      <div class="max-w-[1200px] mx-auto text-center">
+
+        <h2 id="sponsors-heading"
+            class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR FINANCIAL
+          SPONSORS</h2>
+        <div>
+          <ul class="links mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center"
+              aria-label="Financial sponsor logos">
+
+            <li class="flex items-center justify-center">
+              <img src="{% static 'img/logo-django.png' %}" alt="Django logo"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+
+            </li>
+
+            <li>
+              <img src="{% static 'img/logo-aspiredu.png' %}" alt="Aspiredu logo"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="w-full bg-[#EDE2F0] text-[#202020]  py-20 px-6 lg:px-[14vw]" aria-labelledby="resources-heading">
+      <div class="mx-auto max-w-[1200px]">
+        <h2 id="resources-heading" class="text-4xl md:text-6xl font-extrabold mb-12">Explore our universe!</h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-10">
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+            <a href="{% slugurl "comms" %}" aria-labelledby="resource-3"
+               class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
+              <div class="flex flex-col gap-3">
+                <span id="resource-3" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Communication Center</span>
+                <p class="text-lg leading-relaxed text-gray-800">📡 Space travel can be lonely without a comms antenna.
+                  We use our blog to write about our sessions, members and the community.</p>
+              </div>
+            </a>
+          </div>
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+            <a href="{% slugurl "media-talks" %}" aria-labelledby="resource-2"
+               class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
+              <div class="flex flex-col gap-3">
+                <span id="resource-2" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Djangonaut Space Content</span>
+                <p class="text-lg leading-relaxed text-gray-800">🥰 Our members are all over the Django community. We've
+                  got blog posts, talks and podcasts galore.</p>
+              </div>
+            </a>
+          </div>
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+            <a href="{% url 'session_list' %}" aria-labelledby="resource-4"
+               class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
+              <div class="flex flex-col gap-3">
+                <span id="resource-4"
+                      class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Sessions</span>
+                <p class="text-lg leading-relaxed text-gray-800">🚀 Find out more about past and upcoming sessions. Join
+                  the next mission!</p>
+              </div>
+            </a>
+          </div>
+
+          <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
+            <a href="{% slugurl "uniform-supply-office" %}" aria-labelledby="resource-1"
+               class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
+              <div class="flex flex-col gap-3">
+                <span id="resource-1" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Uniform Supply Office</span>
+                <p class="text-lg leading-relaxed text-gray-800">🏪 Otherwise known as the "Store". Get your Djangonaut
+                  Space t-shirts, hoodies, and other merchandise here. </p>
+              </div>
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+
+  </main>
+
+
+  <footer
+      class="landing-page-footer text-base text-white items-center pt-2 md:pt-0 flex flex-col md:flex-row justify-evenly space-y-3 md:space-y-0">
+
+    <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+      <nav class="flex flex-wrap justify-center gap-6" aria-label="Footer navigation">
+        <a class="text-gray-300 hover:text-white transition-all"
+           href="https://github.com/djangonaut-space/program/blob/main/CODE_OF_CONDUCT.md">
+          Code of Conduct
+        </a>
+        <a class="text-gray-300 hover:text-white transition-all"
+           target="_blank" rel="noopener" href="https://buttondown.com/djangonaut-space">
+          Newsletter <span class="sr-only">(opens in new tab)</span>
+        </a>
+      </nav>
+
+      <div class="flex items-center justify-center min-h-[50px]">
+        <webring-css site="https://djangonaut.space" class="scale-75 md:scale-90"></webring-css>
+        <script src="https://djangowebring.com/static/webring.js"></script>
+      </div>
+
+      <div class="flex items-center justify-center gap-4">
+        <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
+           href="https://twitter.com/djangonautspace" target="_blank" rel="noopener" aria-label="Follow us on Twitter">
+          <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+        </a>
+        <a rel="me"
+           class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
+           href="https://indieweb.social/@djangonaut" target="_blank" rel="noopener" aria-label="Follow us on Mastodon">
+          <i class="fa-brands fa-mastodon" aria-hidden="true"></i>
+        </a>
+        <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
+           href="https://github.com/djangonaut-space/" target="_blank" rel="noopener"
+           aria-label="View our GitHub profile">
+          <i class="fa-brands fa-github" aria-hidden="true"></i>
+        </a>
+        <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
+           href="https://www.linkedin.com/company/djangonaut-space/" target="_blank" rel="noopener"
+           aria-label="View our LinkedIn profile">
+          <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+        </a>
+        <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
+           href="https://www.youtube.com/@djangonautspace" target="_blank" rel="noopener"
+           aria-label="View our YouTube profile">
+          <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+        </a>
+        <a class="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-ds-purple hover:border-ds-purple transition-all focus-visible:ring-2 focus-visible:ring-ds-purple outline-none no-underline"
+           href="https://bsky.app/profile/djangonaut.space" target="_blank" rel="noopener"
+           aria-label="View our Bluesky profile">
+          <i class="fa-brands fa-bluesky" aria-hidden="true"></i>
+        </a>
+      </div>
+
+    </div>
+
+  </footer>
+
+  <script>
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+
+      menu.classList.toggle('hidden');
+      menu.classList.toggle('flex');
+
+      btn.setAttribute('aria-expanded', !isExpanded);
+      btn.setAttribute('aria-label', isExpanded ? 'Open main menu' : 'Close main menu');
+    });
+  </script>
 {% endblock content %}
