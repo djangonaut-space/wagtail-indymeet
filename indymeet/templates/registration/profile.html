@@ -69,6 +69,10 @@
                         </td>
                     </tr>
                     <tr class="border-b-2">
+                        <td class="pt-4 pb-1 pr-6">{% translate "Roles Interested In" %}</td>
+                        <td class="pt-4 pb-1 pr-6">{{ user.profile.interested_in|join:", " }}</td>
+                    </tr>
+                    <tr class="border-b-2">
                         <td class="pt-4 pb-1 pr-6">{% translate "Weekly Availability" %}</td>
                         <td class="pt-4 pb-1 pr-6">
                             {% if user.availability.slots %}
