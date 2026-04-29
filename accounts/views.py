@@ -166,7 +166,7 @@ def profile(request):
         testimonials = (
             Testimonial.objects.for_user(request.user)
             .select_related("session")
-            .order_by("?")
+            .order_by("?")[:4]
         )
     context = {
         "user_responses": request.user.usersurveyresponse_set.select_related("survey"),
