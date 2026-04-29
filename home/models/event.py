@@ -169,7 +169,6 @@ class Event(ClusterableModel):
 
         recipients = self.extra_emails or []
         emails = []
-        User = get_user_model()
         if self.session_id:
             emails = list(
                 SessionMembership.objects.for_session(self.session)
@@ -179,10 +178,8 @@ class Event(ClusterableModel):
             )
         elif self.is_public:
             emails = list(
-                User.objects.filter(
-                    profile__receiving_event_updates=True, profile__email_confirmed=True
-                )
-                .exclude(email="")
-                .values_list("email", flat=True)
+                SessionMembership.objects.accepted()
+                .values_list("user__email", flat=True)
+                .distinct()
             )
         return list(set(emails + recipients))

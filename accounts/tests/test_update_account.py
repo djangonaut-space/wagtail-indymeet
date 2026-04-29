@@ -13,8 +13,6 @@ class UpdateEmailSubscriptionViewTests(TestCase):
     def setUpTestData(cls):
         profile = ProfileFactory.create(
             receiving_newsletter=True,
-            receiving_program_updates=True,
-            receiving_event_updates=True,
         )
         cls.user = profile.user
         cls.update_email_subscription_url = reverse("email_subscriptions")
@@ -42,8 +40,6 @@ class UpdateEmailSubscriptionViewTests(TestCase):
             self.update_email_subscription_url,
             data={
                 "receiving_newsletter": False,
-                "receiving_event_updates": False,
-                "receiving_program_updates": False,
             },
             follow=True,
         )
@@ -51,8 +47,6 @@ class UpdateEmailSubscriptionViewTests(TestCase):
         self.assertContains(response, "Profile Info")
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.receiving_newsletter, False)
-        self.assertEqual(self.user.profile.receiving_event_updates, False)
-        self.assertEqual(self.user.profile.receiving_program_updates, False)
 
 
 class UpdateEmailSubscriptionViewTests(TestCase):

@@ -57,8 +57,6 @@ class SignUpViewTests(TestCase):
         self.assertTrue(created_user.is_active)
         self.assertTrue(created_user.profile.accepted_coc)
         self.assertTrue(created_user.profile.receiving_newsletter)
-        self.assertTrue(created_user.profile.receiving_program_updates)
-        self.assertTrue(created_user.profile.receiving_event_updates)
 
     @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)
     def test_signup_template_post_success(self, mock_captcha):

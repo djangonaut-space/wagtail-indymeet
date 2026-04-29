@@ -129,12 +129,6 @@ class SignUpView(CreateView):
         user = self.object
         user.profile.accepted_coc = form.cleaned_data["accepted_coc"]
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
-        user.profile.receiving_program_updates = form.cleaned_data[
-            "receive_program_updates"
-        ]
-        user.profile.receiving_event_updates = form.cleaned_data[
-            "receive_event_updates"
-        ]
         if settings.LOAD_TESTING:
             user.profile.email_confirmed = True
             user.profile.save(
@@ -142,8 +136,6 @@ class SignUpView(CreateView):
                     "email_confirmed",
                     "accepted_coc",
                     "receiving_newsletter",
-                    "receiving_program_updates",
-                    "receiving_event_updates",
                 ]
             )
         else:
@@ -151,8 +143,6 @@ class SignUpView(CreateView):
                 update_fields=[
                     "accepted_coc",
                     "receiving_newsletter",
-                    "receiving_program_updates",
-                    "receiving_event_updates",
                 ]
             )
             send_user_confirmation_email(self.request, user)
@@ -197,12 +187,6 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         Returns the initial data to use for forms on this view.
         """
         initial = super().get_initial()
-        initial["receive_program_updates"] = (
-            self.request.user.profile.receiving_program_updates
-        )
-        initial["receive_event_updates"] = (
-            self.request.user.profile.receiving_event_updates
-        )
         initial["receive_newsletter"] = self.request.user.profile.receiving_newsletter
         return initial
 
@@ -218,17 +202,9 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         self.object = form.save()
         user = self.object
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
-        user.profile.receiving_program_updates = form.cleaned_data[
-            "receive_program_updates"
-        ]
-        user.profile.receiving_event_updates = form.cleaned_data[
-            "receive_event_updates"
-        ]
         user.profile.save(
             update_fields=[
                 "receiving_newsletter",
-                "receiving_program_updates",
-                "receiving_event_updates",
             ]
         )
         """sends a link for a user to activate their account after changing their email"""

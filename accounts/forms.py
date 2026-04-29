@@ -158,23 +158,13 @@ class CustomUserChangeForm(BaseCustomUserForm):
 class EmailSubscriptionsChangeForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = (
-            "receiving_newsletter",
-            "receiving_event_updates",
-            "receiving_program_updates",
-        )
+        fields = ("receiving_newsletter",)
         labels = {
             "receiving_newsletter": "Subscribe to newsletter",
-            "receiving_event_updates": "Subscribe to event updates",
-            "receiving_program_updates": "Subscribe to program updates ",
         }
         help_texts = {
             "receiving_newsletter": "Please check this to opt-in for receiving our newsletter."
             "You can opt-out on your profile page at anytime.",
-            "receiving_event_updates": "Please check this to opt-in for receiving emails about "
-            "upcoming events. You can opt-out on your profile page at anytime.",
-            "receiving_program_updates": "Please check this to opt-in for receiving emails about "
-            "upcoming program sessions. You can opt-out on your profile page at anytime.",
         }
 
 

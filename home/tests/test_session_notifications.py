@@ -557,9 +557,9 @@ class SessionMembershipModelAcceptanceFieldsTests(TestCase):
         membership = SessionMembershipFactory.create(team=None)
 
         # Check default values
-        self.assertIsNone(membership.accepted)
         self.assertIsNone(membership.acceptance_deadline)
         self.assertIsNone(membership.accepted_at)
+        # accepted is controlled by SessionMembershipFactory
 
         # Set values
         deadline = timezone.now().date() + timedelta(days=7)

@@ -141,49 +141,15 @@ class CustomUser(AbstractUser):
 
 
 class UserProfile(models.Model):
-    PARTICIPANT = "Participant"
-    SPEAKER = "Speaker"
-    MENTOR = "Mentor"
-    EXPERT = "Expert"
-    PROJECT_OWNER = "Project Owner"
-    VOLUNTEER = "Volunteer"
-    ORGANIZER = "Organizer"
-    MEMBER_ROLES = (
-        (PARTICIPANT, "Participant"),
-        (SPEAKER, "Speaker"),
-        (MENTOR, "Mentor"),
-        (EXPERT, "Expert"),
-        (PROJECT_OWNER, "Project Owner"),
-        (VOLUNTEER, "Volunteer"),
-        (ORGANIZER, "Organizer"),
-    )
-
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-
-    MEMBER_STATUS = (
-        (ACTIVE, "Active"),
-        (INACTIVE, "Inactive"),
-    )
     user = DefaultOneToOneField(
         "CustomUser", create=True, on_delete=models.CASCADE, related_name="profile"
-    )
-    member_status = models.CharField(
-        choices=MEMBER_STATUS, default=ACTIVE, max_length=50
-    )
-    member_role = models.CharField(
-        choices=MEMBER_ROLES, default=PARTICIPANT, max_length=50
     )
     pronouns = models.CharField(max_length=20, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     bio_image = models.ImageField(blank=True, null=True)
-    session_participant = models.BooleanField(default=False)
-    recruitment_interest = models.BooleanField(default=False)
     accepted_coc = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
     receiving_newsletter = models.BooleanField(default=False)
-    receiving_event_updates = models.BooleanField(default=False)
-    receiving_program_updates = models.BooleanField(default=False)
     github_username = models.CharField(
         max_length=39,
         blank=True,

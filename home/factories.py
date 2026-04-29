@@ -129,6 +129,9 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     session = factory.SubFactory(SessionFactory)
     team = factory.SubFactory(TeamFactory)
     role = SessionMembership.DJANGONAUT
+    accepted = factory.LazyAttribute(
+        lambda o: True if o.role == SessionMembership.DJANGONAUT else None
+    )
 
 
 class OrganizerFactory(factory.django.DjangoModelFactory):
