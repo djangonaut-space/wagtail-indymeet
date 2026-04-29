@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
-from accounts.models import CustomUser
+from accounts.factories import ProfileFactory, UserAvailabilityFactory, UserFactory
+from accounts.models import CustomUser, UserProfile
 from home.factories import SessionFactory, SessionMembershipFactory
 from home.models import SessionMembership
 

@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.factories import ProfileFactory, UserFactory
+from accounts.models import UserProfile
 
 
 class UpdateEmailSubscriptionViewTests(TestCase):
@@ -79,6 +80,27 @@ class UpdateEmailSubscriptionViewTests(TestCase):
         self.assertContains(
             response,
             "This email has already been used. Please reset your password.",
+        )
+
+    def test_update_interested_in(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.update_account_url,
+            data={
+                "username": self.user.username,
+                "email": self.user.email,
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "interested_in_captain": True,
+                "interested_in_navigator": True,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.profile.refresh_from_db()
+        self.assertEqual(
+            self.user.profile.interested_in,
+            [UserProfile.CAPTAIN, UserProfile.NAVIGATOR],
         )
 
     def test_cant_reuse_username(self):

@@ -30,6 +30,7 @@ from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
 from .forms import DeleteAccountForm
 from .forms import EmailSubscriptionsChangeForm
+from .forms import INTERESTED_IN_FIELDS
 from .forms import UserAvailabilityForm
 from .models import UserAvailability
 from .tasks import delete_user_account
@@ -129,6 +130,11 @@ class SignUpView(CreateView):
         user = self.object
         user.profile.accepted_coc = form.cleaned_data["accepted_coc"]
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
+        user.profile.interested_in = [
+            role
+            for field_name, role in INTERESTED_IN_FIELDS
+            if form.cleaned_data.get(field_name)
+        ]
         if settings.LOAD_TESTING:
             user.profile.email_confirmed = True
             user.profile.save(
@@ -136,6 +142,7 @@ class SignUpView(CreateView):
                     "email_confirmed",
                     "accepted_coc",
                     "receiving_newsletter",
+                    "interested_in",
                 ]
             )
         else:
@@ -143,6 +150,7 @@ class SignUpView(CreateView):
                 update_fields=[
                     "accepted_coc",
                     "receiving_newsletter",
+                    "interested_in",
                 ]
             )
             send_user_confirmation_email(self.request, user)
@@ -188,6 +196,8 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         """
         initial = super().get_initial()
         initial["receive_newsletter"] = self.request.user.profile.receiving_newsletter
+        for field_name, role in INTERESTED_IN_FIELDS:
+            initial[field_name] = role in self.request.user.profile.interested_in
         return initial
 
     def get_success_url(self):
@@ -202,9 +212,15 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         self.object = form.save()
         user = self.object
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
+        user.profile.interested_in = [
+            role
+            for field_name, role in INTERESTED_IN_FIELDS
+            if form.cleaned_data.get(field_name)
+        ]
         user.profile.save(
             update_fields=[
                 "receiving_newsletter",
+                "interested_in",
             ]
         )
         """sends a link for a user to activate their account after changing their email"""

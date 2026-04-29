@@ -9,6 +9,13 @@ from .models import CustomUser
 from .models import UserAvailability
 from .models import UserProfile
 
+INTERESTED_IN_FIELDS = (
+    ("interested_in_djangonaut", UserProfile.DJANGONAUT),
+    ("interested_in_captain", UserProfile.CAPTAIN),
+    ("interested_in_navigator", UserProfile.NAVIGATOR),
+    ("interested_in_organizer", UserProfile.ORGANIZER),
+)
+
 
 class BaseCustomUserForm(forms.ModelForm):
     receive_newsletter = forms.BooleanField(
@@ -29,6 +36,27 @@ class BaseCustomUserForm(forms.ModelForm):
         help_text="Optional: Please check this to opt-in for receiving "
         "emails about upcoming program sessions. You can opt-out on "
         "your profile page at anytime.",
+    )
+    interested_in_djangonaut = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Interested in being a Djangonaut?",
+        help_text="Djangonauts are mentees learning to contributor.",
+    )
+    interested_in_captain = forms.BooleanField(
+        required=False,
+        label="Interested in being a Captain?",
+        help_text="Captains are volunteer, community mentors.",
+    )
+    interested_in_navigator = forms.BooleanField(
+        required=False,
+        label="Interested in being a Navigator?",
+        help_text="Navigators are volunteer, technical mentors.",
+    )
+    interested_in_organizer = forms.BooleanField(
+        required=False,
+        label="Interested in being an Organizer?",
+        help_text="Organizers help run the session behind the scenes.",
     )
 
 

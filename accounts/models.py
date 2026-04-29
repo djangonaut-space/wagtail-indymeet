@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.postgres.fields import ArrayField
 from django.core.signing import BadSignature
 from django.core.signing import SignatureExpired
 from django.core.signing import TimestampSigner
@@ -140,7 +141,21 @@ class CustomUser(AbstractUser):
         return self.username
 
 
+def _default_interested_in():
+    return [UserProfile.DJANGONAUT]
+
+
 class UserProfile(models.Model):
+    ORGANIZER = "Organizer"
+    DJANGONAUT = "Djangonaut"
+    CAPTAIN = "Captain"
+    NAVIGATOR = "Navigator"
+    ROLE_INTERESTS = (
+        (DJANGONAUT, _("Djangonaut")),
+        (CAPTAIN, _("Captain")),
+        (NAVIGATOR, _("Navigator")),
+        (ORGANIZER, _("Organizer")),
+    )
     user = DefaultOneToOneField(
         "CustomUser", create=True, on_delete=models.CASCADE, related_name="profile"
     )
@@ -156,6 +171,13 @@ class UserProfile(models.Model):
         null=False,
         default="",
         help_text="Your GitHub username (required for participation)",
+    )
+    interested_in = ArrayField(
+        models.CharField(max_length=64),
+        default=_default_interested_in,
+        blank=True,
+        help_text="The roles you are interested in. Djangonaut is the mentee role, "
+        "the rest are volunteer roles.",
     )
 
     def __str__(self):
