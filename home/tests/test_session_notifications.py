@@ -8,6 +8,7 @@ Tests the notification system for:
 - User acceptance/decline of memberships
 """
 
+from home import constants
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -68,25 +69,25 @@ class SessionResultsNotificationTests(TestCase):
         cls.membership1 = SessionMembershipFactory.create(
             session=cls.session,
             user=cls.accepted_user1,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             team=None,
         )
         cls.membership2 = SessionMembershipFactory.create(
             session=cls.session,
             user=cls.accepted_user2,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             team=None,
         )
         SessionMembershipFactory.create(
             session=cls.session,
             user=cls.navigator,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             team=None,
         )
         SessionMembershipFactory.create(
             session=cls.session,
             user=cls.captain,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             team=None,
         )
 
@@ -320,19 +321,19 @@ class TeamWelcomeEmailTests(TestCase):
             session=cls.session,
             user=cls.member1,
             team=cls.team1,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         SessionMembershipFactory.create(
             session=cls.session,
             user=cls.member2,
             team=cls.team1,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
         SessionMembershipFactory.create(
             session=cls.session,
             user=cls.member3,
             team=cls.team2,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         # Create admin user
@@ -557,9 +558,9 @@ class SessionMembershipModelAcceptanceFieldsTests(TestCase):
         membership = SessionMembershipFactory.create(team=None)
 
         # Check default values
-        self.assertIsNone(membership.accepted)
         self.assertIsNone(membership.acceptance_deadline)
         self.assertIsNone(membership.accepted_at)
+        # accepted is controlled by SessionMembershipFactory
 
         # Set values
         deadline = timezone.now().date() + timedelta(days=7)

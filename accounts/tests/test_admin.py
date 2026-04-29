@@ -1,3 +1,4 @@
+from home import constants
 from datetime import timedelta
 from http import HTTPStatus
 
@@ -5,8 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
-from accounts.models import CustomUser
+from accounts.factories import ProfileFactory, UserAvailabilityFactory, UserFactory
+from accounts.models import CustomUser, UserProfile
 from home.factories import SessionFactory, SessionMembershipFactory
 from home.models import SessionMembership
 
@@ -32,7 +33,7 @@ class AdminFilterTests(TestCase):
         SessionMembershipFactory.create(
             user=cls.past_djangonaut,
             session=past_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             team=None,
         )
 
@@ -40,7 +41,7 @@ class AdminFilterTests(TestCase):
         SessionMembershipFactory.create(
             user=cls.past_navigator,
             session=past_session,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             team=None,
         )
 
@@ -48,7 +49,7 @@ class AdminFilterTests(TestCase):
         SessionMembershipFactory.create(
             user=cls.future_djangonaut,
             session=future_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             team=None,
         )
 

@@ -265,11 +265,9 @@ class EventAdminSendCalendarInvitesTests(TestCase):
 
     @patch("home.tasks.event_notifications.email.send")
     def test_public_event_no_session_sends_to_opted_in_users(self, mock_send):
-        """A public event with no session sends to users who opted in for event updates."""
+        """A public event with no session sends to users who are accepted session members."""
         opted_in = UserFactory.create(email="opted@example.com")
-        opted_in.profile.receiving_event_updates = True
-        opted_in.profile.email_confirmed = True
-        opted_in.profile.save()
+        SessionMembershipFactory.create(user=opted_in)
 
         UserFactory.create(email="nope@example.com")
 
@@ -299,9 +297,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
     def test_multiple_events_each_processed_independently(self, mock_send):
         """Selecting multiple events sends one email per event."""
         opted_in = UserFactory.create(email="opted@example.com")
-        opted_in.profile.receiving_event_updates = True
-        opted_in.profile.email_confirmed = True
-        opted_in.profile.save()
+        SessionMembershipFactory.create(user=opted_in)
 
         event1 = self._make_event(slug="ev-1", is_public=True, session=None)
         event2 = self._make_event(slug="ev-2", is_public=True, session=None)
@@ -345,9 +341,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         """Selecting a mix of already-sent and pending events sends to the pending ones
         and skips the rest, showing separate success and warning messages."""
         opted_in = UserFactory.create(email="opted@example.com")
-        opted_in.profile.receiving_event_updates = True
-        opted_in.profile.email_confirmed = True
-        opted_in.profile.save()
+        SessionMembershipFactory.create(user=opted_in)
 
         already_sent = self._make_event(
             slug="ev-sent",

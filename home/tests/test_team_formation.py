@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserAvailability
+from home import constants
 from home.admin import SessionAdmin
 from home.availability import (
     calculate_overlap,
@@ -321,7 +322,7 @@ class TeamFormationViewTestCase(TestCase):
             user=navigator,
             session=self.session,
             team=team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         # Create availability for navigator
@@ -404,7 +405,7 @@ class TeamFormationViewTestCase(TestCase):
             user=navigator,
             session=self.session,
             team=team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
         UserAvailabilityFactory(
             user=navigator, slots=[24.0, 24.5, 25.0, 25.5]  # Mon 00:00-02:00
@@ -461,7 +462,7 @@ class TeamFormationViewTestCase(TestCase):
             user=captain,
             session=self.session,
             team=team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
         UserAvailabilityFactory(
             user=captain, slots=[48.0, 48.5, 49.0, 49.5]  # Tue 00:00-02:00
@@ -542,7 +543,7 @@ class TeamFormationViewTestCase(TestCase):
             user=captain,
             session=self.session,
             team=team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
 
         # Create captain availability
@@ -558,7 +559,7 @@ class TeamFormationViewTestCase(TestCase):
             user=djangonaut,
             session=self.session,
             team=team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         # Create djangonaut availability (2 hours overlap with captain)
@@ -638,7 +639,7 @@ class TeamFormationViewTestCase(TestCase):
             user=captain,
             session=self.session,
             team=team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
 
         url = reverse("admin:session_form_teams", args=[self.session.id])
@@ -670,7 +671,7 @@ class TeamFormationViewTestCase(TestCase):
             user=djangonaut,
             session=self.session,
             team=team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         # Give djangonaut narrow availability (only Mon 00:00-01:00)
         UserAvailabilityFactory(user=djangonaut, slots=[24.0, 24.5])
@@ -683,7 +684,7 @@ class TeamFormationViewTestCase(TestCase):
             user=navigator,
             session=self.session,
             team=team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
         # Give navigator wider availability (Mon 00:00-02:00)
         UserAvailabilityFactory(user=navigator, slots=[24.0, 24.5, 25.0, 25.5])
@@ -727,7 +728,7 @@ class TeamFormationViewTestCase(TestCase):
             user=navigator,
             session=self.session,
             team=team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
         applicant = UserFactory(username="applicant")
@@ -755,7 +756,7 @@ class TeamFormationViewTestCase(TestCase):
             user=djangonaut,
             session=self.session,
             team=team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         teams_data = get_teams_with_statistics(self.session)

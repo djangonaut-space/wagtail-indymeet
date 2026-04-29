@@ -1,3 +1,4 @@
+from home import constants
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
@@ -88,7 +89,7 @@ class PrivateEventAccessTests(TestCase):
         SessionMembershipFactory.create(
             user=cls.member_user,
             session=cls.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 

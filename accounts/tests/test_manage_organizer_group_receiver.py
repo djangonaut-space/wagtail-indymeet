@@ -1,3 +1,4 @@
+from home import constants
 from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
@@ -28,7 +29,7 @@ class TestManageOrganizerGroupReceiver(TestCase):
         self.assertEqual(session.status, "past")
 
         SessionMembershipFactory.create(
-            user=user, session=session, role=SessionMembership.ORGANIZER
+            user=user, session=session, role=constants.ORGANIZER
         )
 
         user.refresh_from_db()

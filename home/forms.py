@@ -17,8 +17,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import CustomUser
-from home.constants import DATE_INPUT_FORMAT
-from home.constants import SURVEY_FIELD_VALIDATORS
+from home import constants
 from home.models import (
     Question,
     Team,
@@ -108,7 +107,9 @@ class BaseSurveyForm(forms.Form):
                 self.fields[field_name] = forms.URLField(
                     label=question.label,
                     validators=[
-                        MaxLengthValidator(SURVEY_FIELD_VALIDATORS["max_length"]["url"])
+                        MaxLengthValidator(
+                            constants.SURVEY_FIELD_VALIDATORS["max_length"]["url"]
+                        )
                     ],
                 )
             elif question.type_field == TypeField.EMAIL:
@@ -116,7 +117,7 @@ class BaseSurveyForm(forms.Form):
                     label=question.label,
                     validators=[
                         MaxLengthValidator(
-                            SURVEY_FIELD_VALIDATORS["max_length"]["email"]
+                            constants.SURVEY_FIELD_VALIDATORS["max_length"]["email"]
                         )
                     ],
                 )
@@ -124,7 +125,7 @@ class BaseSurveyForm(forms.Form):
                 self.fields[field_name] = forms.DateField(
                     label=question.label,
                     widget=DateSurvey(),
-                    input_formats=DATE_INPUT_FORMAT,
+                    input_formats=constants.DATE_INPUT_FORMAT,
                 )
             elif question.type_field == TypeField.TEXT_AREA:
                 self.fields[field_name] = forms.CharField(
@@ -132,10 +133,10 @@ class BaseSurveyForm(forms.Form):
                     widget=forms.Textarea,
                     validators=[
                         MinLengthValidator(
-                            SURVEY_FIELD_VALIDATORS["min_length"]["text_area"]
+                            constants.SURVEY_FIELD_VALIDATORS["min_length"]["text_area"]
                         ),
                         MaxLengthValidator(
-                            SURVEY_FIELD_VALIDATORS["max_length"]["text_area"]
+                            constants.SURVEY_FIELD_VALIDATORS["max_length"]["text_area"]
                         ),
                     ],
                 )
@@ -154,10 +155,10 @@ class BaseSurveyForm(forms.Form):
                     label=question.label,
                     validators=[
                         MinLengthValidator(
-                            SURVEY_FIELD_VALIDATORS["min_length"]["text"]
+                            constants.SURVEY_FIELD_VALIDATORS["min_length"]["text"]
                         ),
                         MaxLengthValidator(
-                            SURVEY_FIELD_VALIDATORS["max_length"]["text"]
+                            constants.SURVEY_FIELD_VALIDATORS["max_length"]["text"]
                         ),
                     ],
                 )
@@ -865,9 +866,7 @@ class OverlapAnalysisForm(BaseTeamForm):
 
         team_memberships = (
             SessionMembership.objects.for_team(team)
-            .filter(
-                role__in=[SessionMembership.NAVIGATOR, SessionMembership.DJANGONAUT]
-            )
+            .filter(role__in=[constants.NAVIGATOR, constants.DJANGONAUT])
             .exclude(user_id__in=selected_users)
             .select_related("user")
             .prefetch_related("user__availability")
@@ -1064,7 +1063,7 @@ class BulkTeamAssignmentForm(BaseTeamForm):
             membership, created = SessionMembership.objects.get_or_create(
                 user=user,
                 session=self.session,
-                defaults={"role": SessionMembership.DJANGONAUT},
+                defaults={"role": constants.DJANGONAUT},
             )
             membership.team = team
             # Don't change role - keep whatever it was

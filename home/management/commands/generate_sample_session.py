@@ -9,6 +9,7 @@ This command creates:
 - 1 captain user with membership
 """
 
+from home import constants
 from datetime import timedelta
 
 from django.contrib.auth.models import Permission
@@ -75,7 +76,7 @@ class Command(BaseCommand):
                     session=session,
                     defaults={
                         "team": team,
-                        "role": SessionMembership.DJANGONAUT,
+                        "role": constants.DJANGONAUT,
                         "accepted": True,
                     },
                 )
@@ -96,7 +97,7 @@ class Command(BaseCommand):
                 session=session,
                 defaults={
                     "team": team,
-                    "role": SessionMembership.NAVIGATOR,
+                    "role": constants.NAVIGATOR,
                     "accepted": True,
                 },
             )
@@ -117,7 +118,7 @@ class Command(BaseCommand):
                 session=session,
                 defaults={
                     "team": team,
-                    "role": SessionMembership.CAPTAIN,
+                    "role": constants.CAPTAIN,
                     "accepted": True,
                 },
             )
@@ -152,7 +153,7 @@ class Command(BaseCommand):
             user=organizer,
             session=session,
             team=None,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
 

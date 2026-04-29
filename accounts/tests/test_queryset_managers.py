@@ -1,5 +1,6 @@
 """Tests for CustomUser queryset managers and methods."""
 
+from home import constants
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
@@ -172,21 +173,21 @@ class ForComparingAvailabilityTestCase(TestCase):
             session=cls.session,
             team=cls.team,
             user=cls.captain,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=True,
         )
         cls.navigator_membership = SessionMembershipFactory.create(
             session=cls.session,
             team=cls.team,
             user=cls.navigator,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=True,
         )
         cls.djangonaut_membership = SessionMembershipFactory.create(
             session=cls.session,
             team=cls.team,
             user=cls.djangonaut,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -195,7 +196,7 @@ class ForComparingAvailabilityTestCase(TestCase):
             session=cls.session,
             team=cls.other_team,
             user=cls.other_team_user,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -273,7 +274,7 @@ class ForComparingAvailabilityTestCase(TestCase):
             session=self.session,
             team=self.team,
             user=user_no_availability,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 

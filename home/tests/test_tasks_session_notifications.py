@@ -4,6 +4,7 @@ Tests for session notification background tasks.
 Tests that the task functions correctly send emails when executed.
 """
 
+from home import constants
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
@@ -39,7 +40,7 @@ class SendAcceptedEmailTaskTests(TestCase):
         cls.membership = SessionMembershipFactory.create(
             session=cls.session,
             user=cls.user,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             team=None,
         )
 
@@ -143,7 +144,7 @@ class SendAcceptanceReminderEmailTaskTests(TestCase):
         cls.membership = SessionMembershipFactory.create(
             session=cls.session,
             user=cls.user,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,
             team=None,
         )
@@ -187,13 +188,13 @@ class SendTeamWelcomeEmailTaskTests(TestCase):
             session=cls.session,
             user=cls.djangonaut,
             team=cls.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         SessionMembershipFactory.create(
             session=cls.session,
             user=cls.navigator,
             team=cls.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
     @override_settings(

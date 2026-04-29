@@ -1,5 +1,6 @@
 """Tests for account deletion views."""
 
+from home import constants
 from unittest.mock import patch
 
 from django.test import Client, TestCase
@@ -35,7 +36,7 @@ class DeleteAccountConfirmationViewTests(TestCase):
     def test_shows_related_data_counts(self):
         session = SessionFactory.create()
         SessionMembershipFactory.create(
-            user=self.user, session=session, role=SessionMembership.DJANGONAUT
+            user=self.user, session=session, role=constants.DJANGONAUT
         )
 
         self.client.force_login(self.user)

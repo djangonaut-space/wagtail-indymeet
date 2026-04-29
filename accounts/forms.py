@@ -1,3 +1,4 @@
+from home import constants
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -9,6 +10,13 @@ from .models import CustomUser
 from .models import UserAvailability
 from .models import UserProfile
 
+INTERESTED_IN_FIELDS = (
+    ("interested_in_djangonaut", constants.DJANGONAUT),
+    ("interested_in_captain", constants.CAPTAIN),
+    ("interested_in_navigator", constants.NAVIGATOR),
+    ("interested_in_organizer", constants.ORGANIZER),
+)
+
 
 class BaseCustomUserForm(forms.ModelForm):
     receive_newsletter = forms.BooleanField(
@@ -18,18 +26,36 @@ class BaseCustomUserForm(forms.ModelForm):
         "This newsletter does not yet exist. You can opt-out on your profile "
         "page at anytime.",
     )
-    receive_event_updates = forms.BooleanField(
+    interested_in_djangonaut = forms.BooleanField(
         required=False,
-        help_text="Optional: Please check this to opt-in for receiving "
-        "emails about upcoming community events. You can opt-out on "
-        "your profile page at anytime.",
+        initial=True,
+        label="Interested in being a Djangonaut?",
+        help_text="Djangonauts are mentees learning to contributor.",
     )
-    receive_program_updates = forms.BooleanField(
+    interested_in_captain = forms.BooleanField(
         required=False,
-        help_text="Optional: Please check this to opt-in for receiving "
-        "emails about upcoming program sessions. You can opt-out on "
-        "your profile page at anytime.",
+        label="Interested in being a Captain?",
+        help_text="Captains are volunteer, community mentors.",
     )
+    interested_in_navigator = forms.BooleanField(
+        required=False,
+        label="Interested in being a Navigator?",
+        help_text="Navigators are volunteer, technical mentors.",
+    )
+    interested_in_organizer = forms.BooleanField(
+        required=False,
+        label="Interested in being an Organizer?",
+        help_text="Organizers help run the session behind the scenes.",
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["interested_in"] = [
+            role
+            for field_name, role in INTERESTED_IN_FIELDS
+            if cleaned_data.get(field_name)
+        ]
+        return cleaned_data
 
 
 class CustomUserCreationForm(BaseCustomUserForm, UserCreationForm):
@@ -75,8 +101,6 @@ class CustomUserCreationForm(BaseCustomUserForm, UserCreationForm):
             "password2",
             "email_consent",
             "accepted_coc",
-            "receive_program_updates",
-            "receive_event_updates",
             "receive_newsletter",
         )
 
@@ -93,8 +117,6 @@ class CustomUserChangeForm(BaseCustomUserForm):
             "email",
             "first_name",
             "last_name",
-            "receive_program_updates",
-            "receive_event_updates",
             "receive_newsletter",
         )
 
@@ -158,23 +180,13 @@ class CustomUserChangeForm(BaseCustomUserForm):
 class EmailSubscriptionsChangeForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = (
-            "receiving_newsletter",
-            "receiving_event_updates",
-            "receiving_program_updates",
-        )
+        fields = ("receiving_newsletter",)
         labels = {
             "receiving_newsletter": "Subscribe to newsletter",
-            "receiving_event_updates": "Subscribe to event updates",
-            "receiving_program_updates": "Subscribe to program updates ",
         }
         help_texts = {
             "receiving_newsletter": "Please check this to opt-in for receiving our newsletter."
             "You can opt-out on your profile page at anytime.",
-            "receiving_event_updates": "Please check this to opt-in for receiving emails about "
-            "upcoming events. You can opt-out on your profile page at anytime.",
-            "receiving_program_updates": "Please check this to opt-in for receiving emails about "
-            "upcoming program sessions. You can opt-out on your profile page at anytime.",
         }
 
 

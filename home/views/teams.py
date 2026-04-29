@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.generic.detail import DetailView
 
 from accounts.models import CustomUser
+from home import constants
 from home.models import Session, SessionMembership, Team, UserSurveyResponse
 from home.availability import (
     calculate_overlap,
@@ -54,7 +55,7 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
 
         # Only allow organizers or members of this specific team
         if (
-            self.user_session_membership.role != SessionMembership.ORGANIZER
+            self.user_session_membership.role != constants.ORGANIZER
             and self.user_session_membership.team != team
         ):
             raise PermissionDenied("You do not have access to this team.")
@@ -76,11 +77,9 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
         )
 
         # Separate by role
-        captains = [m for m in team_members if m.role == SessionMembership.CAPTAIN]
-        navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
-        djangonauts = [
-            m for m in team_members if m.role == SessionMembership.DJANGONAUT
-        ]
+        captains = [m for m in team_members if m.role == constants.CAPTAIN]
+        navigators = [m for m in team_members if m.role == constants.NAVIGATOR]
+        djangonauts = [m for m in team_members if m.role == constants.DJANGONAUT]
         # Calculate availability overlaps with logged-in user for each member
         current_user = self.request.user
         for membership in team_members:
@@ -110,9 +109,9 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
             and team.session.application_survey_id
             and self.user_session_membership.role
             in {
-                SessionMembership.CAPTAIN,
-                SessionMembership.NAVIGATOR,
-                SessionMembership.ORGANIZER,
+                constants.CAPTAIN,
+                constants.NAVIGATOR,
+                constants.ORGANIZER,
             }
         )
         context.update(
@@ -154,7 +153,7 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
             ),
             session__slug=self.kwargs.get("session_slug"),
             user_id=self.kwargs.get("user_id"),
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         # Check if session is current
@@ -175,7 +174,7 @@ class DjangonautSurveyResponseView(LoginRequiredMixin, DetailView):
         )
         # Only allow organizers or captains/navigators on the same team
         if (
-            self.user_session_membership.role != SessionMembership.ORGANIZER
+            self.user_session_membership.role != constants.ORGANIZER
             and self.user_session_membership.team != self.djangonaut_membership.team
         ):
             raise PermissionDenied("You do not have access to this team.")
@@ -234,7 +233,7 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
 
     # Only allow organizers or members of this specific team
     if (
-        user_session_membership.role != SessionMembership.ORGANIZER
+        user_session_membership.role != constants.ORGANIZER
         and user_session_membership.team != team
     ):
         raise PermissionDenied("You do not have access to this team.")
@@ -248,8 +247,8 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
         .order_by("role", "user__first_name", "user__last_name")
     )
 
-    navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
-    djangonauts = [m for m in team_members if m.role == SessionMembership.DJANGONAUT]
+    navigators = [m for m in team_members if m.role == constants.NAVIGATOR]
+    djangonauts = [m for m in team_members if m.role == constants.DJANGONAUT]
 
     # Calculate team availability (navigators + djangonauts)
     team_overlap_slots, _ = calculate_overlap(
@@ -284,7 +283,7 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
         "timezone": timezone,
         "offset_hours": offset_hours,
         "team_availability_by_day": team_availability_by_day,
-        "captains": [m for m in team_members if m.role == SessionMembership.CAPTAIN],
+        "captains": [m for m in team_members if m.role == constants.CAPTAIN],
         "navigators": navigators,
         "djangonauts": djangonauts,
         "organizers": organizers,
@@ -293,9 +292,9 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
             and team.session.application_survey_id
             and user_session_membership.role
             in {
-                SessionMembership.CAPTAIN,
-                SessionMembership.NAVIGATOR,
-                SessionMembership.ORGANIZER,
+                constants.CAPTAIN,
+                constants.NAVIGATOR,
+                constants.ORGANIZER,
             }
         ),
     }

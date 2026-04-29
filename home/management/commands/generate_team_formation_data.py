@@ -8,6 +8,7 @@ This command creates:
 - Realistic availability schedules with overlaps
 """
 
+from home import constants
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from faker import Faker
@@ -101,9 +102,9 @@ class Command(BaseCommand):
                 user=user, survey=survey, score=score, selection_rank=selection_rank
             )
 
-            # Create SessionMembership with DJANGONAUT role
+            # Create SessionMembership with constants.DJANGONAUT role
             SessionMembership.objects.create(
-                user=user, session=session, role=SessionMembership.DJANGONAUT
+                user=user, session=session, role=constants.DJANGONAUT
             )
 
             # Create availability schedule
@@ -140,7 +141,7 @@ class Command(BaseCommand):
 
             # Create SessionMembership
             SessionMembership.objects.create(
-                user=user, session=session, role=SessionMembership.CAPTAIN
+                user=user, session=session, role=constants.CAPTAIN
             )
 
             # Captains have flexible availability (many time slots)
@@ -181,7 +182,7 @@ class Command(BaseCommand):
 
             # Create SessionMembership
             SessionMembership.objects.create(
-                user=user, session=session, role=SessionMembership.NAVIGATOR
+                user=user, session=session, role=constants.NAVIGATOR
             )
 
             # Navigators need consistent availability for team meetings
