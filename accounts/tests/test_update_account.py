@@ -72,8 +72,6 @@ class UpdateEmailSubscriptionViewTests(TestCase):
                 "password1": "secretpassword123",
                 "password2": "secretpassword123",
                 "receive_newsletter": True,
-                "receive_program_updates": True,
-                "receive_event_updates": True,
             },
             follow=True,
         )
@@ -116,8 +114,6 @@ class UpdateEmailSubscriptionViewTests(TestCase):
                 "password1": "secretpassword123",
                 "password2": "secretpassword123",
                 "receive_newsletter": True,
-                "receive_program_updates": True,
-                "receive_event_updates": True,
             },
             follow=True,
         )

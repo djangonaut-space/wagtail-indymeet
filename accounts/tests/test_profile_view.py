@@ -49,8 +49,6 @@ class ProfileViewTests(TestCase):
                 "first_name": "Jane",
                 "last_name": "Doe",
                 "receive_newsletter": True,
-                "receive_program_updates": True,
-                "receive_event_updates": True,
             },
             follow=True,
         )

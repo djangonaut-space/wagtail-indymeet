@@ -25,18 +25,6 @@ class BaseCustomUserForm(forms.ModelForm):
         "This newsletter does not yet exist. You can opt-out on your profile "
         "page at anytime.",
     )
-    receive_event_updates = forms.BooleanField(
-        required=False,
-        help_text="Optional: Please check this to opt-in for receiving "
-        "emails about upcoming community events. You can opt-out on "
-        "your profile page at anytime.",
-    )
-    receive_program_updates = forms.BooleanField(
-        required=False,
-        help_text="Optional: Please check this to opt-in for receiving "
-        "emails about upcoming program sessions. You can opt-out on "
-        "your profile page at anytime.",
-    )
     interested_in_djangonaut = forms.BooleanField(
         required=False,
         initial=True,
@@ -103,8 +91,6 @@ class CustomUserCreationForm(BaseCustomUserForm, UserCreationForm):
             "password2",
             "email_consent",
             "accepted_coc",
-            "receive_program_updates",
-            "receive_event_updates",
             "receive_newsletter",
         )
 
@@ -121,8 +107,6 @@ class CustomUserChangeForm(BaseCustomUserForm):
             "email",
             "first_name",
             "last_name",
-            "receive_program_updates",
-            "receive_event_updates",
             "receive_newsletter",
         )
 
