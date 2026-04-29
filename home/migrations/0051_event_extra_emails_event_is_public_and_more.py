@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name="extra_emails",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.EmailField(blank=True, max_length=254),
-                default=home.models.event.default_extra_emails,
+                default=list,
                 help_text=(
                     'List of email addresses to include in calendar invites (e.g. guest speakers). Defaults to ["sessions@djangonaut.space"].',
                 ),

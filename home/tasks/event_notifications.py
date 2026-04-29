@@ -38,7 +38,7 @@ def send_event_calendar_invite(event_id: int) -> None:
 
     email.send(
         email_template="event_calendar_invite",
-        recipient_list=[],
+        recipient_list=["sessions@djangonaut.space"],
         bcc_list=recipients,
         context=context,
         attachments=[("event.ics", ical_data, "text/calendar")],

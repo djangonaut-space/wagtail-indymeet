@@ -80,7 +80,7 @@ class SendEventCalendarInviteTaskTests(TestCase):
             title="Sprint Planning",
             start_time=datetime(2024, 5, 10, 15, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2024, 5, 10, 16, 0, tzinfo=dt_timezone.utc),
-            extra_emails=["sessions@djangonaut.space"],
+            extra_emails=["contact@djangonaut.space"],
         )
 
     @patch("home.tasks.event_notifications.email.send")
@@ -89,7 +89,7 @@ class SendEventCalendarInviteTaskTests(TestCase):
         # Mock get_calendar_invite_recipients on the Event class
         with patch(
             "home.tasks.event_notifications.Event.get_calendar_invite_recipients",
-            return_value=["participant@example.com", "sessions@djangonaut.space"],
+            return_value=["participant@example.com", "contact@djangonaut.space"],
         ):
             send_event_calendar_invite.call(event_id=self.event.pk)
 
@@ -97,9 +97,9 @@ class SendEventCalendarInviteTaskTests(TestCase):
         call_kwargs = mock_send.call_args[1]
 
         self.assertEqual(call_kwargs["email_template"], "event_calendar_invite")
-        self.assertEqual(call_kwargs["recipient_list"], [])
+        self.assertEqual(call_kwargs["recipient_list"], ["sessions@djangonaut.space"])
         self.assertIn("participant@example.com", call_kwargs["bcc_list"])
-        self.assertIn("sessions@djangonaut.space", call_kwargs["bcc_list"])
+        self.assertIn("contact@djangonaut.space", call_kwargs["bcc_list"])
         self.assertEqual(call_kwargs["context"]["event"], self.event)
         self.assertIn("cta_link", call_kwargs["context"])
 
@@ -137,11 +137,6 @@ class SendEventCalendarInviteTaskTests(TestCase):
         with patch.object(event, "get_calendar_invite_recipients", return_value=[]):
             send_event_calendar_invite.call(event_id=event.pk)
         mock_send.assert_not_called()
-
-    def test_extra_emails_defaults_to_sessions_address(self):
-        """Events default extra_emails to the sessions address so it always receives invites."""
-        event = EventFactory.create()
-        self.assertEqual(event.extra_emails, ["sessions@djangonaut.space"])
 
     def test_private_event_with_no_extra_emails_has_no_recipients(self):
         """A private event with no extra_emails has no recipients."""

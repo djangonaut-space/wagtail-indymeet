@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.urls import reverse
@@ -13,10 +12,6 @@ from taggit.models import TaggedItemBase
 from wagtail.snippets.models import register_snippet
 
 from home.managers import EventQuerySet
-
-
-def default_extra_emails():
-    return ["sessions@djangonaut.space"]
 
 
 class EventTag(TaggedItemBase):
@@ -80,10 +75,10 @@ class Event(ClusterableModel):
     is_public = models.BooleanField(default=True)
     extra_emails = ArrayField(
         models.EmailField(blank=True),
-        default=default_extra_emails,
+        default=list,
         help_text=(
             "List of email addresses to include in calendar invites "
-            '(e.g. guest speakers). Defaults to ["sessions@djangonaut.space"].',
+            "(e.g. guest speakers).",
         ),
     )
 
