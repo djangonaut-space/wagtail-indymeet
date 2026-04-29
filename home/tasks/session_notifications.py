@@ -5,6 +5,7 @@ These tasks handle sending various notification emails asynchronously,
 allowing views to return immediately while emails are processed in the background.
 """
 
+from home import constants
 from django.conf import settings
 from django.urls import reverse
 from django_tasks import task
@@ -167,9 +168,9 @@ def send_team_welcome_email(team_id: int) -> None:
         return
 
     # Separate members by role
-    djangonauts = [m for m in team_members if m.role == SessionMembership.DJANGONAUT]
-    navigators = [m for m in team_members if m.role == SessionMembership.NAVIGATOR]
-    captains = [m for m in team_members if m.role == SessionMembership.CAPTAIN]
+    djangonauts = [m for m in team_members if m.role == constants.DJANGONAUT]
+    navigators = [m for m in team_members if m.role == constants.NAVIGATOR]
+    captains = [m for m in team_members if m.role == constants.CAPTAIN]
 
     # Collect all team member emails
     recipient_list = [member.user.email for member in team_members]

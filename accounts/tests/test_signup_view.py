@@ -1,3 +1,4 @@
+from home import constants
 from unittest.mock import patch
 
 from django.core import mail
@@ -59,7 +60,7 @@ class SignUpViewTests(TestCase):
         self.assertTrue(created_user.profile.receiving_newsletter)
         self.assertEqual(
             created_user.profile.interested_in,
-            [UserProfile.DJANGONAUT, UserProfile.NAVIGATOR],
+            [constants.DJANGONAUT, constants.NAVIGATOR],
         )
 
     @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)

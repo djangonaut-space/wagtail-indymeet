@@ -2,6 +2,7 @@
 Signal handlers for managing user groups and staff status based on SessionMembership.
 """
 
+from home import constants
 from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -23,7 +24,7 @@ def manage_organizer_group_on_save(
     Note: This only handles additions of organizer memberships. Role changes FROM
     organizer to another role require manual group removal via admin.
     """
-    if instance.role == SessionMembership.ORGANIZER and not instance.user.is_superuser:
+    if instance.role == constants.ORGANIZER and not instance.user.is_superuser:
         if not instance.session.is_current_or_upcoming():
             return
 

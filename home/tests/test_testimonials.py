@@ -1,5 +1,6 @@
 """Tests for the testimonial feature."""
 
+from home import constants
 from unittest.mock import patch
 
 from django.test import Client, TestCase, override_settings
@@ -97,7 +98,7 @@ class TestimonialQuerySetTests(TestCase):
         organizer = UserFactory.create()
         session = SessionFactory.create()
         SessionMembershipFactory.create(
-            user=organizer, session=session, role=SessionMembership.ORGANIZER
+            user=organizer, session=session, role=constants.ORGANIZER
         )
 
         session_testimonial = TestimonialFactory.create(session=session)
@@ -145,7 +146,7 @@ class TestimonialCreateViewTests(TestCase):
         SessionMembershipFactory.create(
             user=self.user,
             session=self.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
         self.url = reverse("testimonial_create")
@@ -214,7 +215,7 @@ class TestimonialUpdateViewTests(TestCase):
         SessionMembershipFactory.create(
             user=self.user,
             session=self.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
         self.testimonial = TestimonialFactory.create(
@@ -316,7 +317,7 @@ class TestimonialFormTests(TestCase):
         SessionMembershipFactory.create(
             user=self.user,
             session=self.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -406,7 +407,7 @@ class ProfileTestimonialsSectionTests(TestCase):
         self.user = UserFactory.create()
         session = SessionFactory.create()
         SessionMembershipFactory.create(
-            user=self.user, session=session, role=SessionMembership.DJANGONAUT
+            user=self.user, session=session, role=constants.DJANGONAUT
         )
         self.url = reverse("profile")
 

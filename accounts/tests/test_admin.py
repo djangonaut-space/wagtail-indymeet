@@ -1,3 +1,4 @@
+from home import constants
 from datetime import timedelta
 from http import HTTPStatus
 
@@ -32,7 +33,7 @@ class AdminFilterTests(TestCase):
         SessionMembershipFactory.create(
             user=cls.past_djangonaut,
             session=past_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             team=None,
         )
 
@@ -40,7 +41,7 @@ class AdminFilterTests(TestCase):
         SessionMembershipFactory.create(
             user=cls.past_navigator,
             session=past_session,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             team=None,
         )
 
@@ -48,7 +49,7 @@ class AdminFilterTests(TestCase):
         SessionMembershipFactory.create(
             user=cls.future_djangonaut,
             session=future_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             team=None,
         )
 

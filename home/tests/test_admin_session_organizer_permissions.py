@@ -1,5 +1,6 @@
 """Tests for Session Organizer row-level permissions in admin."""
 
+from home import constants
 from unittest.mock import Mock
 
 from django.contrib.admin.sites import AdminSite
@@ -83,7 +84,7 @@ class SessionOrganizerPermissionsTestMixin:
         self.organizer_membership = SessionMembershipFactory.create(
             user=self.organizer_user,
             session=self.organized_session,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
         )
 
         # Create a SessionMembership for other_session (different organizer)
@@ -91,7 +92,7 @@ class SessionOrganizerPermissionsTestMixin:
         self.other_organizer_membership = SessionMembershipFactory.create(
             user=self.other_organizer,
             session=self.other_session,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
         )
 
     def _create_mock_request(self, user):
@@ -140,7 +141,7 @@ class SessionAdminPermissionsTests(SessionOrganizerPermissionsTestMixin, TestCas
         SessionMembershipFactory.create(
             user=self.organizer_user,
             session=self.other_session,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
         )
 
         request = self._create_mock_request(self.organizer_user)
@@ -174,11 +175,11 @@ class SessionMembershipAdminPermissionsTests(
         # Create additional memberships for testing
         self.organized_session_member = SessionMembershipFactory.create(
             session=self.organized_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         self.other_session_member = SessionMembershipFactory.create(
             session=self.other_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
     def test_superuser_sees_all_memberships(self):
@@ -225,11 +226,11 @@ class SessionMembershipInlinePermissionsTests(
         # Create memberships for testing
         self.organized_session_member = SessionMembershipFactory.create(
             session=self.organized_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         self.other_session_member = SessionMembershipFactory.create(
             session=self.other_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
     def test_superuser_sees_all_inline_memberships(self):

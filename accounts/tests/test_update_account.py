@@ -1,3 +1,4 @@
+from home import constants
 from django.test import Client
 from django.test import TestCase
 from django.urls import reverse
@@ -98,7 +99,7 @@ class UpdateEmailSubscriptionViewTests(TestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(
             self.user.profile.interested_in,
-            [UserProfile.CAPTAIN, UserProfile.NAVIGATOR],
+            [constants.CAPTAIN, constants.NAVIGATOR],
         )
 
     def test_cant_reuse_username(self):

@@ -130,11 +130,7 @@ class SignUpView(CreateView):
         user = self.object
         user.profile.accepted_coc = form.cleaned_data["accepted_coc"]
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
-        user.profile.interested_in = [
-            role
-            for field_name, role in INTERESTED_IN_FIELDS
-            if form.cleaned_data.get(field_name)
-        ]
+        user.profile.interested_in = form.cleaned_data["interested_in"]
         if settings.LOAD_TESTING:
             user.profile.email_confirmed = True
             user.profile.save(
@@ -212,11 +208,7 @@ class UpdateUserView(LoginRequiredMixin, UpdateView):
         self.object = form.save()
         user = self.object
         user.profile.receiving_newsletter = form.cleaned_data["receive_newsletter"]
-        user.profile.interested_in = [
-            role
-            for field_name, role in INTERESTED_IN_FIELDS
-            if form.cleaned_data.get(field_name)
-        ]
+        user.profile.interested_in = form.cleaned_data["interested_in"]
         user.profile.save(
             update_fields=[
                 "receiving_newsletter",

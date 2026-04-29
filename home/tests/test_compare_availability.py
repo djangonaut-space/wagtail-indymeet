@@ -8,6 +8,7 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
+from home import constants
 from home.factories import (
     OrganizerFactory,
     ProjectFactory,
@@ -154,9 +155,9 @@ class CompareAvailabilityTests(TestCase):
             user=factory.Iterator([cls.captain, cls.navigator, cls.djangonaut]),
             role=factory.Iterator(
                 [
-                    SessionMembership.CAPTAIN,
-                    SessionMembership.NAVIGATOR,
-                    SessionMembership.DJANGONAUT,
+                    constants.CAPTAIN,
+                    constants.NAVIGATOR,
+                    constants.DJANGONAUT,
                 ]
             ),
         )
@@ -255,7 +256,7 @@ class CompareAvailabilityGridTests(TestCase):
             team=cls.team,
             accepted=True,
             user=factory.Iterator([cls.user_a, cls.user_b]),
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         cls.url = reverse("compare_availability_grid")
 

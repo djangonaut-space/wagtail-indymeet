@@ -1,5 +1,6 @@
 """Tests for custom QuerySet methods."""
 
+from home import constants
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone as dt_timezone
@@ -32,7 +33,7 @@ class EventQuerySetTestCase(TestCase):
         SessionMembershipFactory.create(
             user=cls.member_user,
             session=cls.session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -198,7 +199,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             user=self.user1,
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         qs = UserSurveyResponse.objects.filter(id=response.id).with_session_memberships(
@@ -223,7 +224,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             user=self.user1,
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         qs = UserSurveyResponse.objects.with_team_assignment(self.team, self.session)
@@ -243,7 +244,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             user=self.user1,
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         # Create membership for user2 but without team
@@ -251,7 +252,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             user=self.user2,
             session=self.session,
             team=None,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         qs = UserSurveyResponse.objects.without_team_assignment(self.session)
@@ -297,7 +298,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             user=navigator,
             session=self.session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
         UserAvailabilityFactory(
             user=navigator, slots=[24.0, 24.5, 25.0, 25.5]  # Mon 00:00-02:00
@@ -332,7 +333,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             user=captain,
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
         UserAvailabilityFactory(
             user=captain, slots=[48.0, 48.5, 49.0, 49.5]  # Tue 00:00-02:00
@@ -386,7 +387,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             user=self.user1,
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         qs = UserSurveyResponse.objects.with_full_team_formation_data(self.session)
@@ -485,21 +486,21 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=self.djangonaut_user,
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
         SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,  # Pending
         )
         SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=False,  # Declined
         )
 
@@ -514,21 +515,21 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=None,
         )
         captain_true = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=True,
         )
         captain_false = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=False,
         )
 
@@ -545,21 +546,21 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=None,
         )
         navigator_true = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=True,
         )
         navigator_false = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=False,
         )
 
@@ -575,19 +576,19 @@ class SessionMembershipQuerySetTestCase(TestCase):
         organizer_none = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=None,
         )
         organizer_true = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
         organizer_false = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=False,
         )
 
@@ -605,7 +606,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
         # Pending Djangonaut (should not be included)
@@ -613,7 +614,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,
         )
         # Captain with accepted=None (should be included)
@@ -621,7 +622,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=None,
         )
         # Navigator with accepted=False (should be included)
@@ -629,14 +630,14 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=False,
         )
         # Organizer with accepted=True (should be included)
         organizer = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
             accepted=True,
         )
 
@@ -657,7 +658,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=user,
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -666,7 +667,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
         SessionMembershipFactory.create(
             user=user,
             session=pending_session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,
         )
 
@@ -684,13 +685,13 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=user,
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=None,  # Not accepted, but should still be included
         )
         navigator_membership = SessionMembershipFactory.create(
             user=user,
             session=SessionFactory(),
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
             accepted=False,  # Declined, but should still be included
         )
 
@@ -709,7 +710,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=user,
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=True,
         )
 
@@ -717,7 +718,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
         SessionMembershipFactory.create(
             user=user,
             session=SessionFactory(),
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
             accepted=None,
         )
 
@@ -725,7 +726,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
         captain = SessionMembershipFactory.create(
             user=user,
             session=SessionFactory(),
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
             accepted=None,
         )
 
@@ -743,12 +744,12 @@ class SessionMembershipQuerySetTestCase(TestCase):
         membership1 = SessionMembershipFactory.create(
             user=user1,
             session=self.session,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
         SessionMembershipFactory.create(
             user=user2,
             session=self.session,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
 
         qs = SessionMembership.objects.for_user(user1)
@@ -765,13 +766,13 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         membership2 = SessionMembershipFactory.create(
             user=UserFactory(),
             session=self.session,
             team=self.team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
 
         # Create membership for the second team
@@ -779,7 +780,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=team2,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         # Create membership without a team
@@ -787,7 +788,7 @@ class SessionMembershipQuerySetTestCase(TestCase):
             user=UserFactory(),
             session=self.session,
             team=None,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
         )
 
         qs = SessionMembership.objects.for_team(self.team)
@@ -820,7 +821,7 @@ class EnforceDjangonautAccessControlTestCase(TestCase):
         membership = SessionMembershipFactory.create(
             session=self.upcoming_session,
             team=self.upcoming_team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         qs = SessionMembership.objects.enforce_djangonaut_access_control()
         self.assertNotIn(membership, qs)
@@ -832,7 +833,7 @@ class EnforceDjangonautAccessControlTestCase(TestCase):
         membership = SessionMembershipFactory.create(
             session=self.upcoming_session,
             team=self.upcoming_team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         qs = SessionMembership.objects.enforce_djangonaut_access_control()
         self.assertIn(membership, qs)
@@ -842,7 +843,7 @@ class EnforceDjangonautAccessControlTestCase(TestCase):
         membership = SessionMembershipFactory.create(
             session=self.active_session,
             team=self.active_team,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         qs = SessionMembership.objects.enforce_djangonaut_access_control()
         self.assertIn(membership, qs)
@@ -852,7 +853,7 @@ class EnforceDjangonautAccessControlTestCase(TestCase):
         membership = SessionMembershipFactory.create(
             session=self.upcoming_session,
             team=self.upcoming_team,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
         qs = SessionMembership.objects.enforce_djangonaut_access_control()
         self.assertIn(membership, qs)
@@ -862,7 +863,7 @@ class EnforceDjangonautAccessControlTestCase(TestCase):
         membership = SessionMembershipFactory.create(
             session=self.upcoming_session,
             team=self.upcoming_team,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
         qs = SessionMembership.objects.enforce_djangonaut_access_control()
         self.assertIn(membership, qs)
@@ -872,7 +873,7 @@ class EnforceDjangonautAccessControlTestCase(TestCase):
         membership = SessionMembershipFactory.create(
             session=self.upcoming_session,
             team=None,
-            role=SessionMembership.ORGANIZER,
+            role=constants.ORGANIZER,
         )
         qs = SessionMembership.objects.enforce_djangonaut_access_control()
         self.assertIn(membership, qs)

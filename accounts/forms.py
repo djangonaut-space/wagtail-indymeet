@@ -1,3 +1,4 @@
+from home import constants
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -10,10 +11,10 @@ from .models import UserAvailability
 from .models import UserProfile
 
 INTERESTED_IN_FIELDS = (
-    ("interested_in_djangonaut", UserProfile.DJANGONAUT),
-    ("interested_in_captain", UserProfile.CAPTAIN),
-    ("interested_in_navigator", UserProfile.NAVIGATOR),
-    ("interested_in_organizer", UserProfile.ORGANIZER),
+    ("interested_in_djangonaut", constants.DJANGONAUT),
+    ("interested_in_captain", constants.CAPTAIN),
+    ("interested_in_navigator", constants.NAVIGATOR),
+    ("interested_in_organizer", constants.ORGANIZER),
 )
 
 
@@ -46,6 +47,15 @@ class BaseCustomUserForm(forms.ModelForm):
         label="Interested in being an Organizer?",
         help_text="Organizers help run the session behind the scenes.",
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["interested_in"] = [
+            role
+            for field_name, role in INTERESTED_IN_FIELDS
+            if cleaned_data.get(field_name)
+        ]
+        return cleaned_data
 
 
 class CustomUserCreationForm(BaseCustomUserForm, UserCreationForm):

@@ -1,3 +1,4 @@
+from home import constants
 from datetime import datetime
 
 from django.core import mail
@@ -480,8 +481,8 @@ class SessionMembershipTests(TestCase):
 
     def test_is_organizer(self):
         """Test is_organizer() returns True only for Organizer role."""
-        organizer = SessionMembershipFactory.create(role=SessionMembership.ORGANIZER)
-        captain = SessionMembershipFactory.create(role=SessionMembership.CAPTAIN)
+        organizer = SessionMembershipFactory.create(role=constants.ORGANIZER)
+        captain = SessionMembershipFactory.create(role=constants.CAPTAIN)
         self.assertTrue(organizer.is_organizer())
         self.assertFalse(captain.is_organizer())
 

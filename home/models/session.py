@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from home import constants
 from home.managers import (
     SessionMembershipQuerySet,
     SessionQuerySet,
@@ -311,16 +312,11 @@ class SessionMembership(models.Model):
             )
         ]
 
-    DJANGONAUT = "Djangonaut"
-    CAPTAIN = "Captain"
-    NAVIGATOR = "Navigator"
-    ORGANIZER = "Organizer"
-
     ROLES = (
-        (DJANGONAUT, _("Djangonaut")),
-        (CAPTAIN, _("Captain")),
-        (NAVIGATOR, _("Navigator")),
-        (ORGANIZER, _("Organizer")),
+        (constants.DJANGONAUT, _("Djangonaut")),
+        (constants.CAPTAIN, _("Captain")),
+        (constants.NAVIGATOR, _("Navigator")),
+        (constants.ORGANIZER, _("Organizer")),
     )
     created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
@@ -342,7 +338,7 @@ class SessionMembership(models.Model):
         related_name="session_memberships",
         on_delete=models.CASCADE,
     )
-    role = models.CharField(max_length=64, choices=ROLES, default=DJANGONAUT)
+    role = models.CharField(max_length=64, choices=ROLES, default=constants.DJANGONAUT)
     accepted = models.BooleanField(
         null=True,
         blank=True,
@@ -365,7 +361,7 @@ class SessionMembership(models.Model):
 
     def is_organizer(self) -> bool:
         """Check if this membership has the Organizer role."""
-        return self.role == self.ORGANIZER
+        return self.role == constants.ORGANIZER
 
 
 class WaitlistQuerySet(models.QuerySet):
@@ -381,7 +377,7 @@ class WaitlistQuerySet(models.QuerySet):
                 SessionMembership.objects.filter(
                     session=models.OuterRef("session"),
                     user=user,
-                    role=SessionMembership.ORGANIZER,
+                    role=constants.ORGANIZER,
                 )
             )
         )

@@ -8,6 +8,7 @@ This view provides an interface for:
 - Viewing current team compositions and statistics
 """
 
+from home import constants
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
@@ -317,19 +318,15 @@ def get_teams_with_statistics(session: Session) -> list[TeamStatistics]:
     for team in teams:
         # Separate members by role
         navigators = [
-            m.user
-            for m in team.prefetched_all_members
-            if m.role == SessionMembership.NAVIGATOR
+            m.user for m in team.prefetched_all_members if m.role == constants.NAVIGATOR
         ]
         captains = [
-            m.user
-            for m in team.prefetched_all_members
-            if m.role == SessionMembership.CAPTAIN
+            m.user for m in team.prefetched_all_members if m.role == constants.CAPTAIN
         ]
         djangonauts = [
             m.user
             for m in team.prefetched_all_members
-            if m.role == SessionMembership.DJANGONAUT
+            if m.role == constants.DJANGONAUT
         ]
 
         captain = captains[0] if captains else None

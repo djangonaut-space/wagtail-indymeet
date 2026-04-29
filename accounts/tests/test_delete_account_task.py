@@ -1,5 +1,6 @@
 """Tests for account deletion background task."""
 
+from home import constants
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
@@ -25,7 +26,7 @@ class DeleteUserAccountTaskTests(TestCase):
 
         session = SessionFactory.create()
         SessionMembershipFactory.create(
-            user=self.user, session=session, role=SessionMembership.DJANGONAUT
+            user=self.user, session=session, role=constants.DJANGONAUT
         )
 
         Waitlist.objects.create(user=self.user, session=session)

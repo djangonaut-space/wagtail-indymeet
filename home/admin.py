@@ -1,3 +1,4 @@
+from home import constants
 from datetime import timedelta
 
 from django import forms
@@ -332,7 +333,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         emails = [
             membership.user.email
             for membership in obj.team.session_memberships.all()
-            if membership.role == SessionMembership.NAVIGATOR
+            if membership.role == constants.NAVIGATOR
         ]
         return ", ".join(emails) or "-"
 
@@ -345,7 +346,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         emails = [
             membership.user.email
             for membership in obj.team.session_memberships.all()
-            if membership.role == SessionMembership.CAPTAIN
+            if membership.role == constants.CAPTAIN
         ]
         return ", ".join(emails) or "-"
 
@@ -370,7 +371,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         super().save_model(request, obj, form, change)
 
         # When creating a session organizer
-        if obj.role == SessionMembership.ORGANIZER and request.user.is_superuser:
+        if obj.role == constants.ORGANIZER and request.user.is_superuser:
             group = Group.objects.filter(name="Session Organizers").first()
             if group:
                 group_url = reverse("admin:auth_group_change", args=[group.pk])

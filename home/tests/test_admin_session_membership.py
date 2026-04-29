@@ -1,5 +1,6 @@
 """Tests for admin inlines and admin actions."""
 
+from home import constants
 from unittest.mock import Mock
 
 from django.contrib import messages
@@ -95,17 +96,17 @@ class FindBestAvailabilityOverlapsActionTests(TestCase):
         self.membership1 = SessionMembershipFactory.create(
             session=self.session,
             user=self.user1,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
         self.membership2 = SessionMembershipFactory.create(
             session=self.session,
             user=self.user2,
-            role=SessionMembership.CAPTAIN,
+            role=constants.CAPTAIN,
         )
         self.membership3 = SessionMembershipFactory.create(
             session=self.session,
             user=self.user3,
-            role=SessionMembership.NAVIGATOR,
+            role=constants.NAVIGATOR,
         )
 
     def test_action_requires_at_least_two_members(self):
@@ -269,15 +270,15 @@ class CompareAvailabilityActionTests(TestCase):
                 SessionMembership(
                     session=cls.session1,
                     user=cls.user1,
-                    role=SessionMembership.DJANGONAUT,
+                    role=constants.DJANGONAUT,
                 ),
                 SessionMembership(
-                    session=cls.session1, user=cls.user2, role=SessionMembership.CAPTAIN
+                    session=cls.session1, user=cls.user2, role=constants.CAPTAIN
                 ),
             ]
         )
         cls.membership3 = SessionMembership.objects.create(
-            session=cls.session2, user=cls.user3, role=SessionMembership.NAVIGATOR
+            session=cls.session2, user=cls.user3, role=constants.NAVIGATOR
         )
 
     def setUp(self):

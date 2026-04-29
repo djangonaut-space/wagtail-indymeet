@@ -7,6 +7,7 @@ from django.db.models.signals import post_save
 from django.utils import timezone
 
 from accounts.factories import UserFactory
+from home import constants
 from home.models import (
     Event,
     Project,
@@ -128,9 +129,9 @@ class SessionMembershipFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
     team = factory.SubFactory(TeamFactory)
-    role = SessionMembership.DJANGONAUT
+    role = constants.DJANGONAUT
     accepted = factory.LazyAttribute(
-        lambda o: True if o.role == SessionMembership.DJANGONAUT else None
+        lambda o: True if o.role == constants.DJANGONAUT else None
     )
 
 
@@ -144,7 +145,7 @@ class OrganizerFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
     team = None
-    role = SessionMembership.ORGANIZER
+    role = constants.ORGANIZER
     accepted = True
 
     @factory.post_generation

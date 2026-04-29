@@ -1,4 +1,10 @@
-DATE_INPUT_FORMAT = ["%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y", "%d/%m/%y", "%d/%m/%Y"]
+DJANGONAUT = "Djangonaut"
+CAPTAIN = "Captain"
+NAVIGATOR = "Navigator"
+ORGANIZER = "Organizer"
+ROLES = frozenset({DJANGONAUT, CAPTAIN, NAVIGATOR, ORGANIZER})
+
+DATE_INPUT_FORMAT = ["%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y", "%d/%m/%Y"]
 
 SURVEY_FIELD_VALIDATORS = {
     "max_length": {"email": 250, "text": 700, "text_area": 700, "url": 250},

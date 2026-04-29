@@ -3,6 +3,7 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.test import RequestFactory
 
+from home import constants
 from home.admin import (
     UserSurveyResponseAdmin,
     WaitlistStatusFilter,
@@ -175,7 +176,7 @@ class TestSelectionStatusFilter:
         SessionMembershipFactory(
             user=selected_response.user,
             session=session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         filter_instance = SelectionStatusFilter(
@@ -205,7 +206,7 @@ class TestSelectionStatusFilter:
         SessionMembershipFactory(
             user=selected_response.user,
             session=session,
-            role=SessionMembership.DJANGONAUT,
+            role=constants.DJANGONAUT,
         )
 
         filter_instance = SelectionStatusFilter(
