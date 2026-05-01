@@ -10,6 +10,7 @@ from django.urls import reverse
 
 from accounts.factories import UserFactory
 from accounts.models import ButtondownAccount, UserProfile
+from home.integrations.buttondown import id_translation
 from home.integrations.buttondown.service import buttondown_service
 from home.integrations.buttondown.webhook import _verify_signature
 
@@ -138,10 +139,10 @@ class SubscriberUnsubscribedTests(TestCase):
         self.user.profile.receiving_newsletter = True
         self.user.profile.save()
         self.bd_account = ButtondownAccount.objects.create(
-            user=self.user, buttondown_identifier="bd-uuid-webhook"
+            user=self.user, buttondown_identifier="bduuidwebhook"
         )
 
-    def _unsubscribe_payload(self, subscriber_id: str = "bd-uuid-webhook") -> dict:
+    def _unsubscribe_payload(self, subscriber_id: str = "bduuidwebhook") -> dict:
         return {
             "event_type": "subscriber.unsubscribed",
             "data": {"subscriber": subscriber_id},
@@ -157,10 +158,19 @@ class SubscriberUnsubscribedTests(TestCase):
 
     @override_settings(**WEBHOOK_SETTINGS)
     def test_unknown_subscriber_id_returns_200(self):
-        response = _post(self.client, self._unsubscribe_payload("unknown-uuid"))
+        response = _post(self.client, self._unsubscribe_payload("unknownsubid"))
 
         self.assertEqual(response.status_code, 200)
         # Existing user unaffected
+        self.user.profile.refresh_from_db()
+        self.assertTrue(self.user.profile.receiving_newsletter)
+
+    @override_settings(**WEBHOOK_SETTINGS)
+    def test_unknown_uuid_subscriber_id_returns_200(self):
+        unknown_uuid = "00000000-0000-0000-0000-000000000001"
+        response = _post(self.client, self._unsubscribe_payload(unknown_uuid))
+
+        self.assertEqual(response.status_code, 200)
         self.user.profile.refresh_from_db()
         self.assertTrue(self.user.profile.receiving_newsletter)
 
@@ -191,3 +201,40 @@ class SubscriberUnsubscribedTests(TestCase):
             _post(self.client, self._unsubscribe_payload())
 
         mock_sync.assert_not_called()
+
+    @override_settings(**WEBHOOK_SETTINGS)
+    def test_uuid_subscriber_id_is_translated_to_sub(self):
+        """
+        Buttondown may send the full UUID form; it should be translated
+        to sub_ before lookup.
+        """
+        known_sub = "sub_43cr6b9qxz9zbr9hes7d36d3zp"
+        known_uuid = "83660cb4-dfbf-4fd7-84c5-d93b46668ff6"
+
+        self.bd_account.buttondown_identifier = known_sub
+        self.bd_account.save()
+
+        response = _post(self.client, self._unsubscribe_payload(known_uuid))
+
+        self.assertEqual(response.status_code, 200)
+        self.user.profile.refresh_from_db()
+        self.assertFalse(self.user.profile.receiving_newsletter)
+
+
+class IdTranslationTests(TestCase):
+    KNOWN_SUB = "sub_5anaxvqk6cvqeyxvqzzynanexv"
+    KNOWN_UUID = "aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb"
+
+    def test_sub_to_uuid_known_value(self):
+        self.assertEqual(id_translation.sub_to_uuid(self.KNOWN_SUB), self.KNOWN_UUID)
+
+    def test_uuid_to_sub_known_value(self):
+        self.assertEqual(id_translation.uuid_to_sub(self.KNOWN_UUID), self.KNOWN_SUB)
+
+    def test_sub_to_uuid_round_trip(self):
+        result = id_translation.uuid_to_sub(id_translation.sub_to_uuid(self.KNOWN_SUB))
+        self.assertEqual(result, self.KNOWN_SUB)
+
+    def test_uuid_to_sub_round_trip(self):
+        result = id_translation.sub_to_uuid(id_translation.uuid_to_sub(self.KNOWN_UUID))
+        self.assertEqual(result, self.KNOWN_UUID)

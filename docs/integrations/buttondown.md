@@ -31,6 +31,15 @@ To set it up:
 3. Enable the **subscriber.unsubscribed** event.
 4. Copy the generated webhook secret.
 
+### Subscriber ID Formats
+
+Buttondown subscriber IDs come in two formats depending on the API version:
+
+- **Prefixed format:** `sub_<crockford-base32-encoded-uuid>` (e.g. `sub_5anaxvqk6cvqeyxvqzzynanexv`)
+- **Raw UUID format:** `aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb`
+
+The webhook handler transparently normalizes both formats to a UUID before looking up the user.
+
 | Variable | Description |
 |---|---|
 | `BUTTONDOWN_WEBHOOK_SECRET` | Signing secret used to verify incoming webhook requests |

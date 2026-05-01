@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from accounts.models import ButtondownAccount, UserProfile
+from home.integrations.buttondown import id_translation
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,11 @@ def _handle_unsubscribed(payload: dict) -> None:
     if not subscriber_id:
         logger.warning("subscriber.unsubscribed webhook missing subscriber ID")
         return
+
+    # It's possible buttondown is sending the full uuid4 version of the id
+    # so we need to translate it back into the sub_<encoded> id we store.
+    if not subscriber_id.startswith("sub_") and "-" in subscriber_id:
+        subscriber_id = id_translation.uuid_to_sub(subscriber_id)
 
     try:
         bd_account = ButtondownAccount.objects.get(buttondown_identifier=subscriber_id)
@@ -89,8 +95,6 @@ def buttondown_webhook(request: HttpRequest) -> HttpResponse:
         payload = json.loads(request.body)
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON")
-
-    print("Received payload: %s", payload)
 
     event_type = payload.get("event_type", "")
 
