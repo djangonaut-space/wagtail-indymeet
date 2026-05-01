@@ -25,7 +25,7 @@ def _verify_signature(body: bytes, signature_header: str) -> bool:
     Buttondown sends 'X-Buttondown-Signature: sha256=<hexdigest>'
     computed over the raw request body using the webhook secret.
     """
-    secret = getattr(settings, "BUTTONDOWN_WEBHOOK_SECRET", "") or ""
+    secret = settings.BUTTONDOWN_WEBHOOK_SECRET
     if not secret:
         return False
 
@@ -92,7 +92,8 @@ def buttondown_webhook(request: HttpRequest) -> HttpResponse:
 
     event_type = payload.get("event_type", "")
 
-    if event_type == "subscriber.unsubscribed":
-        _handle_unsubscribed(payload)
+    match event_type:
+        case "subscriber.unsubscribed":
+            _handle_unsubscribed(payload)
 
     return HttpResponse(status=200)

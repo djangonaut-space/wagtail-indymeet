@@ -1,10 +1,9 @@
 """
 Tests for Buttondown newsletter sync: ButtondownClient, service layer,
-background tasks, signal handlers, and the management command.
+and background tasks.
 """
 
 import json
-from io import StringIO
 from unittest.mock import patch
 
 import requests
@@ -30,11 +29,6 @@ from home.tasks.sync_buttondown import (
 BD_SETTINGS = {"BUTTONDOWN_API_KEY": "test-api-key"}
 
 
-# ---------------------------------------------------------------------------
-# buttondown_enabled()
-# ---------------------------------------------------------------------------
-
-
 class ButtondownEnabledTests(TestCase):
     @override_settings(BUTTONDOWN_API_KEY="key")
     def test_returns_true_when_api_key_present(self):
@@ -47,11 +41,6 @@ class ButtondownEnabledTests(TestCase):
     @override_settings(BUTTONDOWN_API_KEY=None)
     def test_returns_false_when_api_key_none(self):
         self.assertFalse(buttondown_enabled())
-
-
-# ---------------------------------------------------------------------------
-# ButtondownClient
-# ---------------------------------------------------------------------------
 
 
 _BASE_URL = "https://api.buttondown.email/v1"
@@ -152,11 +141,6 @@ class ButtondownClientTests(TestCase):
         self.assertTrue(auth.startswith("Token "))
 
 
-# ---------------------------------------------------------------------------
-# get_tags_for_user()
-# ---------------------------------------------------------------------------
-
-
 class GetTagsForUserTests(TestCase):
     def _make_user(self, interested_in=None, is_superuser=False):
         user = UserFactory.create(is_superuser=is_superuser)
@@ -208,27 +192,19 @@ class GetTagsForUserTests(TestCase):
         self.assertNotIn("Session 0", tags)
         self.assertNotIn("Session 1", tags)
 
-    def test_role_tag_djangonaut(self):
+    def test_role_tags_for_all_roles(self):
         user = self._make_user()
         SessionMembershipFactory.create(
             user=user, role=constants.DJANGONAUT, accepted=True
         )
-        self.assertIn("Djangonaut", get_tags_for_user(user))
-
-    def test_role_tag_navigator(self):
-        user = self._make_user()
         SessionMembershipFactory.create(user=user, role=constants.NAVIGATOR)
-        self.assertIn("Navigator", get_tags_for_user(user))
-
-    def test_role_tag_captain(self):
-        user = self._make_user()
         SessionMembershipFactory.create(user=user, role=constants.CAPTAIN)
-        self.assertIn("Captain", get_tags_for_user(user))
-
-    def test_role_tag_organizer(self):
-        user = self._make_user()
         SessionMembershipFactory.create(user=user, role=constants.ORGANIZER)
-        self.assertIn("Organizer", get_tags_for_user(user))
+        tags = get_tags_for_user(user)
+        self.assertIn("Djangonaut", tags)
+        self.assertIn("Navigator", tags)
+        self.assertIn("Captain", tags)
+        self.assertIn("Organizer", tags)
 
     def test_role_tags_deduplicated_across_sessions(self):
         user = self._make_user()
@@ -280,11 +256,6 @@ class GetTagsForUserTests(TestCase):
         user = self._make_user(interested_in=[])
         tags = get_tags_for_user(user)
         self.assertFalse(any(t.startswith("Interested") for t in tags))
-
-
-# ---------------------------------------------------------------------------
-# ButtondownService._first_sync
-# ---------------------------------------------------------------------------
 
 
 class ButtondownServiceFirstSyncTests(TestCase):
@@ -399,10 +370,14 @@ class ButtondownServiceFirstSyncTests(TestCase):
         self.user.profile.refresh_from_db()
         self.assertFalse(self.user.profile.receiving_newsletter)
 
-
-# ---------------------------------------------------------------------------
-# ButtondownService._subsequent_sync
-# ---------------------------------------------------------------------------
+    @override_settings(**BD_SETTINGS)
+    def test_sync_user_does_not_raise_on_api_error(self):
+        with patch.object(
+            buttondown_service.client,
+            "get_subscriber_by_email",
+            side_effect=Exception("API down"),
+        ):
+            buttondown_service.sync_user(self.user)
 
 
 class ButtondownServiceSubsequentSyncTests(TestCase):
@@ -453,11 +428,6 @@ class ButtondownServiceSubsequentSyncTests(TestCase):
         self.assertGreaterEqual(self.bd_account.last_updated, original_updated)
 
 
-# ---------------------------------------------------------------------------
-# ButtondownService.remove_user
-# ---------------------------------------------------------------------------
-
-
 class ButtondownServiceRemoveUserTests(TestCase):
     @override_settings(**BD_SETTINGS)
     def test_remove_user_calls_delete_subscriber(self):
@@ -487,10 +457,14 @@ class ButtondownServiceRemoveUserTests(TestCase):
 
         mock_remove.assert_not_called()
 
-
-# ---------------------------------------------------------------------------
-# sync_user_to_buttondown task
-# ---------------------------------------------------------------------------
+    @override_settings(**BD_SETTINGS)
+    def test_remove_user_does_not_raise_on_api_error(self):
+        with patch.object(
+            buttondown_service.client,
+            "delete_subscriber",
+            side_effect=Exception("API down"),
+        ):
+            buttondown_service.remove_user("bd-uuid")
 
 
 class SyncUserToButtondownTaskTests(TestCase):
@@ -517,20 +491,6 @@ class SyncUserToButtondownTaskTests(TestCase):
         mock_sync.assert_called_once()
         self.assertEqual(mock_sync.call_args.args[0].pk, user.pk)
 
-    @override_settings(**BD_SETTINGS)
-    def test_handles_service_exception_without_raising(self):
-        user = UserFactory.create()
-        with patch.object(
-            buttondown_service, "sync_user", side_effect=Exception("API down")
-        ):
-            # Should not raise
-            sync_user_to_buttondown.call(user_id=user.pk)
-
-
-# ---------------------------------------------------------------------------
-# remove_user_from_buttondown task
-# ---------------------------------------------------------------------------
-
 
 class RemoveUserFromButtondownTaskTests(TestCase):
     @override_settings(BUTTONDOWN_API_KEY="")
@@ -546,139 +506,3 @@ class RemoveUserFromButtondownTaskTests(TestCase):
             remove_user_from_buttondown.call(buttondown_identifier="bd-uuid")
 
         mock_remove.assert_called_once_with("bd-uuid")
-
-    @override_settings(**BD_SETTINGS)
-    def test_handles_service_exception_without_raising(self):
-        with patch.object(
-            buttondown_service, "remove_user", side_effect=Exception("API down")
-        ):
-            # Should not raise
-            remove_user_from_buttondown.call(buttondown_identifier="bd-uuid")
-
-
-# ---------------------------------------------------------------------------
-# Signal handlers
-# ---------------------------------------------------------------------------
-
-
-class ButtondownSignalTests(TestCase):
-    """
-    Signal tests use ImmediateBackend (configured in test settings), so
-    enqueued tasks run synchronously. We mock at the service layer to verify
-    the full signal→task→service chain fires correctly.
-    """
-
-    @override_settings(**BD_SETTINGS)
-    def test_profile_save_triggers_sync_when_account_exists(self):
-        user = UserFactory.create()
-        ButtondownAccount.objects.create(
-            user=user, buttondown_identifier="bd-uuid-signal"
-        )
-
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            user.profile.bio = "updated"
-            user.profile.save()
-
-        mock_sync.assert_called_once()
-        self.assertEqual(mock_sync.call_args.args[0].pk, user.pk)
-
-    @override_settings(**BD_SETTINGS)
-    def test_profile_save_always_triggers_sync_when_configured(self):
-        user = UserFactory.create()
-        # No ButtondownAccount, receiving_newsletter=False — still syncs
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            user.profile.bio = "updated"
-            user.profile.save()
-
-        mock_sync.assert_called_once()
-        self.assertEqual(mock_sync.call_args.args[0].pk, user.pk)
-
-    @override_settings(**BD_SETTINGS)
-    def test_profile_save_triggers_sync_when_opting_in_with_no_account(self):
-        user = UserFactory.create()
-        # No ButtondownAccount but user opts in — trigger first sync
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            user.profile.receiving_newsletter = True
-            user.profile.save()
-
-        mock_sync.assert_called_once()
-        self.assertEqual(mock_sync.call_args.args[0].pk, user.pk)
-
-    @override_settings(**BD_SETTINGS)
-    def test_new_signup_triggers_sync(self):
-        # Create via ORM directly so post_save signals fire (factory mutes them)
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
-
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            User.objects.create_user(username="newuser", email="new@example.com")
-
-        mock_sync.assert_called_once()
-
-    @override_settings(BUTTONDOWN_API_KEY="")
-    def test_profile_save_does_not_sync_when_not_configured(self):
-        user = UserFactory.create()
-        ButtondownAccount.objects.create(
-            user=user, buttondown_identifier="bd-uuid-signal"
-        )
-
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            user.profile.bio = "updated"
-            user.profile.save()
-
-        mock_sync.assert_not_called()
-
-
-# ---------------------------------------------------------------------------
-# sync_buttondown management command
-# ---------------------------------------------------------------------------
-
-
-class SyncButtondownCommandTests(TestCase):
-    """
-    Management command tests use ImmediateBackend, so enqueued tasks run
-    synchronously. We mock at the service layer to verify correct dispatch.
-    """
-
-    @override_settings(**BD_SETTINGS)
-    def test_syncs_active_users(self):
-        from django.core.management import call_command
-
-        active1 = UserFactory.create(is_active=True)
-        active2 = UserFactory.create(is_active=True)
-        UserFactory.create(is_active=False)
-
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            call_command("sync_buttondown", stdout=StringIO(), stderr=StringIO())
-
-        synced_pks = {c.args[0].pk for c in mock_sync.call_args_list}
-        self.assertIn(active1.pk, synced_pks)
-        self.assertIn(active2.pk, synced_pks)
-        self.assertEqual(mock_sync.call_count, 2)
-
-    @override_settings(**BD_SETTINGS)
-    def test_dry_run_does_not_sync(self):
-        from django.core.management import call_command
-
-        UserFactory.create(is_active=True)
-
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            out = StringIO()
-            call_command("sync_buttondown", dry_run=True, stdout=out, stderr=StringIO())
-
-        mock_sync.assert_not_called()
-        self.assertIn("Dry run", out.getvalue())
-
-    @override_settings(BUTTONDOWN_API_KEY="")
-    def test_aborts_when_not_configured(self):
-        from django.core.management import call_command
-
-        UserFactory.create(is_active=True)
-
-        with patch.object(buttondown_service, "sync_user") as mock_sync:
-            err = StringIO()
-            call_command("sync_buttondown", stdout=StringIO(), stderr=err)
-
-        mock_sync.assert_not_called()
-        self.assertIn("BUTTONDOWN_API_KEY", err.getvalue())

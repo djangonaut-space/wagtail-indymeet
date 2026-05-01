@@ -27,7 +27,9 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         count = 0
 
-        for user in User.objects.filter(is_active=True).iterator():
+        for user in User.objects.filter(
+            is_active=True, profile__email_confirmed=True
+        ).iterator():
             if dry_run:
                 self.stdout.write(f"Would sync: {user.email} (pk={user.pk})")
             else:

@@ -48,7 +48,7 @@ def manage_organizer_group_on_save(
     dispatch_uid="accounts.sync_buttondown_on_profile_save",
 )
 def sync_buttondown_on_profile_save(
-    sender, instance: UserProfile, created: bool, **kwargs
+    sender, instance: UserProfile, created: bool, raw: bool, **kwargs
 ) -> None:
     """
     Enqueue a Buttondown sync when a UserProfile is saved.
@@ -57,6 +57,6 @@ def sync_buttondown_on_profile_save(
     and on subsequent saves for users already synced (has ButtondownAccount)
     to keep tags and subscription status up to date.
     """
-    if not buttondown_enabled():
+    if not buttondown_enabled() or raw:
         return
     sync_user_to_buttondown.enqueue(instance.user.pk)

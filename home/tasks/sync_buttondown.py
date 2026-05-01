@@ -31,10 +31,7 @@ def sync_user_to_buttondown(user_id: int) -> None:
         logger.warning("User %s no longer exists; skipping Buttondown sync", user_id)
         return
 
-    try:
-        buttondown_service.sync_user(user)
-    except Exception:
-        logger.exception("Failed to sync user %s to Buttondown", user_id)
+    buttondown_service.sync_user(user)
 
 
 @task()
@@ -52,9 +49,4 @@ def remove_user_from_buttondown(buttondown_identifier: str) -> None:
         )
         return
 
-    try:
-        buttondown_service.remove_user(buttondown_identifier)
-    except Exception:
-        logger.exception(
-            "Failed to remove Buttondown subscriber %s", buttondown_identifier
-        )
+    buttondown_service.remove_user(buttondown_identifier)

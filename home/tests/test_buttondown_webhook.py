@@ -3,17 +3,18 @@
 import hashlib
 import hmac
 import json
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.factories import UserFactory
 from accounts.models import ButtondownAccount, UserProfile
+from home.integrations.buttondown.service import buttondown_service
 from home.integrations.buttondown.webhook import _verify_signature
 
 WEBHOOK_SECRET = "test-webhook-secret"
 WEBHOOK_SETTINGS = {"BUTTONDOWN_WEBHOOK_SECRET": WEBHOOK_SECRET}
-WEBHOOK_URL = "/webhooks/buttondown/"
 
 
 def _make_signature(body: bytes, secret: str = WEBHOOK_SECRET) -> str:
@@ -24,16 +25,11 @@ def _make_signature(body: bytes, secret: str = WEBHOOK_SECRET) -> str:
 def _post(client, payload: dict, secret: str = WEBHOOK_SECRET) -> object:
     body = json.dumps(payload).encode()
     return client.post(
-        WEBHOOK_URL,
+        reverse("buttondown_webhook"),
         data=body,
         content_type="application/json",
         HTTP_X_BUTTONDOWN_SIGNATURE=_make_signature(body, secret),
     )
-
-
-# ---------------------------------------------------------------------------
-# Signature verification
-# ---------------------------------------------------------------------------
 
 
 class VerifySignatureTests(TestCase):
@@ -74,17 +70,12 @@ class VerifySignatureTests(TestCase):
         self.assertFalse(_verify_signature(body, sig))
 
 
-# ---------------------------------------------------------------------------
-# Webhook endpoint
-# ---------------------------------------------------------------------------
-
-
 class WebhookEndpointTests(TestCase):
     @override_settings(**WEBHOOK_SETTINGS)
     def test_rejects_invalid_signature(self):
         body = json.dumps({"event_type": "subscriber.unsubscribed"}).encode()
         response = self.client.post(
-            WEBHOOK_URL,
+            reverse("buttondown_webhook"),
             data=body,
             content_type="application/json",
             headers={"x-buttondown-signature": "sha256=badsig"},
@@ -95,7 +86,7 @@ class WebhookEndpointTests(TestCase):
     def test_rejects_missing_signature(self):
         body = json.dumps({"event_type": "subscriber.unsubscribed"}).encode()
         response = self.client.post(
-            WEBHOOK_URL,
+            reverse("buttondown_webhook"),
             data=body,
             content_type="application/json",
         )
@@ -110,7 +101,7 @@ class WebhookEndpointTests(TestCase):
     def test_rejects_malformed_json(self):
         sig = _make_signature(b"not-json")
         response = self.client.post(
-            WEBHOOK_URL,
+            reverse("buttondown_webhook"),
             data=b"not-json",
             content_type="application/json",
             headers={"x-buttondown-signature": sig},
@@ -123,7 +114,7 @@ class WebhookEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_rejects_get_request(self):
-        response = self.client.get(WEBHOOK_URL)
+        response = self.client.get(reverse("buttondown_webhook"))
         self.assertEqual(response.status_code, 405)
 
     @override_settings(**WEBHOOK_SETTINGS)
@@ -132,18 +123,13 @@ class WebhookEndpointTests(TestCase):
         # view is reachable without a CSRF token (no 403 from CSRF middleware).
         body = json.dumps({"event_type": "subscriber.created", "data": {}}).encode()
         response = self.client.post(
-            WEBHOOK_URL,
+            reverse("buttondown_webhook"),
             data=body,
             content_type="application/json",
             headers={"x-buttondown-signature": _make_signature(body)},
             enforce_csrf_checks=True,
         )
         self.assertNotEqual(response.status_code, 403)
-
-
-# ---------------------------------------------------------------------------
-# subscriber.unsubscribed handling
-# ---------------------------------------------------------------------------
 
 
 class SubscriberUnsubscribedTests(TestCase):
@@ -201,9 +187,6 @@ class SubscriberUnsubscribedTests(TestCase):
     @override_settings(**WEBHOOK_SETTINGS)
     def test_does_not_trigger_sync_signal(self):
         """QuerySet.update() bypasses post_save — no sync task is enqueued."""
-        from unittest.mock import patch
-        from home.integrations.buttondown.service import buttondown_service
-
         with patch.object(buttondown_service, "sync_user") as mock_sync:
             _post(self.client, self._unsubscribe_payload())
 

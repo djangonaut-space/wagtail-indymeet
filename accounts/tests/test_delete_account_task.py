@@ -1,16 +1,18 @@
 """Tests for account deletion background task."""
 
-from home import constants
 from unittest.mock import patch
 
+import responses as rsps
 from django.test import TestCase, override_settings
 
 from accounts.factories import UserFactory
-from accounts.models import ButtondownAccount, CustomUser, UserProfile
+from accounts.models import ButtondownAccount, CustomUser
 from accounts.tasks import delete_user_account
+from home import constants
 from home.factories import SessionFactory, SessionMembershipFactory
-from home.integrations.buttondown.service import buttondown_service
-from home.models import SessionMembership, Waitlist
+from home.models import Waitlist
+
+_BD_BASE_URL = "https://api.buttondown.email/v1"
 
 
 class DeleteUserAccountTaskTests(TestCase):
@@ -63,21 +65,23 @@ class DeleteUserAccountButtondownTests(TestCase):
 
     @patch("accounts.tasks.email.send")
     @override_settings(BUTTONDOWN_API_KEY="test-key")
+    @rsps.activate
     def test_removes_buttondown_subscriber_before_deletion(self, mock_send):
         user = UserFactory.create()
         ButtondownAccount.objects.create(
             user=user, buttondown_identifier="bd-uuid-task"
         )
         user_id = user.pk
+        rsps.add(rsps.DELETE, f"{_BD_BASE_URL}/subscribers/bd-uuid-task", status=204)
 
-        with patch.object(buttondown_service, "remove_user_for_user") as mock_remove:
-            delete_user_account.call(user_id=user_id)
+        delete_user_account.call(user_id=user_id)
 
-        mock_remove.assert_called_once()
+        self.assertEqual(len(rsps.calls), 1)
         self.assertFalse(CustomUser.objects.filter(pk=user_id).exists())
 
     @patch("accounts.tasks.email.send")
     @override_settings(BUTTONDOWN_API_KEY="")
+    @rsps.activate
     def test_skips_buttondown_when_not_configured(self, mock_send):
         user = UserFactory.create()
         ButtondownAccount.objects.create(
@@ -85,26 +89,23 @@ class DeleteUserAccountButtondownTests(TestCase):
         )
         user_id = user.pk
 
-        with patch.object(buttondown_service, "remove_user_for_user") as mock_remove:
-            delete_user_account.call(user_id=user_id)
+        delete_user_account.call(user_id=user_id)
 
-        mock_remove.assert_not_called()
+        self.assertEqual(len(rsps.calls), 0)
         self.assertFalse(CustomUser.objects.filter(pk=user_id).exists())
 
     @patch("accounts.tasks.email.send")
     @override_settings(BUTTONDOWN_API_KEY="test-key")
+    @rsps.activate
     def test_deletion_proceeds_when_buttondown_raises(self, mock_send):
         user = UserFactory.create()
         ButtondownAccount.objects.create(
             user=user, buttondown_identifier="bd-uuid-task"
         )
         user_id = user.pk
+        # 404 avoids the client's retry logic (500 would trigger 3 retries).
+        rsps.add(rsps.DELETE, f"{_BD_BASE_URL}/subscribers/bd-uuid-task", status=404)
 
-        with patch.object(
-            buttondown_service,
-            "remove_user_for_user",
-            side_effect=Exception("API down"),
-        ):
-            delete_user_account.call(user_id=user_id)  # should not raise
+        delete_user_account.call(user_id=user_id)  # should not raise
 
         self.assertFalse(CustomUser.objects.filter(pk=user_id).exists())

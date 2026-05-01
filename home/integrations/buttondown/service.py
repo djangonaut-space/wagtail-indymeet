@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 
+from accounts.models import ButtondownAccount
 from home import constants
 from home.integrations.buttondown.client import ButtondownClient
 
@@ -34,7 +35,7 @@ ROLE_TAG_MAP: dict[str, str] = {
 
 def buttondown_enabled() -> bool:
     """Check whether Buttondown integration is configured."""
-    return bool(getattr(settings, "BUTTONDOWN_API_KEY", ""))
+    return bool(settings.BUTTONDOWN_API_KEY)
 
 
 def get_tags_for_user(user) -> list[str]:
@@ -44,8 +45,6 @@ def get_tags_for_user(user) -> list[str]:
     Does NOT include the "website" tag — callers add it only on first creation
     when the user did not already exist in Buttondown.
     """
-    from home.models import SessionMembership
-
     tags: list[str] = []
 
     # Interested-in tags
@@ -57,7 +56,7 @@ def get_tags_for_user(user) -> list[str]:
 
     # Accepted memberships (single query, iterated twice)
     accepted_memberships = list(
-        SessionMembership.objects.filter(user=user).accepted().select_related("session")
+        user.session_memberships.accepted().select_related("session")
     )
 
     # Session tags
@@ -101,22 +100,21 @@ class ButtondownService:
         First sync: look up by email; create or link existing subscriber.
         Subsequent sync: update tags or unsubscribe based on newsletter preference.
         """
-        from accounts.models import ButtondownAccount
-
         try:
             bd_account = user.buttondown_account
         except ButtondownAccount.DoesNotExist:
             bd_account = None
 
-        if bd_account is None:
-            self._first_sync(user)
-        else:
-            self._subsequent_sync(user, bd_account)
+        try:
+            if bd_account is None:
+                self._first_sync(user)
+            else:
+                self._subsequent_sync(user, bd_account)
+        except Exception:
+            logger.exception("Failed to sync user %s to Buttondown", user.pk)
 
     def _first_sync(self, user) -> None:
         """Handle first-time sync for a user with no ButtondownAccount."""
-        from accounts.models import ButtondownAccount
-
         existing = self.client.get_subscriber_by_email(user.email)
 
         if existing:
@@ -162,13 +160,16 @@ class ButtondownService:
 
     def remove_user(self, buttondown_identifier: str) -> None:
         """Delete a subscriber from Buttondown by their stored UUID."""
-        self.client.delete_subscriber(buttondown_identifier)
-        logger.info("Deleted Buttondown subscriber %s", buttondown_identifier)
+        try:
+            self.client.delete_subscriber(buttondown_identifier)
+            logger.info("Deleted Buttondown subscriber %s", buttondown_identifier)
+        except Exception:
+            logger.exception(
+                "Failed to remove Buttondown subscriber %s", buttondown_identifier
+            )
 
     def remove_user_for_user(self, user) -> None:
         """Look up a user's ButtondownAccount and delete their subscriber record."""
-        from accounts.models import ButtondownAccount
-
         try:
             bd_identifier = user.buttondown_account.buttondown_identifier
         except ButtondownAccount.DoesNotExist:
