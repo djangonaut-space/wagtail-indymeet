@@ -32,21 +32,3 @@ def sync_user_to_buttondown(user_id: int) -> None:
         return
 
     buttondown_service.sync_user(user)
-
-
-@task()
-def remove_user_from_buttondown(buttondown_identifier: str) -> None:
-    """
-    Remove a subscriber from Buttondown by their stored UUID.
-
-    Accepts the identifier directly (not user_id) because the user may already
-    be deleted from the database when this task runs.
-    """
-    if not buttondown_enabled():
-        logger.warning(
-            "Buttondown API key not configured; skipping removal of %s",
-            buttondown_identifier,
-        )
-        return
-
-    buttondown_service.remove_user(buttondown_identifier)

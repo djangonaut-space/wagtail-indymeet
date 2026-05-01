@@ -53,10 +53,9 @@ def sync_buttondown_on_profile_save(
     """
     Enqueue a Buttondown sync when a UserProfile is saved.
 
-    Triggers on new signups (created=True) to add the user to Buttondown,
-    and on subsequent saves for users already synced (has ButtondownAccount)
-    to keep tags and subscription status up to date.
+    Fires on every save where email_confirmed is True, keeping tags and
+    subscription status in sync with any profile changes.
     """
-    if not buttondown_enabled() or raw:
+    if not buttondown_enabled() or raw or not instance.email_confirmed:
         return
-    sync_user_to_buttondown.enqueue(instance.user.pk)
+    sync_user_to_buttondown.enqueue(instance.user_id)

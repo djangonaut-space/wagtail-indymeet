@@ -21,12 +21,16 @@ from home.integrations.buttondown.service import (
     buttondown_service,
     get_tags_for_user,
 )
-from home.tasks.sync_buttondown import (
-    remove_user_from_buttondown,
-    sync_user_to_buttondown,
-)
+from home.tasks.sync_buttondown import sync_user_to_buttondown
 
 BD_SETTINGS = {"BUTTONDOWN_API_KEY": "test-api-key"}
+
+
+def _make_response(status_code: int) -> requests.Response:
+    """Build a minimal requests.Response with a given status code."""
+    resp = requests.Response()
+    resp.status_code = status_code
+    return resp
 
 
 class ButtondownEnabledTests(TestCase):
@@ -54,7 +58,11 @@ class ButtondownClientTests(TestCase):
     @rsps.activate
     def test_get_subscriber_by_email_found(self):
         subscriber = {"id": "uuid-123", "email": "foo@example.com"}
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", json={"results": [subscriber]})
+        rsps.add(
+            rsps.GET,
+            f"{_BASE_URL}/subscribers/foo@example.com",
+            json=subscriber,
+        )
 
         result = self.bd_client.get_subscriber_by_email("foo@example.com")
 
@@ -63,7 +71,11 @@ class ButtondownClientTests(TestCase):
     @override_settings(**BD_SETTINGS)
     @rsps.activate
     def test_get_subscriber_by_email_not_found(self):
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", json={"results": []})
+        rsps.add(
+            rsps.GET,
+            f"{_BASE_URL}/subscribers/nobody@example.com",
+            status=404,
+        )
 
         result = self.bd_client.get_subscriber_by_email("nobody@example.com")
 
@@ -72,12 +84,16 @@ class ButtondownClientTests(TestCase):
     @override_settings(**BD_SETTINGS)
     @rsps.activate
     def test_get_subscriber_by_email_sends_correct_params(self):
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", json={"results": []})
+        rsps.add(
+            rsps.GET,
+            f"{_BASE_URL}/subscribers/foo@example.com",
+            json={"id": "uuid-123"},
+        )
 
         self.bd_client.get_subscriber_by_email("foo@example.com")
 
         req = rsps.calls[0].request
-        self.assertIn("email=foo%40example.com", req.url)
+        self.assertIn("/subscribers/foo@example.com", req.url)
         self.assertEqual(req.headers["Authorization"], "Token test-api-key")
 
     @override_settings(**BD_SETTINGS)
@@ -94,12 +110,19 @@ class ButtondownClientTests(TestCase):
 
         self.assertEqual(result["id"], "new-uuid")
         body = json.loads(rsps.calls[0].request.body)
-        self.assertEqual(body, {"email": "new@example.com", "tags": ["website"]})
+        self.assertEqual(
+            body,
+            {
+                "email_address": "new@example.com",
+                "tags": ["website"],
+                "type": "regular",
+            },
+        )
 
     @override_settings(**BD_SETTINGS)
     @rsps.activate
     def test_patch_subscriber(self):
-        payload = {"tags": ["Admin"], "subscriber_type": "regular"}
+        payload = {"tags": ["Admin"], "type": "regular"}
         rsps.add(
             rsps.PATCH,
             f"{_BASE_URL}/subscribers/uuid-123",
@@ -124,8 +147,8 @@ class ButtondownClientTests(TestCase):
     @override_settings(**BD_SETTINGS)
     @rsps.activate
     def test_request_raises_on_http_error(self):
-        # 404 is not in status_forcelist so retries don't fire; raise_for_status raises HTTPError
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", status=404)
+        # 400 is not in status_forcelist so retries don't fire; raise_for_status raises HTTPError
+        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers/foo@example.com", status=400)
 
         with self.assertRaises(requests.HTTPError):
             self.bd_client.get_subscriber_by_email("foo@example.com")
@@ -133,7 +156,9 @@ class ButtondownClientTests(TestCase):
     @override_settings(**BD_SETTINGS)
     @rsps.activate
     def test_authorization_header_uses_token_scheme(self):
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", json={"results": []})
+        rsps.add(
+            rsps.GET, f"{_BASE_URL}/subscribers/x@example.com", json={"id": "uuid"}
+        )
 
         self.bd_client.get_subscriber_by_email("x@example.com")
 
@@ -380,6 +405,69 @@ class ButtondownServiceFirstSyncTests(TestCase):
             buttondown_service.sync_user(self.user)
 
 
+class ButtondownServiceAccountWithoutIdentifierTests(TestCase):
+    """Tests for when a ButtondownAccount exists but has no identifier yet."""
+
+    def setUp(self):
+        self.user = UserFactory.create()
+        self.user.profile.receiving_newsletter = False
+        self.user.profile.save()
+        self.bd_account = ButtondownAccount.objects.create(
+            user=self.user, buttondown_identifier=""
+        )
+
+    @override_settings(**BD_SETTINGS)
+    def test_links_existing_subscriber_when_account_has_no_id(self):
+        existing = {"id": "bd-uuid-found"}
+        with (
+            patch.object(
+                buttondown_service.client,
+                "get_subscriber_by_email",
+                return_value=existing,
+            ),
+            patch.object(buttondown_service.client, "patch_subscriber"),
+        ):
+            buttondown_service.sync_user(self.user)
+
+        self.bd_account.refresh_from_db()
+        self.assertEqual(self.bd_account.buttondown_identifier, "bd-uuid-found")
+
+    @override_settings(**BD_SETTINGS)
+    def test_creates_new_subscriber_when_account_has_no_id_and_not_found(self):
+        with (
+            patch.object(
+                buttondown_service.client,
+                "get_subscriber_by_email",
+                return_value=None,
+            ),
+            patch.object(
+                buttondown_service.client,
+                "create_subscriber",
+                return_value={"id": "bd-uuid-new"},
+            ),
+        ):
+            buttondown_service.sync_user(self.user)
+
+        self.bd_account.refresh_from_db()
+        self.assertEqual(self.bd_account.buttondown_identifier, "bd-uuid-new")
+
+    @override_settings(**BD_SETTINGS)
+    def test_sets_receiving_newsletter_true_when_linking_existing(self):
+        existing = {"id": "bd-uuid-found"}
+        with (
+            patch.object(
+                buttondown_service.client,
+                "get_subscriber_by_email",
+                return_value=existing,
+            ),
+            patch.object(buttondown_service.client, "patch_subscriber"),
+        ):
+            buttondown_service.sync_user(self.user)
+
+        self.user.profile.refresh_from_db()
+        self.assertTrue(self.user.profile.receiving_newsletter)
+
+
 class ButtondownServiceSubsequentSyncTests(TestCase):
     def setUp(self):
         self.user = UserFactory.create()
@@ -395,7 +483,7 @@ class ButtondownServiceSubsequentSyncTests(TestCase):
             buttondown_service.sync_user(self.user)
 
         payload = mock_patch.call_args.args[1]
-        self.assertEqual(payload["subscriber_type"], "regular")
+        self.assertEqual(payload["type"], "regular")
         self.assertIn("tags", payload)
 
     @override_settings(**BD_SETTINGS)
@@ -407,7 +495,13 @@ class ButtondownServiceSubsequentSyncTests(TestCase):
             buttondown_service.sync_user(self.user)
 
         payload = mock_patch.call_args.args[1]
-        self.assertEqual(payload, {"subscriber_type": "unsubscribed"})
+        self.assertEqual(
+            payload,
+            {
+                "type": "unsubscribed",
+                "tags": ["Interested Djangonaut"],
+            },
+        )
 
     @override_settings(**BD_SETTINGS)
     def test_subsequent_sync_calls_patch_with_correct_id(self):
@@ -426,6 +520,55 @@ class ButtondownServiceSubsequentSyncTests(TestCase):
 
         self.bd_account.refresh_from_db()
         self.assertGreaterEqual(self.bd_account.last_updated, original_updated)
+
+    @override_settings(**BD_SETTINGS)
+    def test_patch_404_falls_back_to_resolve_and_link_existing(self):
+        """Subscriber deleted from Buttondown; re-links when found by email."""
+        not_found = requests.HTTPError(response=_make_response(404))
+        existing = {"id": "bd-uuid-new"}
+        # First patch call raises 404; second (after re-link) succeeds.
+        with (
+            patch.object(
+                buttondown_service.client,
+                "patch_subscriber",
+                side_effect=[not_found, {"tags": []}],
+            ),
+            patch.object(
+                buttondown_service.client,
+                "get_subscriber_by_email",
+                return_value=existing,
+            ),
+        ):
+            buttondown_service.sync_user(self.user)
+
+        self.bd_account.refresh_from_db()
+        self.assertEqual(self.bd_account.buttondown_identifier, "bd-uuid-new")
+
+    @override_settings(**BD_SETTINGS)
+    def test_patch_404_creates_new_subscriber_when_not_found_by_email(self):
+        """Subscriber deleted from Buttondown and email lookup finds nothing."""
+        not_found = requests.HTTPError(response=_make_response(404))
+        with (
+            patch.object(
+                buttondown_service.client,
+                "patch_subscriber",
+                side_effect=not_found,
+            ),
+            patch.object(
+                buttondown_service.client,
+                "get_subscriber_by_email",
+                return_value=None,
+            ),
+            patch.object(
+                buttondown_service.client,
+                "create_subscriber",
+                return_value={"id": "bd-uuid-created"},
+            ),
+        ):
+            buttondown_service.sync_user(self.user)
+
+        self.bd_account.refresh_from_db()
+        self.assertEqual(self.bd_account.buttondown_identifier, "bd-uuid-created")
 
 
 class ButtondownServiceRemoveUserTests(TestCase):
@@ -490,19 +633,3 @@ class SyncUserToButtondownTaskTests(TestCase):
 
         mock_sync.assert_called_once()
         self.assertEqual(mock_sync.call_args.args[0].pk, user.pk)
-
-
-class RemoveUserFromButtondownTaskTests(TestCase):
-    @override_settings(BUTTONDOWN_API_KEY="")
-    def test_skips_when_not_configured(self):
-        with patch.object(buttondown_service, "remove_user") as mock_remove:
-            remove_user_from_buttondown.call(buttondown_identifier="bd-uuid")
-
-        mock_remove.assert_not_called()
-
-    @override_settings(**BD_SETTINGS)
-    def test_calls_service_remove_user(self):
-        with patch.object(buttondown_service, "remove_user") as mock_remove:
-            remove_user_from_buttondown.call(buttondown_identifier="bd-uuid")
-
-        mock_remove.assert_called_once_with("bd-uuid")

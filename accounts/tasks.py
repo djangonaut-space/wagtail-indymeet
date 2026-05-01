@@ -25,7 +25,6 @@ def delete_user_account(user_id: int) -> None:
     except User.DoesNotExist:
         pass
     else:
-
         user_email = user.email
         user_name = user.get_full_name() or user.username
         if buttondown_enabled():

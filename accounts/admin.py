@@ -13,7 +13,13 @@ from django.db.models import Exists, OuterRef, QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
-from accounts.models import CustomUser, Link, UserAvailability, UserProfile
+from accounts.models import (
+    ButtondownAccount,
+    CustomUser,
+    Link,
+    UserAvailability,
+    UserProfile,
+)
 from home.models.session import SessionMembership
 from indymeet.admin import DescriptiveSearchMixin
 
@@ -152,6 +158,14 @@ class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin)
     inlines = (LinksInline,)
     model = UserProfile
     actions = ["export_as_csv"]
+    list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)
+
+
+@admin.register(ButtondownAccount)
+class ButtondownAccountAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+    model = ButtondownAccount
+    search_fields = ["buttondown_identifier", "user__email"]
+    list_display = ["user", "buttondown_identifier"]
     list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)
 
 

@@ -33,6 +33,7 @@ class ButtondownSignalTests(TestCase):
             json={"id": "bd-uuid-signal"},
         )
 
+        user.profile.email_confirmed = True
         user.profile.bio = "updated"
         user.profile.save()
 
@@ -43,7 +44,7 @@ class ButtondownSignalTests(TestCase):
     @rsps.activate
     def test_profile_save_always_triggers_sync_when_configured(self):
         user = UserFactory.create()
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", json={"results": []})
+        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers/{user.email}", status=404)
         rsps.add(
             rsps.POST,
             f"{_BASE_URL}/subscribers",
@@ -51,6 +52,7 @@ class ButtondownSignalTests(TestCase):
             status=201,
         )
 
+        user.profile.email_confirmed = True
         user.profile.bio = "updated"
         user.profile.save()
 
@@ -60,7 +62,7 @@ class ButtondownSignalTests(TestCase):
     @rsps.activate
     def test_profile_save_triggers_sync_when_opting_in_with_no_account(self):
         user = UserFactory.create()
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", json={"results": []})
+        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers/{user.email}", status=404)
         rsps.add(
             rsps.POST,
             f"{_BASE_URL}/subscribers",
@@ -68,6 +70,7 @@ class ButtondownSignalTests(TestCase):
             status=201,
         )
 
+        user.profile.email_confirmed = True
         user.profile.receiving_newsletter = True
         user.profile.save()
 
@@ -75,18 +78,23 @@ class ButtondownSignalTests(TestCase):
 
     @override_settings(**BD_SETTINGS)
     @rsps.activate
-    def test_new_signup_triggers_sync(self):
-        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers", json={"results": []})
-        rsps.add(
-            rsps.POST,
-            f"{_BASE_URL}/subscribers",
-            json={"id": "new-uuid"},
-            status=201,
-        )
-
+    def test_new_signup_does_not_trigger_sync_when_email_not_confirmed(self):
         User.objects.create_user(username="newuser", email="new@example.com")
 
-        self.assertGreaterEqual(len(rsps.calls), 1)
+        self.assertEqual(len(rsps.calls), 0)
+
+    @override_settings(**BD_SETTINGS)
+    @rsps.activate
+    def test_profile_save_does_not_sync_when_email_not_confirmed(self):
+        user = UserFactory.create()
+        ButtondownAccount.objects.create(
+            user=user, buttondown_identifier="bd-uuid-signal"
+        )
+
+        user.profile.bio = "updated"
+        user.profile.save()
+
+        self.assertEqual(len(rsps.calls), 0)
 
     @override_settings(BUTTONDOWN_API_KEY="")
     @rsps.activate

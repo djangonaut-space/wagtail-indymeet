@@ -40,8 +40,13 @@ class ButtondownClient:
                 logger.error("Buttondown rate limit exceeded")
             response.raise_for_status()
             return response
-        except requests.RequestException:
-            logger.exception("Buttondown API request failed: %s %s", method, url)
+        except requests.RequestException as exc:
+            if not (
+                isinstance(exc, requests.HTTPError)
+                and exc.response is not None
+                and exc.response.status_code == 404
+            ):
+                logger.exception("Buttondown API request failed: %s %s", method, url)
             raise
 
     def get_subscriber_by_email(self, email: str) -> dict | None:
@@ -50,9 +55,13 @@ class ButtondownClient:
 
         Returns the subscriber dict if found, or None if not found.
         """
-        response = self._request("GET", "/subscribers", params={"email": email})
-        results = response.json().get("results", [])
-        return results[0] if results else None
+        try:
+            response = self._request("GET", f"/subscribers/{email}")
+        except requests.HTTPError as exc:
+            if exc.response is not None and exc.response.status_code == 404:
+                return None
+            raise
+        return response.json()
 
     def create_subscriber(self, email: str, tags: list[str]) -> dict:
         """
@@ -63,7 +72,7 @@ class ButtondownClient:
         response = self._request(
             "POST",
             "/subscribers",
-            json={"email": email, "tags": tags},
+            json={"email_address": email, "tags": tags, "type": "regular"},
         )
         return response.json()
 
