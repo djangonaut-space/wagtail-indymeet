@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "anymail",
     "django_recaptcha",
     "wagtail.contrib.forms",
+    "wagtail.contrib.frontend_cache",
     "wagtail.contrib.redirects",
     "wagtail.contrib.table_block",
     "wagtail.embeds",
