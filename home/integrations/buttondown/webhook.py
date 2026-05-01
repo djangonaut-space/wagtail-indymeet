@@ -90,7 +90,7 @@ def buttondown_webhook(request: HttpRequest) -> HttpResponse:
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON")
 
-    logger.info("Received payload: %s", payload)
+    print("Received payload: %s", payload)
 
     event_type = payload.get("event_type", "")
 
