@@ -31,5 +31,5 @@ jobs:
         with:
           branch: main
           git_push_flags: '--force'
-          git_remote_url: 'ssh://dokku@djangonaut.space:22/djangonaut-space'
+          git_remote_url: 'ssh://dokku@dev.djangonaut.space:22/djangonaut-space'
           ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
