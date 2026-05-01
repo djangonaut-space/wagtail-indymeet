@@ -49,5 +49,16 @@ sentry_sdk.init(
 
 BASE_URL = os.getenv("BASE_URL", "https://djangonaut.space")
 
+CLOUDFLARE_BEARER_TOKEN = os.getenv("CLOUDFLARE_BEARER_TOKEN")
+CLOUDFLARE_ZONE_ID = os.getenv("CLOUDFLARE_ZONE_ID")
+if CLOUDFLARE_BEARER_TOKEN and CLOUDFLARE_ZONE_ID:
+    WAGTAILFRONTENDCACHE = {
+        "cloudflare": {
+            "BACKEND": "wagtail.contrib.frontend_cache.backends.CloudflareBackend",
+            "BEARER_TOKEN": CLOUDFLARE_BEARER_TOKEN,
+            "ZONEID": CLOUDFLARE_ZONE_ID,
+        },
+    }
+
 RECAPTCHA_PUBLIC_KEY = os.getenv("RECAPTCHA_PUBLIC_KEY")
 RECAPTCHA_PRIVATE_KEY = os.getenv("RECAPTCHA_PRIVATE_KEY")

@@ -8,8 +8,11 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from home.integrations.buttondown.webhook import buttondown_webhook
+
 urlpatterns = [
     path("django-admin/", admin.site.urls),
+    path("webhooks/buttondown/", buttondown_webhook, name="buttondown_webhook"),
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("accounts/", include("accounts.urls"), name="accounts"),

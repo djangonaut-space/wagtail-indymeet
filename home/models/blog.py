@@ -1,22 +1,15 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.cache import patch_cache_control
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
 from taggit.models import TaggedItemBase
-from wagtail import blocks
 from wagtail.admin.panels import FieldPanel
-from wagtail.admin.panels import InlinePanel
 from wagtail.admin.panels import MultiFieldPanel
-from wagtail.admin.panels import PageChooserPanel
-from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.fields import RichTextField
 from wagtail.fields import StreamField
-from wagtail.images.blocks import ImageChooserBlock
 from wagtail.models import Page
 
-from home import blocks as blog_blocks
 from home.blocks import BaseStreamBlock
-from home.models.event import Event
 from home.models.testimonial import Testimonial
 
 # BLOG PUPUT IMPORTS
@@ -27,23 +20,20 @@ class HomePage(Page):
 
     def get_context(self, request):
         context = super().get_context(request)
-        events = Event.objects.visible()
-        past_events = events.past()
-        future_events = events.upcoming()
-        show_rsvp = False
-        if request.user.is_authenticated and request.user.profile.accepted_coc:
-            show_rsvp = True
-        context["past_events"] = past_events[:6]
-        context["future_events"] = future_events[:6]
-        context["show_rsvp"] = show_rsvp
-
         context["testimonials"] = (
             Testimonial.objects.published()
             .select_related("author", "session")
             .order_by("?")[:6]  # random order
         )
-
         return context
+
+    def serve(self, request, *args, **kwargs):
+        response = super().serve(request, *args, **kwargs)
+        if request.user.is_authenticated:
+            patch_cache_control(response, private=True)
+        else:
+            patch_cache_control(response, public=True, max_age=3600)
+        return response
 
 
 class GeneralTag(TaggedItemBase):
@@ -78,3 +68,11 @@ class GeneralPage(Page):
         FieldPanel("body"),
         FieldPanel("content"),
     ]
+
+    def serve(self, request, *args, **kwargs):
+        response = super().serve(request, *args, **kwargs)
+        if request.user.is_authenticated:
+            patch_cache_control(response, private=True)
+        else:
+            patch_cache_control(response, public=True, max_age=3600)
+        return response

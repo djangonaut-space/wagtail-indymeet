@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "anymail",
     "django_recaptcha",
     "wagtail.contrib.forms",
+    "wagtail.contrib.frontend_cache",
     "wagtail.contrib.redirects",
     "wagtail.contrib.table_block",
     "wagtail.embeds",
@@ -270,6 +271,11 @@ FORMS_URLFIELD_ASSUME_HTTPS = True
 ZOOM_ACCOUNT_ID = os.environ.get("ZOOM_ACCOUNT_ID")
 ZOOM_CLIENT_ID = os.environ.get("ZOOM_CLIENT_ID")
 ZOOM_CLIENT_SECRET = os.environ.get("ZOOM_CLIENT_SECRET")
+
+# Buttondown newsletter integration.
+# Set to enable; leave unset to disable.
+BUTTONDOWN_API_KEY = os.environ.get("BUTTONDOWN_API_KEY")
+BUTTONDOWN_WEBHOOK_SECRET = os.environ.get("BUTTONDOWN_WEBHOOK_SECRET")
 
 ######################
 # Application settings
