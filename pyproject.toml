@@ -44,6 +44,7 @@ test = [
     "factory_boy",
     "unittest_parametrize",
     "faker",
+    "responses>=0.26.0",
 ]
 dev = [
     "pre-commit",

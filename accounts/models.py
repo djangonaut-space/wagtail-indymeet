@@ -292,6 +292,29 @@ class UserAvailability(models.Model):
         return settings.BASE_URL + self.get_absolute_url()
 
 
+class ButtondownAccount(models.Model):
+    """Tracks a user's Buttondown subscriber record for newsletter sync."""
+
+    user = models.OneToOneField(
+        "CustomUser",
+        on_delete=models.CASCADE,
+        related_name="buttondown_account",
+    )
+    buttondown_identifier = models.CharField(max_length=255)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["buttondown_identifier"],
+                name="unique_buttondown_identifier",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"ButtondownAccount({self.user_id}, {self.buttondown_identifier})"
+
+
 # ====================== Signals =======================
 @receiver(post_save, sender=CustomUser)
 def create_profile(sender, instance, created, **kwargs):
