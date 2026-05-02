@@ -66,7 +66,18 @@ jobs:
         run: uv run pytest --cov --cov-branch --cov-report=xml --cov-report=term
 
       - name: Run playwright tests
-        run: uv run pytest --tracing retain-on-failure -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
+        run: >-
+          uv run pytest
+          --tracing retain-on-failure
+          -m playwright
+          --browser webkit
+          --browser firefox
+          --browser chromium
+          --cov
+          --cov-branch
+          --cov-report=xml
+          --cov-append
+          --cov-report=term
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2  # v6.0.0
