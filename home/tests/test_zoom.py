@@ -4,7 +4,8 @@ and the create_zoom_meeting task.
 """
 
 import datetime
-from datetime import datetime as dt, timezone as dt_timezone
+from datetime import datetime as dt
+from datetime import timezone as dt_timezone
 from unittest.mock import MagicMock, patch
 
 from django.core.cache import cache
@@ -184,7 +185,6 @@ class ZoomClientRequestRetryTests(TestCase):
             ) as mock_req,
             patch.object(self.client.session, "post", return_value=token_resp),
         ):
-
             response = self.client._request("GET", "https://api.zoom.us/v2/test")
 
         self.assertEqual(response, resp_200)
@@ -322,7 +322,6 @@ class CreateZoomMeetingTaskTests(TestCase):
                 "home.tasks.create_zoom_meeting.Event.objects.select_for_update"
             ) as mock_select,
         ):
-
             # Setup the chain: Event.objects.select_for_update().get(pk=...)
             mock_select.return_value.get.return_value = self.event
 
@@ -346,7 +345,6 @@ class ZoomSignalTests(TestCase):
             slug="signal-test-new",
             start_time=dt(2025, 6, 1, 18, 0, tzinfo=UTC),
             end_time=dt(2025, 6, 1, 19, 0, tzinfo=UTC),
-            location="https://zoom.example.com",
             zoom_link="",
         )
         event.refresh_from_db()
@@ -362,7 +360,6 @@ class ZoomSignalTests(TestCase):
             slug="signal-test-update",
             start_time=dt(2025, 6, 1, 18, 0, tzinfo=UTC),
             end_time=dt(2025, 6, 1, 19, 0, tzinfo=UTC),
-            location="https://zoom.example.com",
             zoom_link="",
         )
         mock_create.reset_mock()
