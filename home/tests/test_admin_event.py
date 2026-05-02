@@ -38,8 +38,6 @@ class EventAdminCopyActionTests(TestCase):
             slug="original-event",
             start_time=datetime(2025, 6, 1, 18, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2025, 6, 1, 20, 0, tzinfo=dt_timezone.utc),
-            location="The internet",
-            status=Event.SCHEDULED,
         )
 
     def _get_request(self):
@@ -109,11 +107,8 @@ class EventAdminCopyActionTests(TestCase):
                 "start_time_1": "18:00:00",
                 "end_time_0": "2025-07-01",
                 "end_time_1": "20:00:00",
-                "location": "The internet",
-                "status": Event.PENDING,
                 "is_public": True,
                 "extra_emails": "sessions@djangonaut.space",
-                "tags": "",
                 "_save": "Save",
             },
         )
@@ -126,11 +121,9 @@ class EventAdminCopyActionTests(TestCase):
         self.assertEqual(Event.objects.count(), count_before + 1)
         new_event = Event.objects.get(slug="copied-event")
         self.assertEqual(new_event.title, "Copied Event")
-        self.assertEqual(new_event.status, Event.PENDING)
 
         self.event.refresh_from_db()
         self.assertEqual(self.event.title, "Original Event")
-        self.assertEqual(self.event.status, Event.SCHEDULED)
 
 
 class EventAdminGetChangeformInitialDataTests(TestCase):
@@ -144,24 +137,17 @@ class EventAdminGetChangeformInitialDataTests(TestCase):
             is_staff=True,
             is_superuser=True,
         )
-        self.speaker = UserFactory.create(email="speaker@example.com")
-        self.organizer = UserFactory.create(email="organizer@example.com")
         self.event = EventFactory.create(
             title="Source Event",
             slug="source-event",
             start_time=datetime(2025, 6, 1, 18, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2025, 6, 1, 20, 0, tzinfo=dt_timezone.utc),
-            location="The internet",
             description="A great event.",
-            status=Event.SCHEDULED,
             zoom_link="https://zoom.us/j/existing",
             video_link="https://youtube.example.com/watch?v=abc",
             is_public=True,
-            capacity=50,
             extra_emails=["sessions@djangonaut.space"],
         )
-        self.event.speakers.add(self.speaker)
-        self.event.organizers.add(self.organizer)
 
     def _get_add_request(self, copy_from=None):
         params = f"?copy_from={copy_from}" if copy_from else ""
@@ -176,31 +162,12 @@ class EventAdminGetChangeformInitialDataTests(TestCase):
 
         self.assertEqual(initial["title"], "Source Event")
         self.assertEqual(initial["slug"], "source-event")
-        self.assertEqual(initial["location"], "The internet")
         self.assertEqual(initial["description"], "A great event.")
         self.assertEqual(initial["zoom_link"], "")
         self.assertEqual(initial["video_link"], "")
+        self.assertFalse(initial["is_published"])
         self.assertTrue(initial["is_public"])
-        self.assertEqual(initial["capacity"], 50)
         self.assertEqual(initial["extra_emails"], ["sessions@djangonaut.space"])
-
-    def test_status_reset_to_pending(self):
-        """The copied event's status is reset to Pending regardless of the source."""
-        request = self._get_add_request(copy_from=self.event.pk)
-        initial = self.admin.get_changeform_initial_data(request)
-
-        self.assertEqual(initial["status"], Event.PENDING)
-
-    def test_pre_populates_m2m_speakers_and_organizers(self):
-        """Speaker and organizer querysets are included in initial data."""
-        request = self._get_add_request(copy_from=self.event.pk)
-        initial = self.admin.get_changeform_initial_data(request)
-
-        speaker_ids = list(initial["speakers"].values_list("pk", flat=True))
-        self.assertIn(self.speaker.pk, speaker_ids)
-
-        organizer_ids = list(initial["organizers"].values_list("pk", flat=True))
-        self.assertIn(self.organizer.pk, organizer_ids)
 
     def test_no_copy_from_returns_normal_initial(self):
         """Without copy_from the method behaves like the default implementation."""

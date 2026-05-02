@@ -1,4 +1,5 @@
-from datetime import timedelta, timezone as dt_timezone
+from datetime import timedelta
+from datetime import timezone as dt_timezone
 
 import factory
 from django.contrib.auth.models import Permission
@@ -11,6 +12,7 @@ from home import constants
 from home.models import (
     Event,
     Project,
+    ProjectPreference,
     Question,
     ResourceLink,
     Session,
@@ -22,7 +24,6 @@ from home.models import (
     UserQuestionResponse,
     UserSurveyResponse,
     Waitlist,
-    ProjectPreference,
 )
 
 
@@ -35,8 +36,7 @@ class EventFactory(factory.django.DjangoModelFactory):
     slug = factory.Sequence(lambda n: "event-%d" % n)
     start_time = factory.Faker("date_time", tzinfo=dt_timezone.utc)
     end_time = factory.Faker("date_time", tzinfo=dt_timezone.utc)
-    location = "https://zoom.link"
-    status = Event.SCHEDULED
+    is_published = True
 
 
 class ResourceLinkFactory(factory.django.DjangoModelFactory):
