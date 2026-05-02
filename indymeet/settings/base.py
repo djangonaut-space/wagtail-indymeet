@@ -17,10 +17,11 @@ import dj_database_url
 from django.forms.renderers import TemplatesSetting
 from dotenv import load_dotenv
 
-load_dotenv()
-
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
+
+# Load .env file explicitly
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -133,6 +134,11 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     },
 }
+
+
+# GitHub API Configuration
+# Used for collecting Djangonaut stats
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 
 
 # Password validation
@@ -253,6 +259,11 @@ LOGGING = {
     },
     "loggers": {
         "django.request": {"handlers": [], "level": "ERROR"},
+        "home.services.github_stats": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
 

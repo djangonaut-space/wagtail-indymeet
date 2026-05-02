@@ -39,6 +39,7 @@ from .views.session_notifications import (
     send_session_results_view,
     send_team_welcome_emails_view,
 )
+from .views.sessions import collect_stats_view
 
 User = get_user_model()
 
@@ -164,8 +165,9 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
-    list_display = ("name", "url")
-    search_fields = ("name",)
+    list_display = ("name", "url", "monitor_all_organization_repos")
+    list_filter = ("monitor_all_organization_repos",)
+    search_fields = ("name", "url")
     ordering = ("name",)
 
 
@@ -484,12 +486,24 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
-    list_display = ("title", "start_date", "end_date", "form_teams", "email_actions")
+    list_display = (
+        "title",
+        "start_date",
+        "end_date",
+        "form_teams",
+        "collect_stats",
+        "email_actions",
+    )
 
     @admin.display(description="Form Teams")
     def form_teams(self, obj):
         href = reverse("admin:session_form_teams", kwargs={"session_id": obj.id})
         return mark_safe(f'<a href="{href}">Form Teams</a>')
+
+    @admin.display(description="GitHub Stats")
+    def collect_stats(self, obj):
+        href = reverse("admin:session_collect_stats", args=[obj.id])
+        return mark_safe(f'<a href="{href}">Collect Stats</a>')
 
     @admin.display(description="Email Actions")
     def email_actions(self, obj):
@@ -529,6 +543,11 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "<int:session_id>/calculate-overlap/",
                 self.admin_site.admin_view(calculate_overlap_ajax),
                 name="session_calculate_overlap",
+            ),
+            path(
+                "<int:session_id>/collect-stats/",
+                self.admin_site.admin_view(collect_stats_view),
+                name="session_collect_stats",
             ),
             path(
                 "<int:session_id>/send-session-results/",

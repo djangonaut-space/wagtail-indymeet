@@ -5,8 +5,6 @@ These tasks handle sending notification emails to administrators when
 testimonials are created or updated, allowing for review and approval.
 """
 
-from typing import Optional
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
