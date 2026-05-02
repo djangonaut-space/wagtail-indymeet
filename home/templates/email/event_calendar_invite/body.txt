@@ -7,7 +7,12 @@ You are invited to join us for {{ event.title }} on {{ event.start_time|date:"l,
 
 {% if event.description %}{{ event.description }}
 
-{% endif %}Location: {{ event.location }}
+{% endif %}
+
+{% if event.zoom_link %}
+Zoom: {{ event.zoom_link }}
+{% endif %}
+
 
 Start: {{ event.start_time|date:"l, F j, Y g:i A e" }} ({{ event.start_time|time_is_link }})
 End: {{ event.end_time|date:"l, F j, Y g:i A e" }} ({{ event.end_time|time_is_link }})

@@ -19,7 +19,7 @@
   {% endif %}
 
   <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
-    <strong>Location:</strong> {{ event.location }}<br>
+    {% if event.zoom_link %}<strong>Zoom:</strong> <a href="{{ event.zoom_link }}" style="color: #5c0287;">{{ event.zoom_link }}</a><br>{% endif %}
     <strong>Start:</strong> <a href="{{ event.start_time|time_is_link }}" style="color: #5c0287;">{{ event.start_time|date:"l, F j, Y g:i A e" }}</a><br>
     <strong>End:</strong> <a href="{{ event.end_time|time_is_link }}" style="color: #5c0287;">{{ event.end_time|date:"l, F j, Y g:i A e" }}</a>
   </p>

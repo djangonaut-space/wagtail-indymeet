@@ -14,18 +14,28 @@
 <main class="section my-3 mx-5">
   <div class="section-container">
   <h1 class="text-5xl my-3">{{ event.title }}</h1>
+    {% if event.cover_image %}
+    <div class="mb-4">
+      <img src="{{ event.cover_image.url }}" alt="" class="w-full max-w-2xl rounded">
+      {% if event.cover_image_caption %}
+      <p class="mt-1 text-sm text-gray-500">{{ event.cover_image_caption }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
     <div class="row">
       <div class="col">
           {% localtime on %}
           <p><strong>Start:</strong> {{ event.start_time|date:"M d, Y H:i e" }}</p>
           <p><strong>End:</strong> {{ event.end_time|date:"M d, Y H:i e" }}</p>
           {% endlocaltime %}
-          <p><strong>Location:</strong> {{ event.location|urlizetrunc:25 }}</p>
-          {% if event.zoom_link %}
-            <p><strong>Join:</strong> <a href="{{ event.zoom_link }}" target="_blank">Join Zoom Meeting</a></p>
-          {% endif %}
-          {% if event.video_link %}
-            <p><strong>Recording:</strong> <a href="{{ event.video_link }}" target="_blank">Watch Recording</a></p>
+          {% if event.is_future %}
+            {% if event.zoom_link %}
+              <p><strong>Join:</strong> <a href="{{ event.zoom_link }}" target="_blank">Join Zoom Meeting</a></p>
+            {% endif %}
+          {% else %}
+            {% if event.video_link %}
+              <p><strong>Recording:</strong> <a href="{{ event.video_link }}" target="_blank">Watch Recording</a></p>
+            {% endif %}
           {% endif %}
           <br>
           <p>{{ event.description|linebreaksbr|urlizetrunc:25 }}</p>

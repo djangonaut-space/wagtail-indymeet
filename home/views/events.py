@@ -1,7 +1,6 @@
 """Event-related views."""
 
-from django.http import Http404
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 
@@ -18,7 +17,7 @@ def event_calendar(request):
 
 
 class EventDetailView(DetailView):
-    """Display a single event with RSVP functionality."""
+    """Display a single event."""
 
     model = Event
     template_name = "home/event_detail.html"
@@ -41,55 +40,20 @@ class EventDetailView(DetailView):
 
         return get_object_or_404(queryset)
 
-    def get_context_data(self, **kwargs):
-        """Handle RSVP actions in context preparation."""
-        if self.request.GET.get("rsvp", None):
-            if (
-                self.request.GET.get("rsvp") == "true"
-                and self.request.user.profile
-                and self.request.user.profile.accepted_coc
-                and self.request.user not in self.object.rsvped_members.all()
-            ):
-                self.object.add_participant_email_verification(self.request.user)
-            elif (
-                self.request.GET.get("rsvp") == "false"
-                and self.request.user in self.object.rsvped_members.all()
-            ):
-                self.object.remove_participant_email_verification(self.request.user)
-        return super().get_context_data(**kwargs)
-
 
 class EventListView(ListView):
-    """Display a list of events with filtering by tag."""
+    """Display a list of events."""
 
     model = Event
     template_name = "home/event_list.html"
 
     def get_context_data(self, **kwargs):
-        """Add upcoming/past events and tags to context."""
+        """Add upcoming/past events to context."""
         context = super().get_context_data(**kwargs)
 
         events = (
             Event.objects.visible().for_user(self.request.user).order_by("-start_time")
         )
-
-        tag = self.request.GET.get("tag")
-        if tag:
-            events = events.filter(tags__name=tag)
-
         context["upcoming_events"] = events.upcoming()
         context["past_events"] = events.past()
-        context["tags"] = self.get_event_tags()
-        context["current_tag"] = tag
         return context
-
-    def get_event_tags(self):
-        """Get all unique tags from visible events."""
-        tags = []
-        events = (
-            Event.objects.visible().for_user(self.request.user).prefetch_related("tags")
-        )
-        for event in events:
-            tags += [tag.name for tag in event.tags.all()]
-        tags = sorted(set(tags))
-        return tags
