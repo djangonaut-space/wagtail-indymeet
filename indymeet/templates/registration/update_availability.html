@@ -50,7 +50,7 @@
             <p class="text-sm">
                 <strong>{% translate "Instructions:" %}</strong>
                 {% blocktranslate %}
-                    Click and drag to select time slots when you're generally available each week. To remove selections, click the cell. Mobile devices require a long click. Times are shown in your local timezone<span id="local-timezone"></span>.
+                    Click or tap to select individual time slots, or drag to select a range. Click or tap a selected slot to remove it. Times are shown in your local timezone<span id="local-timezone"></span>.
                 {% endblocktranslate %}
             </p>
         </div>
@@ -71,13 +71,13 @@
               <table>
                 <tr id="time-row-template">
                     <th class="border border-gray-200"></th>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
-                    <td class="time-slot cursor-row-resize h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
+                    <td class="time-slot cursor-row-resize h-8 sm:h-4 transition-colors duration-150 hover:bg-gray-100 border border-gray-200"></td>
                 </tr>
               </table>
             </div>
@@ -243,11 +243,16 @@
         behaviour: {
             overlap: 'keep',
             intersect: 'touch',
-            startThreshold: 5,
-        }
+            startThreshold: 10,
+        },
+        features: {
+            singleTap: {
+                allow: true,
+                intersect: 'touch',
+            },
+        },
     })
     selection.select('.time-slot.selected', true)
-
 
     // Show preview highlighting during selection
     selection.on('move', ({ store: { changed: { added, removed } } }) => {
