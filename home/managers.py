@@ -37,9 +37,6 @@ class UserQuestionResponseQuerySet(QuerySet):
 
 
 class EventQuerySet(QuerySet):
-    def visible(self):
-        return self.filter(is_published=True)
-
     def upcoming(self):
         return self.filter(start_time__gte=timezone.now())
 

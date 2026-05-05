@@ -3,6 +3,11 @@
 from django.db import migrations, models
 
 
+def set_existing_events_published(apps, schema_editor):
+    Event = apps.get_model("home", "Event")
+    Event.objects.update(is_published=True)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -71,5 +76,9 @@ class Migration(migrations.Migration):
         ),
         migrations.DeleteModel(
             name="EventTag",
+        ),
+        migrations.RunPython(
+            set_existing_events_published,
+            migrations.RunPython.noop,
         ),
     ]

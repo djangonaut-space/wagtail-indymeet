@@ -9,7 +9,7 @@ from home.models import Event
 
 def event_calendar(request):
     """Render the event calendar view."""
-    all_events = Event.objects.visible().for_user(request.user)
+    all_events = Event.objects.filter(is_published=True).for_user(request.user)
     context = {
         "events": all_events,
     }
@@ -52,7 +52,9 @@ class EventListView(ListView):
         context = super().get_context_data(**kwargs)
 
         events = (
-            Event.objects.visible().for_user(self.request.user).order_by("-start_time")
+            Event.objects.filter(is_published=True)
+            .for_user(self.request.user)
+            .order_by("-start_time")
         )
         context["upcoming_events"] = events.upcoming()
         context["past_events"] = events.past()
