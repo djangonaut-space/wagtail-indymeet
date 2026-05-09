@@ -18,7 +18,7 @@
     <div class="mb-4">
       <img src="{{ event.cover_image.url }}" alt="" class="w-full max-w-2xl rounded">
       {% if event.cover_image_caption %}
-      <p class="mt-1 text-sm text-gray-500">{{ event.cover_image_caption }}</p>
+      <p class="mt-1 text-sm text-gray-500">{{ event.cover_image_caption|urlize }}</p>
       {% endif %}
     </div>
     {% endif %}

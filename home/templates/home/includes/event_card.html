@@ -19,7 +19,7 @@
         >
         {% endif %}
         {% if event.cover_image_caption %}
-        <p class="px-6 pt-2 text-sm text-gray-500">{{ event.cover_image_caption }}</p>
+        <p class="px-6 pt-2 text-sm text-gray-500">{{ event.cover_image_caption|urlize }}</p>
         {% endif %}
         <div class="px-6 py-4 card-body">
           <h5 class="font-bold text-xl mb-1 card-title">{{ event.title }}</h5>
