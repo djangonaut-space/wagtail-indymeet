@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from typing import Optional
 
-from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Subquery, Value, Q
+from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -37,20 +37,8 @@ class UserQuestionResponseQuerySet(QuerySet):
 
 
 class EventQuerySet(QuerySet):
-    def pending(self):
-        return self.filter(status=self.model.PENDING)
-
-    def scheduled(self):
-        return self.filter(status=self.model.SCHEDULED)
-
-    def canceled(self):
-        return self.filter(status=self.model.CANCELED)
-
-    def rescheduled(self):
-        return self.filter(status=self.model.RESCHEDULED)
-
-    def visible(self):
-        return self.exclude(status=self.model.PENDING)
+    def published(self):
+        return self.filter(is_published=True)
 
     def upcoming(self):
         return self.filter(start_time__gte=timezone.now())
@@ -382,8 +370,8 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose navigators to check overlap with
         """
-        from home.models import SessionMembership
         from home.availability import get_role_slots
+        from home.models import SessionMembership
 
         navigator_slots = get_role_slots(team, role=constants.NAVIGATOR)
         if not navigator_slots:
@@ -397,8 +385,8 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose captain to check overlap with
         """
-        from home.models import SessionMembership
         from home.availability import get_role_slots
+        from home.models import SessionMembership
 
         captain_slots = get_role_slots(team, role=constants.CAPTAIN)
         if not captain_slots:

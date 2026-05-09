@@ -12,7 +12,7 @@ def generate_icalendar(event) -> bytes:
 
     Args:
         event: An Event model instance with start_time, end_time, title,
-               location, description, and get_full_url() method.
+               zoom_link, description, and get_full_url() method.
 
     Returns:
         Bytes of the .ics file content.
@@ -28,7 +28,8 @@ def generate_icalendar(event) -> bytes:
     cal_event.add("summary", event.title)
     cal_event.add("dtstart", event.start_time)
     cal_event.add("dtend", event.end_time)
-    cal_event.add("location", event.location)
+    if event.zoom_link:
+        cal_event.add("location", event.zoom_link)
     cal_event.add("url", event.get_full_url())
     if event.description:
         cal_event.add("description", event.description)

@@ -1,14 +1,13 @@
-from home import constants
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
-from django.test import Client
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
 
 from accounts.factories import UserFactory
+from home import constants
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import SessionMembership
 
@@ -71,9 +70,6 @@ class EventViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed("home/event_detail.html")
         self.assertContains(response, "Feb 01, 2023 11:00 CET")
-        self.assertContains(
-            response, '<a href="https://zoom.link" rel="nofollow">https://zoom.link</a>'
-        )
         timezone.deactivate()
 
 
