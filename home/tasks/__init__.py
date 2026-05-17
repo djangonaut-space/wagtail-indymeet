@@ -9,10 +9,9 @@ from home.tasks.session_notifications import (
     send_waitlisted_email,
 )
 from home.tasks.testimonial_notifications import send_testimonial_notification
-from home.tasks.create_zoom_meeting import create_zoom_meeting
+from home.tasks.sync_event import sync_event
 
 __all__ = [
-    "create_zoom_meeting",
     "reject_waitlisted_user",
     "send_accepted_email",
     "send_acceptance_reminder_email",
@@ -22,4 +21,5 @@ __all__ = [
     "send_team_welcome_email",
     "send_testimonial_notification",
     "send_waitlisted_email",
+    "sync_event",
 ]

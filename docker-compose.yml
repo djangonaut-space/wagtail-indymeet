@@ -19,6 +19,14 @@ services:
     env_file:
       - ./.env.docker
 
+  worker:
+    <<: *default-app
+    command: "uv run python manage.py db_worker --interval 5"
+    depends_on:
+      - db
+    env_file:
+      - ./.env.template.docker
+
   tailwind:
     <<: *default-app
     command: "uv run python manage.py tailwind start"

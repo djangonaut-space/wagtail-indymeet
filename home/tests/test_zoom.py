@@ -1,6 +1,6 @@
 """
-Tests for Zoom meeting creation: ZoomClient, create_event_meeting service,
-and the create_zoom_meeting task.
+Tests for Zoom integration: ZoomClient, the zoom service (create/update meeting),
+and the Zoom behaviour of the sync_event task.
 """
 
 import datetime
@@ -13,9 +13,14 @@ from django.test import TestCase, override_settings
 
 from home.factories import EventFactory
 from home.integrations.zoom.client import TOKEN_CACHE_KEY, ZoomClient
-from home.integrations.zoom.service import create_event_meeting
+from home.integrations.zoom.service import (
+    ZoomMeeting,
+    create_event_meeting,
+    update_event_meeting,
+    zoom_enabled,
+)
 from home.models import Event
-from home.tasks.create_zoom_meeting import create_zoom_meeting, zoom_enabled
+from home.tasks.sync_event import sync_event
 
 ZOOM_SETTINGS = dict(
     ZOOM_ACCOUNT_ID="acct",
@@ -192,7 +197,33 @@ class ZoomClientRequestRetryTests(TestCase):
         self.assertEqual(cache.get(TOKEN_CACHE_KEY), "new-token")
 
 
-class CreateEventMeetingTests(TestCase):
+class ZoomClientPatchMeetingTests(TestCase):
+    def setUp(self):
+        self.client = ZoomClient()
+
+    def test_payload_shape(self):
+        start = dt(2026, 6, 1, 14, 0, tzinfo=UTC)
+
+        with patch.object(self.client, "_request") as mock_req:
+            self.client.patch_meeting(
+                meeting_id="123",
+                topic="Updated Topic",
+                start_time=start,
+                duration_minutes=45,
+            )
+
+        method, url = mock_req.call_args.args[:2]
+        payload = mock_req.call_args.kwargs["json"]
+
+        self.assertEqual(method, "PATCH")
+        self.assertTrue(url.endswith("/meetings/123"))
+        self.assertEqual(payload["topic"], "Updated Topic")
+        self.assertEqual(payload["start_time"], "2026-06-01T14:00:00Z")
+        self.assertEqual(payload["duration"], 45)
+        self.assertEqual(payload["timezone"], "UTC")
+
+
+class CreateEventMeetingServiceTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.event = EventFactory.create(
@@ -203,16 +234,18 @@ class CreateEventMeetingTests(TestCase):
         )
 
     @patch("home.integrations.zoom.service.zoom_client.create_meeting")
-    def test_returns_join_url(self, mock_create):
+    def test_returns_zoom_meeting(self, mock_create):
         mock_create.return_value = {
             "id": 1,
             "join_url": "https://zoom.us/j/abc",
             "start_url": "https://zoom.us/s/abc",
         }
 
-        url = create_event_meeting(self.event)
+        result = create_event_meeting(self.event)
 
-        self.assertEqual(url, "https://zoom.us/j/abc")
+        self.assertIsInstance(result, ZoomMeeting)
+        self.assertEqual(result.join_url, "https://zoom.us/j/abc")
+        self.assertEqual(result.meeting_id, "1")
 
         mock_create.assert_called_once_with(
             topic="Django Office Hours",
@@ -239,132 +272,132 @@ class CreateEventMeetingTests(TestCase):
         self.assertEqual(mock_create.call_args.kwargs["duration_minutes"], 1)
 
 
-class CreateZoomMeetingTaskTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.event = EventFactory.create(
-            start_time=dt(2024, 9, 1, 10, 0, tzinfo=UTC),
-            end_time=dt(2024, 9, 1, 11, 0, tzinfo=UTC),
-            zoom_link="",
+class UpdateEventMeetingServiceTests(TestCase):
+    @patch("home.integrations.zoom.service.zoom_client.patch_meeting")
+    def test_calls_patch_meeting_with_event_fields(self, mock_patch):
+        event = EventFactory.create(
+            title="Existing",
+            start_time=dt(2026, 9, 1, 10, 0, tzinfo=UTC),
+            end_time=dt(2026, 9, 1, 11, 0, tzinfo=UTC),
+            zoom_link="https://zoom.us/j/existing",
+            zoom_meeting_id="meeting-123",
         )
 
+        update_event_meeting(event)
+
+        mock_patch.assert_called_once_with(
+            meeting_id="meeting-123",
+            topic="Existing",
+            start_time=event.start_time,
+            duration_minutes=60,
+        )
+
+
+class SyncEventZoomTests(TestCase):
+    """Zoom behaviour of the single sync_event task (create and update paths)."""
+
     @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_sets_zoom_link(self, mock_create):
-        mock_create.return_value = "https://zoom.us/j/meeting"
+    @patch("home.tasks.sync_event.create_event_meeting")
+    def test_creates_meeting_and_sets_fields(self, mock_create):
+        mock_create.return_value = ZoomMeeting("https://zoom.us/j/meeting", "12345")
+        event = EventFactory.create(zoom_link="")
 
-        create_zoom_meeting.call(event_id=self.event.pk)
+        sync_event.call(event_id=event.pk)
 
-        self.event.refresh_from_db()
-        self.assertEqual(self.event.zoom_link, "https://zoom.us/j/meeting")
+        event.refresh_from_db()
+        self.assertEqual(event.zoom_link, "https://zoom.us/j/meeting")
+        self.assertEqual(event.zoom_meeting_id, "12345")
+        self.assertIsNotNone(event.zoom_synced_at)
 
     @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_skips_if_zoom_link_exists(self, mock_create):
+    @patch("home.tasks.sync_event.create_event_meeting")
+    def test_skips_create_when_zoom_link_exists(self, mock_create):
         event = EventFactory.create(zoom_link="https://existing.link")
 
-        create_zoom_meeting.call(event_id=event.pk)
+        sync_event.call(event_id=event.pk)
 
         mock_create.assert_not_called()
 
     @override_settings(ZOOM_ACCOUNT_ID="", ZOOM_CLIENT_ID="", ZOOM_CLIENT_SECRET="")
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_skips_when_zoom_not_configured(self, mock_create):
-        create_zoom_meeting.call(event_id=self.event.pk)
-
-        mock_create.assert_not_called()
-
-    @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_handles_missing_event(self, mock_create):
-        create_zoom_meeting.call(event_id=999999)
-
-        mock_create.assert_not_called()
-
-    @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_handles_zoom_errors(self, mock_create):
-        mock_create.side_effect = Exception("Zoom API error")
-
-        create_zoom_meeting.call(event_id=self.event.pk)
-
-        self.event.refresh_from_db()
-        self.assertEqual(self.event.zoom_link, "")
-
-    @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_concurrent_update_preserved(self, mock_create):
-        mock_create.return_value = "https://zoom.us/j/new"
-
+    @patch("home.tasks.sync_event.create_event_meeting")
+    def test_skips_zoom_when_not_configured(self, mock_create):
         event = EventFactory.create(zoom_link="")
 
+        sync_event.call(event_id=event.pk)
+
+        mock_create.assert_not_called()
+
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.tasks.sync_event.create_event_meeting")
+    def test_handles_missing_event(self, mock_create):
+        sync_event.call(event_id=999999)
+
+        mock_create.assert_not_called()
+
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.tasks.sync_event.create_event_meeting")
+    def test_zoom_error_leaves_link_empty(self, mock_create):
+        mock_create.side_effect = Exception("Zoom API error")
+        event = EventFactory.create(zoom_link="")
+
+        sync_event.call(event_id=event.pk)
+
+        event.refresh_from_db()
+        self.assertEqual(event.zoom_link, "")
+
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.tasks.sync_event.create_event_meeting")
+    def test_concurrent_link_preserved(self, mock_create):
+        mock_create.return_value = ZoomMeeting("https://zoom.us/j/new", "111")
+        event = EventFactory.create(zoom_link="")
+
+        # Simulate a concurrent write committed after the task was enqueued; the
+        # task's select_for_update re-reads the row and must not overwrite it.
         Event.objects.filter(pk=event.pk).update(
             zoom_link="https://zoom.us/j/concurrent"
         )
 
-        create_zoom_meeting.call(event_id=event.pk)
+        sync_event.call(event_id=event.pk)
 
         event.refresh_from_db()
-
         self.assertEqual(event.zoom_link, "https://zoom.us/j/concurrent")
+        mock_create.assert_not_called()
 
     @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_uses_select_for_update_in_transaction(self, mock_create):
-        """Task uses select_for_update inside an atomic transaction."""
-        from django.db import transaction
-
-        mock_create.return_value = "https://zoom.us/j/meeting"
-
-        with (
-            patch("django.db.transaction.atomic") as mock_atomic,
-            patch(
-                "home.tasks.create_zoom_meeting.Event.objects.select_for_update"
-            ) as mock_select,
-        ):
-            # Setup the chain: Event.objects.select_for_update().get(pk=...)
-            mock_select.return_value.get.return_value = self.event
-
-            create_zoom_meeting.call(event_id=self.event.pk)
-
-            self.assertTrue(mock_atomic.called)
-            mock_select.assert_called_once()
-            mock_select.return_value.get.assert_called_with(pk=self.event.pk)
-
-
-class ZoomSignalTests(TestCase):
-    """Tests for the post_save signal that triggers Zoom meeting creation."""
-
-    @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_new_event_without_zoom_link_creates_meeting(self, mock_create):
-        """Creating a new event with no zoom_link triggers Zoom meeting creation."""
-        mock_create.return_value = "https://zoom.us/j/new"
-        event = Event.objects.create(
-            title="Signal Test Event",
-            slug="signal-test-new",
-            start_time=dt(2025, 6, 1, 18, 0, tzinfo=UTC),
-            end_time=dt(2025, 6, 1, 19, 0, tzinfo=UTC),
-            zoom_link="",
+    @patch("home.tasks.sync_event.update_event_meeting")
+    def test_updates_meeting_when_meeting_id_present(self, mock_update):
+        event = EventFactory.create(
+            zoom_link="https://zoom.us/j/existing",
+            zoom_meeting_id="meeting-123",
         )
+
+        sync_event.call(event_id=event.pk)
+
+        mock_update.assert_called_once()
         event.refresh_from_db()
-        self.assertEqual(event.zoom_link, "https://zoom.us/j/new")
+        self.assertIsNotNone(event.zoom_synced_at)
 
     @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_updating_existing_event_does_not_create_new_meeting(self, mock_create):
-        """Updating (not creating) an event never triggers a new Zoom meeting."""
-        mock_create.return_value = "https://zoom.us/j/initial"
-        event = Event.objects.create(
-            title="Signal Test Update",
-            slug="signal-test-update",
-            start_time=dt(2025, 6, 1, 18, 0, tzinfo=UTC),
-            end_time=dt(2025, 6, 1, 19, 0, tzinfo=UTC),
-            zoom_link="",
+    @patch("home.tasks.sync_event.update_event_meeting")
+    def test_update_error_leaves_synced_at_unset(self, mock_update):
+        mock_update.side_effect = Exception("Zoom down")
+        event = EventFactory.create(
+            zoom_link="https://zoom.us/j/existing",
+            zoom_meeting_id="meeting-123",
         )
-        mock_create.reset_mock()
 
-        event.title = "Updated Title"
+        sync_event.call(event_id=event.pk)
+
+        event.refresh_from_db()
+        self.assertIsNone(event.zoom_synced_at)
+
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.tasks.sync_event.create_event_meeting")
+    def test_model_save_does_not_trigger_sync(self, mock_create):
+        """No post_save signal: saving an Event must not run the sync itself,
+        so the sync_event write-back can't loop back into another sync."""
+        event = EventFactory.create(zoom_link="")
+        event.title = "Changed"
         event.save()
 
         mock_create.assert_not_called()
