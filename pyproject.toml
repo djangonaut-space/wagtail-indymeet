@@ -29,7 +29,7 @@ dependencies = [
     "django-tasks-db",
     "django-import-export",
     "icalendar",
-    "requests>=2.33.1",
+    "requests>=2.34.2",
 ]
 
 [project.optional-dependencies]
@@ -44,7 +44,7 @@ test = [
     "factory_boy",
     "unittest_parametrize",
     "faker",
-    "responses>=0.26.0",
+    "responses>=0.26.1",
 ]
 dev = [
     "pre-commit",
