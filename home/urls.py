@@ -14,6 +14,7 @@ from home.views.surveys import (
     EditUserSurveyResponseView,
     UserSurveyResponseView,
 )
+from home.views.talks import TalkGeoJSONView, TalkMapView
 from home.views.teams import (
     DjangonautSurveyResponseView,
     TeamDetailView,
@@ -90,6 +91,8 @@ urlpatterns = [
         ),
         name="opportunities",
     ),
+    path("talks/api/geojson/", TalkGeoJSONView.as_view(), name="talks_geojson"),
+    path("talks/map/", TalkMapView.as_view(), name="talks_map"),
     path("testimonials/", TestimonialListView.as_view(), name="testimonial_list"),
     path(
         "testimonials/create/",

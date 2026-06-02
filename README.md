@@ -80,9 +80,7 @@ This is the web application for the Djangonaut Space mentoring program. The plat
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* Python version 3.11
-* [uv](https://docs.astral.sh/uv/) - Fast Python package installer and resolver
+* [Docker](https://docs.docker.com/get-started/introduction/get-docker-desktop/)
 
 ### Installation
 
@@ -90,91 +88,29 @@ This is an example of how to list things you need to use the software and how to
    ```sh
    git clone https://github.com/dawnwages/wagtail-indymeet.git
    ```
-2. Install uv if you haven't already
-   ```sh
-   # On macOS and Linux
-   curl -LsSf https://astral.sh/uv/install.sh | sh
 
-   # On Windows
-   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-   ```
-3. Create a posgresql database
-   ```sh
-   psql -U postgres
-   ```
-   ```sh
-   postgres=# CREATE DATABASE "djangonaut-space";
-   postgres=# CREATE USER djangonaut WITH SUPERUSER PASSWORD 'djangonaut';
-   postgres=# GRANT ALL PRIVILEGES ON DATABASE "djangonaut-space" TO djangonaut;
-   ```
-   ```sh
-   postgres=# exit
-   ```
-4. Install dependencies (this will automatically create a virtual environment)
-   ```sh
-   uv sync --extra dev --extra test
-   ```
-   Set up the git hook scripts
-   ```sh
-   uv run pre-commit install
-   ```
-5. Copy `.env.template.local` file, rename to `.env` and use variables for your local postgres database.
+2. Copy `.env.template.docker` file, rename to `.env.docker` and update the secret key.
    Copy in Linux:
    ```sh
-   cp .env.template.local .env
+   cp .env.template.docker .env.docker
    ```
    activate in Windows:
    ```sh
-   copy .env.template.local .env
-   ```
-6. Run migrations and create superuser
-   ```sh
-   uv run python manage.py migrate
-   # Potentially load data first
-   # uv run python manage.py loaddata fixtures/data.json
-   uv run python manage.py createsuperuser
-   ```
-7. Install tailwind. You also need npm installed.
-   ```sh
-   uv run python manage.py tailwind install
-   ```
-8. Run server locally
-   ```sh
-   uv run python manage.py runserver
-   ```
-9. Run tailwind in another terminal locally
-   ```sh
-   uv run python manage.py tailwind start
-   ```
+   copy .env.template.docker .env.docker
+   `````
 
-Alternatively, if you're not using Windows you can run the following instead of steps 8 and 9:
-
-```shell
-./scripts/local.sh
-```
-
-This will run both the Django server and the Tailwind watcher in the same terminal.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-#### Docker
-
-If you have docker installed, alternatively
-
-1. Have docker running and then run:
+3. Have docker running and then run:
    ```sh
    docker compose up
    ```
 
-2. In a new terminal, run any setup commands you need such as
+4. In a new terminal, run any setup commands you need such as
    ```sh
-   docker compose exec web python manage.py createsuperuser
+   docker compose exec django uv run python manage.py createsuperuser
    ```
 
-3. Go to: http://127.0.0.1:8000/ and enjoy!
+5. Go to: http://127.0.0.1:8000/ and enjoy!
 
-
-You will also want to createsuperuser, load/create data in order to use the blog, etc.
 
 ### Creating fixtures for local testing
 
@@ -182,7 +118,7 @@ You will also want to createsuperuser, load/create data in order to use the blog
 To create a fixture to share content with another person you should do the following:
 
 ```shell
-python manage.py dumpdata --natural-foreign --indent 2 \
+docker compose exec django uv run python manage.py dumpdata --natural-foreign --indent 2 \
    -e contenttypes -e auth.permission \
    -e wagtailcore.groupcollectionpermission \
    -e wagtailcore.grouppagepermission \
@@ -203,10 +139,10 @@ some images first before sharing.
 on.
 2. Unpack the archived file, and place the `media/` and `fixtures/` directories at the
 top level of the project.
-3. Create a new database such as ``createdb -U djangonaut -W -O djangonaut djangonaut-space2``
-4. Change your settings or environment variables to point to the new database
-5. ``uv run python manage.py migrate``
-6. ``uv run python manage.py loaddata fixtures/data.json``
+3. Create a new database such as ``docker compose exec db createdb -U djangonaut -W -O djangonaut djangonaut-space2``
+4. Update `DATABASE_URL` in `.env.docker` to point to the new database
+5. ``docker compose exec django uv run python manage.py migrate``
+6. ``docker compose exec django uv run python manage.py loaddata fixtures/data.json``
 
 ## Documentation
 
@@ -237,18 +173,18 @@ or using [`pytest`](https://docs.pytest.org/).
 To run the tests:
 
 ```shell
-uv run pytest
+docker compose exec django uv run pytest
 ```
 
 There are also Playwright tests that can be run. To run these tests:
 
 ```shell
 # Be sure playwright is properly installed and has a test user for accessing /admin
-uv run playwright install --with-deps
+docker compose exec django uv run playwright install --with-deps
 # This is the actual test command
-uv run pytest -m playwright
+docker compose exec django uv run pytest -m playwright
 # Run the tests in headed mode (so you can see the browser)
-uv run pytest -m playwright --headed
+docker compose exec django uv run pytest -m playwright --headed
 ```
 
 ### Merging changes
@@ -303,12 +239,12 @@ occur in rare cases where a change must be pushed out to production immediately.
 ## Running `production` or `staging` locally
 
 **Running production or staging locally**
-- Set .env variables `USER`, `PASSWORD` and `HOST` for either `staging` or `production` in order to access staging db. Credentials are in the password manager
-- `uv run python manage.py runserver --settings=indymeet.settings.production`
+- Set `DATABASE_URL` in `.env.docker` to the staging or production connection string. Credentials are in the password manager.
+- `docker compose up`
 
 **Migrate production or staging db**
-- Set terminal variables for `USER`, `PASSWORD` and `HOST` for either `staging` or `production` db. Credentials are in the password manager.
-- `uv run python manage.py migrate --settings=indymeet.settings.production`
+- Set `DATABASE_URL` in `.env.docker` to the staging or production connection string. Credentials are in the password manager.
+- `docker compose exec django uv run python manage.py migrate`
 
 ### Updating dependencies
 This project uses [`uv`](https://docs.astral.sh/uv/) to manage dependencies.
@@ -316,22 +252,22 @@ This project uses [`uv`](https://docs.astral.sh/uv/) to manage dependencies.
 To add a new dependency:
 ```sh
 # Add to main dependencies
-uv add package-name
+docker compose exec django uv add package-name
 
 # Add to dev dependencies
-uv add --dev package-name
+docker compose exec django uv add --group dev package-name
 
 # Add to test dependencies
-uv add --optional test package-name
+docker compose exec django uv add --group test package-name
 ```
 
 To update dependencies:
 ```sh
 # Update all dependencies
-uv lock --upgrade
+docker compose exec django uv lock --upgrade
 
 # Update a specific package
-uv lock --upgrade-package package-name
+docker compose exec django uv lock --upgrade-package package-name
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

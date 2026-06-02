@@ -33,5 +33,8 @@
       "Bash(uv run python manage.py flush:*)",
       "Bash(uv run python manage.py dbshell:*)"
     ]
+  },
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "indymeet.settings"
   }
 }

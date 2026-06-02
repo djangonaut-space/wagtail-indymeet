@@ -10,6 +10,7 @@ This is used directly by Wagtail. Don't delete it.
 {% block title %}Djangonaut Space - Where contributors launch!{% endblock %}
 {% block body_class %}landing{% endblock %}
 {% block content %}
+
   <header class="w-full bg-gray-950/80 backdrop-blur-md fixed top-0 z-50 font-inter">
     <nav class="max-w-[1200px] mx-auto px-6 py-4" aria-label="Main navigation">
       <div class="flex items-center justify-between lg:grid lg:grid-cols-3 lg:items-center">
@@ -50,6 +51,10 @@ This is used directly by Wagtail. Don't delete it.
               <a href="{% url 'session_list' %}"
                  class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
                 Sessions
+              </a>
+              <a href="{% url 'talks_map' %}"
+                 class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
+                Talks Map
               </a>
               <a href="mailto:contact@djangonaut.space"
                  class="block px-4 py-2 text-sm no-underline text-gray-700 hover:bg-ds-purple hover:text-white transition-colors">
@@ -162,6 +167,7 @@ This is used directly by Wagtail. Don't delete it.
             <a href="{% slugurl 'uniform-supply-office' %}" class="no-underline text-gray-300 hover:text-white py-1">Store</a>
             <a href="{% slugurl 'media-talks' %}" class="no-underline text-gray-300 hover:text-white py-1">Media</a>
             <a href="{% url 'session_list' %}" class="no-underline text-gray-300 hover:text-white py-1">Sessions</a>
+            <a href="{% url 'talks_map' %}" class="no-underline text-gray-300 hover:text-white py-1">Talks Map</a>
             <a href="mailto:contact@djangonaut.space"
                class="no-underline text-gray-300 hover:text-white py-1">Contact</a>
           </div>

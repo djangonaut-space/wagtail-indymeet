@@ -1,0 +1,154 @@
+/* Body & map container */
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+}
+
+#map-container {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    transition: left 1s;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+#info {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    z-index: 1000;
+    background: rgba(0,0,0,0.8);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#markerPopup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    font-family: sans-serif;
+    pointer-events: none;
+    max-width: 250px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#markerPopup.hovered {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(-4px);
+}
+
+#markerPopup a {
+    margin: 0;
+    color: #C8F582;
+    letter-spacing: 0.5px;
+}
+
+#markerPopup a:hover {
+    color: #A7EBA7;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Home logo */
+.project-logo {
+    display: inline-block;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.project-logo:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+
+.project-logo:focus {
+    outline: 3px solid #D4F4D4;
+    outline-offset: 4px;
+}
+
+.project-logo img {
+    height: auto;
+    max-width: 140px;
+    width: 100%;
+    object-fit: contain;
+}
+
+/* Map title */
+#map-title {
+    position: absolute;
+    left: 10px;
+    z-index: 100;
+    font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+    text-align: left;
+    max-width: 90vw;
+    padding: 6px 10px;
+}
+
+#map-title h1 {
+    color: #ffffff;
+    background: rgba(0,0,0,0.75);
+    font-size: clamp(1.5rem, 8vw, 3.5rem);
+    font-weight: 400;
+    margin: 0;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    display: inline-block;
+    font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+    line-height: 1.2;
+}
+
+#map-title p {
+    color: rgba(255,255,255,0.9);
+    background: rgba(0,0,0,0.6);
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    font-weight: 400;
+    margin: 0;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    display: block;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    max-width: 90vw;
+}
+
+/* License attribution */
+#map-license-attribution {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-family: sans-serif;
+    font-size: 0.8rem;
+    z-index: 10;
+}
+
+#map-license-attribution a {
+    color: #ffd700;
+    text-decoration: none;
+}
+
+#map-license-attribution a:hover {
+    text-decoration: underline;
+}
