@@ -35,10 +35,5 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY . /app
 
-# Provide a dummy SECRET_KEY so Django can initialize during build steps.
-# Dokku injects the real SECRET_KEY at runtime; ARG is not persisted in the image.
-ARG SECRET_KEY=build-time-placeholder
-RUN uv run python manage.py tailwind build
-RUN uv run python manage.py collectstatic --no-input
 
 CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]

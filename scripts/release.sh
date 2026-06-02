@@ -4,3 +4,5 @@ else
     python manage.py migrate
     python manage.py setup_session_organizers_group
 fi
+python manage.py tailwind build
+python manage.py collectstatic --no-input
