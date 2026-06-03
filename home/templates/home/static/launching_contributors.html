@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+{% load i18n wagtailcore_tags static tz %}
+
+{% block title %}Launching Djangonauts into Contributing | Djangonaut Space{% endblock %}
+{% block meta_title %}Launching Djangonauts into Contributing | Djangonaut Space{% endblock %}
+{% block meta_description %}An interstellar review of Djangonaut Space's cosmic impact by the numbers.{% endblock %}
+{% block social_share %}
+    <meta property="og:description" content="An interstellar review of Djangonaut Space's cosmic impact by the numbers.">
+    <meta property="og:image" content="{% static 'img/main-white-purple-background.png' %}">
+    <meta property="og:title" content="Launching Djangonauts into Contributing | Djangonaut Space">
+{% endblock social_share %}
+
+{% block extra_css %}
+  <style>
+  .ds-blog { max-width: 900px; margin: 0 auto; padding: 0 24px; font-family: 'Lato', sans-serif; font-size: 18px; line-height: 1.7; color: #1A1A2E; }
+  .ds-blog h2 { font-size: 2.2rem; font-weight: 900; margin-bottom: 12px; }
+  .ds-blog h2 span { color: #5C0287; }
+  .ds-blog h3 { font-size: 1.4rem; font-weight: 700; margin: 40px 0 12px; }
+  .ds-blog p { margin-bottom: 20px; }
+  .ds-blog .section-lead { font-size: 1.15rem; color: #64647A; margin-bottom: 40px; max-width: 700px; }
+  .ds-blog .hero { text-align: center; padding: 60px 0 40px; }
+  .ds-blog .hero h1 { font-size: 3rem; font-weight: 900; line-height: 1.2; margin-bottom: 20px; }
+  .ds-blog .hero h1 span { color: #5C0287; }
+  .ds-blog .hero .subtitle { font-size: 1.3rem; color: #64647A; max-width: 640px; margin: 0 auto 40px; font-weight: 300; }
+  .ds-blog .hero-stats { display: flex; justify-content: center; gap: 60px; flex-wrap: wrap; }
+  .ds-blog .hero-stat { text-align: center; }
+  .ds-blog .hero-stat .num { font-size: 3rem; font-weight: 900; color: #B8580C; display: block; }
+  .ds-blog .hero-stat .label { font-size: 0.9rem; color: #64647A; text-transform: uppercase; letter-spacing: 1px; }
+  .ds-blog .stat-row { display: flex; gap: 24px; margin: 40px 0; flex-wrap: wrap; }
+  .ds-blog .stat-card { flex: 1; min-width: 200px; background: #FFFFFF; border-radius: 12px; padding: 32px 24px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .ds-blog .stat-card .num { font-size: 2.5rem; font-weight: 900; color: #B8580C; display: block; margin-bottom: 8px; }
+  .ds-blog .stat-card .label { font-size: 0.9rem; color: #64647A; }
+  .ds-blog .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 40px 0; }
+  .ds-blog .comparison-card { background: #FFFFFF; border-radius: 12px; padding: 40px 32px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .ds-blog .comparison-card .num { font-size: 3.5rem; font-weight: 900; display: block; margin-bottom: 8px; }
+  .ds-blog .comparison-card .num.problem { color: #64647A; }
+  .ds-blog .comparison-card .num.solution { color: #5C0287; }
+  .ds-blog .comparison-card .label { font-size: 1rem; color: #64647A; line-height: 1.4; }
+  .ds-blog .comparison-card .source { font-size: 0.75rem; color: #64647A; margin-top: 12px; opacity: 0.7; }
+  .ds-blog .quote-block { border-left: 3px solid #5C0287; padding: 24px 32px; margin: 40px 0; background: #FFFFFF; border-radius: 0 12px 12px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .ds-blog .quote-block p { font-size: 1.25rem; font-weight: 300; font-style: italic; margin-bottom: 12px; line-height: 1.6; }
+  .ds-blog .quote-block .attribution { font-size: 0.95rem; color: #5C0287; font-style: normal; font-weight: 700; }
+  .ds-blog .quote-block .attribution .session { font-size: 0.85rem; font-weight: 400; color: #64647A; display: block; }
+  .ds-blog .big-quote { text-align: center; padding: 80px 24px; }
+  .ds-blog .big-quote p { font-size: 2rem; font-weight: 300; font-style: italic; max-width: 700px; margin: 0 auto 20px; line-height: 1.5; }
+  .ds-blog .big-quote .attribution { color: #5C0287; font-size: 1.1rem; }
+  .ds-blog .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 40px 0; }
+  .ds-blog .video-card { background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .ds-blog .video-card img { width: 100%; display: block; }
+  .ds-blog .video-card .video-label { padding: 12px 16px; font-size: 0.85rem; color: #64647A; }
+  .ds-blog .video-card .video-label strong { color: #5C0287; font-weight: 700; }
+  .ds-blog .video-single { margin: 40px auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 640px; }
+  .ds-blog .video-single img { width: 100%; display: block; }
+  .ds-blog .video-single .video-label { padding: 12px 16px; font-size: 0.85rem; color: #64647A; }
+  .ds-blog .video-single .video-label strong { color: #5C0287; }
+  .ds-blog .chart-container { margin: 40px 0; text-align: center; }
+  .ds-blog .chart-container img { max-width: 100%; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .ds-blog .chart-caption { font-size: 0.85rem; color: #64647A; margin-top: 12px; font-style: italic; }
+  .ds-blog .pipeline-list { list-style: none; margin: 30px 0; padding: 0; }
+  .ds-blog .pipeline-list li { padding: 16px 0; border-bottom: 1px solid rgba(92,2,135,0.08); display: flex; gap: 16px; align-items: baseline; }
+  .ds-blog .pipeline-list .name { font-weight: 700; color: #5C0287; min-width: 180px; }
+  .ds-blog .pipeline-list .journey { color: #64647A; font-size: 0.95rem; }
+  .ds-blog .pipeline-list .journey strong { color: #1A1A2E; }
+  .ds-blog .caveat { background: #FFFFFF; border-radius: 12px; padding: 28px 32px; margin: 40px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 3px solid #B8580C; font-size: 1.05rem; line-height: 1.6; }
+  .ds-blog .divider { width: 80px; height: 3px; background: #5C0287; margin: 60px auto; border-radius: 2px; }
+  .ds-blog .cta { text-align: center; padding: 60px 24px; background: #FFFFFF; border-radius: 16px; margin: 40px 0; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .ds-blog .cta h2 { margin-bottom: 16px; }
+  .ds-blog .cta p { color: #64647A; max-width: 600px; margin: 0 auto 30px; }
+  .ds-blog .cta a { display: inline-block; background: #5C0287; color: #FFFFFF; padding: 14px 36px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; }
+  .ds-blog .cta a:hover { opacity: 0.85; }
+  .ds-blog table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+  .ds-blog th, .ds-blog td { padding: 10px 16px; text-align: left; border-bottom: 1px solid rgba(92,2,135,0.08); }
+  .ds-blog th { font-weight: 700; color: #5C0287; }
+  .ds-blog .footnotes { font-size: 0.9rem; line-height: 1.6; color: #64647A; }
+  .ds-blog .footnotes li { margin-bottom: 12px; }
+  @media (max-width: 700px) {
+    .ds-blog .hero h1 { font-size: 2rem; }
+    .ds-blog .hero-stats { gap: 30px; }
+    .ds-blog .video-grid { grid-template-columns: 1fr; }
+    .ds-blog .stat-row { flex-direction: column; }
+    .ds-blog .comparison { grid-template-columns: 1fr; }
+    .ds-blog h2 { font-size: 1.6rem; }
+    .ds-blog .big-quote p { font-size: 1.4rem; }
+    .ds-blog .pipeline-list li { flex-direction: column; gap: 4px; }
+    .ds-blog .pipeline-list .name { min-width: auto; }
+  }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+  <div class="ds-blog">
+
+    <!-- ============================================================ -->
+    <!-- HERO -->
+    <!-- ============================================================ -->
+    <div class="hero">
+      <p class="subtitle">
+        How a small mentorship program turned 104 contributors from 40+ countries
+        into the most diverse open source pipeline in Django's history.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="num">104</span><span class="label">Djangonauts</span></div>
+        <div class="hero-stat"><span class="num">40+</span><span class="label">Countries</span></div>
+        <div class="hero-stat"><span class="num">6</span><span class="label">Sessions</span></div>
+        <div class="hero-stat"><span class="num">226</span><span class="label">Volunteers</span></div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- THE PROBLEM -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>The software the world runs on is built by a <span>narrow slice</span> of the world.</h2>
+
+      <p>95% of open source contributors identify as men.<sup><a href="#fn1">1</a></sup> Only 18% identify as ethnic minorities in their country of birth.<sup><a href="#fn2">2</a></sup> Most pull requests come from developers in the US, UK, and Germany.<sup><a href="#fn3">3</a></sup></p>
+
+      <div class="comparison">
+        <div class="comparison-card">
+          <span class="num problem">~9%</span>
+          <span class="label">of open source contributors<br>are <strong>gender minorities</strong></span>
+          <span class="source">LF &amp; Harvard FOSS Survey, 2020</span>
+        </div>
+        <div class="comparison-card">
+          <span class="num solution">48%</span>
+          <span class="label">of Djangonaut Space participants<br>are <strong>gender minorities</strong></span>
+          <span class="source">Djangonaut Space, S1-S6</span>
+        </div>
+      </div>
+
+      <p>This isn't just an equity problem. It's an engineering problem. Diverse teams solve complex tasks 60% faster.<sup><a href="#fn4">4</a></sup> Diverse open source repositories produce superior code quality.<sup><a href="#fn5">5</a></sup> When female contributors' gender is identifiable, their code acceptance rate drops 12%, even though their code was accepted at <em>higher</em> rates when gender was hidden.<sup><a href="#fn6">6</a></sup></p>
+
+      <p>Open source has a diversity problem. And it's making the software worse.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- ORIGIN -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>So We <span>Built Something</span></h2>
+
+      <p>For years at DjangoCon, the same conversation kept coming up: the people contributing to Django didn't reflect the community using it. We were losing people to burnout, to feeling unwelcome, to life getting in the way with no one noticing.</p>
+
+      <div class="video-single">
+        <img src="assets/blog_screenshots/rachell_the_solution.jpg" alt="Rachell Calhoun: We need more contributors. Why do we not have more diversity? But no one was putting a solution forward. So this is the solution.">
+        <div class="video-label"><strong>Rachell Calhoun</strong>, Co-founder</div>
+      </div>
+
+      <p>And we kept hearing that people wanted to contribute but didn't know how. They'd open the issue tracker, feel overwhelmed, and close the tab. Or they'd submit a pull request and never hear back. We saw that gap between wanting to contribute and actually getting in, and we saw the bridge it needed. So in 2023, a small group of volunteers built Djangonaut Space: an 8-week group mentorship program that pairs people who want to contribute to open source with people who already do. Each team of three djangonauts gets a navigator (technical mentor) and a captain (community mentor).</p>
+
+      <div class="video-grid">
+        <div class="video-card">
+          <img src="assets/blog_screenshots/tim_interest_in_human.jpg" alt="Tim Schilling: Take an interest in them as a human.">
+          <div class="video-label"><strong>Tim Schilling</strong>, Co-founder</div>
+        </div>
+        <div class="video-card">
+          <img src="assets/blog_screenshots/lillian_every_role.jpg" alt="Lilian Tran: Session 1 djangonaut who went on to hold every role in the program.">
+          <div class="video-label"><strong>Lilian Tran</strong>, S1 djangonaut, held every role</div>
+        </div>
+      </div>
+
+      <div class="quote-block">
+        <p>"Take an interest in them as a human. Our goal is to bring community members into the program, and a lot of open source is the community aspect of it. We are trying to bring people into our community."</p>
+        <div class="attribution">Tim Schilling, Co-founder
+          <span class="session">Djangonaut Space Onboarding, Session 6</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- SIX SESSIONS -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>Six Sessions: <span>The Numbers</span></h2>
+
+      <table>
+        <thead><tr><th></th><th>Applications</th><th>Accepted</th><th>Acceptance Rate</th></tr></thead>
+        <tbody>
+          <tr><td>Pilot</td><td>Invited</td><td>6</td><td></td></tr>
+          <tr><td>Session 1</td><td>172</td><td>17</td><td>10%</td></tr>
+          <tr><td>Session 2</td><td>146</td><td>15</td><td>10%</td></tr>
+          <tr><td>Session 3</td><td>92</td><td>14</td><td>15%</td></tr>
+          <tr><td>Session 4</td><td>83</td><td>15</td><td>18%</td></tr>
+          <tr><td>Session 5</td><td>95</td><td>20</td><td>21%</td></tr>
+          <tr><td>Session 6</td><td>95</td><td>18</td><td>19%</td></tr>
+          <tr><td><strong>Total</strong></td><td><strong>680+</strong></td><td><strong>104</strong></td><td><strong>~15%</strong></td></tr>
+        </tbody>
+      </table>
+      <p><small>All counts from program tracking data.<sup><a href="#fn7">7</a></sup></small></p>
+
+      <div class="stat-row">
+        <div class="stat-card"><span class="num">5 yrs</span><span class="label">median programming experience</span></div>
+        <div class="stat-card"><span class="num">680+</span><span class="label">total applications</span></div>
+        <div class="stat-card"><span class="num">15%</span><span class="label">acceptance rate</span></div>
+      </div>
+
+      <p>The typical applicant has a median of 5 years of programming experience.<sup><a href="#fn8">8</a></sup> These aren't beginners. They're working developers who use Django every day but haven't found their way into contributing. Because open source contribution is hard to do alone.</p>
+
+      <p>And here's what surprised us: the people we accept actually have slightly <em>less</em> experience than those we don't (4.9 years vs 5.9 years on average).<sup><a href="#fn8">8</a></sup> We don't select for the longest resume. We select for resilience, motivation, and wanting to give back.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- ACTIVE INCLUSION -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>Active Inclusion <span>by Design</span></h2>
+
+      <p><strong>82%</strong> of our accepted djangonauts come from underrepresented backgrounds, compared to 18% in open source overall.<sup><a href="#fn2">2</a></sup><sup><a href="#fn7">7</a></sup></p>
+
+      <p>This didn't happen by accident. Across every session, gender minorities have been accepted at 3 to 10 times their representation in the applicant pool.<sup><a href="#fn10">10</a></sup> For example, in Session 1 gender minorities made up 17% of applicants but 71% of those accepted. In Session 6, 23% of the pool and 56% of those accepted.</p>
+
+      <div class="chart-container">
+        <img src="assets/chart_gender_accepted_only_light.png" alt="Gender minority percentage per session among accepted djangonauts">
+        <div class="chart-caption">Gender minority representation among accepted djangonauts, by session.</div>
+      </div>
+
+      <p>Representation matters. When people see others who look like them or share their background contributing to a project, it stops feeling like something other people do and starts feeling possible. And we're seeing that play out: the applicant pool itself is growing more diverse on its own. Underrepresented applicants went from 68% of the pool in Session 1 to 86% in Session 6, an 18 percentage point increase over six sessions.<sup><a href="#fn10">10</a></sup> Diversity attracts diversity.</p>
+
+      <h3>Where our djangonauts come from</h3>
+
+      <div class="chart-container">
+        <img src="assets/geographic_combined_accepted_s4s6_light.png" alt="Where our accepted djangonauts come from: Africa 42%, Global North 38%, Latin America 13%, South Asia 8%">
+        <div class="chart-caption">Geographic distribution of accepted djangonauts, Sessions 4-6.<sup><a href="#fn7">7</a></sup></div>
+      </div>
+
+      <p>The top applicant countries: Nigeria, India, Kenya, Ghana, Pakistan, and Egypt.<sup><a href="#fn7">7</a></sup> This is what open source could look like everywhere.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- WHAT CHANGES -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>What Changes: From "I Can't" to <span>"I Know I Can"</span></h2>
+
+      <div class="stat-row">
+        <div class="stat-card"><span class="num">2.3 &rarr; 4.3</span><span class="label">confidence contributing to Django (out of 5)</span></div>
+        <div class="stat-card"><span class="num">97%</span><span class="label">feel more comfortable contributing</span></div>
+        <div class="stat-card"><span class="num">100%</span><span class="label">would recommend the program</span></div>
+      </div>
+
+      <p>Before the program, djangonauts rated their confidence contributing to Django at <strong>2.3 out of 5</strong>. After? <strong>4.3</strong>.<sup><a href="#fn12">12</a></sup> That's people going from "I'm not sure I can do this" to "I know I can."</p>
+
+      <div class="quote-block">
+        <p>"I felt as though I wasn't the kind of person who could become a Django contributor. Now I feel like I found a place where I belong."</p>
+        <div class="attribution">Eliana Rosselli
+          <span class="session">Session 1 Djangonaut, now Navigator and Django Accessibility Team co-chair</span>
+        </div>
+      </div>
+
+      <p>Our follow-up survey of 24 alumni paints a fuller picture across five dimensions, every one showing dramatic positive movement. After the program, nearly every respondent agreed or strongly agreed that they feel like a member of the Django community, and that they belong in the open source community. Before the program, many had strongly disagreed.<sup><a href="#fn12">12</a></sup></p>
+
+      <p>From exit surveys: 97% feel more comfortable contributing to Django, 53% said their growth exceeded their own expectations, and 100% would recommend the program.<sup><a href="#fn11">11</a></sup></p>
+
+      <p>And the impact keeps going after the program ends:<sup><a href="#fn12">12</a></sup></p>
+
+      <ul>
+        <li>88% built confidence making open source contributions</li>
+        <li>83% developed better communication and collaboration skills</li>
+        <li>83% have opened pull requests since their session ended</li>
+        <li>83% feel more welcomed and included in the open source community</li>
+        <li>79% expanded their professional network</li>
+        <li>75% attended conferences or meetups</li>
+        <li>62% stayed motivated as long-term contributors</li>
+        <li>54% created content (blog posts, talks, videos)</li>
+        <li>42% are now mentoring others</li>
+        <li>21% gained access to new professional opportunities</li>
+        <li>12% got a new job; 8% got a promotion</li>
+      </ul>
+
+      <p>One participant switched careers from wildlife management to backend development. Another had been coding since 2004 (twenty years) but never contributed to open source until Djangonaut Space gave them a crew. Yet another had used Django for fourteen years before she ever contributed to it. The barrier was never what they knew. It was finding a way in.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- MORE THAN CODE -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>More Than <span>Code</span></h2>
+      <p class="section-lead">At the end of each session, djangonauts present what they learned in a showcase. What they talk about is rarely about code.</p>
+
+      <div class="video-grid">
+        <div class="video-card">
+          <img src="assets/blog_screenshots/maria_wins_about_learning.jpg" alt="Maria: The wins aren't about how many tickets we solve. It's all about learning.">
+          <div class="video-label"><strong>Maria</strong>, Session 3</div>
+        </div>
+        <div class="video-card">
+          <img src="assets/blog_screenshots/collins_changed_that.jpg" alt="Collins: My captain and navigator really changed that for me. They kept reminding me that open source is for everyone.">
+          <div class="video-label"><strong>Collins</strong>, Session 5</div>
+        </div>
+      </div>
+
+      <div class="quote-block">
+        <p>"I came for the code but stayed for the community."</p>
+        <div class="attribution">Felipe Villegas
+          <span class="session">Session 4 Showcase</span>
+        </div>
+      </div>
+
+      <div class="video-grid">
+        <div class="video-card">
+          <img src="assets/blog_screenshots/felipe_terrifying.jpg" alt="Felipe Villegas: I came for the code but stayed for the community.">
+          <div class="video-label"><strong>Felipe Villegas</strong>, Session 4</div>
+        </div>
+        <div class="video-card">
+          <img src="assets/blog_screenshots/annabelle_didnt_give_up.jpg" alt="Annabelle Wiegart: I'm glad I didn't give up, because I learned so much along the way.">
+          <div class="video-label"><strong>Annabelle Wiegart</strong>, Session 5</div>
+        </div>
+      </div>
+
+      <div class="video-grid">
+        <div class="video-card">
+          <img src="assets/blog_screenshots/hwayoung_community_matters.jpg" alt="Hwayoung Cha: AI can help, but having wonderful teammates and a supportive community was what actually mattered.">
+          <div class="video-label"><strong>Hwayoung Cha</strong>, Session 5</div>
+        </div>
+        <div class="video-card">
+          <img src="assets/blog_screenshots/hiram_effort_not_results.jpg" alt="Hiram Choi: Celebrate the effort, not just the results.">
+          <div class="video-label"><strong>Hiram Choi</strong>, Session 5</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="big-quote">
+      <p>"I was not alone."</p>
+      <div class="attribution">Yash Raj, Session 3</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TIM: CONTRIBUTIONS SECTION -->
+    <!-- Fill in GitHub PR stats, specific contribution examples,     -->
+    <!-- and before/during/after data.                                 -->
+    <!-- Source: verified_djangonaut_contributions.txt,                 -->
+    <!-- fetch_github_prs.py output                                    -->
+    <!-- ============================================================ -->
+
+    <section>
+      <h2>What They <span>Build</span></h2>
+
+      <p><em>[Tim: add GitHub PR numbers, contribution highlights, and before/during/after stats here.]</em></p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- LEADERS EMERGE -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>Leaders <span>Emerge</span></h2>
+      <p class="section-lead">The program doesn't end at session close. Djangonauts become captains, navigators, session organizers, DSF board members, conference chairs, and community founders.</p>
+
+      <div class="chart-container">
+        <img src="assets/chart_pipeline_funnel_light.png" alt="The Pipeline: 104 accepted, 22 returned as volunteers, 35+ in leadership roles.">
+        <div class="chart-caption">21% of djangonauts returned to the program in volunteer roles. 35+ are now in leadership positions across the Django ecosystem.<sup><a href="#fn13">13</a></sup></div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card"><span class="num">22</span><span class="label">returned as volunteers (21%)</span></div>
+        <div class="stat-card"><span class="num">35+</span><span class="label">in leadership roles</span></div>
+        <div class="stat-card"><span class="num">8+</span><span class="label">DSF Individual Members</span></div>
+        <div class="stat-card"><span class="num">18+</span><span class="label">conference talks</span></div>
+      </div>
+
+      <ul class="pipeline-list">
+        <li><span class="name">Afi (Abigail Gbadago)</span><span class="journey">S3 djangonaut &rarr; <strong>DSF Vice President</strong>, PSF Fellow, DjangoCon US Program Chair</span></li>
+        <li><span class="name">Lilian Tran</span><span class="journey">S1 djangonaut &rarr; captain &rarr; organizer &rarr; navigator &rarr; admin. Held every role. 4+ conference talks.</span></li>
+        <li><span class="name">Keanya Phelps</span><span class="journey">S1 djangonaut &rarr; captain 4x &rarr; <strong>DjangoCon US Chair</strong></span></li>
+        <li><span class="name">Priya Pahwa</span><span class="journey">S1 djangonaut &rarr; organizer &rarr; <strong>DSF Board</strong>, Fundraising WG Lead</span></li>
+        <li><span class="name">Alex Gomez</span><span class="journey">Djangonaut &rarr; <strong>PyCon Spain main organizer</strong>, DSF Website WG, Django Girls coach (5+ events)</span></li>
+        <li><span class="name">Moe (Mohammad Alsakhawy)</span><span class="journey">S1 djangonaut &rarr; captain &rarr; <strong>founded first Django meetup in Egypt</strong> (27 attendees, 170+ Discord members)</span></li>
+        <li><span class="name">Farhan Ali Raza</span><span class="journey">S2 djangonaut &rarr; organizer &rarr; <strong>Django core contributor</strong> (brought django-template-partials into Django)</span></li>
+        <li><span class="name">Eliana Rosselli</span><span class="journey">S1 djangonaut &rarr; navigator 2x &rarr; <strong>Django Accessibility Team co-chair</strong>, DSF Member</span></li>
+        <li><span class="name">Rahmat Akintola</span><span class="journey">S2 djangonaut &rarr; captain &rarr; organizer &rarr; <strong>Django Accessibility WG</strong>, Django Girls coach, Program Lead at Everything Open Source</span></li>
+        <li><span class="name">Soyoung Kang</span><span class="journey">Djangonaut &rarr; <strong>PyCon Korea organizer</strong></span></li>
+        <li><span class="name">Annabelle</span><span class="journey">S5 djangonaut &rarr; <strong>PyLadies Zurich organizer</strong></span></li>
+      </ul>
+
+      <p>More than eight djangonauts have given talks at conferences including DjangoCon US, DjangoCon Europe, FOSDEM, PyCon Italia, Python Ghana, North Bay Python, Google DevFest Lagos, and PyLadiesCon. Five serve on Django working groups across Accessibility, Fundraising, and the Website Working Group.<sup><a href="#fn13">13</a></sup><sup><a href="#fn14">14</a></sup></p>
+
+      <div class="caveat">
+        These numbers come from just 24 survey respondents, roughly 23% of all alumni.<sup><a href="#fn12">12</a></sup> The real numbers are almost certainly higher.
+      </div>
+
+      <p>73% of officers say they feel more comfortable in mentoring and leadership positions because of this program.<sup><a href="#fn16">16</a></sup> We're not just producing contributors. We're producing the people who produce contributors.</p>
+
+      <div class="video-single">
+        <img src="assets/blog_screenshots/hiram_help_others.jpg" alt="Hiram Choi: Someday I hope I can help someone else take their first step.">
+        <div class="video-label"><strong>Hiram Choi</strong>, "Someday I hope I can help someone else take their first step."</div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- FINANCIAL AID -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>What a Small <span>Budget</span> Can Do</h2>
+
+      <p>Our total financial aid budget across two and a half years: <strong>$2,275</strong>.<sup><a href="#fn17">17</a></sup></p>
+
+      <p>With it, we've supported 13 people to attend conferences around the world. For some, it was their first. The conferences include PyCon Ireland, FOSDEM, PyCon US, DjangoCon Africa, and DjangoDay India.<sup><a href="#fn17">17</a></sup></p>
+
+      <p>Two grants were canceled because recipients couldn't obtain visas, a reminder that access isn't just about money.<sup><a href="#fn17">17</a></sup></p>
+
+      <p>People who received grants went on to give talks, organize workshops, join the DSF board, and come back to Djangonaut Space as volunteers. That's not a conference ticket. That's a trajectory.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TIM: VOLUNTEER HOURS SECTION                                  -->
+    <!-- Calculate: 226 volunteers x hours/role x 8 weeks              -->
+    <!-- and the dollar value of that donated time.                    -->
+    <!-- ============================================================ -->
+
+    <section>
+      <h2>The Cost of <span>Showing Up</span></h2>
+
+      <p><em>[Tim: add volunteer hours calculation and monetary value here. 226 volunteers across 6 sessions, estimate hours per role (navigator, captain, organizer) over 8 weeks, and the dollar value of that donated time.]</em></p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- IN THEIR OWN WORDS -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>What the Numbers <span>Can't Capture</span></h2>
+
+      <p>During one session showcase, a djangonaut talked about living with a chronic illness that had disconnected her from traditional work and community. She'd struggled to even describe herself anymore. The things she used to love felt like they belonged to a different person. But open source, and this program, gave her a way to contribute at her own pace, find purpose, and help make the web more accessible for people like her.</p>
+
+      <p>The chat filled with hearts.</p>
+
+      <p>She's not alone. Across every session, djangonauts are finding their place and discovering they belong. Not because someone handed it to them, but because a community made space for them to show up as they are.</p>
+
+      <div class="video-grid">
+        <div class="video-card">
+          <img src="assets/blog_screenshots/eddie_safe_space.jpg" alt="Eddie: Djangonaut Space was a safe space to learn and grow.">
+          <div class="video-label"><strong>Eddie</strong>, Session 5</div>
+        </div>
+        <div class="video-card">
+          <img src="assets/blog_screenshots/chiemezuo_okay_nervous.jpg" alt="Chiemezuo Akujobi: It's okay to feel nervous. It's overwhelming for not just you, but a lot of other people as well.">
+          <div class="video-label"><strong>Chiemezuo Akujobi</strong>, Session 5</div>
+        </div>
+      </div>
+
+      <div class="quote-block">
+        <p>"Djangonaut Space: the best thing to happen in Django in a long while."</p>
+        <div class="attribution">Carlton Gibson
+          <span class="session">Django Fellow</span>
+        </div>
+      </div>
+
+      <div class="quote-block">
+        <p>"You get to be part of a community of really smart people that care about the project, but maybe more about each other and their development."</p>
+        <div class="attribution">Anonymous
+          <span class="session">Session 2 Djangonaut</span>
+        </div>
+      </div>
+
+      <p>That moment doesn't fit in a spreadsheet. Neither do the chess matches on Discord, the icebreakers about what you'd bring to space ("an astronaut," solid choice), or the friend in a different timezone who stayed on a call an extra hour to help debug a test.</p>
+
+      <div class="video-grid">
+        <div class="video-card">
+          <img src="assets/blog_screenshots/collins_feels_like_family.jpg" alt="Collins: Djangonaut Space feels like a family.">
+          <div class="video-label"><strong>Collins</strong>, "Djangonaut Space feels like a family."</div>
+        </div>
+        <div class="video-card">
+          <img src="assets/blog_screenshots/maria_just_the_start.jpg" alt="Maria: It is not ever over. Everything we do is just the start.">
+          <div class="video-label"><strong>Maria</strong>, "It is not ever over."</div>
+        </div>
+      </div>
+
+      <div class="quote-block">
+        <p>"When I joined this program, I wasn't sure how much I could achieve. However, I found a group of splendid individuals who not only guided me toward solutions but also provided valuable advice to face numerous new challenges. Embrace the power of community. While there are many things someone can do, letting the community guide you opens up even more possibilities."</p>
+        <div class="attribution">Raffaella Suardini
+          <span class="session">Session 1 Djangonaut, now Admin, PyCon Italia organizer, created Deep Space Dialogues</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="big-quote">
+      <p>"It is not ever over. Everything we do is just the start."</p>
+      <div class="attribution">Maria, Session 3</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CTA -->
+    <!-- ============================================================ -->
+    <div class="cta">
+      <h2>What Comes <span>Next</span></h2>
+      <p>
+        Djangonaut Space is a volunteer-run program. Everything you've read here was built by people who showed up because they believed the community could be better.
+      </p>
+      <a href="https://djangonaut.space/#get-involved">Get Involved</a>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DATA REFERENCES -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>Data <span>References</span></h2>
+      <p><small>Every statistic in this post traces back to a specific source. We believe transparency about data is as important as the data itself.</small></p>
+
+      <ol class="footnotes">
+        <li id="fn1"><strong>[1] GitHub Open Source Survey (2017).</strong> 95% of respondents identified as men, 3% as women, 1% as non-binary. <a href="https://opensourcesurvey.org/2017/">opensourcesurvey.org/2017</a></li>
+        <li id="fn2"><strong>[2] GitHub Open Source Survey (2024).</strong> 18% identified as ethnic minorities in their country of birth, up from 13% in 2017. <a href="https://opensourcesurvey.org/2024/">opensourcesurvey.org/2024</a></li>
+        <li id="fn3"><strong>[3] GitHub geographic data.</strong> Most closed pull requests come from developers in the US, UK, and Germany. <a href="https://opensourcesurvey.org/2024/">opensourcesurvey.org/2024</a></li>
+        <li id="fn4"><strong>[4] Harvard Business Review.</strong> Cognitively diverse teams solve complex tasks 60% faster.</li>
+        <li id="fn5"><strong>[5] IEEE, "Diversity and Inclusion in Open Source Software Projects."</strong> Diverse repositories have superior code quality. <a href="https://ieeexplore.ieee.org/abstract/document/8870179">ieeexplore.ieee.org</a></li>
+        <li id="fn6"><strong>[6] GitHub study on gender bias in code review.</strong> Acceptance drops 12% when gender is identifiable. <a href="https://en.wikipedia.org/wiki/Diversity_in_open-source_software">Wikipedia</a></li>
+        <li id="fn7"><strong>[7] Djangonaut Space program tracking data.</strong> Consolidated from application records and accepted participant lists across Pilot + Sessions 1-6. 104 unique accepted djangonauts, 680+ applications, 226 total volunteers, 40+ countries. Geographic data available for Sessions 4-6.</li>
+        <li id="fn8"><strong>[8] Applicant experience analysis.</strong> Extracted from freeform application responses. 202 of ~680 applicants (30%) explicitly mentioned years of experience. Accepted sample: 28 of 99.</li>
+        <li id="fn9"><strong>[9] Linux Foundation &amp; Harvard, 2020 FOSS Contributor Survey.</strong> ~9% gender minorities among open source contributors. <a href="https://www.linuxfoundation.org/resources/publications/foss-contributor-2020">linuxfoundation.org</a></li>
+        <li id="fn10"><strong>[10] Djangonaut Space demographics analysis.</strong> Computed from self-reported underrepresented status and gender minority status collected from applicants.</li>
+        <li id="fn11"><strong>[11] Exit surveys, Sessions 1-5.</strong> 32 responses from djangonauts. 97% feel more comfortable contributing. 53% said growth exceeded expectations.</li>
+        <li id="fn12"><strong>[12] Alumni follow-up survey, 2026.</strong> 24 respondents out of 104 alumni (~23% response rate). Measured post-program contributions, benefits, and before/after confidence across 5 dimensions.</li>
+        <li id="fn13"><strong>[13] Leadership pipeline tracking.</strong> Compiled from program records and alumni survey responses. 22 unique people returning in volunteer roles. Some individuals hold multiple roles.</li>
+        <li id="fn14"><strong>[14] Survey-reported external leadership and conference activity.</strong> Self-reported by 24 alumni survey respondents. 18 of 24 attended conferences or events post-program.</li>
+        <li id="fn15"><strong>[15] Djangonaut Space Session 5 showcase presentations (November 2025).</strong></li>
+        <li id="fn16"><strong>[16] Officer exit surveys, Sessions 1-5.</strong> 15 responses. 73% reported feeling more comfortable in mentoring and leadership positions.</li>
+        <li id="fn17"><strong>[17] Conference financial aid records.</strong> 13 grants across 2024-2026, averaging approximately $300 per grant. Total budget: $2,275.</li>
+      </ol>
+    </section>
+
+    <hr>
+
+    <p><small><em>This post was written by Rachell Calhoun and Tim Schilling based on data presented in our PyCon US 2026 keynote, "Djangonaut Space: Where Contributors Launch." If you have questions about any of the numbers here, reach out at <a href="mailto:contact@djangonaut.space">contact@djangonaut.space</a>.</em></small></p>
+
+  </div><!-- .ds-blog -->
+</main>
+{% endblock content %}
