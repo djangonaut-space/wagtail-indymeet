@@ -21,11 +21,6 @@
                     id: '{{ event.id }}',
                     description: '{{ event.description }}',
                     url: "{{ event.get_absolute_url }}",
-                    {% if event.status == 'Canceled' %}
-                        backgroundColor: '#d3d3d3',
-                    {% elif event.status == 'Rescheduled' %}
-                        backgroundColor: 'orange',
-                    {% endif %}
                 },
                 {% endfor %}
 

@@ -32,7 +32,6 @@ class GenerateICalendarTests(TestCase):
             title="Django Meetup",
             start_time=datetime(2024, 3, 15, 18, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2024, 3, 15, 20, 0, tzinfo=dt_timezone.utc),
-            location="https://zoom.us/j/123456",
             description="A fun Django meetup.",
         )
 
@@ -58,7 +57,6 @@ class GenerateICalendarTests(TestCase):
             vevent.decoded("DTEND"),
             datetime(2024, 3, 15, 20, 0, tzinfo=dt_timezone.utc),
         )
-        self.assertEqual(str(vevent["LOCATION"]), "https://zoom.us/j/123456")
         self.assertIn(self.event.slug, str(vevent["URL"]))
         self.assertEqual(str(vevent["DESCRIPTION"]), "A fun Django meetup.")
 
@@ -70,6 +68,11 @@ class GenerateICalendarTests(TestCase):
         )
         vevent = _get_vevent(generate_icalendar(event))
         self.assertNotIn("DESCRIPTION", vevent)
+
+    def test_vevent_location_set_from_zoom_link(self):
+        event = EventFactory.create(zoom_link="https://zoom.us/j/123")
+        vevent = _get_vevent(generate_icalendar(event))
+        self.assertEqual(str(vevent["LOCATION"]), "https://zoom.us/j/123")
 
 
 class SendEventCalendarInviteTaskTests(TestCase):

@@ -1,13 +1,12 @@
-from home import constants
 from datetime import timedelta
 
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Exists, F, Max, Count, OuterRef
+from django.db.models import Count, Exists, F, Max, OuterRef
 from django.http import HttpRequest, HttpResponseRedirect
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import path, reverse
 from django.utils import timezone
@@ -15,29 +14,36 @@ from django.utils.safestring import mark_safe
 from import_export import fields, resources
 from import_export.admin import ExportMixin
 
+from home import constants
 from indymeet.admin import DescriptiveSearchMixin
+
 from . import preview_email, tasks
 from .availability import AvailabilityWindow, find_best_one_hour_windows_with_roles
 from .forms import SurveyCSVExportForm, SurveyCSVImportForm
-from .models import Event, Project, Team, Testimonial
-from .models import ResourceLink
-from .models import Question
-from .models import Session
-from .models import SessionMembership
-from .models import Survey
-from .models import UserQuestionResponse
-from .models import UserSurveyResponse as UserSurveyResponseModel
-from .models import Waitlist
-from .team_allocation import allocate_teams_bounded_search, apply_allocation
-from .views.team_formation import (
-    add_to_waitlist,
-    calculate_overlap_ajax,
-    team_formation_view,
+from .models import (
+    Event,
+    Project,
+    Question,
+    ResourceLink,
+    Session,
+    SessionMembership,
+    Survey,
+    Team,
+    Testimonial,
+    UserQuestionResponse,
+    Waitlist,
 )
+from .models import UserSurveyResponse as UserSurveyResponseModel
+from .team_allocation import allocate_teams_bounded_search, apply_allocation
 from .views.session_notifications import (
     send_acceptance_reminders_view,
     send_session_results_view,
     send_team_welcome_emails_view,
+)
+from .views.team_formation import (
+    add_to_waitlist,
+    calculate_overlap_ajax,
+    team_formation_view,
 )
 
 User = get_user_model()
@@ -46,7 +52,6 @@ User = get_user_model()
 @admin.register(Event)
 class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
-    filter_horizontal = ("speakers", "rsvped_members", "organizers")
     actions = ["copy_event", "send_calendar_invites", "retry_zoom_meeting_creation"]
     list_display = ["title", "start_time", "calendar_invites_sent_at"]
 
@@ -56,14 +61,11 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         When the request contains a ``copy_from`` GET parameter, the add form
         is pre-filled with the source event's data so the user can review,
         modify, and save it as a completely new event in a single step.
-        RSVPs (rsvped_members) are intentionally excluded.
         """
         initial = super().get_changeform_initial_data(request)
         copy_from = request.GET.get("copy_from")
         if copy_from:
-            source = get_object_or_404(
-                Event.objects.prefetch_related("speakers", "organizers"), pk=copy_from
-            )
+            source = get_object_or_404(Event, pk=copy_from)
 
             initial.update(
                 {
@@ -71,18 +73,13 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                     "slug": source.slug,
                     "start_time": source.start_time,
                     "end_time": source.end_time,
-                    "location": source.location,
                     "description": source.description or "",
-                    "status": Event.PENDING,
+                    "is_published": False,
                     "zoom_link": "",
                     "video_link": "",
                     "is_public": source.is_public,
-                    "capacity": source.capacity,
                     "extra_emails": source.extra_emails,
                     "session": source.session_id,
-                    "speakers": source.speakers.all(),
-                    "organizers": source.organizers.all(),
-                    "tags": ", ".join(source.tags.names()),
                 }
             )
         return initial
