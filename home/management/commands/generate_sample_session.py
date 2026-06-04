@@ -18,7 +18,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CustomUser
+from accounts.models import CustomUser, UserAvailability
 from home.factories import SessionFactory, TeamFactory
 from home.models import Project, Session, SessionMembership, Team
 
@@ -60,6 +60,7 @@ class Command(BaseCommand):
             self._add_organizer_membership(organizer, session)
             self.stdout.write(f"Added organizer: {organizer.username}")
 
+            slot_index = 0
             for i in range(1, 3):
                 user, _ = CustomUser.objects.get_or_create(
                     username=f"sample_djangonaut_{date_str}_{i}",
@@ -71,6 +72,10 @@ class Command(BaseCommand):
                 )
                 user.set_password("testpass123")
                 user.save(update_fields=["password"])
+                UserAvailability.objects.update_or_create(
+                    user=user, defaults={"slots": self._availability_slots(slot_index)}
+                )
+                slot_index += 1
                 SessionMembership.objects.get_or_create(
                     user=user,
                     session=session,
@@ -92,6 +97,10 @@ class Command(BaseCommand):
             )
             navigator.set_password("testpass123")
             navigator.save(update_fields=["password"])
+            UserAvailability.objects.update_or_create(
+                user=navigator, defaults={"slots": self._availability_slots(slot_index)}
+            )
+            slot_index += 1
             SessionMembership.objects.get_or_create(
                 user=navigator,
                 session=session,
@@ -113,6 +122,9 @@ class Command(BaseCommand):
             )
             captain.set_password("testpass123")
             captain.save(update_fields=["password"])
+            UserAvailability.objects.update_or_create(
+                user=captain, defaults={"slots": self._availability_slots(slot_index)}
+            )
             SessionMembership.objects.get_or_create(
                 user=captain,
                 session=session,
@@ -137,6 +149,32 @@ class Command(BaseCommand):
             self.stdout.write(f"  Captain:      {captain.username}")
             self.stdout.write(f"  Team:         {team.name}")
             self.stdout.write(f"  Project:      {project.name}")
+
+    def _availability_slots(self, index: int) -> list[float]:
+        """Return one of 5 rotating weekly availability patterns (hours from Sunday 00:00 UTC)."""
+        pattern = index % 5
+        slots: list[float] = []
+        if pattern == 0:
+            for day in range(1, 6):
+                for hour in range(8, 12):
+                    slots.extend([day * 24 + hour, day * 24 + hour + 0.5])
+        elif pattern == 1:
+            for day in range(1, 6):
+                for hour in range(13, 17):
+                    slots.extend([day * 24 + hour, day * 24 + hour + 0.5])
+        elif pattern == 2:
+            for day in range(2, 5):
+                for hour in range(10, 15):
+                    slots.extend([day * 24 + hour, day * 24 + hour + 0.5])
+        elif pattern == 3:
+            for day in range(1, 4):
+                for hour in range(17, 21):
+                    slots.extend([day * 24 + hour, day * 24 + hour + 0.5])
+        else:
+            for day in [6, 0]:
+                for hour in range(10, 18):
+                    slots.extend([day * 24 + hour, day * 24 + hour + 0.5])
+        return slots
 
     def _get_superuser(self) -> CustomUser:
         """Return the first available superuser."""

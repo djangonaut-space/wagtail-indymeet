@@ -1,0 +1,20 @@
+.ts-control {
+    border-color: #d1d5db;
+    border-radius: 0.5rem;
+}
+
+.ts-wrapper.focus .ts-control {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 1px #7c3aed;
+}
+
+.ts-dropdown .active {
+    background-color: #7c3aed;
+    color: #fff;
+}
+
+.ts-control .item {
+    background-color: #ede9fe;
+    color: #5b21b6;
+    border-radius: 0.25rem;
+}

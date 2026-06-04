@@ -5,6 +5,7 @@
 {% block meta_title %}{% trans "Compare Availability | Djangonaut Space" %}{% endblock %}
 
 {% block extra_css %}
+{{ form.media.css }}
 <style>
     #availability-grid {
         user-select: none;
@@ -72,20 +73,10 @@
 
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-grow">
-                    <label for="user-select" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="id_users" class="block text-sm font-medium text-gray-700 mb-2">
                         {% trans "Select Users to Compare" %}
                     </label>
-                    <select id="user-select" name="users" multiple
-                            class="w-full border border-gray-300 rounded-lg p-2 focus:ring-purple-500 focus:border-purple-500"
-                            size="5">
-                        {% for user in selectable_users %}
-                        <option value="{{ user.id }}"
-                                {% if user.id in selected_user_ids %}selected{% endif %}>
-                            {{ user.get_full_name|default:user.username }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">{% trans "Hold Ctrl/Cmd to select multiple users" %}</p>
+                    {{ form.users }}
                 </div>
                 <div class="flex items-end">
                     <button type="submit"
@@ -124,6 +115,7 @@
         </div>
     </div>
 </main>
+{{ form.media.js }}
 <script>
 function availabilityGrid() {
     return {
