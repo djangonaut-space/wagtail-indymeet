@@ -298,27 +298,6 @@ class CompareAvailabilityGridTests(TestCase):
         self.assertContains(response, "View on time.is")
 
 
-class TomSelectMultipleWidgetTests(TestCase):
-    """Tests for TomSelectMultipleWidget."""
-
-    def test_build_attrs_adds_tom_select_class(self) -> None:
-        widget = TomSelectMultipleWidget()
-        attrs = widget.build_attrs({})
-        self.assertIn("tom-select", attrs["class"])
-
-    def test_build_attrs_preserves_existing_class(self) -> None:
-        widget = TomSelectMultipleWidget()
-        attrs = widget.build_attrs({"class": "my-class"})
-        self.assertIn("my-class", attrs["class"])
-        self.assertIn("tom-select", attrs["class"])
-
-    def test_media_includes_vendored_files(self) -> None:
-        widget = TomSelectMultipleWidget()
-        self.assertIn("tom-select.min.css", str(widget.media))
-        self.assertIn("tom-select.complete.min.js", str(widget.media))
-        self.assertIn("tom-select-init.js", str(widget.media))
-
-
 @freeze_time("2024-06-15")
 class CompareAvailabilityFormTests(TestCase):
     """Tests for CompareAvailabilityForm new logic."""

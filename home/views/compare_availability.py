@@ -232,8 +232,10 @@ def compare_availability(request):
     - Users with home.compare_org_availability permission: Can access without session context
     """
     form = CompareAvailabilityForm(data=request.GET, user=request.user)
-    is_valid = form.is_valid()
-    selected_user_ids = list(form.cleaned_data.get("users", set())) if is_valid else []
+    if form.is_valid():
+        selected_user_ids = form.cleaned_data.get("users", [])
+    else:
+        selected_user_ids = []
     context = {
         "form": form,
         "selected_user_ids": selected_user_ids,
