@@ -582,7 +582,7 @@ requires-dist = [
     { name = "django-tasks-db" },
     { name = "django-widget-tweaks" },
     { name = "djangorestframework-gis" },
-    { name = "gdal" },
+    { name = "gdal", specifier = "<3.7" },
     { name = "gunicorn" },
     { name = "icalendar" },
     { name = "psycopg", extras = ["binary"] },
@@ -717,9 +717,9 @@ wheels = [
 
 [[package]]
 name = "gdal"
-version = "3.13.0"
+version = "3.6.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/28/58/c1d628c5b5a38d31e93e825199fd4dfd39b658104a52dfce3228d1067042/gdal-3.13.0.tar.gz", hash = "sha256:b440bcecbcdb96690a74da223142f2d51c6a540ee78674e10f9dca933d0e9006", size = 940507, upload-time = "2026-05-08T10:33:19.112Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/45/ce25a03268e6ccab9396acb92537b58eb5d0f4bdfa2144fd0f0e3bfdbacc/GDAL-3.6.4.tar.gz", hash = "sha256:c07d548cbd6544e8a51651fc1e487ca4b39e8fe6b5b3c886082d87f0e49e8313", size = 758072, upload-time = "2023-04-21T13:04:05.772Z" }
 
 [[package]]
 name = "greenlet"
