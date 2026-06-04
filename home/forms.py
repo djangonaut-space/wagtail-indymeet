@@ -1208,6 +1208,7 @@ class TestimonialFormRenderer(DjangoTemplates):
 
 
 class TestimonialForm(forms.ModelForm):
+    __test__ = False
     default_renderer = TestimonialFormRenderer
 
     class Meta:
