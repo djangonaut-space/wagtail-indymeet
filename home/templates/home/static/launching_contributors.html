@@ -85,6 +85,7 @@
     .ds-blog .pipeline-list .name { min-width: auto; }
   }
 </style>
+<script src="{% static 'js/plotly-cartesian.min.js' %}"></script>
 {% endblock extra_css %}
 
 {% block content %}
@@ -197,6 +198,12 @@
         <div class="stat-card"><span class="num">680+</span><span class="label">total applications</span></div>
         <div class="stat-card"><span class="num">15%</span><span class="label">acceptance rate</span></div>
       </div>
+
+      {% include "home/static/charts/chart_monthly_activity.html" %}
+      <p class="chart-caption" style="text-align:center;">Monthly contribution activity for each session's members over time. Shaded bands mark each session's program window. Alumni cohorts keep contributing while new sessions run — the lines compound on each other.</p>
+
+      {% include "home/static/charts/chart_individual_timelines.html" %}
+      <p class="chart-caption" style="text-align:center;">One panel per session. Solid vertical line = session start date; dotted = session end date.</p>
 
       <p>The typical applicant has a median of 5 years of programming experience.<sup><a href="#fn8">8</a></sup> These aren't beginners. They're working developers who use Django every day but haven't found their way into contributing. Because open source contribution is hard to do alone.</p>
 
@@ -331,18 +338,26 @@
       <div class="attribution">Yash Raj, Session 3</div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- TIM: CONTRIBUTIONS SECTION -->
-    <!-- Fill in GitHub PR stats, specific contribution examples,     -->
-    <!-- and before/during/after data.                                 -->
-    <!-- Source: verified_djangonaut_contributions.txt,                 -->
-    <!-- fetch_github_prs.py output                                    -->
-    <!-- ============================================================ -->
-
     <section>
       <h2>What They <span>Build</span></h2>
 
-      <p><em>[Tim: add GitHub PR numbers, contribution highlights, and before/during/after stats here.]</em></p>
+      <p>Survey data shows djangonauts feel more confident and more welcomed. But surveys capture intention; GitHub data captures behavior. Here is what the code history shows across 104 program members tracked from before their session started through the present day.</p>
+
+      {% include "home/static/charts/chart_heatmap.html" %}
+      <p class="chart-caption" style="text-align:center;">Every row is a program member; every column is a month. Color intensity uses a log(1+n) scale so a handful of high-volume contributors don't wash out everyone else — a faint blue square still represents real activity. Solid colored lines mark each session's start date; dotted lines mark the end. Orange horizontal lines divide the sessions.</p>
+
+      <p>The headline finding is in the phase comparison. We measured each member's contribution rate — actions per user per day — in three equal-length windows: the period before their session started, during it, and the equivalent length of time after it ended. The result that surprised us most: the <em>after</em> rate is higher than the <em>before</em> rate.</p>
+
+      {% include "home/static/charts/chart_phase_rates.html" %}
+      <p class="chart-caption" style="text-align:center;">Actions per user per day in equal-length windows before, during, and after the program. Three panels: all participants, the most active 5%, and the remaining 95%. Multipliers show the change relative to each panel's Before rate.</p>
+
+      <p>Across all 104 members, the before-program rate was 0.083 actions/user/day. After the program it was 0.142 — a <strong>1.7× increase</strong> over pre-program baseline. Contributors are more active in the months after their session than they were in the equivalent period before it. That's not what an attrition story looks like.</p>
+
+      <p>The top 5% — five people with the highest total action counts — maintained a 3.1× multiplier over their own pre-program baseline even after the program ended. For the other 95%, the after rate is 1.4× their before rate. Both groups show the same direction: sustained, elevated activity post-program. This is behavioral data, not self-report.</p>
+
+      <p>In concrete terms, here is the per-session output from the program windows themselves:</p>
+
+      {% include "home/static/charts/chart_prs_and_issues.html" %}
     </section>
 
     <div class="divider"></div>
@@ -358,6 +373,9 @@
         <img src="assets/chart_pipeline_funnel_light.png" alt="The Pipeline: 104 accepted, 22 returned as volunteers, 35+ in leadership roles.">
         <div class="chart-caption">21% of djangonauts returned to the program in volunteer roles. 35+ are now in leadership positions across the Django ecosystem.<sup><a href="#fn13">13</a></sup></div>
       </div>
+
+      {% include "home/static/charts/chart_contributor_status.html" %}
+      <p class="chart-caption" style="text-align:center;"><strong>Retained</strong> = active in both before and after windows (these contributors were already active and kept going). <strong>Newly Activated</strong> = active only after the program — the session genuinely started their open source journey. <strong>Session Only</strong> = activity concentrated in the program window itself, not captured in the before/after measurement periods. <strong>Dropped Off</strong> = active before but not after. The "Newly Activated" and "Retained" categories are the pipeline that leadership emerges from.</p>
 
       <div class="stat-row">
         <div class="stat-card"><span class="num">22</span><span class="label">returned as volunteers (21%)</span></div>
@@ -421,6 +439,45 @@
       <h2>The Cost of <span>Showing Up</span></h2>
 
       <p><em>[Tim: add volunteer hours calculation and monetary value here. 226 volunteers across 6 sessions, estimate hours per role (navigator, captain, organizer) over 8 weeks, and the dollar value of that donated time.]</em></p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- THE LONG GAME: RETENTION -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>The Long Game: <span>Retention</span></h2>
+
+      <p>Our alumni survey found that 83% of respondents have opened pull requests since their session ended, and 62% say they've stayed motivated as long-term contributors. Those are self-reported numbers. Here is what the GitHub activity data shows directly.</p>
+
+      {% include "home/static/charts/chart_retention.html" %}
+      <p class="chart-caption" style="text-align:center;">Combined retention across all sessions. At each point on the x-axis, the denominator is only members whose session ended at least that many months ago — so the line isn't inflated by recent sessions with no post-program history yet. Dashed vertical lines mark each session's data cutoff point (to the right of that line, that session no longer contributes to the denominator). At month 6, <strong>37.5%</strong> of eligible members made at least one contribution that month.</p>
+
+      <p>37.5% active at six months post-program, holding near 40% through month 11 before settling around 32% at one year. These are not people who contributed once and disappeared. They are people who kept showing up — in their own time, on projects they chose, months after anyone was guiding them.</p>
+
+      {% include "home/static/charts/chart_active_per_month.html" %}
+      <p class="chart-caption" style="text-align:center;">Absolute count of session members with at least one contribution each calendar month, by session, after their program ended.</p>
+
+      <p>Sustained contributors are the pool from which the next generation of captains, navigators, and board members emerges. The pipeline described in the Leaders Emerge section above doesn't happen without this bedrock of people who stayed active after graduation.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============================================================ -->
+    <!-- BEYOND DJANGO/DJANGO -->
+    <!-- ============================================================ -->
+    <section>
+      <h2>Beyond <span>django/django</span></h2>
+
+      <p>Djangonaut Space's goal is to grow open source contributors — not just Django contributors. The GitHub data shows that playing out. Program members are contributing across the full width of the Python and open source ecosystem, not just to the Django repository they were initially assigned.</p>
+
+      {% include "home/static/charts/chart_top_orgs.html" %}
+      <p class="chart-caption" style="text-align:center;">Top 50 organisations by total actions (PRs, reviews, comments, issues) from program members. Blue bars are the Django ecosystem. Personal repos excluded.</p>
+
+      <p>Beyond the Django ecosystem, the most active destinations include <strong>i-dot-ai</strong> (UK government's AI unit, 795 actions), <strong>ethyca</strong> (open-source data privacy infrastructure, 662 actions), and <strong>Unidata</strong> (scientific Python and atmospheric data tools, 453 actions). Djangonauts are contributing to government AI services, privacy tooling, and scientific computing — domains that matter well beyond web frameworks.</p>
+
+      <p>This is Djangonaut Space functioning as a feeder for the broader Python and open source ecosystem. We onboard people into the practice of contribution through the familiar structure of Django, then watch them take that skill set wherever their interests lead. The Django community benefits, but so does every project downstream.</p>
     </section>
 
     <div class="divider"></div>
