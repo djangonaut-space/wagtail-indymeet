@@ -32,7 +32,7 @@ dependencies = [
     "wagtailgeowidget",
     "djangorestframework-gis",
     "icalendar",
-    "requests>=2.33.1",
+    "requests>=2.34.2",
 ]
 
 [dependency-groups]
@@ -47,7 +47,7 @@ test = [
     "factory_boy",
     "unittest_parametrize",
     "faker",
-    "responses>=0.26.0",
+    "responses>=0.26.1",
 ]
 dev = [
     "pre-commit",
