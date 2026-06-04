@@ -173,6 +173,8 @@ class WaitlistFactory(factory.django.DjangoModelFactory):
 
 
 class TestimonialFactory(factory.django.DjangoModelFactory):
+    __test__ = False
+
     class Meta:
         model = Testimonial
 
