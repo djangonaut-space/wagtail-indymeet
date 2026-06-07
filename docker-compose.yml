@@ -25,7 +25,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ./.env.template.docker
+      - ./.env.docker
 
   tailwind:
     <<: *default-app
