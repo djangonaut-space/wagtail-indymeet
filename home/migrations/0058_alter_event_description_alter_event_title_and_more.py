@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("home", "0056_event_discord_zoom_sync_fields"),
+        ("home", "0057_event_discord_zoom_sync_fields"),
     ]
 
     operations = [

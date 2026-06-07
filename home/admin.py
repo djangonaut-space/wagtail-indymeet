@@ -55,8 +55,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     actions = [
         "copy_event",
         "send_calendar_invites",
-        "retry_zoom_meeting_creation",
-        "retry_discord_event_creation",
+        "retry_event_sync",
     ]
     list_display = [
         "title",
@@ -177,57 +176,45 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 messages.WARNING,
             )
 
-    @admin.action(description="Retry Zoom meeting creation")
-    def retry_zoom_meeting_creation(self, request, queryset) -> None:
-        """Retry creating a Zoom meeting for events that don't have one."""
+    @admin.action(description="Retry Zoom/Discord sync")
+    def retry_event_sync(self, request, queryset) -> None:
+        """Re-run the Zoom/Discord sync for events that aren't fully synced.
+
+        Uses the same dispatch as ``save_model``, so the sync task creates
+        whatever is missing: the Zoom meeting first, then the Discord event.
+        """
         queued = 0
+        already_synced = 0
+        not_configured = 0
         for event in queryset:
-            if event.zoom_link:
+            if event.zoom_link and event.discord_event_id:
+                already_synced += 1
                 continue
-            tasks.sync_event.enqueue(event_id=event.pk)
-            queued += 1
+            decision = dispatch_event_sync(event)
+            if decision.status is EventSyncStatus.QUEUED:
+                queued += 1
+            else:
+                not_configured += 1
 
         if queued:
             self.message_user(
                 request,
-                f"Zoom meeting creation queued for {queued} event(s).",
+                f"Zoom/Discord sync queued for {queued} event(s).",
                 messages.SUCCESS,
             )
-        else:
+        if already_synced:
             self.message_user(
                 request,
-                "All selected events already have a Zoom link.",
+                f"Skipped {already_synced} event(s) already synced to Zoom "
+                "and Discord.",
+                messages.INFO,
+            )
+        if not_configured:
+            self.message_user(
+                request,
+                f"{not_configured} event(s) have no Zoom link and Zoom isn't "
+                "configured, so no sync was queued.",
                 messages.WARNING,
-            )
-
-    @admin.action(description="Retry Discord event creation")
-    def retry_discord_event_creation(self, request, queryset) -> None:
-        """Retry creating a Discord event for events that don't have one."""
-        queued = 0
-        for event in queryset:
-            if event.discord_event_id:
-                self.message_user(
-                    request,
-                    f"'{event.title}' already has a Discord event.",
-                    messages.INFO,
-                )
-                continue
-            if not event.zoom_link:
-                self.message_user(
-                    request,
-                    f"'{event.title}' needs a Zoom link before a Discord event "
-                    "can be created. Add a Zoom link to the event and try again.",
-                    messages.WARNING,
-                )
-                continue
-            tasks.sync_event.enqueue(event_id=event.pk)
-            queued += 1
-
-        if queued:
-            self.message_user(
-                request,
-                f"Discord event creation queued for {queued} event(s).",
-                messages.SUCCESS,
             )
 
 

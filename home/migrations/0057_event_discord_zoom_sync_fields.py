@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("home", "0055_remove_event_tags_remove_event_capacity_and_more"),
+        ("home", "0056_talk_talkspeaker"),
     ]
 
     operations = [
