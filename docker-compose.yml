@@ -8,7 +8,7 @@ x-app: &default-app
 services:
   django:
     <<: *default-app
-    command: bash -c "uv run python manage.py migrate && uv run python manage.py runserver 0.0.0.0:8000"
+    command: "uv run python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     expose:

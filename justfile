@@ -32,8 +32,8 @@ superuser:
     {{django}} uv run python manage.py createsuperuser
 
 # Run database migrations
-migrate:
-    {{django}} uv run python manage.py migrate
+migrate *args:
+    {{django}} uv run python manage.py migrate {{args}}
 
 # Create new migrations
 makemigrations *args:
