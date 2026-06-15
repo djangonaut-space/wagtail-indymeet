@@ -111,7 +111,7 @@ urlpatterns = [
     ),
     path(
         "2026/launching-contributors/",
-        TemplateView.as_view(template_name="home/static/launching_contributors.html"),
+        TemplateView.as_view(template_name="home/reports/launching_contributors.html"),
         name="launching_contributors",
     ),
 ]
