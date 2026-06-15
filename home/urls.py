@@ -110,7 +110,7 @@ urlpatterns = [
         name="testimonial_delete",
     ),
     path(
-        "2026/launching-contributors/",
+        "launching-contributors/",
         TemplateView.as_view(template_name="home/reports/launching_contributors.html"),
         name="launching_contributors",
     ),
