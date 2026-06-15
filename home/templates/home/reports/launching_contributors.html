@@ -17,7 +17,6 @@
   .ds-blog h2 span { color: #5C0287; }
   .ds-blog h3 { font-size: 1.4rem; font-weight: 700; margin: 40px 0 12px; }
   .ds-blog p { margin-bottom: 20px; }
-  .ds-blog .section-lead { font-size: 1.15rem; color: #64647A; margin-bottom: 40px; max-width: 700px; }
   .ds-blog .hero { text-align: center; padding: 60px 0 40px; }
   .ds-blog .hero h1 { font-size: 3rem; font-weight: 900; line-height: 1.2; margin-bottom: 20px; }
   .ds-blog .hero h1 span { color: #5C0287; }
@@ -73,6 +72,10 @@
   .ds-blog th { font-weight: 700; color: #5C0287; }
   .ds-blog .footnotes { font-size: 0.9rem; line-height: 1.6; color: #64647A; }
   .ds-blog .footnotes li { margin-bottom: 12px; }
+  .ds-blog .outcome-list { list-style: none; padding: 0; margin: 24px 0; }
+  .ds-blog .outcome-list li { padding: 12px 0 12px 24px; border-bottom: 1px solid rgba(92,2,135,0.08); position: relative; }
+  .ds-blog .outcome-list li::before { content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; background: #5C0287; border-radius: 50%; }
+  .ds-blog .outcome-list .pct { color: #B8580C; font-weight: 900; }
   @media (max-width: 700px) {
     .ds-blog .hero h1 { font-size: 2rem; }
     .ds-blog .hero-stats { gap: 30px; }
@@ -159,13 +162,6 @@
         <div class="video-card">
           <img src="{% static 'images/reports/launching_contributors/2026/lillian_every_role.jpg' %}" alt="Lilian Tran: Session 1 Djangonaut who went on to hold every role in the program.">
           <div class="video-label"><strong>Lilian Tran</strong>, S1 Djangonaut, held every role</div>
-        </div>
-      </div>
-
-      <div class="quote-block">
-        <p>"Take an interest in them as a human. Our goal is to bring community members into the program, and a lot of open source is the community aspect of it. We are trying to bring people into our community."</p>
-        <div class="attribution">Tim Schilling, Co-founder
-          <span class="session">Djangonaut Space Onboarding, Session 6</span>
         </div>
       </div>
     </section>
@@ -262,18 +258,18 @@
 
       <p>And the impact keeps going after the program ends:<sup><a href="#fn11">11</a></sup></p>
 
-      <ul>
-        <li>88% built confidence making open source contributions</li>
-        <li>83% developed better communication and collaboration skills</li>
-        <li>83% have opened pull requests since their session ended</li>
-        <li>83% feel more welcomed and included in the open source community</li>
-        <li>79% expanded their professional network</li>
-        <li>75% attended conferences or meetups</li>
-        <li>62% stayed motivated as long-term contributors</li>
-        <li>54% created content (blog posts, talks, videos)</li>
-        <li>42% are now mentoring others</li>
-        <li>21% gained access to new professional opportunities</li>
-        <li>12% got a new job; 8% got a promotion</li>
+      <ul class="outcome-list">
+        <li><span class="pct">88%</span> built confidence making open source contributions</li>
+        <li><span class="pct">83%</span> developed better communication and collaboration skills</li>
+        <li><span class="pct">83%</span> have opened pull requests since their session ended</li>
+        <li><span class="pct">83%</span> feel more welcomed and included in the open source community</li>
+        <li><span class="pct">79%</span> expanded their professional network</li>
+        <li><span class="pct">75%</span> attended conferences or meetups</li>
+        <li><span class="pct">62%</span> stayed motivated as long-term contributors</li>
+        <li><span class="pct">54%</span> created content (blog posts, talks, videos)</li>
+        <li><span class="pct">42%</span> are now mentoring others</li>
+        <li><span class="pct">21%</span> gained access to new professional opportunities</li>
+        <li><span class="pct">12%</span> got a new job; <span class="pct">8%</span> got a promotion</li>
       </ul>
 
       <p>One participant switched careers from wildlife management to backend development. Another had been coding since 2004 (twenty years) but never contributed to open source until Djangonaut Space gave them a crew. Yet another had used Django for fourteen years before she ever contributed to it. The barrier was never what they knew. It was finding a way in.</p>
@@ -284,7 +280,7 @@
     <!-- ============================================================ -->
     <section>
       <h2>More Than <span>Code</span></h2>
-      <p class="section-lead">At the end of each session, Djangonauts present what they learned in a <a href="https://www.youtube.com/@Djangonautspace/search?query=showcase">showcase</a>. What they talk about is rarely about code.</p>
+      <p>At the end of each session, Djangonauts present what they learned in a <a target="_blank" href="https://www.youtube.com/@Djangonautspace/search?query=showcase">showcase</a>. What they talk about is rarely about code.</p>
 
       <div class="video-grid">
         <div class="video-card">
@@ -382,7 +378,7 @@
     <!-- ============================================================ -->
     <section>
       <h2>Leaders <span>Emerge</span></h2>
-      <p class="section-lead">The program doesn't end at session close. Djangonauts become Captains, Navigators, session organizers, DSF board members, conference chairs, and community founders.</p>
+      <p>The program doesn't end at session close. Djangonauts become Captains, Navigators, session organizers, DSF board members, conference chairs, and community founders.</p>
 
       <div class="chart-container">
         <img src="{% static 'images/reports/launching_contributors/2026/chart_pipeline_funnel_light.png' %}" alt="The Pipeline: 104 accepted, 22 returned as volunteers, 35+ in leadership roles.">
