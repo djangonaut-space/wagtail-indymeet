@@ -45,7 +45,7 @@
   .ds-blog .big-quote .attribution { color: #5C0287; font-size: 1.1rem; }
   .ds-blog .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 40px 0; }
   .ds-blog .video-card { background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-  .ds-blog .video-card img { width: 100%; display: block; }
+  .ds-blog .video-card img { width: 100%; display: block; aspect-ratio: 16 / 10; object-fit: cover; }
   .ds-blog .video-card .video-label { padding: 12px 16px; font-size: 0.85rem; color: #64647A; }
   .ds-blog .video-card .video-label strong { color: #5C0287; font-weight: 700; }
   .ds-blog .video-single { margin: 40px auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 640px; }
@@ -394,7 +394,7 @@
 
       <ul class="pipeline-list">
         <li><span class="name">Afi (Abigail Gbadago)</span><span class="journey">S3 Djangonaut &rarr; <strong>DSF Vice President</strong>, PSF Fellow, DjangoCon US Program Chair</span></li>
-        <li><span class="name">Lilian Tran</span><span class="journey">S1 Djangonaut &rarr; Captain &rarr; organizer &rarr; Navigator &rarr; admin. Held every role. 4+ conference talks. Django Triage & Review team member.</span></li>
+        <li><span class="name">Lilian Tran</span><span class="journey">S1 Djangonaut &rarr; Captain &rarr; organizer &rarr; Navigator &rarr; admin. Held every role. 4+ conference talks. <strong>Django Triage & Review Team</strong> member.</span></li>
         <li><span class="name">Keanya Phelps</span><span class="journey">S1 Djangonaut &rarr; Captain 4x &rarr; <strong>DjangoCon US Chair</strong></span></li>
         <li><span class="name">Priya Pahwa</span><span class="journey">S1 Djangonaut &rarr; organizer &rarr; <strong>DSF Board</strong>, Fundraising WG Lead</span></li>
         <li><span class="name">Raffaella Suardini</span><span class="journey">S1 Djangonaut &rarr; organizer &rarr; <strong>Djangonaut Space admin</strong>, Django Triage & Review team member</span></li>
@@ -403,7 +403,7 @@
         <li><span class="name">Farhan Ali Raza</span><span class="journey">S2 Djangonaut &rarr; organizer &rarr; <strong>Django core contributor</strong> (brought django-template-partials into Django)</span></li>
         <li><span class="name">Eliana Rosselli</span><span class="journey">S1 Djangonaut &rarr; Navigator 2x &rarr; <strong>Django Accessibility Team co-chair</strong>, DSF Member</span></li>
         <li><span class="name">Rahmat Akintola</span><span class="journey">S2 Djangonaut &rarr; Captain &rarr; organizer &rarr; <strong>Django Accessibility WG</strong>, Django Girls coach, Program Lead at Everything Open Source</span></li>
-        <li><span class="name">Soyoung Kang</span><span class="journey">Djangonaut &rarr; <strong>PyCon Korea organizer</strong></span></li>
+        <li><span class="name">Soyoung Kang</span><span class="journey">S3 Djangonaut &rarr; <strong>PyCon Korea organizer</strong></span></li>
         <li><span class="name">Annabelle</span><span class="journey">S5 Djangonaut &rarr; <strong>PyLadies Zurich organizer</strong></span></li>
       </ul>
 
@@ -413,7 +413,7 @@
         These numbers come from just 24 survey respondents, roughly 23% of all alumni.<sup><a href="#fn11">11</a></sup> The real numbers are almost certainly higher.
       </div>
 
-      <p>73% of officers say they feel more comfortable in mentoring and leadership positions because of this program.<sup><a href="#fn14">14</a></sup> We're not just producing contributors. We're producing the people who produce contributors.</p>
+      <p>73% of officers say they feel more comfortable in mentoring and leadership positions because of this program.<sup><a href="#fn14">14</a></sup> We're not just producing contributors. We're producing leaders.</p>
 
       <div class="video-single">
         <img src="{% static 'images/reports/launching_contributors/2026/hiram_help_others.jpg' %}" alt="Hiram Choi: Someday I hope I can help someone else take their first step.">
@@ -483,7 +483,7 @@
       <div class="quote-block">
         <p>"Djangonaut Space: the best thing to happen in Django in a long while."</p>
         <div class="attribution">Carlton Gibson
-          <span class="session">Django Fellow</span>
+          <span class="session">Former Django Fellow</span>
         </div>
       </div>
 
@@ -516,7 +516,7 @@
     </section>
 
     <div class="big-quote">
-      <p>"It is not ever over. Everything we do is just the start."</p>
+      <p>"It is not ever over.<br>Everything we do is just the start."</p>
       <div class="attribution">Maria, Session 3</div>
     </div>
 
