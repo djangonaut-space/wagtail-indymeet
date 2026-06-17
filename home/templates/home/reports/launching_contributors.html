@@ -19,8 +19,8 @@
 {% endblock extra_css %}
 
 {% block content %}
-<main class="section my-3 mx-5">
-  <div class="max-w-[900px] mx-auto px-6 text-lg leading-[1.7] text-[#1A1A2E]">
+<main class="section my-3 md:mx-5">
+  <div class="max-w-[900px] mx-auto px-4 md:px-6 text-lg leading-[1.7] text-[#1A1A2E]">
     <h1 class="font-fraunces text-[2.5rem] md:text-6xl font-black leading-tight mb-2 text-center">Launching Contributors</h1>
     <!-- ============================================================ -->
     <!-- HERO -->
@@ -269,13 +269,13 @@
       <p class="mb-5">
         Some people were already avid OSS contributors, some people become regular contributors and some don't. Keep in mind, this is only displaying technical participation for members. It does not consider other contributions such as community/conference organizing which are incredibly valuable to the community.
       </p>
-      {% include "home/reports/charts/chart_individual_timelines.html" %}
+      <div class="overflow-x-auto"><div style="min-width:600px;">{% include "home/reports/charts/chart_individual_timelines.html" %}</div></div>
       <p class="text-sm text-[#64647A] mt-3 italic text-center">Monthly open source activity for each session's members over time. One panel per session. Solid vertical line = session start date; dotted = session end date.<sup><a href="#fn16">16</a></sup></p>
 
-      {% include "home/reports/charts/chart_monthly_activity.html" %}
+      <div class="overflow-x-auto"><div style="min-width:500px;">{% include "home/reports/charts/chart_monthly_activity.html" %}</div></div>
       <p class="text-sm text-[#64647A] mt-3 italic text-center">Monthly open source activity for each session's members over time. Shaded bands mark each session's program window. Clicking on the series will show/hide the relevant dataset.<sup><a href="#fn16">16</a></sup></p>
 
-      {% include "home/reports/charts/chart_heatmap.html" %}
+      <div class="overflow-x-auto"><div style="min-width:650px;">{% include "home/reports/charts/chart_heatmap.html" %}</div></div>
       <p class="text-sm text-[#64647A] mt-3 italic text-center">Look for more color to the right of the solid lines to see individuals who had a behavior change due to the session. <br />Every row is a program member; every column is a month. Color intensity uses a log(1+n) scale so a handful of high-volume contributors don't wash out everyone else. A faint blue square still represents real activity. Solid colored lines mark each session's start date; dotted lines mark the end. Orange horizontal lines divide the sessions.<sup><a href="#fn16">16</a></sup></p>
 
       <h3 class="ds-report-heading text-[1.4rem] font-bold mt-10 mb-3 tracking-wide">
@@ -285,20 +285,20 @@
         We measured each member's contribution rate (actions per user per day) in three windows. Before their session, during the session and after the session.
       </p>
 
-      {% include "home/reports/charts/chart_phase_rates.html" %}
+      <div class="overflow-x-auto"><div style="min-width:700px;">{% include "home/reports/charts/chart_phase_rates.html" %}</div></div>
       <p class="text-sm text-[#64647A] mt-3 italic text-center">Actions per user per day from before, during, and after the program. Three panels: all participants, the most active 5%, and the remaining 95%. Multipliers show the change relative to each panel's Before rate.<sup><a href="#fn16">16</a></sup></p>
 
       <p class="mb-5">What we found is that, on average, there's a <strong>1.7× increase</strong> over pre-program activity. This is evidence of a behavioral change of participating more in open source software.</p>
 
       <p class="mb-5">For comparison, we analyzed the activity of applicants who applied to a session, but were not accepted. It's evident that people do not need Djangonaut Space to become successful open source contributors. It is also evident that people who are selected are above average contributors (0.075 compared to 0.061 for all applicants and 0.035 for 95% of applicants). This isn't something that is actively selected on during the application process, but is likely a correlation of people who have strong applications have participated more.</p>
 
-      {% include "home/reports/charts/chart_group_activity_rate.html" %}
+      <div class="overflow-x-auto"><div style="min-width:500px;">{% include "home/reports/charts/chart_group_activity_rate.html" %}</div></div>
 
       <p class="text-sm text-[#64647A] mt-3 italic text-center">Actions per user per day for unaccepted applicants. Three panels: all participants, the most active 5%, and the remaining 95%.<sup><a href="#fn17">17</a></sup></p>
 
       <p class="mb-5">The behavior change to participate more in open source is driven by successful contributions and momentum. Our Djangonauts have had <strong>157 PRs merged</strong> across all sessions, with even more opened. Below you will see the breakdown of PRs opened per session:</p>
 
-      {% include "home/reports/charts/chart_prs.html" %}
+      <div class="overflow-x-auto"><div style="min-width:400px;">{% include "home/reports/charts/chart_prs.html" %}</div></div>
       <p class="text-sm text-[#64647A] mt-3 italic text-center">Number of Pull Requests opened per session.<sup><a href="#fn16">16</a></sup></p>
 
     </section>

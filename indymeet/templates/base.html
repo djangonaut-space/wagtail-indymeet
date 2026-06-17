@@ -94,7 +94,7 @@
         {% endif %}
         {% wagtailuserbar %}
         <div class="{% if not blog_page %}container flex justify-center mb-auto mx-auto max-w-screen-xl {% endif %}">
-            <div class="{% if not blog_page %}w-3/4{% endif %}">
+            <div class="{% if not blog_page %}w-full md:w-3/4{% endif %}">
             {% include 'includes/messages.html' %}
             {% block content %}
                 {# other page stuff goes here #}
