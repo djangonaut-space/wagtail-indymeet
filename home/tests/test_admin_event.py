@@ -1,8 +1,10 @@
-"""Tests for EventAdmin copy_event and send_calendar_invites actions."""
+"""Tests for EventAdmin actions and save_model sync dispatch."""
 
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime
+from datetime import timezone as dt_timezone
 from unittest.mock import patch
 
+from django.contrib import messages
 from django.contrib.admin.sites import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -14,12 +16,14 @@ from accounts.factories import UserFactory
 from home.admin import EventAdmin
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import Event
+from home.operations import EventSyncDecision, EventSyncStatus
 
 ZOOM_SETTINGS = dict(
     ZOOM_ACCOUNT_ID="acct",
     ZOOM_CLIENT_ID="cid",
     ZOOM_CLIENT_SECRET="secret",
 )
+ZOOM_DISABLED = dict(ZOOM_ACCOUNT_ID="", ZOOM_CLIENT_ID="", ZOOM_CLIENT_SECRET="")
 
 
 class EventAdminCopyActionTests(TestCase):
@@ -331,8 +335,8 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertTrue(any("Skipped 1" in t for t in message_texts))
 
 
-class EventAdminRetryZoomActionTests(TestCase):
-    """Tests for the retry_zoom_meeting_creation admin action."""
+class EventAdminRetryEventSyncActionTests(TestCase):
+    """Tests for the retry_event_sync admin action."""
 
     def setUp(self):
         self.factory = RequestFactory()
@@ -353,44 +357,116 @@ class EventAdminRetryZoomActionTests(TestCase):
         return request
 
     @override_settings(**ZOOM_SETTINGS)
-    @patch("home.tasks.create_zoom_meeting.create_event_meeting")
-    def test_queues_zoom_creation_for_events_without_zoom_link(self, mock_create):
-        """Action creates a meeting for events that lack a Zoom link and skips others."""
-        mock_create.return_value = "https://zoom.us/j/new"
-        event1 = EventFactory.create(zoom_link="")
-        event2 = EventFactory.create(zoom_link="https://zoom.us/j/123")
-        queryset = Event.objects.filter(pk__in=[event1.pk, event2.pk])
+    @patch("home.operations.sync_event")
+    def test_queues_events_that_are_not_fully_synced(self, mock_task):
+        """Action enqueues events missing a Zoom link or Discord event and
+        skips events that already have both."""
+        missing_zoom = EventFactory.create(zoom_link="", discord_event_id="")
+        missing_discord = EventFactory.create(
+            zoom_link="https://zoom.us/j/x", discord_event_id=""
+        )
+        fully_synced = EventFactory.create(
+            zoom_link="https://zoom.us/j/y", discord_event_id="d1"
+        )
+        queryset = Event.objects.filter(
+            pk__in=[missing_zoom.pk, missing_discord.pk, fully_synced.pk]
+        )
 
-        self.admin.retry_zoom_meeting_creation(self._get_request(), queryset)
+        self.admin.retry_event_sync(self._get_request(), queryset)
 
-        event1.refresh_from_db()
-        event2.refresh_from_db()
-        self.assertEqual(event1.zoom_link, "https://zoom.us/j/new")
-        self.assertEqual(event2.zoom_link, "https://zoom.us/j/123")
-        mock_create.assert_called_once()
+        enqueued_ids = {
+            call.kwargs["event_id"] for call in mock_task.enqueue.call_args_list
+        }
+        self.assertEqual(enqueued_ids, {missing_zoom.pk, missing_discord.pk})
 
-    def test_shows_success_message_when_queued(self):
-        """A success message is shown when one or more tasks are queued."""
-        event = EventFactory.create(zoom_link="")
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.operations.sync_event")
+    def test_shows_success_message_when_queued(self, _mock_task):
+        event = EventFactory.create(zoom_link="", discord_event_id="")
         request = self._get_request()
 
-        self.admin.retry_zoom_meeting_creation(
-            request, Event.objects.filter(pk=event.pk)
-        )
+        self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
 
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
         self.assertIn("queued for 1 event(s)", str(stored[0]))
 
-    def test_shows_warning_when_none_queued(self):
-        """A warning message is shown when no events needed processing."""
-        event = EventFactory.create(zoom_link="https://zoom.us/j/123")
+    @patch("home.operations.sync_event")
+    def test_shows_info_message_for_already_synced_events(self, mock_task):
+        event = EventFactory.create(
+            zoom_link="https://zoom.us/j/x", discord_event_id="d1"
+        )
         request = self._get_request()
 
-        self.admin.retry_zoom_meeting_creation(
-            request, Event.objects.filter(pk=event.pk)
-        )
+        self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
 
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
-        self.assertIn("already have a Zoom link", str(stored[0]))
+        self.assertIn("already synced", str(stored[0]))
+        mock_task.enqueue.assert_not_called()
+
+    @override_settings(**ZOOM_DISABLED)
+    @patch("home.operations.sync_event")
+    def test_shows_warning_when_zoom_not_configured(self, mock_task):
+        event = EventFactory.create(zoom_link="", discord_event_id="")
+        request = self._get_request()
+
+        with self.assertLogs("home.operations", level="WARNING"):
+            self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
+
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertIn("Zoom isn't configured", str(stored[0]))
+        mock_task.enqueue.assert_not_called()
+
+
+class EventAdminSaveModelTests(TestCase):
+    """Tests for the save_model wiring that dispatches the Zoom/Discord sync
+    and surfaces its result to the admin user."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.admin = EventAdmin(Event, AdminSite())
+        self.superuser = UserFactory.create(
+            email="savemodel@example.com", is_staff=True, is_superuser=True
+        )
+
+    def _get_request(self):
+        request = self.factory.post("/admin/home/event/")
+        request.user = self.superuser
+        middleware = SessionMiddleware(lambda req: None)
+        middleware.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        return request
+
+    @patch("home.admin.dispatch_event_sync")
+    def test_queued_decision_shows_info_message(self, mock_dispatch):
+        mock_dispatch.return_value = EventSyncDecision(
+            EventSyncStatus.QUEUED, "Syncing now."
+        )
+        request = self._get_request()
+        event = EventFactory.build(zoom_link="https://zoom.us/j/x")
+
+        self.admin.save_model(request, event, form=None, change=False)
+
+        mock_dispatch.assert_called_once_with(event)
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertEqual(stored[0].level, messages.INFO)
+        self.assertEqual(str(stored[0]), "Syncing now.")
+
+    @patch("home.admin.dispatch_event_sync")
+    def test_dead_end_decision_shows_warning_message(self, mock_dispatch):
+        mock_dispatch.return_value = EventSyncDecision(
+            EventSyncStatus.SKIPPED_NO_ZOOM_CONFIGURED, "No Zoom configured."
+        )
+        request = self._get_request()
+        event = EventFactory.build(zoom_link="")
+
+        self.admin.save_model(request, event, form=None, change=False)
+
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertEqual(stored[0].level, messages.WARNING)
+        self.assertEqual(str(stored[0]), "No Zoom configured.")

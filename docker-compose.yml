@@ -8,7 +8,7 @@ x-app: &default-app
 services:
   django:
     <<: *default-app
-    command: bash -c "uv run python manage.py migrate && uv run python manage.py runserver 0.0.0.0:8000"
+    command: "uv run python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     expose:
@@ -16,6 +16,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - ./.env.docker
+
+  worker:
+    <<: *default-app
+    command: "uv run python manage.py db_worker --interval 5"
+    depends_on:
+      - db
     env_file:
       - ./.env.docker
 

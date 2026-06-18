@@ -117,7 +117,13 @@ class ZoomClient:
         duration_minutes: int,
         user_id: str = "me",
     ) -> dict:
-        """Create a Zoom meeting."""
+        """Create a scheduled Zoom meeting.
+
+        Schedules a meeting (Zoom type 2) for the given user with a waiting
+        room, mute-on-entry, and an auto-generated password. Start times are
+        converted to UTC and the duration is clamped to 1-1440 minutes.
+        Returns the new meeting's id and its join/start URLs.
+        """
 
         if timezone.is_aware(start_time):
             start_time = timezone.localtime(start_time, dt_timezone.utc)
@@ -158,3 +164,32 @@ class ZoomClient:
             "join_url": data["join_url"],
             "start_url": data["start_url"],
         }
+
+    def patch_meeting(
+        self,
+        *,
+        meeting_id: str,
+        topic: str,
+        start_time: datetime,
+        duration_minutes: int,
+    ) -> None:
+        """Update an existing Zoom meeting.
+
+        Updates only the topic, start time, and duration of the given meeting,
+        leaving all other settings unchanged. Start times are converted to UTC
+        and the duration is clamped to 1-1440 minutes. Zoom returns no content
+        on success, so this method returns nothing.
+        """
+        if timezone.is_aware(start_time):
+            start_time = timezone.localtime(start_time, dt_timezone.utc)
+        start_str = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        duration_minutes = max(1, min(duration_minutes, 1440))
+
+        payload = {
+            "topic": topic,
+            "start_time": start_str,
+            "duration": duration_minutes,
+            "timezone": "UTC",
+        }
+
+        self._request("PATCH", f"{BASE_URL}/meetings/{meeting_id}", json=payload)

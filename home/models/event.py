@@ -1,17 +1,23 @@
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxLengthValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from modelcluster.models import ClusterableModel
 from wagtail.snippets.models import register_snippet
 
+from home.integrations.discord.service import DESCRIPTION_MAX, LOCATION_MAX, NAME_MAX
 from home.managers import EventQuerySet
 
 
 @register_snippet
 class Event(ClusterableModel):
-    title = models.CharField(max_length=255)
+    title = models.CharField(
+        max_length=255,
+        validators=[MaxLengthValidator(NAME_MAX)],
+        help_text=f"Capped at {NAME_MAX} characters to fit Discord scheduled events.",
+    )
     slug = models.SlugField(
         unique=True,
         help_text="This is used in the URL to identify the event.",
@@ -32,7 +38,13 @@ class Event(ClusterableModel):
         help_text="Changing this will change the link for the event. Use caution."
     )
     end_time = models.DateTimeField()
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(
+        blank=True,
+        null=True,
+        max_length=DESCRIPTION_MAX,
+        validators=[MaxLengthValidator(DESCRIPTION_MAX)],
+        help_text=f"Capped at {DESCRIPTION_MAX} characters to fit Discord scheduled events.",
+    )
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     session = models.ForeignKey(
@@ -45,6 +57,16 @@ class Event(ClusterableModel):
     zoom_link = models.URLField(
         blank=True,
         default="",
+        validators=[
+            MaxLengthValidator(
+                LOCATION_MAX,
+                message=(
+                    f"This Zoom link is over Discord's {LOCATION_MAX}-character "
+                    "limit. A Discord event can't be created with a longer link, "
+                    "so please shorten it."
+                ),
+            )
+        ],
         help_text="Zoom join URL for this event. Set automatically when the event is created.",
     )
     video_link = models.URLField(
@@ -66,6 +88,29 @@ class Event(ClusterableModel):
         null=True,
         blank=True,
         help_text="The date and time calendar invites were successfully sent.",
+    )
+
+    zoom_meeting_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text="Zoom meeting ID, used to update the meeting if event details change.",
+    )
+    zoom_synced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="The date and time the Zoom meeting was last successfully synced.",
+    )
+    discord_event_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text="Discord scheduled-event ID, used to update the event in Discord.",
+    )
+    discord_synced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="The date and time the Discord event was last successfully synced.",
     )
 
     objects = EventQuerySet.as_manager()

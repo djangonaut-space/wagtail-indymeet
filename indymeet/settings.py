@@ -2,9 +2,9 @@ import os
 
 import dj_database_url
 import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 from django.forms.renderers import TemplatesSetting
 from dotenv import load_dotenv
+from sentry_sdk.integrations.django import DjangoIntegration
 
 load_dotenv()
 
@@ -335,6 +335,11 @@ ZOOM_CLIENT_SECRET = os.environ.get("ZOOM_CLIENT_SECRET")
 # Set to enable; leave unset to disable.
 BUTTONDOWN_API_KEY = os.environ.get("BUTTONDOWN_API_KEY")
 BUTTONDOWN_WEBHOOK_SECRET = os.environ.get("BUTTONDOWN_WEBHOOK_SECRET")
+
+# Discord scheduled-event sync.
+# Set both to enable; leave unset to disable.
+DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
+DISCORD_GUILD_ID = os.environ.get("DISCORD_GUILD_ID")
 
 # When running load tests, it's helpful to remove some functionality
 # such as confirmation emails.

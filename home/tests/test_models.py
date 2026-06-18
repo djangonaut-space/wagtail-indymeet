@@ -1,5 +1,6 @@
 from home import constants
 from datetime import datetime
+from datetime import timezone as dt_timezone
 
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -8,6 +9,7 @@ from freezegun import freeze_time
 from accounts.factories import UserFactory
 from home.constants import SRID_WGS84
 from home.factories import (
+    EventFactory,
     ProjectFactory,
     QuestionFactory,
     SessionFactory,
@@ -578,3 +580,41 @@ class TalkTests(TalksBaseData):
         self.talk_on_site.address = None
         with self.assertRaises(ValidationError):
             self.talk_on_site.clean()
+
+
+class EventModelValidationTests(TestCase):
+    """The Discord field-length caps now live as model validators (run on
+    full_clean, i.e. every ModelForm) rather than in the admin form / service."""
+
+    def _event(self, **kwargs):
+        defaults = dict(
+            title="Valid title",
+            slug="valid-slug",
+            start_time=datetime(2026, 6, 1, 14, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2026, 6, 1, 15, 0, tzinfo=dt_timezone.utc),
+            zoom_link="https://zoom.us/j/123456789",
+            extra_emails=["sessions@djangonaut.space"],
+        )
+        defaults.update(kwargs)
+        return EventFactory.build(**defaults)
+
+    def test_valid_event_passes_full_clean(self):
+        self._event().full_clean()  # should not raise
+
+    def test_zoom_link_over_discord_limit_fails(self):
+        event = self._event(zoom_link="https://zoom.us/j/" + "z" * 100)
+        with self.assertRaises(ValidationError) as ctx:
+            event.full_clean()
+        self.assertIn("zoom_link", ctx.exception.message_dict)
+
+    def test_title_over_100_fails(self):
+        event = self._event(title="x" * 101)
+        with self.assertRaises(ValidationError) as ctx:
+            event.full_clean()
+        self.assertIn("title", ctx.exception.message_dict)
+
+    def test_description_over_1000_fails(self):
+        event = self._event(description="y" * 1001)
+        with self.assertRaises(ValidationError) as ctx:
+            event.full_clean()
+        self.assertIn("description", ctx.exception.message_dict)

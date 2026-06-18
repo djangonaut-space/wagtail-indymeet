@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -15,6 +14,7 @@ from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 from home import constants
+from home.operations import EventSyncStatus, dispatch_event_sync
 from indymeet.admin import DescriptiveSearchMixin
 
 from . import preview_email, tasks
@@ -52,8 +52,49 @@ User = get_user_model()
 @admin.register(Event)
 class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
-    actions = ["copy_event", "send_calendar_invites", "retry_zoom_meeting_creation"]
-    list_display = ["title", "start_time", "calendar_invites_sent_at"]
+    actions = [
+        "copy_event",
+        "send_calendar_invites",
+        "retry_event_sync",
+    ]
+    list_display = [
+        "title",
+        "start_time",
+        "calendar_invites_sent_at",
+        "zoom_synced_at",
+        "discord_synced_at",
+    ]
+    readonly_fields = ("zoom_synced_at", "discord_synced_at")
+    field_help_text = {
+        "is_public": (
+            "Public events are visible to everyone; private events only appear "
+            "to authenticated members of the linked session."
+        ),
+        "is_published": (
+            "Only published events show up on the public calendar and detail pages."
+        ),
+    }
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and db_field.name in self.field_help_text:
+            formfield.help_text = self.field_help_text[db_field.name]
+        return formfield
+
+    def save_model(self, request, obj, form, change) -> None:
+        """Save the event, then dispatch the Zoom/Discord sync and report back.
+
+        The sync is triggered explicitly here so the admin can surface the
+        outcome to the user.
+        """
+        super().save_model(request, obj, form, change)
+        decision = dispatch_event_sync(obj)
+        level = (
+            messages.WARNING
+            if decision.status is EventSyncStatus.SKIPPED_NO_ZOOM_CONFIGURED
+            else messages.INFO
+        )
+        self.message_user(request, decision.message, level)
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Pre-populate the add form with data from an existing event.
@@ -135,26 +176,44 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 messages.WARNING,
             )
 
-    @admin.action(description="Retry Zoom meeting creation")
-    def retry_zoom_meeting_creation(self, request, queryset) -> None:
-        """Retry creating a Zoom meeting for events that don't have one."""
+    @admin.action(description="Retry Zoom/Discord sync")
+    def retry_event_sync(self, request, queryset) -> None:
+        """Re-run the Zoom/Discord sync for events that aren't fully synced.
+
+        Uses the same dispatch as ``save_model``, so the sync task creates
+        whatever is missing: the Zoom meeting first, then the Discord event.
+        """
         queued = 0
+        already_synced = 0
+        not_configured = 0
         for event in queryset:
-            if event.zoom_link:
+            if event.zoom_link and event.discord_event_id:
+                already_synced += 1
                 continue
-            tasks.create_zoom_meeting.enqueue(event_id=event.pk)
-            queued += 1
+            decision = dispatch_event_sync(event)
+            if decision.status is EventSyncStatus.QUEUED:
+                queued += 1
+            else:
+                not_configured += 1
 
         if queued:
             self.message_user(
                 request,
-                f"Zoom meeting creation queued for {queued} event(s).",
+                f"Zoom/Discord sync queued for {queued} event(s).",
                 messages.SUCCESS,
             )
-        else:
+        if already_synced:
             self.message_user(
                 request,
-                "All selected events already have a Zoom link.",
+                f"Skipped {already_synced} event(s) already synced to Zoom "
+                "and Discord.",
+                messages.INFO,
+            )
+        if not_configured:
+            self.message_user(
+                request,
+                f"{not_configured} event(s) have no Zoom link and Zoom isn't "
+                "configured, so no sync was queued.",
                 messages.WARNING,
             )
 

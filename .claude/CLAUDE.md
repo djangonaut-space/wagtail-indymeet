@@ -59,33 +59,23 @@ wagtail-indymeet/
 
 ### Setup Commands
 ```bash
-# Install dependencies (creates venv automatically)
-uv sync --extra dev --extra test
+# Start all services (Django, DB, etc.)
+just up
 
-# Database setup
-uv run python manage.py migrate
-uv run python manage.py createsuperuser
+# In a new terminal, run setup commands
+just migrate
+just superuser
 
-# Tailwind setup
-uv run python manage.py tailwind install
-
-# Run development servers
-uv run python manage.py runserver        # Django server
-uv run python manage.py tailwind start   # Tailwind watcher (separate terminal)
-
-# Or use the convenience script (non-Windows)
-./scripts/local.sh
+# Tailwind setup (if needed)
+just tailwind-install
 ```
 
 ### Testing Commands
 ```bash
-# Run standard tests
-uv run pytest
-
-# Run Playwright tests (browser-based)
-uv run playwright install --with-deps
-uv run pytest -m playwright
-uv run pytest -m playwright --headed  # See browser
+just test                   # All tests except Playwright
+just test-fast              # All tests, reusing the database
+just test-playwright        # Playwright tests
+just test-playwright-headed # Playwright tests with visible browser
 ```
 
 ### Common Tasks
@@ -106,7 +96,7 @@ uv run pytest -m playwright --headed  # See browser
 - Run zizmor security checks on GitHub Actions workflows when modifying `.github/` directory
 
 ### GitHub Actions Security
-- **Run zizmor locally** when modifying workflow files: `uvx zizmor .github/workflows/`
+- **Run zizmor locally** when modifying workflow files: `just zizmor`
 - Zizmor checks for security issues in GitHub Actions workflows
 - The zizmor workflow runs automatically on PRs that modify `.github/` directory
 - Address any security findings before committing workflow changes
@@ -115,7 +105,7 @@ uv run pytest -m playwright --headed  # See browser
 - **Always run tests** before considering work complete
 - Write unit tests for new functionality (pytest or Django TestCase)
 - For JavaScript/frontend interactions, use Playwright tests with `@pytest.mark.playwright`
-- Playwright tests run with: `uv run pytest -m playwright`
+- Playwright tests run with: `just test-playwright`
 - Playwright tests should avoid generic wait calls
 
 ### Type Annotations Example
@@ -236,40 +226,42 @@ Key variables (see `.env.template` files):
 ## Common Commands Reference
 
 ```bash
+# Services
+just up                          # Start all services
+just up-detached                 # Start all services in the background
+just down                        # Stop all services
+just logs                        # Follow Django logs
+
 # Dependency management
-uv add package-name              # Add main dependency
-uv add --dev package-name        # Add dev dependency
-uv add --optional test package   # Add test dependency
-uv lock --upgrade                # Update all dependencies
-uv lock --upgrade-package name   # Update specific package
+just add package-name            # Add main dependency
+just add-dev package-name        # Add dev dependency
+just add-test package-name       # Add test dependency
+just upgrade                     # Update all dependencies
+just upgrade-package name        # Update specific package
 
 # Database
-uv run python manage.py migrate
-uv run python manage.py makemigrations
-uv run python manage.py dbshell
+just migrate
+just makemigrations
+just dbshell
 
 # Fixtures
-uv run python manage.py dumpdata [options] -o fixtures/data.json
-uv run python manage.py loaddata fixtures/data.json
+just dumpdata
+just loaddata
 
 # Testing
-uv run pytest                    # All tests except playwright
-uv run pytest -m playwright      # Playwright tests only
-uv run pytest --reuse-db         # Reuse database
-uv run pytest path/to/test.py    # Specific test file
+just test                        # All tests except Playwright
+just test-fast                   # All tests, reusing the database
+just test path/to/test.py        # Specific test file
+just test-playwright             # Playwright tests only
+just test-playwright-headed      # Playwright tests with visible browser
 
 # Tailwind
-uv run python manage.py tailwind install
-uv run python manage.py tailwind start
-uv run python manage.py tailwind build   # Production build
+just tailwind-install
+just tailwind-start
+just tailwind-build              # Production build
 
 # GitHub Actions Security
-uvx zizmor .github/workflows/           # Check all workflows
-uvx zizmor .github/workflows/tests.yml  # Check specific workflow
-
-# Production/staging locally
-uv run python manage.py runserver
-uv run python manage.py migrate
+just zizmor                      # Check all workflows
 ```
 
 ## Resources

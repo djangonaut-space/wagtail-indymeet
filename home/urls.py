@@ -109,4 +109,9 @@ urlpatterns = [
         TestimonialDeleteView.as_view(),
         name="testimonial_delete",
     ),
+    path(
+        "launching-contributors/",
+        TemplateView.as_view(template_name="home/reports/launching_contributors.html"),
+        name="launching_contributors",
+    ),
 ]
