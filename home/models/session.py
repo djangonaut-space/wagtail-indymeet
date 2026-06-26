@@ -1,4 +1,5 @@
 import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import models
@@ -35,9 +36,30 @@ class Project(models.Model):
     url = models.URLField(
         help_text=_("The URL for the project repository or website"),
     )
+    monitor_all_organization_repos = models.BooleanField(
+        default=False,
+        help_text=_(
+            "When enabled, GitHub stats collection searches all source "
+            "repositories in this GitHub organization instead of only this "
+            "repository."
+        ),
+    )
 
     class Meta:
         ordering = ["name"]
+
+    @property
+    def github_repo(self) -> tuple[str, str] | None:
+        """Return the GitHub org, repo pair from the configured project URL."""
+        parsed_url = urlparse(self.url)
+        if parsed_url.netloc != "github.com":
+            return None
+
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        if len(path_parts) < 2:
+            return None
+
+        return path_parts[0], path_parts[1]
 
     def __str__(self) -> str:
         return self.name

@@ -618,3 +618,24 @@ class EventModelValidationTests(TestCase):
         with self.assertRaises(ValidationError) as ctx:
             event.full_clean()
         self.assertIn("description", ctx.exception.message_dict)
+
+
+class ProjectTests(TestCase):
+    """Tests for Project GitHub metadata helpers."""
+
+    def test_github_repo_returns_owner_and_repo(self):
+        project = ProjectFactory.create(
+            url="https://github.com/django/django/contributors"
+        )
+
+        self.assertEqual(project.github_repo, ("django", "django"))
+
+    def test_github_repo_returns_none_for_non_github_url(self):
+        project = ProjectFactory.create(url="https://www.djangoproject.com/")
+
+        self.assertIsNone(project.github_repo)
+
+    def test_github_repo_returns_none_for_short_github_path(self):
+        project = ProjectFactory.create(url="https://github.com/django")
+
+        self.assertIsNone(project.github_repo)
