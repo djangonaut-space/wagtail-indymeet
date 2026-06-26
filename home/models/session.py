@@ -31,11 +31,15 @@ class Project(models.Model):
     )
     description = models.TextField(
         null=False,
+        blank=True,
         default="",
         help_text=_("A description or helpful context for prospective contributors."),
     )
     url = models.URLField(
-        help_text=_("The URL for the project repository or website"),
+        help_text=_(
+            "The URL for the project repository or website. Use the GitHub repo "
+            "URL when possible for automated stat tracking."
+        ),
     )
     monitor_all_organization_repos = models.BooleanField(
         default=False,
