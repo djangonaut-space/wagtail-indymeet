@@ -50,20 +50,8 @@
         margin-bottom: 15px;
     }
 
-    .merged-prs h3 {
-        color: var(--message-success-bg, #28a745);
-    }
-
-    .open-prs h3 {
-        color: var(--link-fg, #007bff);
-    }
-
-    .closed-prs h3 {
+    .pr-header h3 {
         color: var(--body-quiet-color, #666);
-    }
-
-    .open-issues h3 {
-        color: var(--message-warning-bg, #fd7e14);
     }
 
     ul {
@@ -236,7 +224,7 @@
         </div>
 
         {% if team.merged_prs %}
-        <div class="merged-prs">
+        <div class="pr-header">
             <h3>🎉 Merged Pull Requests</h3>
             <ul>
                 {% for pr in team.merged_prs %}
@@ -255,7 +243,7 @@
         {% endif %}
 
         {% if team.closed_prs %}
-        <div class="closed-prs">
+        <div class="pr-header">
             <h3>🚧 Closed Pull Requests</h3>
             <ul>
                 {% for pr in team.closed_prs %}
@@ -274,7 +262,7 @@
         {% endif %}
 
         {% if team.open_prs %}
-        <div class="open-prs">
+        <div class="pr-header">
             <h3>✨ Open Pull Requests</h3>
             <ul>
                 {% for pr in team.open_prs %}
@@ -293,7 +281,7 @@
         {% endif %}
 
         {% if team.open_issues %}
-        <div class="open-issues">
+        <div class="pr-header">
             <h3>✏️ Issues</h3>
             <ul>
                 {% for issue in team.open_issues %}
