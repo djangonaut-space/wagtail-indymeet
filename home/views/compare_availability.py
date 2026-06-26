@@ -15,6 +15,7 @@ from home.availability import (
     slot_to_datetime,
 )
 from home.models import Session, SessionMembership
+from home.widgets import TomSelectMultipleWidget
 
 slotAvailabilities = dict[str, list[int]]
 
@@ -136,20 +137,50 @@ class CompareAvailabilityForm(forms.Form):
         queryset=Session.objects.all(),
         required=False,
     )
-    users = forms.CharField(required=False)
+    users = forms.MultipleChoiceField(
+        choices=[],
+        required=False,
+        widget=TomSelectMultipleWidget(),
+    )
     offset = forms.FloatField(required=False, initial=0)
 
-    def __init__(self, *args, user: CustomUser, **kwargs):
+    def __init__(self, data=None, *args, user: CustomUser, **kwargs):
         """
         Initialize form with the requesting user.
+
+        Selectable users are computed eagerly so the widget has choices at render time.
+        The session is resolved from the raw data (before validation) because
+        available user choices depend on it.
 
         Args:
             user: The currently logged-in user making the request
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(data, *args, **kwargs)
         self.user = user
-        self._session = None
-        self._session_membership = None
+        session = None
+        session_membership = None
+        if session_id := (data and data.get("session")):
+            session_membership = (
+                SessionMembership.objects.for_user(user)
+                .filter(session_id=session_id)
+                .select_related("session")
+                .first()
+            )
+            if session_membership:
+                session = session_membership.session
+            else:
+                session = Session.objects.filter(pk=session_id).first()
+
+        self._selectable_users: list[CustomUser] = list(
+            CustomUser.objects.for_comparing_availability(
+                user=user,
+                session=session,
+                session_membership=session_membership,
+            )
+        )
+        self.fields["users"].choices = [
+            (str(u.id), u.get_full_name() or u.username) for u in self._selectable_users
+        ]
 
     def clean_offset(self) -> float:
         """Return offset value, defaulting to 0 if not provided or invalid."""
@@ -157,29 +188,8 @@ class CompareAvailabilityForm(forms.Form):
         return offset if offset is not None else 0.0
 
     def clean_users(self) -> set[int]:
-        """Parse user IDs from form data, handling both comma-separated and multiple params."""
-        result = set()
-        # Handle multiple params (from select multiple) and comma-separated values
-        values = (
-            self.data.getlist("users")
-            if hasattr(self.data, "getlist")
-            else [self.data.get("users", "")]
-        )
-        for value in values:
-            for uid in str(value).split(","):
-                if uid.strip().isdigit():
-                    result.add(int(uid.strip()))
-        return result
-
-    def clean_session(self) -> Session | None:
-        if session := self.cleaned_data.get("session"):
-            self._session_membership = (
-                SessionMembership.objects.for_session(session)
-                .for_user(self.user)
-                .first()
-            )
-        self._session = session
-        return self._session
+        """Convert validated choice strings to a set of integer user IDs."""
+        return {int(v) for v in self.cleaned_data.get("users", [])}
 
     def get_selectable_users(self) -> list[CustomUser]:
         """
@@ -188,13 +198,7 @@ class CompareAvailabilityForm(forms.Form):
         Returns:
             List of CustomUser objects the user can compare
         """
-        return list(
-            CustomUser.objects.for_comparing_availability(
-                user=self.user,
-                session=self._session,
-                session_membership=self._session_membership,
-            )
-        )
+        return self._selectable_users
 
     def get_selected_users(
         self, selectable_users: list[CustomUser]
@@ -229,16 +233,12 @@ def compare_availability(request):
     """
     form = CompareAvailabilityForm(data=request.GET, user=request.user)
     if form.is_valid():
-        selectable_users = form.get_selectable_users()
-        selected_users = form.get_selected_users(selectable_users)
+        selected_user_ids = form.cleaned_data.get("users", [])
     else:
-        selectable_users = []
-        selected_users = []
-
+        selected_user_ids = []
     context = {
         "form": form,
-        "selectable_users": selectable_users,
-        "selected_user_ids": [u.id for u in selected_users],
+        "selected_user_ids": selected_user_ids,
         "session_id": form.data.get("session"),
     }
     return render(request, "home/compare_availability.html", context)
