@@ -31,6 +31,10 @@ dbshell:
 superuser:
     {{django}} uv run python manage.py createsuperuser
 
+# Create a superuser
+demo:
+    {{django}} uv run python manage.py generate_sample_session
+
 # Run database migrations
 migrate *args:
     {{django}} uv run python manage.py migrate {{args}}

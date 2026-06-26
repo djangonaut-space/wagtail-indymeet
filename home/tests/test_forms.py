@@ -1,16 +1,17 @@
 import csv
 import io
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from accounts.factories import UserFactory
 from home.factories import QuestionFactory, SessionFactory
 from home.factories import SurveyFactory
 from home.factories import UserSurveyResponseFactory
+from home.forms import CollectStatsForm
 from home.forms import CreateUserSurveyResponseForm
 from home.forms import EditUserSurveyResponseForm
 from home.forms import SurveyCSVExportForm, SurveyCSVImportForm
@@ -741,3 +742,48 @@ class SurveyCSVImportFormTests(TestCase):
         self.assertEqual(self.response1.score, 10)
         self.assertEqual(self.response1.selection_rank, 1)
         self.assertEqual(result["updated"], 1)
+
+
+class CollectStatsFormTests(SimpleTestCase):
+    def test_future_dates_are_normalized_to_today(self):
+        today = date.today()
+        future_date = today + timedelta(days=1)
+
+        form = CollectStatsForm(
+            data={
+                "start_date": future_date.isoformat(),
+                "end_date": future_date.isoformat(),
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["start_date"], today)
+        self.assertEqual(form.cleaned_data["end_date"], today)
+
+    def test_valid_date_range(self):
+        today = date.today()
+
+        form = CollectStatsForm(
+            data={
+                "start_date": (today - timedelta(days=7)).isoformat(),
+                "end_date": today.isoformat(),
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+
+    def test_start_date_after_end_date_is_invalid(self):
+        today = date.today()
+
+        form = CollectStatsForm(
+            data={
+                "start_date": today.isoformat(),
+                "end_date": (today - timedelta(days=7)).isoformat(),
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn(
+            "Start date must be before or equal to end date.",
+            form.non_field_errors(),
+        )

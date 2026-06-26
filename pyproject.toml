@@ -33,6 +33,7 @@ dependencies = [
     "djangorestframework-gis",
     "icalendar",
     "requests>=2.33.1",
+    "pygithub>=2.9.1",
 ]
 
 [dependency-groups]

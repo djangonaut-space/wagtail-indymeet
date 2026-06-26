@@ -1,8 +1,8 @@
 """Tests for the compare availability views."""
 
 from datetime import datetime
-
 import factory
+from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
 from freezegun import freeze_time
@@ -18,9 +18,11 @@ from home.factories import (
 from home.models import SessionMembership, Team
 from home.availability import slot_to_datetime
 from home.views.compare_availability import (
+    CompareAvailabilityForm,
     build_grid_data,
     get_slot_color,
 )
+from home.widgets import TomSelectMultipleWidget
 
 
 class GetSlotColorTests(TestCase):
@@ -180,7 +182,7 @@ class CompareAvailabilityTests(TestCase):
 
         self.client.force_login(membership.user)
         response = self.client.get(
-            f"{self.url}?users={self.captain.id},{self.navigator.id}"
+            f"{self.url}?users={self.captain.id}&users={self.navigator.id}"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -294,3 +296,64 @@ class CompareAvailabilityGridTests(TestCase):
         )
         self.assertContains(response, "activeDisplayTime")
         self.assertContains(response, "View on time.is")
+
+
+@freeze_time("2024-06-15")
+class CompareAvailabilityFormTests(TestCase):
+    """Tests for CompareAvailabilityForm new logic."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.organizer_membership = OrganizerFactory.create()
+        cls.organizer = cls.organizer_membership.user
+
+        cls.session = SessionFactory.create(
+            start_date=datetime(2024, 6, 1).date(),
+            end_date=datetime(2024, 8, 30).date(),
+        )
+        project = ProjectFactory.create()
+        team = Team.objects.create(
+            session=cls.session, project=project, name="Team Alpha"
+        )
+        cls.member = UserFactory.create()
+        UserAvailabilityFactory.create(user=cls.member, slots=[0.0])
+        SessionMembershipFactory.create(
+            session=cls.session,
+            team=team,
+            accepted=True,
+            user=cls.member,
+            role=constants.DJANGONAUT,
+        )
+
+    def _make_form(self, user, data: dict) -> CompareAvailabilityForm:
+        return CompareAvailabilityForm(data=QueryDict(data), user=user)
+
+    def test_choices_populated_from_session(self) -> None:
+        """Widget choices are set from the selectable users for the given session."""
+        form = self._make_form(self.organizer, f"session={self.session.pk}")
+        choice_ids = {int(pk) for pk, _ in form.fields["users"].choices}
+        self.assertIn(self.member.id, choice_ids)
+
+    def test_invalid_session_id_falls_back_to_no_session(self) -> None:
+        """A non-existent session PK does not raise; choices are computed without session."""
+        form = self._make_form(self.organizer, "session=999999")
+        self.assertIsInstance(form.fields["users"].choices, list)
+
+    def test_clean_users_returns_set_of_ints(self) -> None:
+        """clean_users converts the MultipleChoiceField strings to a set of ints."""
+        form = self._make_form(
+            self.organizer,
+            f"session={self.session.pk}&users={self.member.id}",
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["users"], {self.member.id})
+
+    def test_user_id_not_in_choices_is_rejected(self) -> None:
+        """Submitting a user ID outside the selectable set fails validation."""
+        outsider = UserFactory.create()
+        form = self._make_form(
+            self.organizer,
+            f"session={self.session.pk}&users={outsider.id}",
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("users", form.errors)

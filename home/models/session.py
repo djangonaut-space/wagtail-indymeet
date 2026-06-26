@@ -1,4 +1,5 @@
 import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import models
@@ -12,6 +13,7 @@ from home.managers import (
     SessionQuerySet,
     TeamQuerySet,
 )
+from home.services.github_stats import Author, TeamScope
 
 
 class Project(models.Model):
@@ -29,15 +31,54 @@ class Project(models.Model):
     )
     description = models.TextField(
         null=False,
+        blank=True,
         default="",
         help_text=_("A description or helpful context for prospective contributors."),
     )
     url = models.URLField(
-        help_text=_("The URL for the project repository or website"),
+        help_text=_(
+            "The URL for the project repository or website. Use the GitHub repo "
+            "URL when possible for automated stat tracking."
+        ),
+    )
+    monitor_all_organization_repos = models.BooleanField(
+        default=False,
+        help_text=_(
+            "When enabled, GitHub stats collection searches all source "
+            "repositories in this GitHub organization instead of only this "
+            "repository."
+        ),
     )
 
     class Meta:
         ordering = ["name"]
+
+    @property
+    def github_repo(self) -> tuple[str, str] | None:
+        """Return the GitHub org, repo pair from the configured project URL."""
+        parsed_url = urlparse(self.url)
+        if parsed_url.netloc != "github.com":
+            return None
+
+        path_parts = [part for part in parsed_url.path.split("/") if part]
+        if len(path_parts) < 2:
+            return None
+
+        return path_parts[0], path_parts[1]
+
+    @property
+    def github_scope_term(self) -> str | None:
+        """Return a GitHub search scope qualifier for this project's repo.
+
+        Returns ``None`` when the project URL is not a GitHub repository.
+        """
+        github_repo = self.github_repo
+        if github_repo is None:
+            return None
+        owner, repo_name = github_repo
+        if self.monitor_all_organization_repos:
+            return f"org:{owner}"
+        return f"repo:{owner}/{repo_name}"
 
     def __str__(self) -> str:
         return self.name
@@ -195,6 +236,35 @@ class Session(models.Model):
             return "past"
         else:
             return "current"
+
+    def build_team_scopes(self) -> list[TeamScope]:
+        """Build one ``TeamScope`` per team with a GitHub project and djangonauts.
+
+        Teams whose project has no GitHub URL, or whose djangonauts have no
+        GitHub username configured, produce no queries and are skipped.
+        """
+        scopes: list[TeamScope] = []
+        for team in self.teams.has_github_project().with_djangonaut_members():
+            scope_term = team.project.github_scope_term
+
+            members_by_login: dict[str, Author] = {}
+            for membership in team.team_djangonauts:
+                github_username = membership.annotated_github_username
+                display_name = membership.user.get_full_name() or github_username
+                members_by_login[github_username] = Author(
+                    github_username=github_username, name=display_name
+                )
+
+            if members_by_login:
+                scopes.append(
+                    TeamScope(
+                        scope_term=scope_term,
+                        members=tuple(members_by_login.values()),
+                        label=str(team),
+                    )
+                )
+
+        return scopes
 
 
 class Team(models.Model):
