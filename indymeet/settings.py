@@ -281,6 +281,11 @@ LOGGING = {
     },
     "loggers": {
         "django.request": {"handlers": [], "level": "ERROR"},
+        "home.services.github_stats": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
 
@@ -340,6 +345,9 @@ BUTTONDOWN_WEBHOOK_SECRET = os.environ.get("BUTTONDOWN_WEBHOOK_SECRET")
 # Set both to enable; leave unset to disable.
 DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 DISCORD_GUILD_ID = os.environ.get("DISCORD_GUILD_ID")
+
+# GitHub API token for Djangonaut stats collection (Issue #615).
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 
 # When running load tests, it's helpful to remove some functionality
 # such as confirmation emails.

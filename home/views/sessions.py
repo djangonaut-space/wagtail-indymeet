@@ -3,7 +3,7 @@
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Prefetch, QuerySet
+from django.db.models import QuerySet
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 

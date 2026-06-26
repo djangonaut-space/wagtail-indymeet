@@ -3,7 +3,17 @@ from __future__ import annotations
 import datetime
 from typing import Optional
 
-from django.db.models import Avg, Count, Exists, OuterRef, Prefetch, Q, Subquery, Value
+from django.db.models import (
+    Avg,
+    Count,
+    Exists,
+    F,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Value,
+)
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -138,6 +148,17 @@ class SessionMembershipQuerySet(QuerySet):
     def djangonauts(self):
         """Filter to only Djangonauts."""
         return self.filter(role=constants.DJANGONAUT)
+
+    def with_github_username(self):
+        """Annotate each membership with its user's configured GitHub username.
+
+        Memberships whose user has no GitHub username configured are excluded,
+        so the annotated ``annotated_github_username`` is always a non-empty
+        string.
+        """
+        return self.exclude(user__profile__github_username="").annotate(
+            annotated_github_username=F("user__profile__github_username")
+        )
 
     def navigators(self):
         """Filter to only Navigators."""
@@ -439,6 +460,36 @@ class UserSurveyResponseQuerySet(QuerySet):
 
 class TeamQuerySet(QuerySet):
     """QuerySet for Team with admin filtering."""
+
+    def has_github_project(self):
+        """Filter to teams whose project is a GitHub repository.
+
+        Mirrors ``Project.github_repo``: the URL host must be exactly
+        ``github.com`` followed by at least an owner and repository. Teams kept
+        by this filter are guaranteed a non-``None`` ``github_scope_term``.
+        """
+        return self.filter(project__url__regex=r"^https?://github\.com/[^/]+/[^/]+")
+
+    def with_djangonaut_members(self):
+        """Select each team's project and prefetch its Djangonaut members.
+
+        Only Djangonauts with a configured GitHub username are prefetched, each
+        annotated with ``github_username``. The prefetched memberships are
+        exposed via the ``team_djangonauts`` attribute on each team.
+        """
+        from home.models import SessionMembership
+
+        return self.select_related("project").prefetch_related(
+            Prefetch(
+                "session_memberships",
+                queryset=(
+                    SessionMembership.objects.djangonauts()
+                    .with_github_username()
+                    .select_related("user")
+                ),
+                to_attr="team_djangonauts",
+            )
+        )
 
     def for_admin_site(self, user):
         """Filter to only teams for sessions the user organizes."""

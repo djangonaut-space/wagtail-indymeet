@@ -1,25 +1,27 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Count, Exists, F, Max, OuterRef
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from github import GithubException
 from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 from home import constants
 from home.operations import EventSyncStatus, dispatch_event_sync
+from home.services.github_stats import GitHubStatsCollector
 from indymeet.admin import DescriptiveSearchMixin
 
 from . import preview_email, tasks
 from .availability import AvailabilityWindow, find_best_one_hour_windows_with_roles
-from .forms import SurveyCSVExportForm, SurveyCSVImportForm
+from .forms import CollectStatsForm, SurveyCSVExportForm, SurveyCSVImportForm
 from .models import (
     Event,
     Project,
@@ -47,6 +49,86 @@ from .views.team_formation import (
 )
 
 User = get_user_model()
+
+
+def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
+    """
+    Collect and display GitHub stats for Djangonauts in a session.
+
+    Access is controlled by admin_site.admin_view() in SessionAdmin.get_urls().
+    Additionally checks that the user is authorized for this specific session.
+    """
+    session = get_object_or_404(
+        Session.objects.for_admin_site(request.user),
+        id=session_id,
+    )
+
+    scopes = session.build_team_scopes()
+    if not scopes:
+        messages.error(
+            request,
+            "No teams with GitHub projects and configured Djangonaut GitHub "
+            "usernames were found for this session.",
+        )
+        return redirect("admin:home_session_changelist")
+
+    djangonaut_count = len(
+        {member.github_username for scope in scopes for member in scope.members}
+    )
+
+    if request.method == "POST":
+        form = CollectStatsForm(request.POST)
+        if form.is_valid():
+            try:
+                report = GitHubStatsCollector().collect_all_stats(
+                    scopes=scopes,
+                    start_date=form.cleaned_data["start_date"],
+                    end_date=form.cleaned_data["end_date"],
+                )
+            except (GithubException, ValueError) as e:
+                messages.error(request, f"GitHub API error: {e}")
+                return redirect("admin:home_session_changelist")
+
+            messages.success(
+                request,
+                f"Successfully collected stats for {djangonaut_count} Djangonauts. "
+                f"Found {report.count_open_prs()} open PRs, "
+                f"{report.count_merged_prs()} merged PRs, "
+                f"{report.count_closed_prs()} closed PRs, "
+                f"and {report.count_open_issues()} issues.",
+            )
+
+            return render(
+                request,
+                "admin/collect_stats_results.html",
+                {
+                    "session": session,
+                    "report": report,
+                    "opts": Session._meta,
+                    "has_view_permission": True,
+                },
+            )
+    else:
+        today = date.today()
+        form = CollectStatsForm(
+            initial={
+                "start_date": today - timedelta(days=7),
+                "end_date": today,
+            }
+        )
+
+    return render(
+        request,
+        "admin/collect_stats_form.html",
+        {
+            "session": session,
+            "form": form,
+            "scopes": scopes,
+            "djangonaut_count": djangonaut_count,
+            "opts": Session._meta,
+            "has_view_permission": True,
+        },
+    )
 
 
 @admin.register(Event)
@@ -540,12 +622,24 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         preview_email.waitlist_email_action,
         preview_email.team_welcome_email_action,
     ]
-    list_display = ("title", "start_date", "end_date", "form_teams", "email_actions")
+    list_display = (
+        "title",
+        "start_date",
+        "end_date",
+        "form_teams",
+        "collect_stats",
+        "email_actions",
+    )
 
     @admin.display(description="Form Teams")
     def form_teams(self, obj):
         href = reverse("admin:session_form_teams", kwargs={"session_id": obj.id})
         return mark_safe(f'<a href="{href}">Form Teams</a>')
+
+    @admin.display(description="GitHub Stats")
+    def collect_stats(self, obj):
+        href = reverse("admin:session_collect_stats", args=[obj.id])
+        return mark_safe(f'<a href="{href}">Collect Stats</a>')
 
     @admin.display(description="Email Actions")
     def email_actions(self, obj):
@@ -585,6 +679,11 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "<int:session_id>/calculate-overlap/",
                 self.admin_site.admin_view(calculate_overlap_ajax),
                 name="session_calculate_overlap",
+            ),
+            path(
+                "<int:session_id>/collect-stats/",
+                self.admin_site.admin_view(collect_stats_view),
+                name="session_collect_stats",
             ),
             path(
                 "<int:session_id>/send-session-results/",
