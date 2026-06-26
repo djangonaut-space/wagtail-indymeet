@@ -19,8 +19,9 @@ from home.factories import (
     UserQuestionResponseFactory,
     UserSurveyResponseFactory,
 )
-from home.models import SessionMembership, TypeField
+from home.models import SessionMembership, Team, TypeField
 from home.models.talk import Talk, TalkSpeaker
+from home.services.github_stats import Author
 from django.contrib.gis.geos import Point
 from accounts.models import CustomUser
 from django.core.exceptions import ValidationError
@@ -493,6 +494,22 @@ class SessionMembershipTests(TestCase):
         self.assertTrue(organizer.is_organizer())
         self.assertFalse(captain.is_organizer())
 
+    def test_with_github_username_annotates_and_excludes_blank(self):
+        """Annotates the GitHub username and drops members without one."""
+        member = SessionMembershipFactory.create(
+            role=constants.DJANGONAUT,
+            user=UserFactory.create(profile__github_username="octocat"),
+        )
+        SessionMembershipFactory.create(
+            role=constants.DJANGONAUT,
+            user=UserFactory.create(profile__github_username=""),
+        )
+
+        annotated = SessionMembership.objects.with_github_username().get()
+
+        self.assertEqual(annotated.pk, member.pk)
+        self.assertEqual(annotated.annotated_github_username, "octocat")
+
 
 class TeamTests(TestCase):
     """Tests for Team model."""
@@ -505,6 +522,53 @@ class TeamTests(TestCase):
 
         expected_url = f"/sessions/spring-2024/teams/{team.pk}/"
         self.assertEqual(team.get_absolute_url(), expected_url)
+
+    def test_has_github_project_keeps_only_github_repo_urls(self):
+        """Only teams whose project URL is a GitHub repository are returned."""
+        github_team = TeamFactory.create(
+            project=ProjectFactory.create(url="https://github.com/django/django")
+        )
+        TeamFactory.create(
+            project=ProjectFactory.create(url="https://www.djangoproject.com/")
+        )
+        TeamFactory.create(
+            project=ProjectFactory.create(url="https://github.com/django")
+        )
+
+        teams = Team.objects.has_github_project()
+
+        self.assertEqual({team.pk for team in teams}, {github_team.pk})
+
+    def test_with_djangonaut_members_prefetches_djangonauts_with_usernames(self):
+        """Prefetches only Djangonauts with a GitHub username, annotated."""
+        team = TeamFactory.create()
+        djangonaut = SessionMembershipFactory.create(
+            session=team.session,
+            team=team,
+            role=constants.DJANGONAUT,
+            user=UserFactory.create(profile__github_username="octocat"),
+        )
+        SessionMembershipFactory.create(
+            session=team.session,
+            team=team,
+            role=constants.DJANGONAUT,
+            user=UserFactory.create(profile__github_username=""),
+        )
+        SessionMembershipFactory.create(
+            session=team.session,
+            team=team,
+            role=constants.CAPTAIN,
+            user=UserFactory.create(profile__github_username="captainhook"),
+        )
+
+        fetched = Team.objects.with_djangonaut_members().get(pk=team.pk)
+
+        self.assertEqual(
+            [member.pk for member in fetched.team_djangonauts], [djangonaut.pk]
+        )
+        self.assertEqual(
+            fetched.team_djangonauts[0].annotated_github_username, "octocat"
+        )
 
 
 class TalksBaseData(TestCase):
@@ -639,3 +703,92 @@ class ProjectTests(TestCase):
         project = ProjectFactory.create(url="https://github.com/django")
 
         self.assertIsNone(project.github_repo)
+
+    def test_github_scope_term_returns_repo_qualifier(self):
+        project = ProjectFactory.create(url="https://github.com/django/django")
+
+        self.assertEqual(project.github_scope_term, "repo:django/django")
+
+    def test_github_scope_term_returns_org_qualifier_when_monitoring_all(self):
+        project = ProjectFactory.create(
+            url="https://github.com/django/django",
+            monitor_all_organization_repos=True,
+        )
+
+        self.assertEqual(project.github_scope_term, "org:django")
+
+    def test_github_scope_term_returns_none_for_non_github_url(self):
+        project = ProjectFactory.create(url="https://www.djangoproject.com/")
+
+        self.assertIsNone(project.github_scope_term)
+
+
+class BuildTeamScopesTests(TestCase):
+    """Tests for Session.build_team_scopes."""
+
+    def _add_djangonaut(
+        self, team, github_username, first_name="Jane", last_name="Doe"
+    ):
+        return SessionMembershipFactory.create(
+            session=team.session,
+            team=team,
+            role=constants.DJANGONAUT,
+            user=UserFactory.create(
+                first_name=first_name,
+                last_name=last_name,
+                profile__github_username=github_username,
+            ),
+        )
+
+    def test_builds_one_scope_per_github_team_with_members(self):
+        session = SessionFactory.create()
+        project = ProjectFactory.create(
+            name="Django", url="https://github.com/test-org/test-repo"
+        )
+        team = TeamFactory.create(session=session, project=project, name="Team Alpha")
+        self._add_djangonaut(team, "octocat", first_name="Jane", last_name="Doe")
+
+        scopes = session.build_team_scopes()
+
+        self.assertEqual(len(scopes), 1)
+        scope = scopes[0]
+        self.assertEqual(scope.scope_term, "repo:test-org/test-repo")
+        self.assertEqual(scope.label, "Team Alpha - Django")
+        self.assertEqual(
+            scope.members, (Author(github_username="octocat", name="Jane Doe"),)
+        )
+
+    def test_skips_team_whose_project_is_not_on_github(self):
+        session = SessionFactory.create()
+        team = TeamFactory.create(
+            session=session,
+            project=ProjectFactory.create(url="https://www.djangoproject.com/"),
+        )
+        self._add_djangonaut(team, "octocat")
+
+        self.assertEqual(session.build_team_scopes(), [])
+
+    def test_skips_team_without_djangonauts_with_usernames(self):
+        session = SessionFactory.create()
+        team = TeamFactory.create(
+            session=session,
+            project=ProjectFactory.create(url="https://github.com/test-org/test-repo"),
+        )
+        self._add_djangonaut(team, "")
+
+        self.assertEqual(session.build_team_scopes(), [])
+
+    def test_deduplicates_members_sharing_a_github_username(self):
+        session = SessionFactory.create()
+        team = TeamFactory.create(
+            session=session,
+            project=ProjectFactory.create(url="https://github.com/test-org/test-repo"),
+        )
+        self._add_djangonaut(team, "octocat", first_name="Jane", last_name="Doe")
+        self._add_djangonaut(team, "octocat", first_name="John", last_name="Smith")
+
+        scopes = session.build_team_scopes()
+
+        self.assertEqual(len(scopes), 1)
+        self.assertEqual(len(scopes[0].members), 1)
+        self.assertEqual(scopes[0].members[0].github_username, "octocat")

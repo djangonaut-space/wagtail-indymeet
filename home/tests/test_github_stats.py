@@ -564,7 +564,7 @@ class CollectStatsViewIntegrationTests(TestCase):
         )
 
     @override_settings(GITHUB_TOKEN="test_token")
-    @patch("home.views.sessions.GitHubStatsCollector")
+    @patch("home.admin.GitHubStatsCollector")
     def test_displays_mixed_pr_states(self, mock_collector_class):
         """Verify view correctly displays open, merged, and closed PRs."""
         mock_collector = Mock()
@@ -664,7 +664,7 @@ class CollectStatsViewIntegrationTests(TestCase):
         )
 
     @override_settings(GITHUB_TOKEN="test_token")
-    @patch("home.views.sessions.GitHubStatsCollector")
+    @patch("home.admin.GitHubStatsCollector")
     def test_uses_org_scope_when_project_monitors_whole_org(self, mock_collector_class):
         self.project.monitor_all_organization_repos = True
         self.project.save()
@@ -686,7 +686,7 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertEqual(scope.scope_term, "org:test-org")
 
     @override_settings(GITHUB_TOKEN="test_token")
-    @patch("home.views.sessions.GitHubStatsCollector")
+    @patch("home.admin.GitHubStatsCollector")
     def test_hides_empty_sections(self, mock_collector_class):
         """Verify sections without data are not displayed."""
         mock_collector = Mock()
@@ -741,7 +741,7 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertIn(self.session.title, content)
 
     @override_settings(GITHUB_TOKEN="test_token")
-    def test_redirects_when_session_has_no_teams_with_github_projects(self):
+    def test_redirects_when_session_has_no_teams_has_github_projects(self):
         """Redirects with error when no team has a GitHub-backed project."""
         self.session.teams.all().delete()
 
@@ -766,7 +766,7 @@ class CollectStatsViewIntegrationTests(TestCase):
         self.assertIn("No teams with GitHub projects", str(messages[0]))
 
     @override_settings(GITHUB_TOKEN="test_token")
-    @patch("home.views.sessions.GitHubStatsCollector")
+    @patch("home.admin.GitHubStatsCollector")
     def test_github_api_error_redirects_with_message(self, mock_collector_class):
         """Redirects with error message when GitHub API raises an exception."""
         mock_collector = Mock()
