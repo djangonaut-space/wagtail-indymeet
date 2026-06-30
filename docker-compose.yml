@@ -33,6 +33,8 @@ services:
     # Without tty, no stdin, and tailwind watcher aborts
     # https://github.com/tailwindlabs/tailwindcss/issues/5324
     tty: true
+    env_file:
+      - ./.env.docker
 
   db:
     restart: always
