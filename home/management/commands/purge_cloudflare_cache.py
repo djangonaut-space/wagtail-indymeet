@@ -10,9 +10,13 @@ edge. This command calls Cloudflare's "purge everything" API directly so
 freshly built assets are picked up once a release goes live.
 """
 
+import logging
+
 import requests
 from django.conf import settings
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
+
+logger = logging.getLogger(__name__)
 
 CLOUDFLARE_PURGE_CACHE_URL = (
     "https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache"
@@ -47,17 +51,11 @@ class Command(BaseCommand):
             )
             response_json = response.json()
         except (requests.exceptions.RequestException, ValueError) as exc:
-            # A failed purge shouldn't fail the deployment - stale cache is
-            # recoverable, an aborted release is not.
-            self.stderr.write(
-                self.style.ERROR(f"Failed to purge Cloudflare cache: {exc}")
-            )
-            return
+            logger.error("Failed to purge Cloudflare cache: %s", exc, exc_info=True)
+            raise CommandError(f"Failed to purge Cloudflare cache: {exc}") from exc
 
         if not response.ok or not response_json.get("success"):
-            self.stderr.write(
-                self.style.ERROR(f"Failed to purge Cloudflare cache: {response_json}")
-            )
-            return
+            logger.error("Failed to purge Cloudflare cache: %s", response_json)
+            raise CommandError(f"Failed to purge Cloudflare cache: {response_json}")
 
         self.stdout.write(self.style.SUCCESS("Purged the entire Cloudflare cache."))
