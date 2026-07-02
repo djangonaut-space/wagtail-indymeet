@@ -36,7 +36,11 @@ from home.models import Session, SessionMembership, Survey, Team, UserSurveyResp
 from django.contrib.gis.geos import Point
 
 from home.models.talk import Talk, TalkSpeaker
-from tests.timezones import US_EASTERN_TIMEZONE
+from tests.timezones import (
+    DEFAULT_TIMEZONE,
+    PACIFIC_AUCKLAND_TIMEZONE,
+    US_EASTERN_TIMEZONE,
+)
 
 logger = getLogger(__name__)
 
@@ -942,8 +946,8 @@ class TestCompareAvailability:
 
     def navigate_to_compare_page(self, page: Page, user_ids: list[int]):
         users_param = "&".join(f"users={uid}" for uid in user_ids)
-        # Force offset=0 so we're testing UTC directly
-        page.goto(f"{reverse('compare_availability')}?{users_param}&offset=0")
+        compare_url = reverse("compare_availability")
+        page.goto(f"{compare_url}?{users_param}&timezone={DEFAULT_TIMEZONE}")
         page.wait_for_load_state("networkidle")
 
     def assert_selected_users_show_availability(self, page: Page, data: dict):
@@ -1119,6 +1123,29 @@ class TestCompareAvailability:
         # Time display should be hidden
         time_display = page.locator("[x-text='activeDisplayTime']")
         expect(time_display).not_to_be_visible()
+
+    @pytest.mark.playwright
+    def test_compare_availability_submits_browser_timezone_name(
+        self, new_context, live_server, setup_compare_data
+    ):
+        """Compare grid HTMX request includes the browser's IANA timezone name."""
+        data = setup_compare_data
+        context = new_context(
+            base_url=live_server.url,
+            timezone_id=PACIFIC_AUCKLAND_TIMEZONE,
+        )
+        page = context.new_page()
+        try:
+            self.login_as_organizer(page, data["organizer"])
+            self.navigate_to_compare_page(page, [data["user_a"].id, data["user_b"].id])
+
+            expect(
+                page.get_by_text(f"Timezone: {PACIFIC_AUCKLAND_TIMEZONE}")
+            ).to_be_visible()
+            expect(page.locator('td.time-slot[title*="2/2"]').first).to_be_visible()
+        finally:
+            page.close()
+            context.close()
 
     @pytest.mark.playwright
     def test_compare_availability_interactivity(self, page: Page, setup_compare_data):

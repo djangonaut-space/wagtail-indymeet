@@ -1,7 +1,8 @@
 """Views for comparing availability across multiple users."""
 
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import date, datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django import forms
 from django.contrib.auth.decorators import login_required
@@ -9,9 +10,9 @@ from django.shortcuts import render
 
 from accounts.models import CustomUser
 from home.availability import (
-    convert_slot_with_offset,
     format_slot_as_time,
-    get_user_slots,
+    get_user_utc_slots,
+    local_slot_to_utc_slot,
     slot_to_datetime,
 )
 from home.models import Session, SessionMembership
@@ -71,10 +72,15 @@ def get_slot_color(available_count: int, total_count: int) -> str | None:
 def build_grid_data(
     selected_users: list[CustomUser],
     user_slots: dict[int, set[float]],
-    offset_hours: float = 0,
+    timezone_name: str = "UTC",
+    reference_date: date | None = None,
 ) -> tuple[list[GridRow], slotAvailabilities]:
     """
     Build grid rows and slot availability mapping.
+
+    ``user_slots`` contains per-user UTC reference slots. Grid cells are walked
+    in the viewer's timezone and converted back to UTC reference slots for
+    comparison.
 
     Returns:
         Tuple of (grid_rows, slot_availabilities) where slot_availabilities
@@ -91,7 +97,11 @@ def build_grid_data(
 
             for day in range(7):
                 local_slot = (day * 24.0) + time_value
-                utc_slot = convert_slot_with_offset(local_slot, -offset_hours)
+                utc_slot = local_slot_to_utc_slot(
+                    local_slot,
+                    timezone_name,
+                    reference_date,
+                )
 
                 available_user_ids = [
                     user.id
@@ -108,8 +118,12 @@ def build_grid_data(
                         color=get_slot_color(len(available_user_ids), total_count),
                         available_count=len(available_user_ids),
                         total_count=total_count,
-                        display_time=format_slot_as_time(local_slot),
-                        utc_datetime=slot_to_datetime(utc_slot),
+                        display_time=format_slot_as_time(
+                            utc_slot,
+                            timezone_name,
+                            reference_date,
+                        ),
+                        utc_datetime=slot_to_datetime(utc_slot, reference_date),
                     )
                 )
 
@@ -129,7 +143,7 @@ class CompareAvailabilityForm(forms.Form):
     """
     Form for handling compare availability querystring parameters.
 
-    Validates session_id, user selection, and offset parameters.
+    Validates session_id, user selection, and timezone parameters.
     Also determines which users the current user can select for comparison.
     """
 
@@ -142,7 +156,7 @@ class CompareAvailabilityForm(forms.Form):
         required=False,
         widget=TomSelectMultipleWidget(),
     )
-    offset = forms.FloatField(required=False, initial=0)
+    timezone = forms.CharField(required=False, initial="UTC")
 
     def __init__(self, data=None, *args, user: CustomUser, **kwargs):
         """
@@ -182,10 +196,14 @@ class CompareAvailabilityForm(forms.Form):
             (str(u.id), u.get_full_name() or u.username) for u in self._selectable_users
         ]
 
-    def clean_offset(self) -> float:
-        """Return offset value, defaulting to 0 if not provided or invalid."""
-        offset = self.cleaned_data.get("offset")
-        return offset if offset is not None else 0.0
+    def clean_timezone(self) -> str:
+        """Return a valid IANA timezone name, defaulting to UTC when omitted."""
+        timezone_name = self.cleaned_data.get("timezone") or "UTC"
+        try:
+            ZoneInfo(timezone_name)
+        except ZoneInfoNotFoundError as exc:
+            raise forms.ValidationError("Enter a valid timezone name.") from exc
+        return timezone_name
 
     def clean_users(self) -> set[int]:
         """Convert validated choice strings to a set of integer user IDs."""
@@ -216,9 +234,9 @@ class CompareAvailabilityForm(forms.Form):
             return []
         return [u for u in selectable_users if u.id in self.cleaned_data["users"]]
 
-    def get_offset_hours(self) -> float:
-        """Return the validated offset hours value."""
-        return self.cleaned_data.get("offset", 0)
+    def get_timezone_name(self) -> str:
+        """Return the validated viewer timezone name."""
+        return self.cleaned_data.get("timezone", "UTC")
 
 
 @login_required
@@ -250,25 +268,25 @@ def compare_availability_grid(request):
     Return the availability grid partial for htmx requests.
 
     This endpoint is called via htmx to load the grid with the correct
-    timezone offset from the client.
+    viewer timezone from the client.
     """
     form = CompareAvailabilityForm(data=request.GET, user=request.user)
     if form.is_valid():
         selectable_users = form.get_selectable_users()
         selected_users = form.get_selected_users(selectable_users)
-        offset_hours = form.get_offset_hours()
+        timezone_name = form.get_timezone_name()
 
         user_slots = {}
         for user in selected_users:
-            slots = get_user_slots(user)
+            slots = get_user_utc_slots(user)
             user_slots[user.id] = set(slots)
     else:
         selected_users = []
-        offset_hours = 0.0
+        timezone_name = "UTC"
         user_slots = {}
 
     grid_rows, slot_availabilities = build_grid_data(
-        selected_users, user_slots, offset_hours
+        selected_users, user_slots, timezone_name
     )
     context = {
         "selected_users": [
@@ -282,5 +300,6 @@ def compare_availability_grid(request):
         ],
         "grid_rows": grid_rows,
         "slot_availabilities": slot_availabilities,
+        "timezone_name": timezone_name,
     }
     return render(request, "home/_compare_availability_grid.html", context)

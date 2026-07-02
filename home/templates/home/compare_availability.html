@@ -69,7 +69,7 @@
             {% if session_id %}
             <input type="hidden" name="session" value="{{ session_id }}">
             {% endif %}
-            <input type="hidden" name="offset" x-bind:value="offsetHours">
+            <input type="hidden" name="timezone" x-bind:value="timezone">
 
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-grow">
@@ -88,8 +88,8 @@
         </form>
 
         {% comment %}
-            The grid is loaded via htmx so we can inject the browser's UTC offset
-            (not available server-side) into the request via hx-vals.
+            The grid is loaded via htmx so we can inject the browser's IANA
+            timezone name (not available server-side) into the request via hx-vals.
             After htmx settles the response, we hydrate Alpine.js state from the
             JSON script tags rendered by the grid partial and reset any pinned
             slot since the grid contents have changed.
@@ -97,7 +97,7 @@
         <div id="availability-grid-container"
              hx-get="{% url 'compare_availability_grid' %}?{{ request.GET.urlencode }}"
              hx-trigger="load"
-             hx-vals='js:{"offset": -new Date().getTimezoneOffset() / 60}'
+             hx-vals='js:{"timezone": Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"}'
              hx-swap="innerHTML"
              hx-disinherit="*"
              @htmx:after-settle="
@@ -126,8 +126,7 @@ function availabilityGrid() {
         hoveredUser: null,
         activeDisplayTime: '',
         activeTimeIsUrl: '',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        offsetHours: -new Date().getTimezoneOffset() / 60,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
 
         get activeSlot() {
             return this.fixedSlot || this.hoveredSlot;

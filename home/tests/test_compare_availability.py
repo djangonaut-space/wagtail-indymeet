@@ -23,6 +23,13 @@ from home.views.compare_availability import (
     get_slot_color,
 )
 from home.widgets import TomSelectMultipleWidget
+from tests.timezones import (
+    CENTRAL_EUROPEAN_TIMEZONE,
+    DEFAULT_TIMEZONE,
+    PACIFIC_AUCKLAND_TIMEZONE,
+    QUARTER_HOUR_TIMEZONE,
+    US_EASTERN_TIMEZONE,
+)
 
 
 class GetSlotColorTests(TestCase):
@@ -55,12 +62,12 @@ class BuildGridDataTests(TestCase):
 
     def test_returns_48_rows(self) -> None:
         """Returns 48 rows (24 hours * 2 half-hours)."""
-        rows, _ = build_grid_data([], {}, 0)
+        rows, _ = build_grid_data([], {}, DEFAULT_TIMEZONE)
         self.assertEqual(len(rows), 48)
 
     def test_each_row_has_7_cells(self) -> None:
         """Each row has 7 cells (one per day)."""
-        rows, _ = build_grid_data([], {}, 0)
+        rows, _ = build_grid_data([], {}, DEFAULT_TIMEZONE)
         for row in rows:
             self.assertEqual(len(row.cells), 7)
 
@@ -72,7 +79,9 @@ class BuildGridDataTests(TestCase):
         UserAvailabilityFactory.create(user=user2, slots=[0.0])
 
         user_slots = {user1.id: {0.0, 0.5}, user2.id: {0.0}}
-        _, slot_availabilities = build_grid_data([user1, user2], user_slots, 0)
+        _, slot_availabilities = build_grid_data(
+            [user1, user2], user_slots, DEFAULT_TIMEZONE
+        )
 
         # Slot 0-0-0 (Sunday 0:00) should have both users
         self.assertIn(user1.id, slot_availabilities["0-0-0"])
@@ -84,7 +93,7 @@ class BuildGridDataTests(TestCase):
 
     def test_time_labels_on_hour_rows(self) -> None:
         """Time labels appear on full hour rows."""
-        rows, _ = build_grid_data([], {}, 0)
+        rows, _ = build_grid_data([], {}, DEFAULT_TIMEZONE)
 
         # First row (0:00) should have time label
         self.assertTrue(rows[0].show_time_label)
@@ -96,26 +105,72 @@ class BuildGridDataTests(TestCase):
 
     def test_cells_have_display_time(self) -> None:
         """Each cell has a formatted display time string."""
-        rows, _ = build_grid_data([], {}, 0)
+        rows, _ = build_grid_data([], {}, DEFAULT_TIMEZONE)
         self.assertEqual(rows[0].cells[0].display_time, "Sun 12:00 AM")
         self.assertEqual(rows[0].cells[1].display_time, "Mon 12:00 AM")
         self.assertEqual(rows[1].cells[0].display_time, "Sun 12:30 AM")
 
     def test_cells_have_utc_datetime(self) -> None:
         """Each cell has a utc_datetime matching slot_to_datetime."""
-        rows, _ = build_grid_data([], {}, 0)
+        rows, _ = build_grid_data([], {}, DEFAULT_TIMEZONE)
         cell = rows[0].cells[0]
         self.assertEqual(cell.utc_datetime, slot_to_datetime(0.0))
 
-    def test_utc_datetime_accounts_for_offset(self) -> None:
-        """utc_datetime converts back to UTC when an offset is applied."""
-        rows_utc, _ = build_grid_data([], {}, 0)
-        rows_offset, _ = build_grid_data([], {}, 5)
-        # With +5 offset, local slot Sun 00:00 maps to UTC slot Sat 19:00
-        utc_dt = rows_offset[0].cells[0].utc_datetime
-        self.assertEqual(utc_dt, slot_to_datetime(24 * 6 + 19.0))
-        # Display time should still show local time
-        self.assertEqual(rows_offset[0].cells[0].display_time, "Sun 12:00 AM")
+    def test_utc_datetime_accounts_for_viewer_timezone(self) -> None:
+        """utc_datetime converts back to UTC for the viewer timezone."""
+        reference_date = datetime(2024, 6, 17).date()
+        rows_timezone, _ = build_grid_data(
+            [],
+            {},
+            US_EASTERN_TIMEZONE,
+            reference_date=reference_date,
+        )
+        # New York is UTC-4 in June, so local Sun 00:00 maps to UTC Sun 04:00.
+        utc_dt = rows_timezone[0].cells[0].utc_datetime
+        self.assertEqual(utc_dt, slot_to_datetime(4.0, reference_date))
+        # Display time should still show local time.
+        self.assertEqual(rows_timezone[0].cells[0].display_time, "Sun 12:00 AM")
+
+    def test_grid_allows_quarter_hour_viewer_timezone_without_matching_cells(
+        self,
+    ) -> None:
+        """Quarter-hour viewer zones are accepted despite imperfect grid fit."""
+        reference_date = datetime(2024, 6, 17).date()
+        rows_timezone, _ = build_grid_data(
+            [],
+            {},
+            QUARTER_HOUR_TIMEZONE,
+            reference_date=reference_date,
+        )
+
+        # Local Sunday 00:00 in Kathmandu maps to Saturday 18:15 UTC. This is
+        # allowed, but exposes the first-pass limitation: the displayed grid is
+        # still built from 30-minute local cells while UTC reference slots may be
+        # quarter-hour aligned.
+        self.assertEqual(
+            rows_timezone[0].cells[0].utc_datetime,
+            slot_to_datetime(162.25, reference_date),
+        )
+        self.assertEqual(rows_timezone[0].cells[0].display_time, "Sun 12:00 AM")
+
+    def test_mixed_timezone_users_overlap_in_viewer_grid(self) -> None:
+        """Users in different slot timezones overlap by derived UTC slots."""
+        ny_user = UserFactory.create()
+        berlin_user = UserFactory.create()
+        user_slots = {ny_user.id: {37.0}, berlin_user.id: {37.0}}
+
+        _, slot_availabilities = build_grid_data(
+            [ny_user, berlin_user],
+            user_slots,
+            DEFAULT_TIMEZONE,
+            reference_date=datetime(2024, 6, 17).date(),
+        )
+
+        # Monday 13:00 UTC should contain both users.
+        self.assertEqual(
+            set(slot_availabilities["1-13-0"]),
+            {ny_user.id, berlin_user.id},
+        )
 
 
 @freeze_time("2024-06-15")
@@ -251,13 +306,32 @@ class CompareAvailabilityGridTests(TestCase):
         )
         UserAvailabilityFactory.create(user=cls.user_a, slots=[0.0, 0.5])
         UserAvailabilityFactory.create(user=cls.user_b, slots=[0.0])
+        cls.ny_user = UserFactory.create(first_name="New", last_name="York")
+        cls.berlin_user = UserFactory.create(first_name="Berlin", last_name="User")
+        UserAvailabilityFactory.create(
+            user=cls.ny_user,
+            slots=[33.0],  # Monday 9:00 America/New_York -> Monday 13:00 UTC
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory.create(
+            user=cls.berlin_user,
+            slots=[39.0],  # Monday 15:00 Europe/Berlin -> Monday 13:00 UTC
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
 
         SessionMembershipFactory.create_batch(
-            2,
+            4,
             session=cls.session,
             team=cls.team,
             accepted=True,
-            user=factory.Iterator([cls.user_a, cls.user_b]),
+            user=factory.Iterator(
+                [
+                    cls.user_a,
+                    cls.user_b,
+                    cls.ny_user,
+                    cls.berlin_user,
+                ]
+            ),
             role=constants.DJANGONAUT,
         )
         cls.url = reverse("compare_availability_grid")
@@ -270,21 +344,24 @@ class CompareAvailabilityGridTests(TestCase):
     def test_grid_contains_display_time_data_attribute(self) -> None:
         """Grid cells have data-display-time attributes."""
         response = self.client.get(
-            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}"
+            f"&timezone={DEFAULT_TIMEZONE}"
         )
         self.assertContains(response, 'data-display-time="Sun 12:00 AM"')
 
     def test_grid_contains_time_is_url_data_attribute(self) -> None:
         """Grid cells have data-time-is-url attributes linking to time.is."""
         response = self.client.get(
-            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}"
+            f"&timezone={DEFAULT_TIMEZONE}"
         )
         self.assertContains(response, 'data-time-is-url="https://time.is/compare/')
 
     def test_grid_contains_click_handler(self) -> None:
         """Grid cells have click handlers for pinning."""
         response = self.client.get(
-            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}"
+            f"&timezone={DEFAULT_TIMEZONE}"
         )
         self.assertContains(response, "@click=")
         self.assertContains(response, "fixedSlot")
@@ -292,10 +369,42 @@ class CompareAvailabilityGridTests(TestCase):
     def test_grid_contains_time_info_section(self) -> None:
         """Grid contains the time info display section with time.is link."""
         response = self.client.get(
-            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+            f"{self.url}?users={self.user_a.id}&users={self.user_b.id}"
+            f"&timezone={DEFAULT_TIMEZONE}"
         )
         self.assertContains(response, "activeDisplayTime")
         self.assertContains(response, "View on time.is")
+
+    def test_grid_contains_server_validated_timezone_label(self) -> None:
+        """Grid displays the server-validated timezone name."""
+        response = self.client.get(
+            f"{self.url}?users={self.user_a.id}&timezone={US_EASTERN_TIMEZONE}"
+        )
+        self.assertContains(response, US_EASTERN_TIMEZONE)
+
+    def test_grid_accepts_browser_submitted_timezone_name(self) -> None:
+        """The HTMX grid endpoint uses the browser-submitted IANA timezone."""
+        response = self.client.get(
+            f"{self.url}?users={self.user_a.id}&timezone={PACIFIC_AUCKLAND_TIMEZONE}"
+        )
+        self.assertContains(response, PACIFIC_AUCKLAND_TIMEZONE)
+        self.assertContains(response, 'data-display-time="Sun 12:00 AM"')
+
+    def test_mixed_timezone_users_overlap_correctly(self) -> None:
+        """The grid compares per-user UTC reference slots, not raw local slots."""
+        response = self.client.get(
+            f"{self.url}?users={self.ny_user.id}&users={self.berlin_user.id}"
+            f"&timezone={DEFAULT_TIMEZONE}"
+        )
+        self.assertEqual(response.status_code, 200)
+        slot_availabilities = response.context["slot_availabilities"]
+
+        self.assertEqual(
+            set(slot_availabilities["1-13-0"]),
+            {self.ny_user.id, self.berlin_user.id},
+        )
+        self.assertEqual(slot_availabilities["1-9-0"], [])
+        self.assertEqual(slot_availabilities["1-15-0"], [])
 
 
 @freeze_time("2024-06-15")
@@ -325,8 +434,10 @@ class CompareAvailabilityFormTests(TestCase):
             role=constants.DJANGONAUT,
         )
 
-    def _make_form(self, user, data: dict) -> CompareAvailabilityForm:
-        return CompareAvailabilityForm(data=QueryDict(data), user=user)
+    def _make_form(self, user, data: str | dict) -> CompareAvailabilityForm:
+        if isinstance(data, str):
+            data = QueryDict(data)
+        return CompareAvailabilityForm(data=data, user=user)
 
     def test_choices_populated_from_session(self) -> None:
         """Widget choices are set from the selectable users for the given session."""
@@ -347,6 +458,25 @@ class CompareAvailabilityFormTests(TestCase):
         )
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["users"], {self.member.id})
+
+    def test_timezone_defaults_to_utc(self) -> None:
+        """Timezone defaults to UTC when not submitted."""
+        form = self._make_form(self.organizer, "")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["timezone"], DEFAULT_TIMEZONE)
+        self.assertEqual(form.get_timezone_name(), DEFAULT_TIMEZONE)
+
+    def test_timezone_accepts_valid_iana_name(self) -> None:
+        """Timezone accepts valid IANA names from the browser."""
+        form = self._make_form(self.organizer, f"timezone={US_EASTERN_TIMEZONE}")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["timezone"], US_EASTERN_TIMEZONE)
+
+    def test_timezone_rejects_invalid_name(self) -> None:
+        """Timezone rejects non-IANA names."""
+        form = self._make_form(self.organizer, "timezone=Not/AZone")
+        self.assertFalse(form.is_valid())
+        self.assertIn("timezone", form.errors)
 
     def test_user_id_not_in_choices_is_rejected(self) -> None:
         """Submitting a user ID outside the selectable set fails validation."""
