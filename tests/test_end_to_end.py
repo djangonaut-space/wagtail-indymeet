@@ -36,6 +36,7 @@ from home.models import Session, SessionMembership, Survey, Team, UserSurveyResp
 from django.contrib.gis.geos import Point
 
 from home.models.talk import Talk, TalkSpeaker
+from tests.timezones import US_EASTERN_TIMEZONE
 
 logger = getLogger(__name__)
 
@@ -430,6 +431,10 @@ class TestAvailabilityPage:
             page.get_by_role("heading", name="Set Your Availability")
         ).to_be_visible()
 
+        timezone_select = page.get_by_label("Timezone")
+        expect(timezone_select).to_be_visible()
+        timezone_select.select_option(US_EASTERN_TIMEZONE)
+
         # Select a block of time slots (Monday 9:00 AM - 10:30 AM)
         # The grid is organized as: columns = days (0-6), rows = times
         # Monday = column 1, each half hour is a separate row
@@ -466,9 +471,10 @@ class TestAvailabilityPage:
         page.locator("#availability-grid tbody tr").first.wait_for(state="visible")
 
         # Wait for grid to render and data to load
+        expect(timezone_select).to_have_value(US_EASTERN_TIMEZONE)
         expect(monday_9am).to_have_class(re.compile(r".*\bselected\b.*"))
 
-        # Verify the same slots are selected
+        # Verify the same local wall-clock slots are selected
         expect(monday_930am).to_have_class(re.compile(r".*\bselected\b.*"))
         expect(monday_10am).to_have_class(re.compile(r".*\bselected\b.*"))
         expect(monday_1030am).to_have_class(re.compile(r".*\bselected\b.*"))
