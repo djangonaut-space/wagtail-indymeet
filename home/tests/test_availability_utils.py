@@ -1,8 +1,15 @@
 """Tests for availability calculation utilities."""
 
+import datetime
+
 from django.test import TestCase
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
+from tests.timezones import (
+    CENTRAL_EUROPEAN_TIMEZONE,
+    QUARTER_HOUR_TIMEZONE,
+    US_EASTERN_TIMEZONE,
+)
 from home.availability import (
     AvailabilityWindow,
     calculate_overlap,
@@ -10,6 +17,10 @@ from home.availability import (
     count_one_hour_blocks,
     format_slot_as_time,
     format_slots_as_ranges,
+    get_reference_week_start,
+    get_user_utc_slots,
+    local_slot_to_utc_slot,
+    utc_slot_to_local_slot,
 )
 
 
@@ -58,6 +69,128 @@ class AvailabilityUtilsTestCase(TestCase):
         # Empty slots
         self.assertEqual(count_one_hour_blocks([]), 0)
 
+    def test_reference_week_start_uses_current_week_sunday(self):
+        """Reference week starts on the Sunday of the given date's week."""
+        self.assertEqual(
+            get_reference_week_start(datetime.date(2024, 6, 19)),
+            datetime.date(2024, 6, 16),
+        )
+        self.assertEqual(
+            get_reference_week_start(datetime.date(2024, 6, 16)),
+            datetime.date(2024, 6, 16),
+        )
+
+    def test_local_and_utc_slot_conversion_round_trips(self):
+        """Local slots convert through UTC reference slots and back."""
+        reference_date = datetime.date(2024, 6, 17)
+        utc_slot = local_slot_to_utc_slot(33.0, US_EASTERN_TIMEZONE, reference_date)
+        self.assertEqual(utc_slot, 37.0)
+        self.assertEqual(
+            utc_slot_to_local_slot(utc_slot, US_EASTERN_TIMEZONE, reference_date),
+            33.0,
+        )
+
+    def test_dst_spring_reference_week_uses_daylight_offset_after_transition(self):
+        """Spring reference weeks use that week's zoneinfo DST rules."""
+        # Sunday, March 10 2024 is the US spring-forward transition.
+        reference_date = datetime.date(2024, 3, 10)
+
+        # Monday 9:00 in New York is Monday 13:00 UTC after DST starts.
+        self.assertEqual(
+            local_slot_to_utc_slot(33.0, US_EASTERN_TIMEZONE, reference_date),
+            37.0,
+        )
+        self.assertEqual(
+            utc_slot_to_local_slot(37.0, US_EASTERN_TIMEZONE, reference_date),
+            33.0,
+        )
+
+    def test_dst_fall_reference_week_uses_standard_offset_after_transition(self):
+        """Fall reference weeks use that week's zoneinfo DST rules."""
+        # Sunday, November 3 2024 is the US fall-back transition.
+        reference_date = datetime.date(2024, 11, 3)
+
+        # Monday 9:00 in New York is Monday 14:00 UTC after DST ends.
+        self.assertEqual(
+            local_slot_to_utc_slot(33.0, US_EASTERN_TIMEZONE, reference_date),
+            38.0,
+        )
+        self.assertEqual(
+            utc_slot_to_local_slot(38.0, US_EASTERN_TIMEZONE, reference_date),
+            33.0,
+        )
+
+    def test_fold_defaults_to_earlier_occurrence(self):
+        """Ambiguous fall-back times inherit zoneinfo's fold=0 default."""
+        reference_date = datetime.date(2024, 11, 3)
+
+        # Sunday 1:30 occurs twice in New York. The default fold=0 occurrence is
+        # still daylight time (UTC-4), so it maps to Sunday 05:30 UTC.
+        self.assertEqual(
+            local_slot_to_utc_slot(1.5, US_EASTERN_TIMEZONE, reference_date),
+            5.5,
+        )
+        self.assertEqual(
+            utc_slot_to_local_slot(5.5, US_EASTERN_TIMEZONE, reference_date),
+            1.5,
+        )
+
+    def test_gap_defaults_to_pre_transition_offset_without_blocking(self):
+        """Nonexistent spring-forward times inherit zoneinfo defaults."""
+        reference_date = datetime.date(2024, 3, 10)
+
+        # Sunday 2:30 does not exist in New York on the spring-forward day. The
+        # first-pass policy does not reject it; zoneinfo applies the default
+        # pre-transition offset, mapping it to Sunday 07:30 UTC.
+        self.assertEqual(
+            local_slot_to_utc_slot(2.5, US_EASTERN_TIMEZONE, reference_date),
+            7.5,
+        )
+        self.assertEqual(
+            utc_slot_to_local_slot(7.5, US_EASTERN_TIMEZONE, reference_date),
+            3.5,
+        )
+
+    def test_quarter_hour_timezone_slots_are_allowed_but_not_grid_aligned(self):
+        """Quarter-hour zones can produce non-30-minute UTC reference slots."""
+        reference_date = datetime.date(2024, 6, 17)
+
+        # Kathmandu is UTC+05:45, so Monday 9:00 local maps to Sunday 27.25 UTC
+        # in weekly slot coordinates. This is intentionally allowed for now,
+        # even though other overlap/grid consumers still operate on 30-minute cells.
+        utc_slot = local_slot_to_utc_slot(33.0, QUARTER_HOUR_TIMEZONE, reference_date)
+        self.assertEqual(utc_slot, 27.25)
+        self.assertEqual(
+            utc_slot_to_local_slot(utc_slot, QUARTER_HOUR_TIMEZONE, reference_date),
+            33.0,
+        )
+
+    def test_get_user_utc_slots_preserves_utc_default_users(self):
+        """UTC-default availability remains directly comparable."""
+        self.assertEqual(
+            get_user_utc_slots(self.user1, datetime.date(2024, 6, 17)),
+            self.avail1.slots,
+        )
+
+    def test_get_user_utc_slots_converts_mixed_timezone_users(self):
+        """Local wall-clock slots in user timezones derive matching UTC slots."""
+        ny_user = UserFactory(username="ny_user", email="ny@example.com")
+        berlin_user = UserFactory(username="berlin_user", email="berlin@example.com")
+        UserAvailabilityFactory(
+            user=ny_user,
+            slots=[33.0],  # Monday 9:00 America/New_York -> Monday 13:00 UTC
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=berlin_user,
+            slots=[39.0],  # Monday 15:00 Europe/Berlin -> Monday 13:00 UTC
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+
+        reference_date = datetime.date(2024, 6, 17)
+        self.assertEqual(get_user_utc_slots(ny_user, reference_date), [37.0])
+        self.assertEqual(get_user_utc_slots(berlin_user, reference_date), [37.0])
+
     def test_calculate_overlap(self):
         """Test overlap calculation for groups and pairs."""
         # User1 and User2 overlap on Monday 12:00-15:00 (6 slots = 3 hours)
@@ -78,6 +211,30 @@ class AvailabilityUtilsTestCase(TestCase):
         # Mixed: user with and without availability
         slots, hours = calculate_overlap([self.user1, self.user3])
         self.assertEqual(hours, 0)  # No overlap because user3 has no availability
+
+    def test_calculate_overlap_uses_user_timezones(self):
+        """Mixed-timezone users overlap by derived UTC reference slots."""
+        ny_user = UserFactory(username="ny_overlap", email="ny-overlap@example.com")
+        berlin_user = UserFactory(
+            username="berlin_overlap", email="berlin-overlap@example.com"
+        )
+        UserAvailabilityFactory(
+            user=ny_user,
+            slots=[33.0, 33.5],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=berlin_user,
+            slots=[39.0, 39.5],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+
+        slots, hours = calculate_overlap(
+            [ny_user, berlin_user], datetime.date(2024, 6, 17)
+        )
+
+        self.assertEqual(slots, [37.0, 37.5])
+        self.assertEqual(hours, 1)
 
     def test_calculate_team_overlap(self):
         """Test team overlap calculation."""
@@ -114,6 +271,16 @@ class AvailabilityUtilsTestCase(TestCase):
         # Saturday 23:30 (11:30 PM)
         self.assertEqual(format_slot_as_time(167.5), "Sat 11:30 PM")
 
+        # UTC reference slot displayed in a named timezone.
+        self.assertEqual(
+            format_slot_as_time(
+                37.0,
+                US_EASTERN_TIMEZONE,
+                datetime.date(2024, 6, 17),
+            ),
+            "Mon 9:00 AM",
+        )
+
     def test_format_slots_as_ranges(self):
         """Test formatting slots as time ranges."""
         # Consecutive slots
@@ -130,6 +297,14 @@ class AvailabilityUtilsTestCase(TestCase):
         # Empty slots
         ranges = format_slots_as_ranges([])
         self.assertEqual(ranges, [])
+
+        # UTC reference slots displayed in a named timezone.
+        ranges = format_slots_as_ranges(
+            [37.0, 37.5],
+            US_EASTERN_TIMEZONE,
+            datetime.date(2024, 6, 17),
+        )
+        self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
 
 
 class AvailabilityWindowTestCase(TestCase):

@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from django.test import TestCase
 
 from home.templatetags.email_tags import time_is_link
+from tests.timezones import US_EASTERN_TIMEZONE
 
 
 class TimeIsLinkFilterTests(TestCase):
@@ -50,7 +51,7 @@ class TimeIsLinkFilterTests(TestCase):
         """Test time_is_link with timezone-aware datetime."""
         # Create a timezone-aware datetime
         test_date = datetime(
-            2024, 7, 24, 14, 30, 0, tzinfo=ZoneInfo("America/New_York")
+            2024, 7, 24, 14, 30, 0, tzinfo=ZoneInfo(US_EASTERN_TIMEZONE)
         )
         result = time_is_link(test_date)
 

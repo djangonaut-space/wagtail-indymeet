@@ -10,6 +10,7 @@ from accounts.factories import UserFactory
 from home import constants
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import SessionMembership
+from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE
 
 
 @freeze_time("2012-01-14")
@@ -65,7 +66,7 @@ class EventViewTests(TestCase):
 
     def test_event_detail(self):
         upcoming_event = self.create_upcoming_event()
-        timezone.activate("Europe/Berlin")  # UTC + 1
+        timezone.activate(CENTRAL_EUROPEAN_TIMEZONE)  # UTC + 1
         response = self.client.get(upcoming_event.get_absolute_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed("home/event_detail.html")
