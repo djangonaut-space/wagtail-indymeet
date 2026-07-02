@@ -3,7 +3,7 @@
 <ol>
     {% for window in results %}
     <li>
-        <strong><a href="{{ window.start_datetime|time_is_link }}" target="_blank">{{ window.formatted_time }} UTC</a></strong>:
+        <strong><a href="{{ window.start_datetime|time_is_link }}" target="_blank">{{ window.formatted_time }}</a></strong>:
         {{ window.total_available }} member(s) available ({{ window.role_summary }})
         <br>
         {% if window.unavailable_member_ids %}

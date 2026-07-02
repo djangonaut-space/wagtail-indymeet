@@ -392,46 +392,87 @@ class UserSurveyResponseQuerySet(QuerySet):
         )
         return self.filter(~Exists(has_team_assignment))
 
-    def with_availability_overlap(self, slots: list[float]):
+    def with_availability_overlap(
+        self, slots: list[float], reference_date: datetime.date | None = None
+    ):
         """
-        Filter responses for users with availability overlap with given slots.
+        Filter responses for users with availability overlap with UTC reference slots.
 
         Args:
-            slots: List of time slots to check overlap with
+            slots: UTC reference slots to check overlap with
+            reference_date: Date inside the reference week; defaults to today
         """
         if not slots:
             return self.none()
-        return self.filter(user__availability__slots__has_overlap=slots)
 
-    def with_navigator_overlap(self, team):
+        from home.availability import get_user_utc_slots
+
+        target_slots = {float(slot) for slot in slots}
+        matching_user_ids = []
+        seen_user_ids = set()
+        for response in self.select_related("user").prefetch_related(
+            "user__availability"
+        ):
+            user = response.user
+            if user.id in seen_user_ids:
+                continue
+            seen_user_ids.add(user.id)
+            if target_slots.intersection(get_user_utc_slots(user, reference_date)):
+                matching_user_ids.append(user.id)
+
+        return self.filter(user_id__in=matching_user_ids)
+
+    def with_navigator_overlap(self, team, reference_date: datetime.date | None = None):
         """
         Filter responses for users with availability overlap with team navigators.
 
         Args:
             team: Team instance whose navigators to check overlap with
+            reference_date: Date inside the reference week; defaults to today
         """
-        from home.availability import get_role_slots
+
+        from home.availability import get_user_utc_slots
         from home.models import SessionMembership
 
-        navigator_slots = get_role_slots(team, role=constants.NAVIGATOR)
+        navigator_memberships = (
+            SessionMembership.objects.for_team(team)
+            .filter(role=constants.NAVIGATOR)
+            .select_related("user")
+            .prefetch_related("user__availability")
+        )
+        navigator_slots = set()
+        for membership in navigator_memberships:
+            navigator_slots.update(get_user_utc_slots(membership.user, reference_date))
+
         if not navigator_slots:
             return self.none()
-        return self.with_availability_overlap(navigator_slots)
+        return self.with_availability_overlap(list(navigator_slots), reference_date)
 
-    def with_captain_overlap(self, team):
+    def with_captain_overlap(self, team, reference_date: datetime.date | None = None):
         """
         Filter responses for users with availability overlap with team captain.
 
         Args:
             team: Team instance whose captain to check overlap with
+            reference_date: Date inside the reference week; defaults to today
         """
-        from home.availability import get_role_slots
+
+        from home.availability import get_user_utc_slots
         from home.models import SessionMembership
 
-        captain_slots = get_role_slots(team, role=constants.CAPTAIN)
+        captain_memberships = (
+            SessionMembership.objects.for_team(team)
+            .filter(role=constants.CAPTAIN)
+            .select_related("user")
+            .prefetch_related("user__availability")
+        )
+        captain_slots = set()
+        for membership in captain_memberships:
+            captain_slots.update(get_user_utc_slots(membership.user, reference_date))
+
         if not captain_slots:
             return self.none()
-        return self.with_availability_overlap(captain_slots)
+        return self.with_availability_overlap(list(captain_slots), reference_date)
 
     def with_full_team_formation_data(self, session):
         """
