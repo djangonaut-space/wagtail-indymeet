@@ -57,6 +57,7 @@ from playwright.sync_api import BrowserContext, Page, expect
 from accounts.models import CustomUser
 from accounts.tokens import account_activation_token
 from home.models import Project, Question, Session, SessionMembership, Survey, Team
+from tests.timezones import DEFAULT_TIMEZONE
 
 pytestmark = pytest.mark.playwright
 
@@ -1088,9 +1089,10 @@ class TestCompleteSessionOnboardingFlow:
 
         # Get the updated timezone display
         updated_timezone = timezone_span.text_content().strip()
-        assert (
-            updated_timezone == "UTC"
-        ), f"After toggle, timezone should be UTC, got: {updated_timezone}"
+        assert updated_timezone == DEFAULT_TIMEZONE, (
+            f"After toggle, timezone should be {DEFAULT_TIMEZONE}, "
+            f"got: {updated_timezone}"
+        )
 
         # Check if individual member overlap times updated
         # Re-query the overlap sections after the toggle

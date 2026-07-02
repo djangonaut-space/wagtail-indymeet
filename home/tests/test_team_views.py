@@ -1,6 +1,5 @@
 """Tests for team-related views."""
 
-from home import constants
 from datetime import datetime, timedelta
 
 from django.test import Client, TestCase
@@ -8,7 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
 
-from accounts.factories import UserFactory
+from accounts.factories import UserAvailabilityFactory, UserFactory
+from home import constants
 from home.factories import (
     ProjectFactory,
     QuestionFactory,
@@ -19,6 +19,11 @@ from home.factories import (
     UserSurveyResponseFactory,
 )
 from home.models import SessionMembership, Team
+from tests.timezones import (
+    CENTRAL_EUROPEAN_TIMEZONE,
+    DEFAULT_TIMEZONE,
+    US_EASTERN_TIMEZONE,
+)
 
 
 @freeze_time("2024-06-15")
@@ -372,6 +377,65 @@ class TeamDetailViewTests(TestCase):
 
         # But should not see "View Application" links
         self.assertNotContains(response, "View Application")
+
+    def test_team_availability_fragment_uses_timezone_name(self) -> None:
+        """Team availability fragment formats mixed-timezone overlap for viewer tz."""
+        UserAvailabilityFactory.create(
+            user=self.navigator,
+            slots=[33.0, 33.5],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory.create(
+            user=self.djangonaut1,
+            slots=[39.0, 39.5],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        UserAvailabilityFactory.create(
+            user=self.djangonaut2,
+            slots=[37.0, 37.5],
+            slots_timezone=DEFAULT_TIMEZONE,
+        )
+        self.client.force_login(self.navigator)
+        url = reverse("team_availability_fragment", args=[self.team.pk])
+
+        response = self.client.get(url, {"tz": US_EASTERN_TIMEZONE})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'Timezone: <span class="font-bold">{US_EASTERN_TIMEZONE}</span>',
+            html=True,
+        )
+        self.assertContains(response, "9:00 AM - 10:00 AM")
+
+    def test_team_availability_fragment_invalid_timezone_defaults_to_utc(self) -> None:
+        """Invalid timezone names are ignored safely."""
+        UserAvailabilityFactory.create(
+            user=self.navigator,
+            slots=[37.0, 37.5],
+            slots_timezone=DEFAULT_TIMEZONE,
+        )
+        UserAvailabilityFactory.create(
+            user=self.djangonaut1,
+            slots=[37.0, 37.5],
+            slots_timezone=DEFAULT_TIMEZONE,
+        )
+        UserAvailabilityFactory.create(
+            user=self.djangonaut2,
+            slots=[37.0, 37.5],
+            slots_timezone=DEFAULT_TIMEZONE,
+        )
+        self.client.force_login(self.navigator)
+        url = reverse("team_availability_fragment", args=[self.team.pk])
+
+        response = self.client.get(url, {"tz": "Not/AZone"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'Timezone: <span class="font-bold">{DEFAULT_TIMEZONE}</span>',
+            html=True,
+        )
 
     def test_organizer_can_see_survey_links(self) -> None:
         """Test that Organizers can see 'View Application' links during active session."""

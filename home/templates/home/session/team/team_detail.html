@@ -111,21 +111,11 @@
 <script>
 // Minimal JavaScript for timezone detection and HTMX support
 (function() {
-    const [overrideTZ, overrideTZOffset] = (new URLSearchParams(window.location.search).get('override-timezone') || '').split(':');
-    const userTz = overrideTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // Get UTC offset in hours for the user's timezone
-    function getUserOffset() {
-        const now = new Date();
-        // getTimezoneOffset returns minutes, negative of what we need
-        return -now.getTimezoneOffset() / 60;
-    }
-
-    const userOffset = overrideTZOffset || getUserOffset();
+    const overrideTZ = new URLSearchParams(window.location.search).get('override-timezone');
+    const userTz = (overrideTZ || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').split(':')[0];
 
     // Track current state (starts with user's timezone)
     let currentTz = userTz;
-    let currentOffset = userOffset;
 
     // Update button text based on current timezone
     function updateButtonText() {
@@ -140,14 +130,12 @@
         // Toggle to the opposite of current state
         if (currentTz === 'UTC') {
             currentTz = userTz;
-            currentOffset = userOffset;
         } else {
             currentTz = 'UTC';
-            currentOffset = 0;
         }
 
         // Make HTMX request with new timezone
-        htmx.ajax('GET', '{% url "team_availability_fragment" team.id %}?tz=' + currentTz + '&offset=' + currentOffset, {
+        htmx.ajax('GET', '{% url "team_availability_fragment" team.id %}?tz=' + encodeURIComponent(currentTz), {
             target: '#availability-container',
             swap: 'innerHTML'
         }).then(function() {
@@ -159,7 +147,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('availability-container');
         if (container) {
-            htmx.ajax('GET', '{% url "team_availability_fragment" team.id %}?tz=' + userTz + '&offset=' + userOffset, {
+            htmx.ajax('GET', '{% url "team_availability_fragment" team.id %}?tz=' + encodeURIComponent(userTz), {
                 target: '#availability-container',
                 swap: 'innerHTML'
             }).then(function() {
