@@ -33,6 +33,11 @@ services:
     # Without tty, no stdin, and tailwind watcher aborts
     # https://github.com/tailwindlabs/tailwindcss/issues/5324
     tty: true
+    volumes:
+      # The bind mount hides the node_modules baked into the image, so
+      # overlay it with a named volume seeded from the image's copy.
+      - .:/app
+      - tailwind:/app/theme/static_src/node_modules
     env_file:
       - ./.env.docker
 
