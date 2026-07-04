@@ -16,11 +16,17 @@ This is used directly by Wagtail. Don't delete it.
       <div class="flex items-center justify-between lg:grid lg:grid-cols-3 lg:items-center">
 
         <div class="hidden lg:flex gap-6 justify-end">
-          <div class="relative inline-block" x-data="{ aboutOpen: false }" @mouseleave="aboutOpen = false">
+          <div class="relative inline-block" x-data="{ aboutOpen: false }"
+               @mouseleave="aboutOpen = false"
+               @focusout="if (!$el.contains($event.relatedTarget)) aboutOpen = false"
+               @keydown.escape="aboutOpen = false"
+          >
             <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple flex items-center gap-1"
                href="{% url 'event_list' %}"
                @mouseenter="aboutOpen = true"
                @focus="aboutOpen = true"
+               aria-haspopup="true"
+               :aria-expanded="aboutOpen"
             >
               About
               <svg class="w-4 h-4 transition-transform duration-200" :class="aboutOpen ? 'rotate-180' : ''" fill="none"
