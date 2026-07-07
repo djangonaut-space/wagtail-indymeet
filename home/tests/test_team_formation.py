@@ -201,8 +201,8 @@ class ApplicantFilterFormTestCase(TestCase):
 
     def test_project_preference_filter(self):
         """Test filtering applicants by project preference."""
-        project1 = ProjectFactory(name="Project 1")
-        project2 = ProjectFactory(name="Project 2")
+        project1 = ProjectFactory()
+        project2 = ProjectFactory()
         self.session.available_projects.add(project1, project2)
 
         applicant1 = UserFactory(username="app1")
