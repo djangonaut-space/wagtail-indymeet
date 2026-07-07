@@ -122,6 +122,7 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "email",
         "username",
         "profile__github_username",
+        "profile__discord_username",
     )
     list_select_related = ("profile",)
     list_display = (
@@ -131,6 +132,7 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "last_name",
         "is_staff",
         "profile__github_username",
+        "profile__discord_username",
         "date_joined",
     )
     list_filter = (PastDjangonautFilter, PastSessionMemberFilter)
@@ -158,6 +160,18 @@ class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin)
     inlines = (LinksInline,)
     model = UserProfile
     actions = ["export_as_csv"]
+    list_display = ("user", "github_username", "discord_username")
+    # Editable in the list so Discord usernames can be entered in batches.
+    list_editable = ("discord_username",)
+    list_select_related = ("user",)
+    search_fields = (
+        "user__username",
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+        "github_username",
+        "discord_username",
+    )
     list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)
 
 

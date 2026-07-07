@@ -166,6 +166,14 @@ class UserProfile(models.Model):
         default="",
         help_text="Your GitHub username (required for participation)",
     )
+    discord_username = models.CharField(
+        max_length=32,
+        blank=True,
+        null=False,
+        default="",
+        help_text="Your Discord username, used to grant channel access "
+        "during sessions",
+    )
     interested_in = ArrayField(
         models.CharField(max_length=64, validators=[validate_interested_in_choice]),
         default=_default_interested_in,
@@ -173,6 +181,18 @@ class UserProfile(models.Model):
         help_text="The roles you are interested in. Djangonaut is the mentee role, "
         "the rest are volunteer roles.",
     )
+
+    class Meta:
+        constraints = [
+            # A Discord username maps to a single guild member, so two users
+            # can't share one; case-insensitive to match resolution, and
+            # blanks are exempt (most profiles have none set).
+            models.UniqueConstraint(
+                Lower("discord_username"),
+                condition=~Q(discord_username=""),
+                name="unique_discord_username_ci",
+            )
+        ]
 
     def __str__(self):
         return self.user.username
