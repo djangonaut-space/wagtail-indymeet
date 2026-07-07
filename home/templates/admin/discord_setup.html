@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Set up Discord - {{ session.title }}</h1>
+
+<div class="module">
+    <h2>Summary</h2>
+    <p>This will create or update the Discord infrastructure for this session:</p>
+    <ul>
+        <li>A channel category named <strong>{{ session.short_name }}</strong></li>
+        <li>One text and one voice channel per team ({{ team_count }} team{{ team_count|pluralize }}), accessible via a role named after the team</li>
+        <li>A <strong>captains-and-navigators</strong> channel (Captains, Navigators, Admins, Advisors, Session Organizers)</li>
+        <li>A <strong>session-announcements</strong> channel (the above plus Djangonauts)</li>
+        <li>Discord role assignments for {{ member_count }} session member{{ member_count|pluralize }}</li>
+        <li>Everyone with access to a session channel can send messages, react, create/reply in threads, and pin messages; Admins and Session Organizers can also delete other members' messages and manage threads. Threads auto-archive after 7 days of inactivity.</li>
+    </ul>
+    <p>Running it again is safe: existing channels are updated in place.</p>
+    <p>Setup runs in the background; a report with a link to the team welcome messages will be emailed to you when it completes.</p>
+</div>
+
+{% if members_without_username %}
+<div class="module">
+    <h2>Members without a Discord username</h2>
+    <p>
+        These members have no Discord username on their profile, so they will not
+        receive roles automatically and will be listed for manual follow-up:
+    </p>
+    <ul>
+        {% for user in members_without_username %}
+        <li>{{ user.get_full_name|default:user.username }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if team_count == 0 %}
+<div class="messagelist">
+    <div class="error">
+        No teams found for this session. Form teams before setting up Discord.
+    </div>
+</div>
+<p><a href="{% url 'admin:home_session_changelist' %}" class="button">Back to Session List</a></p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+    <p><strong>Are you sure you want to set up Discord for {{ session.title }}?</strong></p>
+    <div class="submit-row">
+        <input type="submit" value="Set up Discord" class="default" />
+        <a href="{% url 'admin:home_session_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}

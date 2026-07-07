@@ -11,6 +11,7 @@ def send(
     recipient_list,
     context=None,
     from_email=None,
+    cc_list: list[str] | None = None,
     bcc_list: list[str] | None = None,
     attachments: list[tuple[str, bytes, str]] | None = None,
 ):
@@ -21,6 +22,7 @@ def send(
         recipient_list: List of recipient email addresses.
         context: Template context dict.
         from_email: Sender address; defaults to DEFAULT_FROM_EMAIL.
+        cc_list: Optional list of CC recipient email addresses.
         bcc_list: Optional list of BCC recipient email addresses.
         attachments: Optional list of (filename, content, mimetype) tuples
             to attach to the email.
@@ -40,12 +42,17 @@ def send(
             for recipient in recipient_list
             if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
         ]
+        cc_list = [
+            recipient
+            for recipient in (cc_list or [])
+            if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
+        ]
         bcc_list = [
             recipient
             for recipient in (bcc_list or [])
             if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
         ]
-        if not recipient_list and not bcc_list:
+        if not recipient_list and not cc_list and not bcc_list:
             return
 
     email_context = context.copy() if context else {}
@@ -66,6 +73,7 @@ def send(
         body=text,
         from_email=from_email or settings.DEFAULT_FROM_EMAIL,
         to=recipient_list,
+        cc=cc_list,
         bcc=bcc_list,
     )
     msg.attach_alternative(html, "text/html")

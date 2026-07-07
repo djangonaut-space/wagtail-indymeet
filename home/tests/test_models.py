@@ -225,6 +225,24 @@ class SessionTests(TestCase):
         with freeze_time("2025-01-01"):
             self.assertEqual(session.status, "past")
 
+    def test_record_discord_category_persists_id(self):
+        """record_discord_category stores the id, marking Discord active."""
+        session = SessionFactory.create(discord_category_id="")
+
+        session.record_discord_category("cat-1")
+
+        session.refresh_from_db()
+        self.assertEqual(session.discord_category_id, "cat-1")
+
+    def test_clear_discord_setup_clears_id(self):
+        """clear_discord_setup releases the active lock by clearing the id."""
+        session = SessionFactory.create(discord_category_id="cat-1")
+
+        session.clear_discord_setup()
+
+        session.refresh_from_db()
+        self.assertEqual(session.discord_category_id, "")
+
 
 class UserQuestionResponseTests(TestCase):
     @classmethod
@@ -510,6 +528,19 @@ class SessionMembershipTests(TestCase):
         self.assertEqual(annotated.pk, member.pk)
         self.assertEqual(annotated.annotated_github_username, "octocat")
 
+    def test_without_discord_username_keeps_only_blank_usernames(self):
+        """Only memberships whose user has no Discord username are returned."""
+        blank = SessionMembershipFactory.create(
+            user=UserFactory.create(profile__discord_username="")
+        )
+        SessionMembershipFactory.create(
+            user=UserFactory.create(profile__discord_username="someone")
+        )
+
+        memberships = SessionMembership.objects.without_discord_username()
+
+        self.assertEqual({m.pk for m in memberships}, {blank.pk})
+
 
 class TeamTests(TestCase):
     """Tests for Team model."""
@@ -522,6 +553,15 @@ class TeamTests(TestCase):
 
         expected_url = f"/sessions/spring-2024/teams/{team.pk}/"
         self.assertEqual(team.get_absolute_url(), expected_url)
+
+    def test_clear_discord_voice_channel_clears_id(self):
+        """clear_discord_voice_channel forgets the deleted voice channel id."""
+        team = TeamFactory.create(discord_voice_channel_id="chan-voice")
+
+        team.clear_discord_voice_channel()
+
+        team.refresh_from_db()
+        self.assertEqual(team.discord_voice_channel_id, "")
 
     def test_has_github_project_keeps_only_github_repo_urls(self):
         """Only teams whose project URL is a GitHub repository are returned."""

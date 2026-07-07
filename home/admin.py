@@ -21,7 +21,12 @@ from indymeet.admin import DescriptiveSearchMixin
 
 from . import preview_email, tasks
 from .availability import AvailabilityWindow, find_best_one_hour_windows_with_roles
-from .forms import CollectStatsForm, SurveyCSVExportForm, SurveyCSVImportForm
+from .forms import (
+    CollectStatsForm,
+    SessionMembershipInlineForm,
+    SurveyCSVExportForm,
+    SurveyCSVImportForm,
+)
 from .models import (
     Event,
     Project,
@@ -37,6 +42,11 @@ from .models import (
 )
 from .models import UserSurveyResponse as UserSurveyResponseModel
 from .team_allocation import allocate_teams_bounded_search, apply_allocation
+from .views.session_discord import (
+    discord_setup_view,
+    discord_teardown_view,
+    discord_team_messages_view,
+)
 from .views.session_notifications import (
     send_acceptance_reminders_view,
     send_session_results_view,
@@ -357,12 +367,26 @@ class UserWithMembershipFilter(admin.SimpleListFilter):
 
 class SessionMembershipInline(admin.TabularInline):
     model = SessionMembership
+    form = SessionMembershipInlineForm
+    fields = (
+        "user",
+        "discord_username",
+        "team",
+        "role",
+        "accepted",
+        "acceptance_deadline",
+    )
     autocomplete_fields = ["user"]
     extra = 0
 
     def get_queryset(self, request):
         """Filter memberships to only those for organized sessions."""
-        return super().get_queryset(request).for_admin_site(request.user)
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("user__profile")
+            .for_admin_site(request.user)
+        )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Limit team choices to teams in the current session."""
@@ -444,11 +468,17 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         "navigator",
         "captain",
         "github_username",
+        "discord_username",
         "accepted",
         "acceptance_deadline",
     )
     list_filter = ("session", "role", "accepted", UserWithMembershipFilter)
-    search_fields = ("user__email", "user__first_name", "user__last_name")
+    search_fields = (
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+        "user__profile__discord_username",
+    )
     readonly_fields = ("accepted_at",)
     actions = [
         "send_acceptance_emails_action",
@@ -492,6 +522,12 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
     def github_username(self, obj: SessionMembership) -> str:
         if hasattr(obj.user, "profile") and obj.user.profile.github_username:
             return obj.user.profile.github_username
+        return "-"
+
+    @admin.display(description="Discord", ordering="user__profile__discord_username")
+    def discord_username(self, obj: SessionMembership) -> str:
+        if hasattr(obj.user, "profile") and obj.user.profile.discord_username:
+            return obj.user.profile.discord_username
         return "-"
 
     def get_queryset(self, request):
@@ -629,6 +665,7 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "form_teams",
         "collect_stats",
         "email_actions",
+        "discord_actions",
     )
 
     @admin.display(description="Form Teams")
@@ -655,6 +692,26 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             (
                 "Send team welcome emails",
                 reverse("admin:session_send_team_welcome_emails", args=[obj.id]),
+            ),
+        ]
+        return mark_safe(
+            "<br />".join([f"<a href={href}>{action}</a>" for action, href in actions])
+        )
+
+    @admin.display(description="Discord")
+    def discord_actions(self, obj: Session) -> str:
+        actions = [
+            (
+                "Set up Discord",
+                reverse("admin:session_discord_setup", args=[obj.id]),
+            ),
+            (
+                "Tear down Discord",
+                reverse("admin:session_discord_teardown", args=[obj.id]),
+            ),
+            (
+                "Team messages",
+                reverse("admin:session_discord_team_messages", args=[obj.id]),
             ),
         ]
         return mark_safe(
@@ -699,6 +756,21 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "<int:session_id>/send-team-welcome-emails/",
                 self.admin_site.admin_view(send_team_welcome_emails_view),
                 name="session_send_team_welcome_emails",
+            ),
+            path(
+                "<int:session_id>/discord-setup/",
+                self.admin_site.admin_view(discord_setup_view),
+                name="session_discord_setup",
+            ),
+            path(
+                "<int:session_id>/discord-teardown/",
+                self.admin_site.admin_view(discord_teardown_view),
+                name="session_discord_teardown",
+            ),
+            path(
+                "<int:session_id>/discord-team-messages/",
+                self.admin_site.admin_view(discord_team_messages_view),
+                name="session_discord_team_messages",
             ),
         ]
         return custom_urls + urls

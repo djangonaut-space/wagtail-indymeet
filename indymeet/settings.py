@@ -341,10 +341,17 @@ ZOOM_CLIENT_SECRET = os.environ.get("ZOOM_CLIENT_SECRET")
 BUTTONDOWN_API_KEY = os.environ.get("BUTTONDOWN_API_KEY")
 BUTTONDOWN_WEBHOOK_SECRET = os.environ.get("BUTTONDOWN_WEBHOOK_SECRET")
 
-# Discord scheduled-event sync.
-# Set both to enable; leave unset to disable.
+# Discord scheduled-event sync and session channel/role management.
+# Set DISCORD_BOT_TOKEN and DISCORD_GUILD_ID to enable; leave unset to disable.
 DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 DISCORD_GUILD_ID = os.environ.get("DISCORD_GUILD_ID")
+
+# Id of the bot's own role on the guild (Discord assigns this automatically
+# when the bot is invited with the `bot` OAuth2 scope). Session setup/teardown
+# grant this role explicit view access on every private channel they manage,
+# since Discord only bypasses per-channel overwrites for Administrator — see
+# docs/integrations/discord.md.
+DISCORD_BOT_ROLE_ID = os.environ.get("DISCORD_BOT_ROLE_ID")
 
 # GitHub API token for Djangonaut stats collection (Issue #615).
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")

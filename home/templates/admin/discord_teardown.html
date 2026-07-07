@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Tear down Discord - {{ session.title }}</h1>
+
+<div class="module">
+    <h2>Summary</h2>
+    <p>This will archive the Discord infrastructure for this session:</p>
+    <ul>
+        <li>Every channel in the <strong>{{ session.short_name }}</strong> category switches from role-based access to direct member access (team members and organizers keep their channels; other channels go to organizers, Admins, and Advisors)</li>
+        <li>Archived channels are renamed with a session prefix (e.g. <strong>{{ session.short_name_slug }}-team-pluto</strong>)</li>
+        <li>Team voice channels are <strong>deleted</strong> outright</li>
+        <li>All {{ member_count }} session member{{ member_count|pluralize }} receive a <strong>{{ session.title }}</strong> role</li>
+        <li>Navigators, Captains, Session Organizers, and Djangonauts receive their alumni roles (Past Navigators, Past Captains, Past Session Organizers, stars)</li>
+        <li>The active Navigators, Captains, Session Organizers, and Djangonauts roles are removed from <strong>everyone on the server</strong></li>
+    </ul>
+    <p><strong>Warning:</strong> this is hard to undo. Role removals apply guild-wide, not just to this session's members.</p>
+    <p>Teardown runs in the background; a report will be emailed to you when it completes.</p>
+</div>
+
+{% if members_without_username %}
+<div class="module">
+    <h2>Members without a Discord username</h2>
+    <p>
+        These members cannot be matched to a Discord account. They will lose
+        access to the archived channels and receive no alumni roles unless
+        handled manually:
+    </p>
+    <ul>
+        {% for user in members_without_username %}
+        <li>{{ user.get_full_name|default:user.username }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if not has_category %}
+<div class="messagelist">
+    <div class="error">
+        This session has no Discord category recorded. Run the Discord setup
+        action first.
+    </div>
+</div>
+<p><a href="{% url 'admin:home_session_changelist' %}" class="button">Back to Session List</a></p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+    <p><strong>Are you sure you want to tear down Discord for {{ session.title }}?</strong></p>
+    <div class="submit-row">
+        <input type="submit" value="Tear down Discord" class="default" />
+        <a href="{% url 'admin:home_session_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}

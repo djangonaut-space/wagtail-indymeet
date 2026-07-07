@@ -123,6 +123,35 @@ class EmailSendTests(TestCase):
             "[staging] Djangonaut Space Application Submitted",
         )
 
+    @override_settings(ENVIRONMENT="production")
+    def test_send_email_with_cc(self):
+        """Test that CC recipients are included on the message"""
+        email.send(
+            email_template="application_created",
+            recipient_list=["test@example.com"],
+            context={"user": self.user},
+            cc_list=["cc@example.com"],
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].cc, ["cc@example.com"])
+
+    @override_settings(
+        ENVIRONMENT="dev",
+        ALLOWED_EMAILS_FOR_TESTING=["allowed@example.com", "cc-allowed@example.com"],
+    )
+    def test_send_email_in_dev_filters_cc(self):
+        """Test that CC recipients are filtered to allowed emails in dev"""
+        email.send(
+            email_template="application_created",
+            recipient_list=["allowed@example.com"],
+            context={"user": self.user},
+            cc_list=["cc-allowed@example.com", "notallowed@example.com"],
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].cc, ["cc-allowed@example.com"])
+
     @override_settings(
         ENVIRONMENT="dev",
         ALLOWED_EMAILS_FOR_TESTING=[],

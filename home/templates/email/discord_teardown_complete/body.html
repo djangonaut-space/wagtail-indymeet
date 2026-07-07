@@ -1,0 +1,48 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}Discord teardown for {{ session.title }} has finished.{% endblock preheader %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Discord teardown for <strong>{{ session.title }}</strong> has finished{% if report.errors %} with <strong>{{ report.errors|length }} error{{ report.errors|length|pluralize }}</strong>{% endif %}.
+  </p>
+
+  {% if report.errors %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 8px;"><strong>Errors:</strong></p>
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px;">
+    {% for error in report.errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 8px;"><strong>Summary:</strong></p>
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px;">
+    <li>Channels archived: {{ report.channels_processed|join:", "|default:"none" }}</li>
+    <li>Channels deleted: {{ report.channels_deleted|join:", "|default:"none" }}</li>
+    <li>Roles created: {{ report.roles_created|join:", "|default:"none" }}</li>
+    <li>Members updated: {{ report.members_updated }}</li>
+  </ul>
+
+  {% if report.roles_stripped %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 8px;"><strong>Active roles removed:</strong></p>
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px;">
+    {% for role, count in report.roles_stripped.items %}
+    <li>{{ role }}: {{ count }} member{{ count|pluralize }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if report.unresolved %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 8px;">
+    These members could not be matched to a Discord account, so they kept no channel access and received no alumni roles:
+  </p>
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px;">
+    {% for person in report.unresolved %}
+    <li>{{ person.display_name }} ({{ person.discord_username|default:"no username" }}, {{ person.role }})</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+{% endblock before_cta %}
+
+{% block cta_button_text %}Open the Session admin{% endblock cta_button_text %}

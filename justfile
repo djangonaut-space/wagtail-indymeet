@@ -15,9 +15,9 @@ up-detached:
 down:
     docker compose down
 
-# Follow Django logs
+# Follow Django and worker logs
 logs:
-    docker compose logs -f django
+    docker compose logs -f django worker
 
 # Open a Django shell
 shell:
@@ -31,9 +31,13 @@ dbshell:
 superuser:
     {{django}} uv run python manage.py createsuperuser
 
-# Create a superuser
+# Create a demo session
 demo:
     {{django}} uv run python manage.py generate_sample_session
+
+# Bootstrap a Discord server
+bootstrap_discord:
+    {{django}} uv run python manage.py bootstrap_discord_server
 
 # Run database migrations
 migrate *args:

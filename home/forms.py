@@ -18,6 +18,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import CustomUser
+from accounts.models import UserProfile
 from home import constants
 from home.models import (
     Question,
@@ -1261,6 +1262,64 @@ class TestimonialForm(forms.ModelForm):
                 _("Your testimonial must be at least 50 characters long.")
             )
         return text
+
+
+class SessionMembershipInlineForm(forms.ModelForm):
+    """SessionMembership inline form that also edits the user's Discord username.
+
+    The username lives on ``UserProfile``, not on the membership; exposing it
+    here lets organizers fill in a whole session's usernames in one place
+    (the Session change page) before running the Discord setup action.
+    """
+
+    discord_username = forms.CharField(
+        max_length=32,
+        required=False,
+        label=_("Discord username"),
+        help_text=_("Stored on the user's profile."),
+    )
+
+    class Meta:
+        model = SessionMembership
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["discord_username"].initial = (
+                self.instance.user.profile.discord_username
+            )
+
+    def clean(self) -> dict:
+        """Reject a Discord username already assigned to a different user.
+
+        Resolution during Discord setup is keyed by username, so two users
+        sharing one would both map to the same guild member; a matching DB
+        constraint backs this up.
+        """
+        cleaned_data = super().clean()
+        username = (cleaned_data.get("discord_username") or "").strip()
+        if username:
+            user = cleaned_data.get("user")
+            if user is None and getattr(self.instance, "user_id", None):
+                user = self.instance.user
+            conflicts = UserProfile.objects.filter(discord_username__iexact=username)
+            if user is not None:
+                conflicts = conflicts.exclude(user=user)
+            if conflicts.exists():
+                self.add_error(
+                    "discord_username",
+                    _("This Discord username is already assigned to another user."),
+                )
+        return cleaned_data
+
+    def save(self, commit: bool = True) -> SessionMembership:
+        instance = super().save(commit)
+        if "discord_username" in self.changed_data and instance.user_id:
+            profile = instance.user.profile
+            profile.discord_username = self.cleaned_data["discord_username"].strip()
+            profile.save(update_fields=["discord_username"])
+        return instance
 
 
 class CollectStatsForm(forms.Form):

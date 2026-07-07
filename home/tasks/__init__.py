@@ -1,3 +1,7 @@
+from home.tasks.discord_session import (
+    setup_session_discord,
+    teardown_session_discord,
+)
 from home.tasks.event_notifications import send_event_calendar_invite
 from home.tasks.session_notifications import (
     reject_waitlisted_user,
@@ -21,5 +25,7 @@ __all__ = [
     "send_team_welcome_email",
     "send_testimonial_notification",
     "send_waitlisted_email",
+    "setup_session_discord",
     "sync_event",
+    "teardown_session_discord",
 ]
