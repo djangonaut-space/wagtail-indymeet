@@ -71,10 +71,10 @@ jobs:
           uv run python manage.py tailwind build
 
       - name: Run tests
-        run: uv run pytest --cov --cov-branch --cov-report=xml --cov-report=term
+        run: uv run pytest -n auto --cov --cov-branch --cov-report=xml --cov-report=term
 
       - name: Run playwright tests
-        run: uv run pytest --tracing retain-on-failure -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
+        run: uv run pytest --tracing retain-on-failure -m playwright -n auto --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0

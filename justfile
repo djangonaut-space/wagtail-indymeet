@@ -45,16 +45,16 @@ makemigrations *args:
 
 # Run all tests (excluding Playwright)
 test *args:
-    {{django}} uv run pytest {{args}}
+    {{django}} uv run pytest -n auto {{args}}
 
 # Run tests with database reuse
 test-fast *args:
-    {{django}} uv run pytest --reuse-db {{args}}
+    {{django}} uv run pytest --reuse-db -n auto {{args}}
 
 # Install Playwright browsers and run Playwright tests
 test-playwright *args:
     {{django}} uv run playwright install --with-deps
-    {{django}} uv run pytest -m playwright {{args}}
+    {{django}} uv run pytest -m playwright -n auto {{args}}
 
 # Run Playwright tests in headed mode (visible browser)
 test-playwright-headed *args:
