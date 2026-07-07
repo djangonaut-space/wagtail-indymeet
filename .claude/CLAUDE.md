@@ -78,6 +78,11 @@ just test-playwright        # Playwright tests
 just test-playwright-headed # Playwright tests with visible browser
 ```
 
+### Running Commands
+- **Always prefer `just` recipes** (`just test`, `just migrate`, `just makemigrations`, `just manage <args>`, etc.) over calling `python manage.py`, `pytest`, or `uv run` directly on the host.
+- The host Python environment cannot build GDAL/GeoDjango's native extensions, so anything invoking Django settings (tests, migrations, shell, management commands) fails outside Docker. `just` recipes run these inside the `django` container where the dependencies are installed.
+- If a command has no matching `just` recipe, run it via `docker compose exec django uv run python manage.py <command>` instead of running it on the host.
+
 ### Common Tasks
 - **Adding Django functionality** (most common contributor task)
 - **Creating Wagtail page models and StreamField blocks** (currently limited, needs improvement)
