@@ -91,7 +91,7 @@ This is the web application for the Djangonaut Space mentoring program. The plat
 
 2. Have docker running and then run:
    ```sh
-   docker compose up
+   docker compose up --watch
    ```
 
 3. In a new terminal, run any setup commands you need such as

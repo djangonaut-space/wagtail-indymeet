@@ -3,13 +3,9 @@
 
 django := "docker compose exec django"
 
-# Start all services
-up:
-    docker compose up
-
-# Start all services in the background
-up-detached:
-    docker compose up -d
+# Start all services in the background with file watching. Pass --attached to stream logs in the foreground instead.
+up attached="":
+    docker compose {{ if attached == "--attached" { "up --watch" } else { "watch" } }}
 
 # Stop all services
 down:

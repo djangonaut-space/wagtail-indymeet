@@ -232,8 +232,7 @@ Key variables (see `.env.template` files):
 
 ```bash
 # Services
-just up                          # Start all services
-just up-detached                 # Start all services in the background
+just up                          # Start all services, rebuilding on dependency file changes (docker compose up --watch --detached)
 just down                        # Stop all services
 just logs                        # Follow Django logs
 
