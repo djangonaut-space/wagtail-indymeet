@@ -262,7 +262,6 @@ just test-playwright-headed      # Playwright tests with visible browser
 # Tailwind
 just tailwind-install
 just tailwind-start
-just tailwind-build              # Production build
 
 # GitHub Actions Security
 just zizmor                      # Check all workflows

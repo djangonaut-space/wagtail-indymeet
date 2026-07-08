@@ -24,21 +24,9 @@ logs:
 shell:
     {{django}} uv run python manage.py shell
 
-# Open a database shell
-dbshell:
-    {{django}} uv run python manage.py dbshell
-
 # Create a superuser
 superuser:
     {{django}} uv run python manage.py createsuperuser
-
-# Create a demo session
-demo:
-    {{django}} uv run python manage.py generate_sample_session
-
-# Bootstrap a Discord server
-bootstrap_discord:
-    {{django}} uv run python manage.py bootstrap_discord_server
 
 # Run database migrations
 migrate *args:
@@ -47,6 +35,18 @@ migrate *args:
 # Create new migrations
 makemigrations *args:
     {{django}} uv run python manage.py makemigrations {{args}}
+
+# Open a database shell
+dbshell:
+    {{django}} uv run python manage.py dbshell
+
+# Create a demo session
+bootstrap_session:
+    {{django}} uv run python manage.py generate_sample_session
+
+# Bootstrap a Discord server
+bootstrap_discord:
+    {{django}} uv run python manage.py bootstrap_discord_server
 
 # Build/refresh the migrated template database used to speed up Playwright test database
 # creation. Skips the rebuild when the template already reflects every migration, so it's
@@ -57,10 +57,6 @@ build-test-db-template *args:
 # Run all tests (excluding Playwright)
 test *args:
     {{django}} uv run pytest -n auto {{args}}
-
-# Run tests with database reuse
-test-fast *args:
-    {{django}} uv run pytest --reuse-db -n auto {{args}}
 
 # Install Playwright browsers and run Playwright tests
 test-playwright *args:
@@ -80,10 +76,6 @@ tailwind-install:
 # Start Tailwind CSS watcher
 tailwind-start:
     {{django}} uv run python manage.py tailwind start
-
-# Build Tailwind CSS for production
-tailwind-build:
-    {{django}} uv run python manage.py tailwind build
 
 # Dump database fixtures (excludes system tables)
 dumpdata:
