@@ -126,6 +126,15 @@ DATABASES = {
     )
 }
 
+# When TEST_DB_TEMPLATE is set, Postgres clones that already-migrated database
+# when pytest-django/pytest-xdist build a test database, instead of replaying
+# every migration. Unset (the default) leaves test database creation
+# unaffected. Used for the Playwright suite via `just test-playwright`; see
+# `just build-test-db-template`.
+DATABASES["default"]["TEST"] = {
+    "TEMPLATE": os.getenv("TEST_DB_TEMPLATE", ""),
+}
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

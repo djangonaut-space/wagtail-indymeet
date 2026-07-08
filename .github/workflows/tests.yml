@@ -73,7 +73,14 @@ jobs:
       - name: Run tests
         run: uv run pytest -n auto --cov --cov-branch --cov-report=xml --cov-report=term
 
+      - name: Build test database template
+        env:
+          TEST_DB_TEMPLATE: template_wagtail_indymeet_test
+        run: uv run python manage.py build_test_db_template
+
       - name: Run playwright tests
+        env:
+          TEST_DB_TEMPLATE: template_wagtail_indymeet_test
         run: uv run pytest --tracing retain-on-failure -m playwright -n auto --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
 
       - name: Upload results to Codecov

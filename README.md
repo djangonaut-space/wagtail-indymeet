@@ -166,15 +166,15 @@ To run the tests:
 docker compose exec django uv run pytest
 ```
 
-There are also Playwright tests that can be run. To run these tests:
+To run the Playwright tests:
 
 ```shell
 # Be sure playwright is properly installed and has a test user for accessing /admin
 docker compose exec django uv run playwright install --with-deps
 # This is the actual test command
-docker compose exec django uv run pytest -m playwright
+just test-playwright
 # Run the tests in headed mode (so you can see the browser)
-docker compose exec django uv run pytest -m playwright --headed
+just test-playwright-headed
 ```
 
 ### Merging changes
