@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from django.urls import reverse
 
-from accounts.models import UserAvailability
+from availability.models import UserAvailability
 from home.models import Team, Session, SessionMembership
 
 if TYPE_CHECKING:

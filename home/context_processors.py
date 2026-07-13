@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from accounts.models import UserAvailability
+from availability.models import UserAvailability
 from home.models import Session, SessionMembership
 
 

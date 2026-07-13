@@ -18,7 +18,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CustomUser, UserAvailability
+from accounts.models import CustomUser
+from availability.models import UserAvailability
 from home.factories import SessionFactory, TeamFactory
 from home.models import Project, Session, SessionMembership, Team
 

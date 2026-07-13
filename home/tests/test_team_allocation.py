@@ -3,7 +3,8 @@
 from home import constants
 from django.test import TestCase
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
 from home.factories import ProjectFactory, TeamFactory
 from home.models import (
     Project,

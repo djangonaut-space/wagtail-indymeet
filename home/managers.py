@@ -318,7 +318,7 @@ class UserSurveyResponseQuerySet(QuerySet):
         Adds:
         - annotated_has_availability: Boolean indicating if user has availability
         """
-        from accounts.models import UserAvailability
+        from availability.models import UserAvailability
 
         # Check for users with availability records that have non-empty slots
         # Using slots != '[]' to match PostgreSQL JSONB empty array

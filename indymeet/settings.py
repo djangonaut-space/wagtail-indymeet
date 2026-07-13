@@ -33,6 +33,7 @@ else:
 
 INSTALLED_APPS = [
     "accounts",
+    "availability",
     "home.apps.HomeAppConfig",
     "anymail",
     "django_recaptcha",

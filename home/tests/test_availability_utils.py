@@ -2,7 +2,8 @@
 
 from django.test import TestCase
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
 from home.availability import (
     AvailabilityWindow,
     calculate_overlap,

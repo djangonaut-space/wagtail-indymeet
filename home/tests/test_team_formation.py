@@ -5,8 +5,10 @@ from django.contrib.admin.sites import site
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
-from accounts.models import CustomUser, UserAvailability
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
+from accounts.models import CustomUser
+from availability.models import UserAvailability
 from home import constants
 from home.admin import SessionAdmin
 from home.availability import (

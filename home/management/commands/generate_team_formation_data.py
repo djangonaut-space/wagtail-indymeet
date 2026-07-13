@@ -13,7 +13,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from faker import Faker
 
-from accounts.models import CustomUser, UserAvailability
+from accounts.models import CustomUser
+from availability.models import UserAvailability
 from home.models import Session, Survey, UserSurveyResponse
 
 

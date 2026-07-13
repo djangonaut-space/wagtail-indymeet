@@ -9,7 +9,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import TestCase, RequestFactory
 
 from accounts.factories import UserFactory
-from accounts.models import UserAvailability
+from availability.models import UserAvailability
 from home.admin import SessionMembershipAdmin, SessionMembershipInline
 from home.factories import SessionFactory, SessionMembershipFactory, TeamFactory
 from home.models import Session, SessionMembership

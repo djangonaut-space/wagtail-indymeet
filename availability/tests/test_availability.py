@@ -6,7 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from accounts.models import UserAvailability
+from availability.models import UserAvailability
 
 User = get_user_model()
 
@@ -168,7 +168,7 @@ class TestAvailabilityForm:
 
     def test_form_valid_with_slots(self, user):
         """Test form validation with valid slot data."""
-        from accounts.forms import UserAvailabilityForm
+        from availability.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(user=user)
         form = UserAvailabilityForm(
@@ -180,7 +180,7 @@ class TestAvailabilityForm:
 
     def test_form_valid_with_empty_slots(self, user):
         """Test form validation with empty slots."""
-        from accounts.forms import UserAvailabilityForm
+        from availability.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(user=user)
         form = UserAvailabilityForm(data={"slots": []}, instance=availability)
@@ -189,7 +189,7 @@ class TestAvailabilityForm:
 
     def test_form_saves_slots(self, user):
         """Test that the form saves slot data correctly."""
-        from accounts.forms import UserAvailabilityForm
+        from availability.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(user=user)
         test_slots = [
@@ -259,7 +259,7 @@ class TestUserAvailabilityAdmin:
         """Test that the admin list view displays correctly."""
         user, availability = user_with_availability
         client.force_login(admin_user)
-        url = reverse("admin:accounts_useravailability_changelist")
+        url = reverse("admin:availability_useravailability_changelist")
         response = client.get(url)
 
         assert response.status_code == 200
@@ -274,7 +274,7 @@ class TestUserAvailabilityAdmin:
         """Test searching for users in the admin."""
         user, availability = user_with_availability
         client.force_login(admin_user)
-        url = reverse("admin:accounts_useravailability_changelist")
+        url = reverse("admin:availability_useravailability_changelist")
         response = client.get(url, {"q": user.username})
 
         assert response.status_code == 200
@@ -287,7 +287,7 @@ class TestUserAvailabilityAdmin:
         """Test the admin change view."""
         user, availability = user_with_availability
         client.force_login(admin_user)
-        url = reverse("admin:accounts_useravailability_change", args=[availability.pk])
+        url = reverse("admin:availability_useravailability_change", args=[availability.pk])
         response = client.get(url)
 
         assert response.status_code == 200
@@ -297,7 +297,7 @@ class TestUserAvailabilityAdmin:
 
     def test_slot_count_display(self, user_with_availability):
         """Test the slot_count admin display method."""
-        from accounts.admin import UserAvailabilityAdmin
+        from availability.admin import UserAvailabilityAdmin
 
         user, availability = user_with_availability
         admin_instance = UserAvailabilityAdmin(UserAvailability, None)
@@ -311,7 +311,7 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_with_invalid_json(self, user):
         """Test form validation with mixed data types."""
-        from accounts.forms import UserAvailabilityForm
+        from availability.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(user=user)
         # JSONField should handle conversion, but let's test with proper list
@@ -325,7 +325,7 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_with_none_slots(self, user):
         """Test form with None value for slots."""
-        from accounts.forms import UserAvailabilityForm
+        from availability.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(user=user)
         form = UserAvailabilityForm(data={}, instance=availability)  # No slots provided
@@ -335,7 +335,7 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_clears_slots_on_empty_submit(self, user):
         """Test that submitting empty list clears slots."""
-        from accounts.forms import UserAvailabilityForm
+        from availability.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(
             user=user, slots=[24.0, 48.0, 72.0]  # Mon, Tue, Wed at 00:00

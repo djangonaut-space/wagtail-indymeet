@@ -6,7 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.factories import ProfileFactory, UserAvailabilityFactory, UserFactory
+from accounts.factories import ProfileFactory, UserFactory
+from availability.factories import UserAvailabilityFactory
 from accounts.models import CustomUser, UserProfile
 from home.factories import SessionFactory, SessionMembershipFactory
 from home.models import SessionMembership
@@ -116,7 +117,7 @@ class AdminFilterTests(TestCase):
         assert self.no_session_user.pk not in user_ids
 
     def test_useravailability_past_djangonaut_yes(self) -> None:
-        url = reverse("admin:accounts_useravailability_changelist")
+        url = reverse("admin:availability_useravailability_changelist")
         user_ids = self._get_filtered_values(
             url, {"past_djangonaut": "yes"}, field="user_id"
         )
@@ -124,7 +125,7 @@ class AdminFilterTests(TestCase):
         assert self.no_session_user.pk not in user_ids
 
     def test_useravailability_past_session_member_no(self) -> None:
-        url = reverse("admin:accounts_useravailability_changelist")
+        url = reverse("admin:availability_useravailability_changelist")
         user_ids = self._get_filtered_values(
             url, {"past_session_member": "no"}, field="user_id"
         )
@@ -132,7 +133,7 @@ class AdminFilterTests(TestCase):
         assert self.no_session_user.pk in user_ids
 
     def test_useravailability_updated_at_filter(self) -> None:
-        url = reverse("admin:accounts_useravailability_changelist")
+        url = reverse("admin:availability_useravailability_changelist")
         response = self.client.get(
             url, {"updated_at__gte": "2020-01-01 00:00:00+00:00"}
         )

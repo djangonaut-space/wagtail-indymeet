@@ -21,7 +21,8 @@ from django.urls import reverse
 from playwright.sync_api import expect, BrowserContext
 from playwright.sync_api import Page
 
-from accounts.factories import UserFactory, UserAvailabilityFactory
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
 from accounts.models import CustomUser
 from home import constants
 from home.factories import (

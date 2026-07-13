@@ -7,7 +7,8 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from freezegun import freeze_time
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
 from home import constants
 from home.factories import (
     OrganizerFactory,
