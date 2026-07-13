@@ -366,6 +366,40 @@ DISCORD_BOT_ROLE_ID = os.environ.get("DISCORD_BOT_ROLE_ID")
 # GitHub API token for Djangonaut stats collection (Issue #615).
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 
+# ---------------------------------------------------------------------------
+# Calendar integrations (Google Calendar)
+# ---------------------------------------------------------------------------
+# Google OAuth 2.0 credentials for the per-user calendar connection. Set both
+# to enable the "Connect Google Calendar" flow; leave unset to hide it.
+# See docs/integrations/google-calendar.md for setup and verification.
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+
+# Register Google push-notification (webhook) channels for near-real-time busy
+# updates. Requires a publicly reachable, domain-verified HTTPS BASE_URL, so it
+# is opt-in per environment. When off, busy data stays fresh via the
+# sync_calendars poll + lazy on-read refresh.
+GOOGLE_CALENDAR_WEBHOOK_ENABLED = bool(
+    os.environ.get("GOOGLE_CALENDAR_WEBHOOK_ENABLED")
+)
+
+# Fernet key used to encrypt calendar credentials at rest. Generate with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# A throwaway key is generated when unset so encrypted fields work out of the box
+# for local/dev/test. In production with the integration enabled a stable key is
+# required, else credentials become unreadable across restarts -- so we fail loudly.
+CALENDAR_TOKEN_ENCRYPTION_KEY = os.environ.get("CALENDAR_TOKEN_ENCRYPTION_KEY", "")
+if not CALENDAR_TOKEN_ENCRYPTION_KEY:
+    if ENVIRONMENT == "production" and GOOGLE_OAUTH_CLIENT_ID:
+        raise ValueError(
+            "CALENDAR_TOKEN_ENCRYPTION_KEY must be set when the Google Calendar "
+            "integration is enabled in production so that stored credentials "
+            "remain readable across deploys."
+        )
+    from cryptography.fernet import Fernet
+
+    CALENDAR_TOKEN_ENCRYPTION_KEY = Fernet.generate_key().decode()
+
 # When running load tests, it's helpful to remove some functionality
 # such as confirmation emails.
 LOAD_TESTING = os.environ.get("LOAD_TESTING", False)
