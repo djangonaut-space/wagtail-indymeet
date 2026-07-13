@@ -8,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from accounts.models import CustomUser
+from availability.providers.service import users_busy_slots
+from availability.tasks import refresh_stale_connections_bulk
 from home.availability import (
     convert_slot_with_offset,
     format_slot_as_time,
@@ -143,6 +145,7 @@ class CompareAvailabilityForm(forms.Form):
         widget=TomSelectMultipleWidget(),
     )
     offset = forms.FloatField(required=False, initial=0)
+    include_calendars = forms.BooleanField(required=False, initial=False)
 
     def __init__(self, data=None, *args, user: CustomUser, **kwargs):
         """
@@ -220,6 +223,29 @@ class CompareAvailabilityForm(forms.Form):
         """Return the validated offset hours value."""
         return self.cleaned_data.get("offset", 0)
 
+    def get_user_slots_map(
+        self, selected_users: list[CustomUser]
+    ) -> dict[int, set[float]]:
+        """
+        Build a mapping of user id to available slots for the selected users.
+
+        Fetches saved availability and, when requested, calendar busy times in
+        bulk (a constant number of queries regardless of user count).
+        """
+        user_slots = {user.id: set(get_user_slots(user)) for user in selected_users}
+        if not selected_users:
+            return user_slots
+
+        if self.cleaned_data.get("include_calendars", False):
+            # Subtract this week's busy times so the overlap reflects real conflicts.
+            busy_slots_by_user = users_busy_slots(selected_users)
+            for user in selected_users:
+                user_slots[user.id] -= busy_slots_by_user.get(user.id, set())
+            # Reads serve cached data; refresh stale connections in the background.
+            refresh_stale_connections_bulk(selected_users)
+
+        return user_slots
+
 
 @login_required
 def compare_availability(request):
@@ -257,11 +283,7 @@ def compare_availability_grid(request):
         selectable_users = form.get_selectable_users()
         selected_users = form.get_selected_users(selectable_users)
         offset_hours = form.get_offset_hours()
-
-        user_slots = {}
-        for user in selected_users:
-            slots = get_user_slots(user)
-            user_slots[user.id] = set(slots)
+        user_slots = form.get_user_slots_map(selected_users)
     else:
         selected_users = []
         offset_hours = 0.0

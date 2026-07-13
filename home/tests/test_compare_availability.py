@@ -1,6 +1,10 @@
 """Tests for the compare availability views."""
 
+import json
 from datetime import datetime
+from datetime import timezone as dt_timezone
+from unittest import mock
+
 import factory
 from django.http import QueryDict
 from django.test import Client, TestCase
@@ -8,7 +12,8 @@ from django.urls import reverse
 from freezegun import freeze_time
 
 from accounts.factories import UserFactory
-from availability.factories import UserAvailabilityFactory
+from availability.factories import CalendarConnectionFactory, UserAvailabilityFactory
+from availability.models import CalendarBusyPeriod
 from home import constants
 from home.factories import (
     OrganizerFactory,
@@ -358,3 +363,86 @@ class CompareAvailabilityFormTests(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("users", form.errors)
+
+
+class CompareAvailabilityCalendarOverlayTests(TestCase):
+    """Tests for the 'subtract connected calendars' overlay on the grid view."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.session = SessionFactory.create(
+            start_date=datetime(2024, 6, 1).date(),
+            end_date=datetime(2024, 8, 30).date(),
+        )
+        cls.project = ProjectFactory.create()
+        cls.team = Team.objects.create(
+            session=cls.session, project=cls.project, name="Team Alpha"
+        )
+        cls.user_a, cls.user_b = UserFactory.create_batch(
+            2, first_name=factory.Iterator(["Alice", "Bob"])
+        )
+        UserAvailabilityFactory.create(user=cls.user_a, slots=[0.0, 0.5])
+        UserAvailabilityFactory.create(user=cls.user_b, slots=[0.0, 0.5])
+        SessionMembershipFactory.create_batch(
+            2,
+            session=cls.session,
+            team=cls.team,
+            accepted=True,
+            user=factory.Iterator([cls.user_a, cls.user_b]),
+            role=constants.DJANGONAUT,
+        )
+        cls.url = reverse("compare_availability_grid")
+
+    def setUp(self) -> None:
+        self.client = Client()
+        self.organizer = OrganizerFactory.create()
+        self.client.force_login(self.organizer.user)
+
+    def _slot_availabilities(self, response) -> dict:
+        content = response.content.decode()
+        anchor = content.index('id="slot-availabilities"')
+        start = content.index(">", anchor) + 1
+        end = content.index("</script>", start)
+        return json.loads(content[start:end])
+
+    @freeze_time("2026-07-05 12:00:00")  # Sunday
+    def test_overlay_subtracts_busy_slots(self) -> None:
+        """With the toggle on, a user's busy slot is removed from the overlap.
+
+        Busy data is real cached ``CalendarBusyPeriod`` rows (rather than a
+        mocked ``users_busy_slots``) so the query count assertion below
+        reflects the bulk lookup actually used, not a bypassed one.
+        """
+        connection = CalendarConnectionFactory.create(
+            user=self.user_a,
+            last_synced_at=datetime(2026, 7, 5, 12, 0, tzinfo=dt_timezone.utc),
+        )
+        CalendarBusyPeriod.objects.create(
+            connection=connection,
+            start=datetime(2026, 7, 5, 0, 0, tzinfo=dt_timezone.utc),
+            end=datetime(2026, 7, 5, 0, 30, tzinfo=dt_timezone.utc),
+        )
+        # Fixed query count regardless of how many users are selected -- the
+        # busy-slot lookup is bulk, not one query per user.
+        with self.assertNumQueries(9):
+            response = self.client.get(
+                f"{self.url}?users={self.user_a.id}&users={self.user_b.id}"
+                f"&offset=0&include_calendars=1"
+            )
+        slot_availabilities = self._slot_availabilities(response)
+        # Sunday 00:00 -> "0-0-0": user_a is busy, so only user_b remains.
+        self.assertNotIn(self.user_a.id, slot_availabilities["0-0-0"])
+        self.assertIn(self.user_b.id, slot_availabilities["0-0-0"])
+        # Sunday 00:30 -> "0-0-1": neither is busy.
+        self.assertIn(self.user_a.id, slot_availabilities["0-0-1"])
+        self.assertIn(self.user_b.id, slot_availabilities["0-0-1"])
+
+    def test_overlay_off_does_not_call_calendar(self) -> None:
+        """Without the toggle, calendars are not consulted at all."""
+        with mock.patch("home.views.compare_availability.users_busy_slots") as busy:
+            response = self.client.get(
+                f"{self.url}?users={self.user_a.id}&users={self.user_b.id}&offset=0"
+            )
+            busy.assert_not_called()
+        slot_availabilities = self._slot_availabilities(response)
+        self.assertIn(self.user_a.id, slot_availabilities["0-0-0"])
