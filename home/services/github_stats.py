@@ -6,7 +6,7 @@ from datetime import date, datetime
 from functools import cached_property
 
 from django.conf import settings
-from github import Github
+from github import Auth, Github
 from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
@@ -149,7 +149,7 @@ class GitHubStatsCollector:
         # PyGithub's default GithubRetry sleeps on rate-limit 403s; swap for a
         # plain no-retry Retry so rate limiting surfaces as an exception
         # instead of a silent wait.
-        self.github = Github(token, retry=Retry(total=0))
+        self.github = Github(auth=Auth.Token(token), retry=Retry(total=0))
         logger.info("GitHubStatsCollector initialized (retries disabled)")
 
     def _to_date(self, dt: datetime | date | None) -> date | None:
