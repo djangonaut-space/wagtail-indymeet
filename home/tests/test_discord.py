@@ -8,6 +8,7 @@ from datetime import datetime as dt
 from datetime import timezone as dt_timezone
 from unittest.mock import MagicMock, patch
 
+import requests
 from django.test import TestCase, override_settings
 
 from home.factories import EventFactory
@@ -15,6 +16,7 @@ from home.integrations.discord.client import DiscordClient
 from home.integrations.discord.service import (
     _prepare_fields,
     discord_enabled,
+    update_event,
 )
 from home.integrations.zoom.service import ZoomMeeting
 from home.tasks.sync_event import sync_event
@@ -130,6 +132,61 @@ class DiscordClientCreateScheduledEventTests(TestCase):
         self.assertEqual(mock_req.call_args.kwargs["json"]["description"], "")
 
 
+class DiscordClientModifyScheduledEventTests(TestCase):
+    def setUp(self):
+        self.client = DiscordClient()
+
+    def _mock_request(self, event_id="987654321"):
+        resp = MagicMock()
+        resp.json.return_value = {
+            "id": event_id,
+            "name": "Test Event",
+            "entity_type": 3,
+        }
+        return patch.object(self.client, "_request", return_value=resp)
+
+    @override_settings(**DISCORD_SETTINGS)
+    def test_sends_patch_to_scoped_event_url(self):
+        with self._mock_request() as mock_req:
+            self.client.modify_scheduled_event(
+                guild_id="123",
+                event_id="event-1",
+                payload={"name": "Renamed"},
+            )
+
+        self.assertEqual(
+            mock_req.call_args.args,
+            ("PATCH", "/guilds/123/scheduled-events/event-1"),
+        )
+
+    @override_settings(**DISCORD_SETTINGS)
+    def test_forwards_payload_unchanged(self):
+        payload = {
+            "name": "Renamed",
+            "entity_metadata": {"location": "https://zoom.us/j/999"},
+        }
+
+        with self._mock_request() as mock_req:
+            self.client.modify_scheduled_event(
+                guild_id="123",
+                event_id="event-1",
+                payload=payload,
+            )
+
+        self.assertEqual(mock_req.call_args.kwargs["json"], payload)
+
+    @override_settings(**DISCORD_SETTINGS)
+    def test_returns_updated_event_json(self):
+        with self._mock_request(event_id="event-1") as mock_req:
+            result = self.client.modify_scheduled_event(
+                guild_id="123",
+                event_id="event-1",
+                payload={"name": "Renamed"},
+            )
+
+        self.assertEqual(result, mock_req.return_value.json.return_value)
+
+
 class DiscordClientRequestTests(TestCase):
     def setUp(self):
         self.client = DiscordClient()
@@ -156,6 +213,21 @@ class DiscordClientRequestTests(TestCase):
             with self.assertLogs("home.integrations.discord.client", level="ERROR"):
                 with self.assertRaises(Exception):
                     self.client._request("GET", "/foo")
+
+    @override_settings(**DISCORD_SETTINGS)
+    def test_logs_response_body_and_reraises_on_http_error(self):
+        resp = MagicMock(status_code=500)
+        resp.text = "boom"
+        resp.raise_for_status.side_effect = requests.HTTPError(response=resp)
+
+        with patch.object(self.client.session, "request", return_value=resp):
+            with self.assertLogs(
+                "home.integrations.discord.client", level="ERROR"
+            ) as logs:
+                with self.assertRaises(requests.HTTPError):
+                    self.client._request("GET", "/foo")
+
+        self.assertIn("boom", "\n".join(logs.output))
 
 
 class PrepareFieldsTests(TestCase):
@@ -185,6 +257,51 @@ class PrepareFieldsTests(TestCase):
         event = self._event(zoom_link="https://zoom.us/j/" + "z" * 100)
         with self.assertRaises(ValueError):
             _prepare_fields(event)
+
+
+class UpdateEventTests(TestCase):
+    """Service-level update_event: the payload sent to Discord mirrors the
+    create path, but as a PATCH targeting the stored discord_event_id."""
+
+    @override_settings(**DISCORD_SETTINGS)
+    @patch("home.integrations.discord.service.discord_client")
+    def test_builds_expected_modify_payload(self, mock_client):
+        event = EventFactory.build(
+            title="My Event",
+            description="A description",
+            zoom_link="https://zoom.us/j/123",
+            discord_event_id="discord-456",
+            start_time=dt(2026, 6, 1, 14, 0, tzinfo=UTC),
+        )
+
+        update_event(event)
+
+        mock_client.modify_scheduled_event.assert_called_once_with(
+            guild_id="123456789",
+            event_id="discord-456",
+            payload={
+                "name": "My Event",
+                "description": "A description",
+                "entity_metadata": {"location": "https://zoom.us/j/123"},
+                "scheduled_start_time": "2026-06-01T14:00:00+00:00",
+                "scheduled_end_time": "2026-06-01T15:00:00+00:00",
+            },
+        )
+
+    @override_settings(**DISCORD_SETTINGS)
+    @patch("home.integrations.discord.service.discord_client")
+    def test_raises_on_over_long_zoom_link_without_calling_discord(self, mock_client):
+        event = EventFactory.build(
+            title="My Event",
+            zoom_link="https://zoom.us/j/" + "z" * 100,
+            discord_event_id="discord-456",
+            start_time=dt(2026, 6, 1, 14, 0, tzinfo=UTC),
+        )
+
+        with self.assertRaises(ValueError):
+            update_event(event)
+
+        mock_client.modify_scheduled_event.assert_not_called()
 
 
 class SyncEventDiscordTests(TestCase):
