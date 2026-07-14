@@ -116,6 +116,13 @@ def fetch_account_email(access_token: str) -> str:
 class GoogleCalendarProvider(CalendarProvider):
     """Reads busy intervals from a user's primary Google calendar."""
 
+    @staticmethod
+    def webhooks_enabled() -> bool:
+        """Whether push-notification channels should be registered."""
+        return bool(getattr(settings, "GOOGLE_CALENDAR_WEBHOOK_ENABLED", False)) and (
+            is_configured()
+        )
+
     def _access_token(self) -> str:
         """Return a valid access token, refreshing it if necessary."""
         connection = self.connection

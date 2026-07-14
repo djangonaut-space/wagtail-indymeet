@@ -1,10 +1,12 @@
-"""Tests for the calendar integration: encryption, slot mapping, provider,
-service layer, and the connect/callback/disconnect/import views."""
+"""Tests for the calendar integration: encryption, provider, service layer,
+and the connect/callback/disconnect/import views."""
 
 from datetime import datetime, timedelta
 from datetime import timezone as dt_timezone
 
 import pytest
+import requests
+import responses as rsps
 from django.core.management import call_command
 from django.db import connection as db_connection
 from django.test import override_settings
@@ -16,8 +18,6 @@ from availability.factories import CalendarConnectionFactory, UserAvailabilityFa
 from availability.models import CalendarBusyPeriod, CalendarConnection
 from availability.providers import google, service
 from availability.providers.base import CalendarSyncError
-from availability.slots import current_week_window, intervals_to_slots
-from availability.tasks import refresh_stale_connections
 
 UTC = dt_timezone.utc
 
@@ -51,56 +51,6 @@ def test_tokens_are_encrypted_at_rest_but_readable():
 def test_blank_encrypted_field_roundtrips():
     conn = CalendarConnectionFactory.create(refresh_token="")
     assert CalendarConnection.objects.get(pk=conn.pk).refresh_token == ""
-
-
-# --------------------------------------------------------------------------- #
-# Slot mapping
-# --------------------------------------------------------------------------- #
-@freeze_time("2026-07-08 12:00:00")  # a Wednesday
-def test_current_week_window():
-    window_start, window_end, week_start = current_week_window()
-    assert week_start == datetime(2026, 7, 5, tzinfo=UTC)  # Sunday
-    assert window_start == datetime(2026, 7, 8, tzinfo=UTC)  # today 00:00
-    assert window_end == datetime(2026, 7, 12, tzinfo=UTC)  # next Sunday
-
-
-def test_intervals_to_slots_maps_busy_to_recurring_slots():
-    week_start = datetime(2026, 7, 5, tzinfo=UTC)  # Sunday
-    window_start = datetime(2026, 7, 8, tzinfo=UTC)  # Wednesday (day 3)
-    # Busy Wed 14:00-15:00 UTC -> day 3 -> 72 + 14 = 86.0, plus 86.5
-    intervals = [
-        (
-            datetime(2026, 7, 8, 14, 0, tzinfo=UTC),
-            datetime(2026, 7, 8, 15, 0, tzinfo=UTC),
-        )
-    ]
-    assert intervals_to_slots(intervals, week_start, window_start) == {86.0, 86.5}
-
-
-def test_intervals_before_window_start_are_ignored():
-    week_start = datetime(2026, 7, 5, tzinfo=UTC)
-    window_start = datetime(2026, 7, 8, tzinfo=UTC)  # today = Wednesday
-    # Monday event is earlier in the week than "today" -> not imported.
-    intervals = [
-        (
-            datetime(2026, 7, 6, 9, 0, tzinfo=UTC),
-            datetime(2026, 7, 6, 10, 0, tzinfo=UTC),
-        )
-    ]
-    assert intervals_to_slots(intervals, week_start, window_start) == set()
-
-
-def test_partial_slot_overlap_marks_touched_slots():
-    week_start = datetime(2026, 7, 5, tzinfo=UTC)
-    window_start = datetime(2026, 7, 5, tzinfo=UTC)
-    # Sunday 00:10-00:40 touches the 00:00 and 00:30 slots (0.0 and 0.5).
-    intervals = [
-        (
-            datetime(2026, 7, 5, 0, 10, tzinfo=UTC),
-            datetime(2026, 7, 5, 0, 40, tzinfo=UTC),
-        )
-    ]
-    assert intervals_to_slots(intervals, week_start, window_start) == {0.0, 0.5}
 
 
 # --------------------------------------------------------------------------- #
@@ -197,12 +147,165 @@ def test_google_provider_raises_on_error(mocker):
         )
 
 
+@rsps.activate
+def test_exchange_code_returns_token_payload():
+    rsps.add(
+        rsps.POST, google.TOKEN_URL, json={"access_token": "at", "refresh_token": "rt"}
+    )
+    assert google.exchange_code("auth-code", "https://example.test/cb") == {
+        "access_token": "at",
+        "refresh_token": "rt",
+    }
+
+
+@rsps.activate
+def test_exchange_code_raises_on_error():
+    rsps.add(rsps.POST, google.TOKEN_URL, status=400)
+    with pytest.raises(CalendarSyncError):
+        google.exchange_code("bad-code", "https://example.test/cb")
+
+
+@rsps.activate
+def test_fetch_account_email_returns_email():
+    rsps.add(rsps.GET, google.USERINFO_URL, json={"email": "person@example.com"})
+    assert google.fetch_account_email("tok") == "person@example.com"
+
+
+@rsps.activate
+def test_fetch_account_email_blank_on_error_response():
+    rsps.add(rsps.GET, google.USERINFO_URL, status=500)
+    assert google.fetch_account_email("tok") == ""
+
+
+@rsps.activate
+def test_fetch_account_email_blank_on_network_error():
+    rsps.add(rsps.GET, google.USERINFO_URL, body=requests.ConnectionError())
+    assert google.fetch_account_email("tok") == ""
+
+
+@override_settings(
+    GOOGLE_CALENDAR_WEBHOOK_ENABLED=True,
+    GOOGLE_OAUTH_CLIENT_ID="client-id",
+    GOOGLE_OAUTH_CLIENT_SECRET="secret",
+)
+def test_webhooks_enabled_true_when_flag_set_and_configured():
+    assert google.GoogleCalendarProvider.webhooks_enabled() is True
+
+
+@override_settings(
+    GOOGLE_CALENDAR_WEBHOOK_ENABLED=True,
+    GOOGLE_OAUTH_CLIENT_ID="",
+    GOOGLE_OAUTH_CLIENT_SECRET="",
+)
+def test_webhooks_enabled_false_when_not_configured():
+    assert google.GoogleCalendarProvider.webhooks_enabled() is False
+
+
+@override_settings(GOOGLE_CALENDAR_WEBHOOK_ENABLED=False)
+def test_webhooks_enabled_false_when_flag_disabled():
+    assert google.GoogleCalendarProvider.webhooks_enabled() is False
+
+
+@pytest.mark.django_db
+def test_refresh_access_token_requires_refresh_token():
+    conn = CalendarConnectionFactory.create(refresh_token="")
+    with pytest.raises(CalendarSyncError):
+        google.GoogleCalendarProvider(conn)._refresh_access_token()
+
+
+@pytest.mark.django_db
+@rsps.activate
+def test_refresh_access_token_raises_on_error():
+    conn = CalendarConnectionFactory.create(refresh_token="refresh-me")
+    rsps.add(rsps.POST, google.TOKEN_URL, status=400)
+    with pytest.raises(CalendarSyncError):
+        google.GoogleCalendarProvider(conn)._refresh_access_token()
+
+
+@pytest.mark.django_db
+@rsps.activate
+def test_get_busy_intervals_raises_on_freebusy_error():
+    conn = CalendarConnectionFactory.create(
+        access_token="tok", token_expiry=datetime(2030, 1, 1, tzinfo=UTC)
+    )
+    rsps.add(
+        rsps.POST,
+        google.FREEBUSY_URL,
+        json={"calendars": {"primary": {"errors": [{"reason": "notFound"}]}}},
+    )
+    with pytest.raises(CalendarSyncError):
+        google.GoogleCalendarProvider(conn).get_busy_intervals(
+            datetime(2026, 7, 8, tzinfo=UTC), datetime(2026, 7, 12, tzinfo=UTC)
+        )
+
+
+@pytest.mark.django_db
+@rsps.activate
+def test_watch_events_registers_channel():
+    conn = CalendarConnectionFactory.create(
+        access_token="tok", token_expiry=datetime(2030, 1, 1, tzinfo=UTC)
+    )
+    rsps.add(
+        rsps.POST,
+        google.EVENTS_WATCH_URL,
+        json={"resourceId": "res-1", "expiration": "1783728000000"},
+    )
+    result = google.GoogleCalendarProvider(conn).watch_events(
+        "chan-1", "https://example.test/webhook", "chan-token", 3600
+    )
+    assert result == {
+        "resource_id": "res-1",
+        "expiration": datetime.fromtimestamp(1783728000, tz=UTC),
+    }
+
+
+@pytest.mark.django_db
+@rsps.activate
+def test_watch_events_raises_on_error():
+    conn = CalendarConnectionFactory.create(
+        access_token="tok", token_expiry=datetime(2030, 1, 1, tzinfo=UTC)
+    )
+    rsps.add(rsps.POST, google.EVENTS_WATCH_URL, status=403)
+    with pytest.raises(CalendarSyncError):
+        google.GoogleCalendarProvider(conn).watch_events(
+            "chan-1", "https://example.test/webhook", "chan-token", 3600
+        )
+
+
+@pytest.mark.django_db
+@rsps.activate
+def test_stop_channel_raises_on_error():
+    conn = CalendarConnectionFactory.create(
+        access_token="tok", token_expiry=datetime(2030, 1, 1, tzinfo=UTC)
+    )
+    rsps.add(rsps.POST, google.CHANNELS_STOP_URL, status=403)
+    with pytest.raises(CalendarSyncError):
+        google.GoogleCalendarProvider(conn).stop_channel("chan-1", "res-1")
+
+
 # --------------------------------------------------------------------------- #
 # Service layer
 # --------------------------------------------------------------------------- #
 @pytest.mark.django_db
 def test_effective_slots_subtracts_busy():
     assert service.effective_slots([0.0, 0.5, 1.0], {0.5}) == [0.0, 1.0]
+
+
+@freeze_time("2026-07-08 12:00:00")
+@pytest.mark.django_db
+def test_users_busy_slots_unions_across_connections():
+    user_a = UserFactory.create()
+    user_b = UserFactory.create()
+    conn_a = CalendarConnectionFactory.create(user=user_a)
+    CalendarBusyPeriod.objects.create(
+        connection=conn_a,
+        start=datetime(2026, 7, 8, 14, tzinfo=UTC),
+        end=datetime(2026, 7, 8, 15, tzinfo=UTC),
+    )
+
+    result = service.users_busy_slots([user_a, user_b])
+
+    assert result == {user_a.id: {86.0, 86.5}, user_b.id: set()}
 
 
 # --------------------------------------------------------------------------- #
@@ -219,6 +322,7 @@ def test_sync_connection_stores_prunes_and_records_metadata(mocker):
         end=datetime(2026, 6, 19, 10, tzinfo=UTC),
     )
     provider = mocker.Mock()
+    provider.webhooks_enabled.return_value = False
     provider.get_busy_intervals.return_value = [
         (datetime(2026, 7, 8, 14, tzinfo=UTC), datetime(2026, 7, 8, 15, tzinfo=UTC))
     ]
@@ -244,6 +348,7 @@ def test_sync_connection_stores_prunes_and_records_metadata(mocker):
 def test_sync_connection_fetches_month_horizon(mocker):
     conn = CalendarConnectionFactory.create()
     provider = mocker.Mock()
+    provider.webhooks_enabled.return_value = False
     provider.get_busy_intervals.return_value = []
     mocker.patch.object(service, "get_provider", return_value=provider)
 
@@ -323,6 +428,7 @@ def test_sync_connection_registers_webhook_channel_when_enabled(mocker):
 def test_sync_connection_skips_webhook_when_disabled(mocker):
     conn = CalendarConnectionFactory.create()
     provider = mocker.Mock()
+    provider.webhooks_enabled.return_value = False
     provider.get_busy_intervals.return_value = []
     mocker.patch.object(service, "get_provider", return_value=provider)
 
@@ -331,29 +437,91 @@ def test_sync_connection_skips_webhook_when_disabled(mocker):
     provider.watch_events.assert_not_called()
 
 
+@override_settings(
+    GOOGLE_CALENDAR_WEBHOOK_ENABLED=True,
+    GOOGLE_OAUTH_CLIENT_ID="client-id",
+    GOOGLE_OAUTH_CLIENT_SECRET="secret",
+    BASE_URL="https://example.test",
+)
 @freeze_time("2026-07-08 12:00:00")
 @pytest.mark.django_db
-def test_refresh_stale_connections_enqueues_only_stale(mocker):
-    # Which connections count as stale is unit-tested against the ORM in
-    # test_managers.py; this checks the task enqueues a sync for exactly those.
-    user = UserFactory.create()
-    fresh = CalendarConnectionFactory.create(
-        user=user,
-        account_label="fresh@example.com",
-        last_synced_at=datetime(2026, 7, 8, 11, 59, tzinfo=UTC),  # minutes ago
+@rsps.activate
+def test_sync_connection_skips_renewal_when_channel_still_valid():
+    conn = CalendarConnectionFactory.create(
+        access_token="tok",
+        token_expiry=datetime(2030, 1, 1, tzinfo=UTC),
+        webhook_channel_id="chan-1",
+        webhook_resource_id="res-1",
+        webhook_expires_at=datetime(
+            2026, 8, 1, tzinfo=UTC
+        ),  # well beyond renewal window
     )
-    stale = CalendarConnectionFactory.create(
-        user=user,
-        account_label="stale@example.com",
-        last_synced_at=datetime(2026, 7, 8, 0, 0, tzinfo=UTC),  # 12h ago
+    rsps.add(
+        rsps.POST, google.FREEBUSY_URL, json={"calendars": {"primary": {"busy": []}}}
     )
-    task = mocker.patch("availability.tasks.sync_calendar_connection")
 
-    refresh_stale_connections(user)
+    service.sync_connection(conn)
 
-    enqueued = {call.args[0] for call in task.enqueue.call_args_list}
-    assert enqueued == {stale.pk}
-    assert fresh.pk not in enqueued
+    assert len(rsps.calls) == 1  # only the freebusy fetch -- no stop/watch calls
+
+
+@override_settings(
+    GOOGLE_CALENDAR_WEBHOOK_ENABLED=True,
+    GOOGLE_OAUTH_CLIENT_ID="client-id",
+    GOOGLE_OAUTH_CLIENT_SECRET="secret",
+    BASE_URL="https://example.test",
+)
+@freeze_time("2026-07-08 12:00:00")
+@pytest.mark.django_db
+@rsps.activate
+def test_sync_connection_renews_expiring_channel_despite_stop_failure():
+    conn = CalendarConnectionFactory.create(
+        access_token="tok",
+        token_expiry=datetime(2030, 1, 1, tzinfo=UTC),
+        webhook_channel_id="old-chan",
+        webhook_resource_id="old-res",
+        webhook_expires_at=datetime(2026, 7, 8, 18, 0, tzinfo=UTC),  # expires in 6h
+    )
+    rsps.add(
+        rsps.POST, google.FREEBUSY_URL, json={"calendars": {"primary": {"busy": []}}}
+    )
+    rsps.add(rsps.POST, google.CHANNELS_STOP_URL, status=403)  # tolerated, not fatal
+    rsps.add(
+        rsps.POST,
+        google.EVENTS_WATCH_URL,
+        json={"resourceId": "new-res", "expiration": "1783728000000"},
+    )
+
+    service.sync_connection(conn)
+
+    conn.refresh_from_db()
+    assert conn.webhook_channel_id != "old-chan"
+    assert conn.webhook_resource_id == "new-res"
+
+
+@override_settings(
+    GOOGLE_CALENDAR_WEBHOOK_ENABLED=True,
+    GOOGLE_OAUTH_CLIENT_ID="client-id",
+    GOOGLE_OAUTH_CLIENT_SECRET="secret",
+    BASE_URL="https://example.test",
+)
+@freeze_time("2026-07-08 12:00:00")
+@pytest.mark.django_db
+@rsps.activate
+def test_sync_connection_succeeds_when_webhook_registration_fails():
+    conn = CalendarConnectionFactory.create(
+        access_token="tok", token_expiry=datetime(2030, 1, 1, tzinfo=UTC)
+    )
+    rsps.add(
+        rsps.POST, google.FREEBUSY_URL, json={"calendars": {"primary": {"busy": []}}}
+    )
+    rsps.add(rsps.POST, google.EVENTS_WATCH_URL, status=403)
+
+    service.sync_connection(conn)  # does not raise
+
+    conn.refresh_from_db()
+    assert conn.last_synced_at is not None
+    assert conn.webhook_channel_id == ""
 
 
 # --------------------------------------------------------------------------- #

@@ -41,13 +41,6 @@ def get_provider(connection: CalendarConnection) -> CalendarProvider:
     return google.GoogleCalendarProvider(connection)
 
 
-def webhooks_enabled() -> bool:
-    """Whether push-notification channels should be registered."""
-    return bool(getattr(settings, "GOOGLE_CALENDAR_WEBHOOK_ENABLED", False)) and (
-        google.is_configured()
-    )
-
-
 def _webhook_address() -> str:
     """Absolute URL Google POSTs push notifications to."""
     return settings.BASE_URL + reverse("google_calendar_webhook")
@@ -61,7 +54,7 @@ def _ensure_webhook_channel(
     No-op when webhooks are disabled or the current channel is still valid. A
     failure here is not fatal to a sync -- the caller falls back to polling.
     """
-    if not webhooks_enabled():
+    if not provider.webhooks_enabled():
         return
     if (
         connection.webhook_channel_id
@@ -93,9 +86,7 @@ def _ensure_webhook_channel(
     connection.webhook_expires_at = result["expiration"]
 
 
-def sync_connection(
-    connection: CalendarConnection, now: datetime | None = None
-) -> None:
+def sync_connection(connection: CalendarConnection) -> None:
     """Refresh a connection's cached busy periods from the provider.
 
     Fetches the next :data:`SYNC_HORIZON` of busy intervals, replaces the stored
@@ -103,7 +94,7 @@ def sync_connection(
     enabled, and records sync metadata. Raises :class:`CalendarSyncError` if the
     busy-time fetch fails (existing periods are left untouched in that case).
     """
-    now = now or timezone.now()
+    now = timezone.now()
     window_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     window_end = now + SYNC_HORIZON
     provider = get_provider(connection)
@@ -156,22 +147,20 @@ def sync_connection(
     )
 
 
-def connection_busy_slots(
-    connection: CalendarConnection, now: datetime | None = None
-) -> set[float]:
+def connection_busy_slots(connection: CalendarConnection) -> set[float]:
     """Busy recurring-week slots for a single connection (current week, from today).
 
     Reads only from the cached ``CalendarBusyPeriod`` rows -- no external call.
     """
-    window_start, window_end, week_start = current_week_window(now)
+    window_start, window_end, week_start = current_week_window()
     periods = connection.busy_periods.overlapping(window_start, window_end)
     intervals = [(period.start, period.end) for period in periods]
     return intervals_to_slots(intervals, week_start, window_start)
 
 
-def users_busy_slots(users, now: datetime | None = None) -> dict[int, set[float]]:
+def users_busy_slots(users) -> dict[int, set[float]]:
     """Union of cached busy slots across all connections, for many users in one query."""
-    window_start, window_end, week_start = current_week_window(now)
+    window_start, window_end, week_start = current_week_window()
     busy_by_user: dict[int, set[float]] = {user.id: set() for user in users}
 
     intervals_by_user: dict[int, list[tuple[datetime, datetime]]] = {}
@@ -194,24 +183,9 @@ def effective_slots(saved_slots, busy_slots: set[float]) -> list[float]:
     return sorted(set(saved_slots) - busy_slots)
 
 
-def prune_busy_periods(now: datetime | None = None) -> int:
+def prune_busy_periods() -> int:
     """Delete cached busy periods ending more than :data:`RETENTION` ago."""
-    now = now or timezone.now()
-    deleted, _ = CalendarBusyPeriod.objects.ending_before(now - RETENTION).delete()
+    deleted, _ = CalendarBusyPeriod.objects.ending_before(
+        timezone.now() - RETENTION
+    ).delete()
     return deleted
-
-
-def stale_connections(user, now: datetime | None = None) -> list[CalendarConnection]:
-    """Connections whose cached data is missing or older than :data:`SYNC_STALE_AFTER`."""
-    now = now or timezone.now()
-    return list(user.calendar_connections.stale(now - SYNC_STALE_AFTER))
-
-
-def stale_connections_bulk(
-    users, now: datetime | None = None
-) -> list[CalendarConnection]:
-    """Stale connections across many users in a single query."""
-    now = now or timezone.now()
-    return list(
-        CalendarConnection.objects.for_users(users).stale(now - SYNC_STALE_AFTER)
-    )

@@ -2,6 +2,7 @@
 
 import logging
 
+from django.utils import timezone
 from django_tasks import task
 
 from availability.models import CalendarConnection
@@ -31,13 +32,8 @@ def sync_calendar_connection(connection_id: int) -> None:
         )
 
 
-def refresh_stale_connections(user) -> None:
-    """Enqueue background syncs for the user's connections with stale cached data."""
-    for connection in service.stale_connections(user):
-        sync_calendar_connection.enqueue(connection.pk)
-
-
 def refresh_stale_connections_bulk(users) -> None:
     """Enqueue background syncs for stale connections across many users at once."""
-    for connection in service.stale_connections_bulk(users):
+    cutoff = timezone.now() - service.SYNC_STALE_AFTER
+    for connection in CalendarConnection.objects.for_users(users).stale(cutoff):
         sync_calendar_connection.enqueue(connection.pk)
