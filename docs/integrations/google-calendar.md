@@ -3,33 +3,12 @@
 ## Overview
 
 Users can connect their **Google Calendar** so that the platform can read their
-**free/busy** times and reconcile them with the weekly availability grid. Two
-features are built on top of a connection:
-
-1. **Import on the availability page** – deselects availability slots that
-   conflict with the user's calendar for the current week.
-2. **"Subtract connected calendars" toggle on the Compare Availability page** –
-   removes each selected person's busy times from the overlap calculation,
-   server-side.
+**free/busy** times and reconcile them with the weekly availability grid.
 
 Unlike the Zoom and Discord integrations (which use a single app-level
 credential), Google Calendar uses a **per-user OAuth 2.0 authorization-code
 flow**: each user grants access to their own calendar, and we store their tokens
 (encrypted) against their account.
-
-Busy times are **cached in the database** and refreshed out-of-band (webhook /
-polling / lazy refresh — see [Syncing & caching](#syncing--caching)), so page
-reads never call Google directly.
-
-The code lives in the `availability` app:
-
-- `availability/providers/google.py` – OAuth + free/busy API client + webhook channels
-- `availability/providers/service.py` – `sync_connection`, cached busy-slot lookup, pruning
-- `availability/managers.py` – busy-period / connection QuerySet filters (`overlapping`, `stale`, `ending_before`, …) shared by the service, views, and command
-- `availability/tasks.py` – background sync task + stale-connection refresh
-- `availability/management/commands/sync_calendars.py` – polling + prune command
-- `availability/models.py` – `CalendarConnection` (encrypted tokens + sync metadata) and `CalendarBusyPeriod` (cached intervals)
-- `availability/views.py` – connect / callback / disconnect / import / **webhook** views
 
 ## Privacy: free/busy only
 
@@ -37,8 +16,7 @@ Busy times are always derived from the
 `https://www.googleapis.com/auth/calendar.freebusy` scope, which returns only
 *when* a user is busy — **never event titles, attendees, or descriptions** — and
 we persist only start/end intervals. The `openid`/`email` scopes are requested
-solely to label the connected account in the UI. The overlap page never displays
-busy times; it only subtracts them from availability.
+solely to label the connected account in the UI.
 
 We also request `https://www.googleapis.com/auth/calendar.events.readonly`. This
 is **not** used to read events — it is required by Google purely to register

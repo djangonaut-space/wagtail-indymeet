@@ -2,6 +2,7 @@ import os
 
 import dj_database_url
 import sentry_sdk
+from cryptography.fernet import Fernet
 from django.forms.renderers import TemplatesSetting
 from dotenv import load_dotenv
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -385,20 +386,7 @@ GOOGLE_CALENDAR_WEBHOOK_ENABLED = bool(
 
 # Fernet key used to encrypt calendar credentials at rest. Generate with:
 #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-# A throwaway key is generated when unset so encrypted fields work out of the box
-# for local/dev/test. In production with the integration enabled a stable key is
-# required, else credentials become unreadable across restarts -- so we fail loudly.
-CALENDAR_TOKEN_ENCRYPTION_KEY = os.environ.get("CALENDAR_TOKEN_ENCRYPTION_KEY", "")
-if not CALENDAR_TOKEN_ENCRYPTION_KEY:
-    if ENVIRONMENT == "production" and GOOGLE_OAUTH_CLIENT_ID:
-        raise ValueError(
-            "CALENDAR_TOKEN_ENCRYPTION_KEY must be set when the Google Calendar "
-            "integration is enabled in production so that stored credentials "
-            "remain readable across deploys."
-        )
-    from cryptography.fernet import Fernet
-
-    CALENDAR_TOKEN_ENCRYPTION_KEY = Fernet.generate_key().decode()
+CALENDAR_TOKEN_ENCRYPTION_KEY = os.environ["CALENDAR_TOKEN_ENCRYPTION_KEY"]
 
 # When running load tests, it's helpful to remove some functionality
 # such as confirmation emails.
