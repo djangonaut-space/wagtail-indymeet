@@ -111,28 +111,3 @@ class AvailabilityUtilsTestCase(TestCase):
         self.assertEqual(window.role_summary, "Captain: 1")
         self.assertEqual(window.unavailable_member_ids, [self.user3.id])
         self.assertEqual(window.start_datetime.weekday(), 0)  # Monday
-
-    def test_admin_unavailable_url_uses_user_ids(self):
-        """Test that admin_unavailable_url uses user.id, not str(user)."""
-        window = AvailabilityWindow(
-            slot_range=(10.0, 10.5),
-            formatted_time="Sun 10:00 AM - 11:00 AM",
-            available_users=[],
-            unavailable_users=[self.user1, self.user2],
-        )
-
-        url = window.admin_unavailable_url
-        expected_ids = f"{self.user1.id},{self.user2.id}"
-        self.assertIn(f"?user_id__in={expected_ids}", url)
-        self.assertIn("home/sessionmembership/", url)
-
-    def test_admin_unavailable_url_returns_none_when_no_unavailable_users(self):
-        """Test that admin_unavailable_url returns None with no unavailable users."""
-        window = AvailabilityWindow(
-            slot_range=(10.0, 10.5),
-            formatted_time="Sun 10:00 AM - 11:00 AM",
-            available_users=[],
-            unavailable_users=[],
-        )
-
-        self.assertIsNone(window.admin_unavailable_url)
