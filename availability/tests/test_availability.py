@@ -287,7 +287,9 @@ class TestUserAvailabilityAdmin:
         """Test the admin change view."""
         user, availability = user_with_availability
         client.force_login(admin_user)
-        url = reverse("admin:availability_useravailability_change", args=[availability.pk])
+        url = reverse(
+            "admin:availability_useravailability_change", args=[availability.pk]
+        )
         response = client.get(url)
 
         assert response.status_code == 200
