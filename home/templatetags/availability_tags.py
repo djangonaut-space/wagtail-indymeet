@@ -2,7 +2,7 @@
 
 from django import template
 
-from home.availability import format_slots_as_ranges
+from availability.formatting import format_slots_as_ranges
 
 register = template.Library()
 

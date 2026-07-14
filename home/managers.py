@@ -410,8 +410,8 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose navigators to check overlap with
         """
-        from home.availability import get_role_slots
         from home.models import SessionMembership
+        from home.team_availability import get_role_slots
 
         navigator_slots = get_role_slots(team, role=constants.NAVIGATOR)
         if not navigator_slots:
@@ -425,8 +425,8 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose captain to check overlap with
         """
-        from home.availability import get_role_slots
         from home.models import SessionMembership
+        from home.team_availability import get_role_slots
 
         captain_slots = get_role_slots(team, role=constants.CAPTAIN)
         if not captain_slots:

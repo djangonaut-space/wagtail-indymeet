@@ -13,6 +13,7 @@ from django.utils import timezone
 
 SLOT_INCREMENT = 0.5  # hours per slot (30 minutes)
 HOURS_PER_WEEK = 168.0  # 7 days * 24 hours
+FLOAT_COMPARISON_THRESHOLD = 0.01  # tolerance for comparing slot floats
 
 
 def week_start_sunday(moment: datetime) -> datetime:
@@ -41,6 +42,26 @@ def current_week_window(
     window_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     window_end = week_start + timedelta(hours=HOURS_PER_WEEK)
     return window_start, window_end, week_start
+
+
+def convert_slot_with_offset(slot: float, offset_hours: float) -> float:
+    """
+    Convert a UTC slot to a different timezone using UTC offset.
+
+    Args:
+        slot: UTC slot value (0.0-167.5)
+        offset_hours: UTC offset in hours (e.g., -5 for EST, +1 for CET)
+
+    Returns:
+        Converted slot value, wrapped to stay within 0-168 range
+    """
+    converted = slot + offset_hours
+    # Wrap around the week (0-HOURS_PER_WEEK)
+    if converted < 0:
+        converted += HOURS_PER_WEEK
+    elif converted >= HOURS_PER_WEEK:
+        converted -= HOURS_PER_WEEK
+    return converted
 
 
 def _slot_for(moment: datetime, week_start: datetime) -> float:

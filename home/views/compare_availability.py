@@ -8,14 +8,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from accounts.models import CustomUser
+from availability.formatting import format_slot_as_time, slot_to_datetime
+from availability.overlap import get_user_slots
 from availability.providers.service import users_busy_slots
+from availability.slots import convert_slot_with_offset
 from availability.tasks import refresh_stale_connections_bulk
-from home.availability import (
-    convert_slot_with_offset,
-    format_slot_as_time,
-    get_user_slots,
-    slot_to_datetime,
-)
 from home.models import Session, SessionMembership
 from home.widgets import TomSelectMultipleWidget
 

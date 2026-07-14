@@ -22,7 +22,7 @@ from home.factories import (
     SessionMembershipFactory,
 )
 from home.models import SessionMembership, Team
-from home.availability import slot_to_datetime
+from availability.formatting import slot_to_datetime
 from home.views.compare_availability import (
     CompareAvailabilityForm,
     build_grid_data,

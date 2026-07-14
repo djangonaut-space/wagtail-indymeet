@@ -13,14 +13,14 @@ from django.shortcuts import get_object_or_404, render
 from django.views.generic.detail import DetailView
 
 from accounts.models import CustomUser
-from home import constants
-from home.models import Session, SessionMembership, Team, UserSurveyResponse
-from home.availability import (
+from availability.formatting import format_availability_by_day
+from availability.overlap import (
     calculate_overlap,
     calculate_user_overlap,
-    format_availability_by_day,
     get_user_slots,
 )
+from home import constants
+from home.models import Session, SessionMembership, Team, UserSurveyResponse
 
 
 class TeamDetailView(LoginRequiredMixin, DetailView):
