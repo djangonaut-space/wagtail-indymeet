@@ -8,9 +8,13 @@ django := "docker compose exec django"
 test_db_template := "template_wagtail_indymeet_test"
 django_playwright := "docker compose exec -e TEST_DB_TEMPLATE=" + test_db_template + " django"
 
-# Start all services in the background with file watching. Pass --attached to stream logs in the foreground instead.
-up attached="":
-    docker compose {{ if attached == "--attached" { "up --watch" } else { "watch" } }}
+# Start all services in the background, removing any orphan containers.
+up:
+    docker compose up -d --remove-orphans
+
+# Start all services with file watching, streaming build/sync output in the foreground.
+watch:
+    docker compose up --watch --remove-orphans
 
 # Stop all services
 down:
