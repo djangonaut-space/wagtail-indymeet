@@ -228,9 +228,7 @@ class DiscordClientRequestTests(TestCase):
     def test_logs_response_body_and_reraises_on_http_error(self):
         rsps.add(rsps.GET, f"{BASE_URL}/foo", status=403, body="boom")
 
-        with self.assertLogs(
-            "home.integrations.discord.client", level="ERROR"
-        ) as logs:
+        with self.assertLogs("home.integrations.discord.client", level="ERROR") as logs:
             with self.assertRaises(requests.HTTPError):
                 self.client._request("GET", "/foo")
 
