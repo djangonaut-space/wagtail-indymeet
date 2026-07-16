@@ -52,7 +52,7 @@ class DiscordEnabledTests(TestCase):
                 self.assertFalse(discord_enabled())
 
 
-class DiscordClientCreateScheduledEventTests(TestCase):
+class DiscordClientScheduledEventTests(TestCase):
     def setUp(self):
         self.client = DiscordClient()
 
@@ -130,20 +130,6 @@ class DiscordClientCreateScheduledEventTests(TestCase):
             )
 
         self.assertEqual(mock_req.call_args.kwargs["json"]["description"], "")
-
-
-class DiscordClientModifyScheduledEventTests(TestCase):
-    def setUp(self):
-        self.client = DiscordClient()
-
-    def _mock_request(self, event_id="987654321"):
-        resp = MagicMock()
-        resp.json.return_value = {
-            "id": event_id,
-            "name": "Test Event",
-            "entity_type": 3,
-        }
-        return patch.object(self.client, "_request", return_value=resp)
 
     @override_settings(**DISCORD_SETTINGS)
     def test_sends_patch_to_scoped_event_url(self):
