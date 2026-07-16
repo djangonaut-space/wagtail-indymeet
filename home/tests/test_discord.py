@@ -4,15 +4,17 @@ Tests for Discord integration: DiscordClient, the discord service
 (including the combined Zoom-then-Discord run in a single task).
 """
 
+import json
 from datetime import datetime as dt
 from datetime import timezone as dt_timezone
 from unittest.mock import MagicMock, patch
 
 import requests
+import responses as rsps
 from django.test import TestCase, override_settings
 
 from home.factories import EventFactory
-from home.integrations.discord.client import DiscordClient
+from home.integrations.discord.client import BASE_URL, DiscordClient
 from home.integrations.discord.service import (
     _prepare_fields,
     discord_enabled,
@@ -247,11 +249,15 @@ class PrepareFieldsTests(TestCase):
 
 class UpdateEventTests(TestCase):
     """Service-level update_event: the payload sent to Discord mirrors the
-    create path, but as a PATCH targeting the stored discord_event_id."""
+    create path, but as a PATCH targeting the stored discord_event_id.
+
+    Discord is stubbed at the HTTP layer so the real client, payload
+    serialization, and URL construction are exercised end to end.
+    """
 
     @override_settings(**DISCORD_SETTINGS)
-    @patch("home.integrations.discord.service.discord_client")
-    def test_builds_expected_modify_payload(self, mock_client):
+    @rsps.activate
+    def test_builds_expected_modify_payload(self):
         event = EventFactory.build(
             title="My Event",
             description="A description",
@@ -259,13 +265,17 @@ class UpdateEventTests(TestCase):
             discord_event_id="discord-456",
             start_time=dt(2026, 6, 1, 14, 0, tzinfo=UTC),
         )
+        rsps.add(
+            rsps.PATCH,
+            f"{BASE_URL}/guilds/123456789/scheduled-events/discord-456",
+            json={"id": "discord-456"},
+        )
 
         update_event(event)
 
-        mock_client.modify_scheduled_event.assert_called_once_with(
-            guild_id="123456789",
-            event_id="discord-456",
-            payload={
+        self.assertEqual(
+            json.loads(rsps.calls[0].request.body),
+            {
                 "name": "My Event",
                 "description": "A description",
                 "entity_metadata": {"location": "https://zoom.us/j/123"},
@@ -275,8 +285,8 @@ class UpdateEventTests(TestCase):
         )
 
     @override_settings(**DISCORD_SETTINGS)
-    @patch("home.integrations.discord.service.discord_client")
-    def test_raises_on_over_long_zoom_link_without_calling_discord(self, mock_client):
+    @rsps.activate
+    def test_raises_on_over_long_zoom_link_without_calling_discord(self):
         event = EventFactory.build(
             title="My Event",
             zoom_link="https://zoom.us/j/" + "z" * 100,
@@ -287,7 +297,7 @@ class UpdateEventTests(TestCase):
         with self.assertRaises(ValueError):
             update_event(event)
 
-        mock_client.modify_scheduled_event.assert_not_called()
+        self.assertEqual(len(rsps.calls), 0)
 
 
 class SyncEventDiscordTests(TestCase):
