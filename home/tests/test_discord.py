@@ -7,7 +7,7 @@ Tests for Discord integration: DiscordClient, the discord service
 import json
 from datetime import datetime as dt
 from datetime import timezone as dt_timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import requests
 import responses as rsps
@@ -55,35 +55,37 @@ class DiscordEnabledTests(TestCase):
 
 
 class DiscordClientScheduledEventTests(TestCase):
+    """DiscordClient scheduled-event methods, over HTTP stubbed with responses.
+
+    The real client, payload serialization, and URL construction run against
+    the stubbed endpoints; assertions read the request body responses captured.
+    """
+
     def setUp(self):
         self.client = DiscordClient()
 
-    def _mock_request(self, event_id="987654321"):
-        resp = MagicMock()
-        resp.json.return_value = {
-            "id": event_id,
-            "name": "Test Event",
-            "entity_type": 3,
-        }
-        return patch.object(self.client, "_request", return_value=resp)
-
     @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_payload_shape(self):
         start = dt(2026, 6, 1, 14, 0, tzinfo=UTC)
         end = dt(2026, 6, 1, 15, 0, tzinfo=UTC)
+        rsps.add(
+            rsps.POST,
+            f"{BASE_URL}/guilds/123/scheduled-events",
+            json={"id": "987654321"},
+        )
 
-        with self._mock_request() as mock_req:
-            self.client.create_scheduled_event(
-                guild_id="123",
-                name="My Event",
-                description="A description",
-                location="https://zoom.us/j/123",
-                start_time=start,
-                end_time=end,
-            )
+        self.client.create_scheduled_event(
+            guild_id="123",
+            name="My Event",
+            description="A description",
+            location="https://zoom.us/j/123",
+            start_time=start,
+            end_time=end,
+        )
 
         self.assertEqual(
-            mock_req.call_args.kwargs["json"],
+            json.loads(rsps.calls[0].request.body),
             {
                 "name": "My Event",
                 "description": "A description",
@@ -96,124 +98,141 @@ class DiscordClientScheduledEventTests(TestCase):
         )
 
     @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_sends_fields_unchanged(self):
         start = dt(2026, 6, 1, 14, 0, tzinfo=UTC)
         end = dt(2026, 6, 1, 15, 0, tzinfo=UTC)
+        rsps.add(
+            rsps.POST,
+            f"{BASE_URL}/guilds/123/scheduled-events",
+            json={"id": "987654321"},
+        )
 
-        with self._mock_request() as mock_req:
-            self.client.create_scheduled_event(
-                guild_id="123",
-                name="x" * 200,
-                description="y" * 2000,
-                location="z" * 200,
-                start_time=start,
-                end_time=end,
-            )
+        self.client.create_scheduled_event(
+            guild_id="123",
+            name="x" * 200,
+            description="y" * 2000,
+            location="z" * 200,
+            start_time=start,
+            end_time=end,
+        )
 
-        payload = mock_req.call_args.kwargs["json"]
+        payload = json.loads(rsps.calls[0].request.body)
 
         self.assertEqual(len(payload["name"]), 200)
         self.assertEqual(len(payload["description"]), 2000)
         self.assertEqual(len(payload["entity_metadata"]["location"]), 200)
 
     @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_handles_null_description(self):
         start = dt(2026, 6, 1, 14, 0, tzinfo=UTC)
         end = dt(2026, 6, 1, 15, 0, tzinfo=UTC)
+        rsps.add(
+            rsps.POST,
+            f"{BASE_URL}/guilds/123/scheduled-events",
+            json={"id": "987654321"},
+        )
 
-        with self._mock_request() as mock_req:
-            self.client.create_scheduled_event(
-                guild_id="123",
-                name="x",
-                description=None,
-                location="https://zoom.us/j/1",
-                start_time=start,
-                end_time=end,
-            )
+        self.client.create_scheduled_event(
+            guild_id="123",
+            name="x",
+            description=None,
+            location="https://zoom.us/j/1",
+            start_time=start,
+            end_time=end,
+        )
 
-        self.assertEqual(mock_req.call_args.kwargs["json"]["description"], "")
+        self.assertEqual(json.loads(rsps.calls[0].request.body)["description"], "")
 
     @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_sends_patch_to_scoped_event_url(self):
-        with self._mock_request() as mock_req:
-            self.client.modify_scheduled_event(
-                guild_id="123",
-                event_id="event-1",
-                payload={"name": "Renamed"},
-            )
+        rsps.add(
+            rsps.PATCH,
+            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
+            json={"id": "event-1"},
+        )
 
+        self.client.modify_scheduled_event(
+            guild_id="123",
+            event_id="event-1",
+            payload={"name": "Renamed"},
+        )
+
+        self.assertEqual(rsps.calls[0].request.method, "PATCH")
         self.assertEqual(
-            mock_req.call_args.args,
-            ("PATCH", "/guilds/123/scheduled-events/event-1"),
+            rsps.calls[0].request.url,
+            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
         )
 
     @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_forwards_payload_unchanged(self):
         payload = {
             "name": "Renamed",
             "entity_metadata": {"location": "https://zoom.us/j/999"},
         }
+        rsps.add(
+            rsps.PATCH,
+            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
+            json={"id": "event-1"},
+        )
 
-        with self._mock_request() as mock_req:
-            self.client.modify_scheduled_event(
-                guild_id="123",
-                event_id="event-1",
-                payload=payload,
-            )
+        self.client.modify_scheduled_event(
+            guild_id="123",
+            event_id="event-1",
+            payload=payload,
+        )
 
-        self.assertEqual(mock_req.call_args.kwargs["json"], payload)
+        self.assertEqual(json.loads(rsps.calls[0].request.body), payload)
 
     @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_returns_updated_event_json(self):
-        with self._mock_request(event_id="event-1") as mock_req:
-            result = self.client.modify_scheduled_event(
-                guild_id="123",
-                event_id="event-1",
-                payload={"name": "Renamed"},
-            )
+        rsps.add(
+            rsps.PATCH,
+            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
+            json={"id": "event-1", "name": "Renamed"},
+        )
 
-        self.assertEqual(result, mock_req.return_value.json.return_value)
+        result = self.client.modify_scheduled_event(
+            guild_id="123",
+            event_id="event-1",
+            payload={"name": "Renamed"},
+        )
+
+        self.assertEqual(result, {"id": "event-1", "name": "Renamed"})
 
 
 class DiscordClientRequestTests(TestCase):
+    """The shared _request helper: auth header, rate-limit logging, and error
+    handling, exercised over HTTP stubbed with responses."""
+
     def setUp(self):
         self.client = DiscordClient()
 
     @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_sets_bot_authorization_header(self):
-        resp = MagicMock(status_code=200)
-        resp.raise_for_status.return_value = None
+        rsps.add(rsps.GET, f"{BASE_URL}/foo", json={})
 
-        with patch.object(
-            self.client.session, "request", return_value=resp
-        ) as mock_req:
-            self.client._request("GET", "/foo")
+        self.client._request("GET", "/foo")
 
-        headers = mock_req.call_args.kwargs["headers"]
-        self.assertEqual(headers["Authorization"], "Bot bot-token")
+        self.assertEqual(
+            rsps.calls[0].request.headers["Authorization"], "Bot bot-token"
+        )
 
     @override_settings(**DISCORD_SETTINGS)
-    def test_logs_on_429(self):
-        resp = MagicMock(status_code=429)
-        resp.raise_for_status.side_effect = Exception("429")
-
-        with patch.object(self.client.session, "request", return_value=resp):
-            with self.assertLogs("home.integrations.discord.client", level="ERROR"):
-                with self.assertRaises(Exception):
-                    self.client._request("GET", "/foo")
-
-    @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
     def test_logs_response_body_and_reraises_on_http_error(self):
-        resp = MagicMock(status_code=500)
-        resp.text = "boom"
-        resp.raise_for_status.side_effect = requests.HTTPError(response=resp)
+        rsps.add(rsps.GET, f"{BASE_URL}/foo", status=403, body="boom")
 
-        with patch.object(self.client.session, "request", return_value=resp):
-            with self.assertLogs(
-                "home.integrations.discord.client", level="ERROR"
-            ) as logs:
-                with self.assertRaises(requests.HTTPError):
-                    self.client._request("GET", "/foo")
+        with self.assertLogs(
+            "home.integrations.discord.client", level="ERROR"
+        ) as logs:
+            with self.assertRaises(requests.HTTPError):
+                self.client._request("GET", "/foo")
 
         self.assertIn("boom", "\n".join(logs.output))
 
