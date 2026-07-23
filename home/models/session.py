@@ -516,6 +516,13 @@ class SessionMembership(models.Model):
         return self.role == constants.ORGANIZER
 
 
+class SessionMembershipNotification(models.Model):
+    session_membership = models.OneToOneField(
+        SessionMembership, on_delete=models.CASCADE, related_name="notification"
+    )
+    final_email_sent_at = models.DateTimeField()
+
+
 class WaitlistQuerySet(models.QuerySet):
     """Custom QuerySet for Waitlist model."""
 

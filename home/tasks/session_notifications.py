@@ -5,6 +5,9 @@ These tasks handle sending various notification emails asynchronously,
 allowing views to return immediately while emails are processed in the background.
 """
 
+from django.db import transaction
+from django.utils import timezone
+
 from home import constants
 from django.conf import settings
 from django.urls import reverse
@@ -262,3 +265,35 @@ def reject_waitlisted_user(waitlist_id: int) -> None:
     # Mark as notified instead of deleting
     waitlist_entry.notified_at = timezone.now()
     waitlist_entry.save(update_fields=["notified_at"])
+
+
+def send_final_email(session_id: int):
+    # This will need to get reworked to work with django-crontask
+    session = Session.objects.get(id=session_id)
+    members = session.session_membership.djangonauts().accepted()
+    notifications = SessionMembershipNotification.objects.filter(
+        session_membership__in=members,
+        final_email_sent_at__isnull=True,
+    ).select_related("session_membership__user")
+    # May need to fix a locking issue with select_related and select_for_update
+    for notification in notifications.select_for_update():
+        with transaction.atomic():
+            certificate_pdf = generate_final_pdf(
+                name=notification.session_membership.user.get_full_name(),
+                date=session.end_date,
+            )
+            email.send(
+                email_template="final_email",
+                recipient_list=[notification.session_membership.user.email],
+                context={"user": notification.session_membership.user},
+                # TODO: Fix mimetype for PDF attachment
+                attachments=[
+                    (
+                        f"{notification.session_membership.user.username}_certificate.pdf",
+                        certificate_pdf,
+                        "application/pdf",
+                    )
+                ],
+            )
+            notification.final_email_sent_at = timezone.now()
+            notification.save(update_fields=["final_email_sent_at"])
