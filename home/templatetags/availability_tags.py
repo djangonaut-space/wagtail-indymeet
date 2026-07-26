@@ -1,8 +1,9 @@
 """Template tags for availability display."""
 
 from django import template
+from django.urls import reverse
 
-from home.availability import format_slots_as_ranges
+from availability.formatting import format_slots_as_ranges
 
 register = template.Library()
 
@@ -27,3 +28,18 @@ def format_slots_as_list(slots, offset_hours=0):
     except (ValueError, TypeError):
         offset_hours = 0.0
     return format_slots_as_ranges(slots, offset_hours)
+
+
+@register.filter
+def admin_unavailable_url(unavailable_member_ids):
+    """
+    Build a SessionMembership admin changelist URL filtered to the given user IDs.
+
+    Returns None when there are no ids so templates can fall back to other messaging.
+    """
+    if not unavailable_member_ids:
+        return None
+    ids_str = ",".join(str(user_id) for user_id in unavailable_member_ids)
+    return (
+        reverse("admin:home_sessionmembership_changelist") + f"?user_id__in={ids_str}"
+    )

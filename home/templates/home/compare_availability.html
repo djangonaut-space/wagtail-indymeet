@@ -87,17 +87,28 @@
             </div>
         </form>
 
+        <div class="mb-6 flex items-start gap-3">
+            <input type="checkbox" id="include-calendars" class="mt-1">
+            <label for="include-calendars" class="text-sm text-gray-700">
+                <span class="font-medium">{% trans "Subtract connected calendars" %}</span><br>
+                {% blocktrans %}
+                    When enabled, each selected person's Google Calendar busy times for the current week (from today) are removed from their availability before the overlap is calculated. People who haven't connected a calendar are compared using their saved availability only.
+                {% endblocktrans %}
+            </label>
+        </div>
+
         {% comment %}
             The grid is loaded via htmx so we can inject the browser's UTC offset
             (not available server-side) into the request via hx-vals.
-            After htmx settles the response, we hydrate Alpine.js state from the
-            JSON script tags rendered by the grid partial and reset any pinned
-            slot since the grid contents have changed.
+            Toggling the calendar checkbox re-fires the request; hx-vals reads the
+            checkbox state each time. After htmx settles the response, we hydrate
+            Alpine.js state from the JSON script tags rendered by the grid partial
+            and reset any pinned slot since the grid contents have changed.
         {% endcomment %}
         <div id="availability-grid-container"
              hx-get="{% url 'compare_availability_grid' %}?{{ request.GET.urlencode }}"
-             hx-trigger="load"
-             hx-vals='js:{"offset": -new Date().getTimezoneOffset() / 60}'
+             hx-trigger="load, change from:#include-calendars"
+             hx-vals='js:{"offset": -new Date().getTimezoneOffset() / 60, "include_calendars": (document.getElementById("include-calendars") || {}).checked ? 1 : 0}'
              hx-swap="innerHTML"
              hx-disinherit="*"
              @htmx:after-settle="

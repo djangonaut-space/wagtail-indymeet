@@ -641,6 +641,7 @@ name = "djangonaut-space"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "cryptography" },
     { name = "distlib" },
     { name = "dj-database-url" },
     { name = "django" },
@@ -695,6 +696,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography" },
     { name = "distlib" },
     { name = "dj-database-url" },
     { name = "django", specifier = "==5.2.*" },

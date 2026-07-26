@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 
 from django.db.models import Prefetch
 
-from home.availability import calculate_overlap
+from availability.overlap import calculate_overlap
 from home.models import SessionMembership, Team, UserSurveyResponse, ProjectPreference
 
 if TYPE_CHECKING:

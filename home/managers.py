@@ -318,7 +318,7 @@ class UserSurveyResponseQuerySet(QuerySet):
         Adds:
         - annotated_has_availability: Boolean indicating if user has availability
         """
-        from accounts.models import UserAvailability
+        from availability.models import UserAvailability
 
         # Check for users with availability records that have non-empty slots
         # Using slots != '[]' to match PostgreSQL JSONB empty array
@@ -410,8 +410,8 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose navigators to check overlap with
         """
-        from home.availability import get_role_slots
         from home.models import SessionMembership
+        from home.team_availability import get_role_slots
 
         navigator_slots = get_role_slots(team, role=constants.NAVIGATOR)
         if not navigator_slots:
@@ -425,8 +425,8 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose captain to check overlap with
         """
-        from home.availability import get_role_slots
         from home.models import SessionMembership
+        from home.team_availability import get_role_slots
 
         captain_slots = get_role_slots(team, role=constants.CAPTAIN)
         if not captain_slots:

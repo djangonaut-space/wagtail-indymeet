@@ -2,6 +2,7 @@ import os
 
 import dj_database_url
 import sentry_sdk
+from cryptography.fernet import Fernet
 from django.forms.renderers import TemplatesSetting
 from dotenv import load_dotenv
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -33,6 +34,7 @@ else:
 
 INSTALLED_APPS = [
     "accounts",
+    "availability",
     "home.apps.HomeAppConfig",
     "anymail",
     "django_recaptcha",
@@ -364,6 +366,27 @@ DISCORD_BOT_ROLE_ID = os.environ.get("DISCORD_BOT_ROLE_ID")
 
 # GitHub API token for Djangonaut stats collection (Issue #615).
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+
+# ---------------------------------------------------------------------------
+# Calendar integrations (Google Calendar)
+# ---------------------------------------------------------------------------
+# Google OAuth 2.0 credentials for the per-user calendar connection. Set both
+# to enable the "Connect Google Calendar" flow; leave unset to hide it.
+# See docs/integrations/google-calendar.md for setup and verification.
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+
+# Register Google push-notification (webhook) channels for near-real-time busy
+# updates. Requires a publicly reachable, domain-verified HTTPS BASE_URL, so it
+# is opt-in per environment. When off, busy data stays fresh via the
+# sync_calendars poll + lazy on-read refresh.
+GOOGLE_CALENDAR_WEBHOOK_ENABLED = bool(
+    os.environ.get("GOOGLE_CALENDAR_WEBHOOK_ENABLED")
+)
+
+# Fernet key used to encrypt calendar credentials at rest. Generate with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+CALENDAR_TOKEN_ENCRYPTION_KEY = os.environ["CALENDAR_TOKEN_ENCRYPTION_KEY"]
 
 # When running load tests, it's helpful to remove some functionality
 # such as confirmation emails.

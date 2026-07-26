@@ -6,8 +6,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
-from accounts.models import UserAvailability
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
+from availability.models import UserAvailability
 from home.factories import SessionFactory, SurveyFactory
 
 

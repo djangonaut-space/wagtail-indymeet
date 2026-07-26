@@ -5,17 +5,15 @@ from django.contrib.admin.sites import site
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
-from accounts.models import CustomUser, UserAvailability
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
+from accounts.models import CustomUser
+from availability.models import UserAvailability
+from availability.formatting import format_slot_as_time, format_slots_as_ranges
+from availability.overlap import calculate_overlap, count_one_hour_blocks
 from home import constants
 from home.admin import SessionAdmin
-from home.availability import (
-    calculate_overlap,
-    calculate_team_overlap,
-    count_one_hour_blocks,
-    format_slot_as_time,
-    format_slots_as_ranges,
-)
+from home.team_availability import calculate_team_overlap
 from home.factories import (
     TeamFactory,
     ProjectFactory,

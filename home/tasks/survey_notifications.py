@@ -1,4 +1,4 @@
-from accounts.models import UserAvailability
+from availability.models import UserAvailability
 from home import email
 from home.models import UserSurveyResponse, Session
 

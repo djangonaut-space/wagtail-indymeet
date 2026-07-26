@@ -55,6 +55,48 @@
             </p>
         </div>
 
+        {% if google_configured %}
+        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6" id="calendar-import-panel">
+            <h2 class="text-lg font-semibold mb-2">{% translate "Import from your calendar" %}</h2>
+            {% if google_connections %}
+                <p class="text-sm text-gray-600 mb-3">
+                    {% blocktranslate with week=calendar_week_label %}
+                        Importing looks at the times you're busy this week ({{ week }}) and deselects any conflicting availability below. Only this week's events, from today onward, are used &mdash; your recurring weekly availability is otherwise left untouched, and nothing is saved until you press Save.
+                    {% endblocktranslate %}
+                </p>
+                <ul class="mb-3 space-y-2">
+                    {% for connection in google_connections %}
+                    <li class="flex flex-wrap gap-2 items-center text-sm">
+                        <span>{{ connection.account_label|default:_("your Google account") }}</span>
+                        <form method="post" action="{% url 'calendar_disconnect' connection.pk %}" onsubmit="return confirm('{% translate "Disconnect this Google Calendar?" %}');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-gray-500 underline hover:text-gray-700">{% translate "Disconnect" %}</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="flex flex-wrap gap-4 items-center">
+                    <button type="button" id="import-calendar-btn" class="action-button" data-url="{% url 'calendar_import' %}">
+                        {% translate "Import busy times" %}
+                    </button>
+                    <span id="import-status" class="text-sm" role="status" aria-live="polite"></span>
+                    <a href="{% url 'google_calendar_connect' %}" class="ml-auto text-sm text-gray-500 underline hover:text-gray-700">
+                        {% translate "Connect another Google Calendar" %}
+                    </a>
+                </div>
+            {% else %}
+                <p class="text-sm text-gray-600 mb-3">
+                    {% blocktranslate %}
+                        Connect your Google Calendar to import your busy times for the current week and automatically deselect any conflicting availability. We only read your free/busy times &mdash; never event details.
+                    {% endblocktranslate %}
+                </p>
+                <a href="{% url 'google_calendar_connect' %}" class="action-button inline-block">
+                    {% translate "Connect Google Calendar" %}
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <form method="post" id="availability-form">
             {% csrf_token %}
             <div class="mb-3 flex gap-4">
@@ -309,6 +351,60 @@
         const slotsField = document.getElementById('id_slots');
         slotsField.value = JSON.stringify(availabilityData.slots);
     });
+
+    // Calendar import: deselect slots that conflict with this week's busy times
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const roundSlot = (s) => Math.round(s * 2) / 2;
+    const importBtn = document.getElementById('import-calendar-btn');
+    if (importBtn) {
+        importBtn.addEventListener('click', async () => {
+            const statusEl = document.getElementById('import-status');
+            importBtn.disabled = true;
+            statusEl.textContent = '{% translate "Importing…" %}';
+            statusEl.className = 'text-sm text-gray-600';
+            try {
+                const resp = await fetch(importBtn.dataset.url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': CSRF_TOKEN,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                const data = await resp.json();
+                if (!data.ok) {
+                    statusEl.textContent = data.error || '{% translate "Import failed." %}';
+                    statusEl.className = 'text-sm text-red-600';
+                    return;
+                }
+                const busySet = new Set(data.busy_slots.map(roundSlot));
+                let removed = 0;
+                document.querySelectorAll('.time-slot').forEach(slot => {
+                    const day = parseInt(slot.dataset.day);
+                    const hour = parseFloat(slot.dataset.hour);
+                    const utcSlot = roundSlot(availabilityData.toUTCSlot(day, hour));
+                    if (busySet.has(utcSlot) && slot.classList.contains('selected')) {
+                        slot.classList.remove('selected');
+                        removed++;
+                    }
+                });
+                // Keep availabilityData and the Viselect store in sync with the DOM
+                availabilityData.slots = availabilityData.slots.filter(
+                    s => !busySet.has(roundSlot(s))
+                );
+                selection.clearSelection(true, true);
+                selection.select('.time-slot.selected', true);
+                statusEl.textContent = removed > 0
+                    ? `${removed} {% translate "conflicting slot(s) deselected for" %} ${data.window_label}. {% translate "Review, then Save to keep the changes." %}`
+                    : `{% translate "No conflicts found for" %} ${data.window_label}.`;
+                statusEl.className = 'text-sm text-green-700';
+            } catch (err) {
+                statusEl.textContent = '{% translate "Import failed. Please try again." %}';
+                statusEl.className = 'text-sm text-red-600';
+            } finally {
+                importBtn.disabled = false;
+            }
+        });
+    }
 </script>
 
 {% endblock content %}

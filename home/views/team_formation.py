@@ -9,6 +9,7 @@ This view provides an interface for:
 """
 
 from home import constants
+from availability.formatting import format_availability_by_day
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
@@ -23,10 +24,7 @@ from home.dataclasses import ApplicantData, DjangonautDetail, TeamStatistics
 from home.filters import ApplicantFilterSet
 from home.forms import BulkTeamAssignmentForm, BulkWaitlistForm, OverlapAnalysisForm
 from home.models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
-from home.availability import (
-    calculate_team_overlap,
-    format_availability_by_day,
-)
+from home.team_availability import calculate_team_overlap
 
 
 @permission_required("home.form_team")

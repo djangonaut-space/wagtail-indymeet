@@ -8,7 +8,8 @@ from django.core.management import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 
-from accounts.models import CustomUser, UserAvailability, UserProfile
+from accounts.models import CustomUser, UserProfile
+from availability.models import UserAvailability
 from home.models import (
     Project,
     ResourceLink,

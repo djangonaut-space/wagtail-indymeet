@@ -14,13 +14,14 @@ from github import GithubException
 from import_export import fields, resources
 from import_export.admin import ExportMixin
 
+from availability.overlap import AvailabilityWindow
 from home import constants
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
 from indymeet.admin import DescriptiveSearchMixin
 
 from . import preview_email, tasks
-from .availability import AvailabilityWindow, find_best_one_hour_windows_with_roles
+from .team_availability import find_best_one_hour_windows_with_roles
 from .forms import (
     CollectStatsForm,
     SessionMembershipInlineForm,

@@ -19,6 +19,8 @@ from django.utils.translation import gettext_lazy as _
 
 from accounts.models import CustomUser
 from accounts.models import UserProfile
+from availability.formatting import format_slots_as_ranges
+from availability.overlap import calculate_overlap
 from home import constants
 from home.models import (
     Question,
@@ -33,11 +35,7 @@ from home.models import Survey
 from home.models import TypeField
 from home.models import UserQuestionResponse
 from home.models import UserSurveyResponse
-from home.availability import (
-    calculate_overlap,
-    calculate_team_overlap,
-    format_slots_as_ranges,
-)
+from home.team_availability import calculate_team_overlap
 from home.validators import RatingValidator
 from home.widgets import CheckboxSelectMultipleSurvey
 from home.widgets import DateSurvey

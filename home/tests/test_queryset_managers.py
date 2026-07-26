@@ -9,7 +9,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 from django.utils import timezone
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
 from home.factories import (
     EventFactory,
     SessionFactory,

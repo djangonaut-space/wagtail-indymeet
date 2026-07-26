@@ -91,12 +91,14 @@ This is the web application for the Djangonaut Space mentoring program. The plat
 
 2. Have docker running and then run:
    ```sh
-   docker compose up --watch
+   just up
    ```
+   This starts all services in the background. If you'd rather stream logs and
+   rebuild on dependency file changes in the foreground, use `just watch` instead.
 
-3. In a new terminal, run any setup commands you need such as
+3. Run any setup commands you need such as
    ```sh
-   docker compose exec django uv run python manage.py createsuperuser
+   just superuser
    ```
 
 4. Go to: http://127.0.0.1:8000/ and enjoy!

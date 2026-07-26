@@ -5,7 +5,8 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
-from accounts.factories import UserAvailabilityFactory, UserFactory
+from accounts.factories import UserFactory
+from availability.factories import UserAvailabilityFactory
 from accounts.models import CustomUser
 from home.factories import (
     OrganizerFactory,
