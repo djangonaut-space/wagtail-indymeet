@@ -4,10 +4,12 @@ Tests for session notification background tasks.
 Tests that the task functions correctly send emails when executed.
 """
 
+from django.db import connection, DatabaseError
+
 from home import constants
 from unittest.mock import patch
 
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, TransactionTestCase
 from django.utils import timezone
 
 from accounts.factories import UserFactory
@@ -19,10 +21,11 @@ from home.factories import (
     TeamFactory,
     UserSurveyResponseFactory,
 )
-from home.models import SessionMembership, Waitlist
+from home.models import SessionMembership, Waitlist, SessionMembershipNotification
 from home.tasks.session_notifications import (
     send_accepted_email,
     send_acceptance_reminder_email,
+    send_final_email,
     send_rejected_email,
     send_team_welcome_email,
     send_waitlisted_email,
@@ -280,3 +283,71 @@ class RejectWaitlistedUserTaskTests(TestCase):
 
         reject_waitlisted_user.call(waitlist_id=self.waitlist_entry.pk)
         mock_send.assert_not_called()
+
+
+class SendFinalEmailTaskTests(TransactionTestCase):
+    """Tests for the send_final_email function."""
+
+    def setUp(self):
+        # This is executed in autocommit mode so that code in
+        # run_select_for_update can see this data.
+        self.session = SessionFactory.create(title="Test Session")
+        self.user = UserFactory.create(email="graduate@example.com", first_name="Grace")
+        self.membership = SessionMembershipFactory.create(
+            session=self.session,
+            user=self.user,
+            role=constants.DJANGONAUT,
+            team=None,
+        )
+
+        # We need another database connection in transaction to test that one
+        # connection issuing a SELECT ... FOR UPDATE will block.
+        self.new_connection = connection.copy()
+
+    def tearDown(self):
+        try:
+            self.end_blocking_transaction()
+        except (DatabaseError, AttributeError):
+            pass
+        self.new_connection.close()
+
+    def start_blocking_transaction(self):
+        self.new_connection.set_autocommit(False)
+        # Start a blocking transaction. At some point,
+        # end_blocking_transaction() should be called.
+        self.cursor = self.new_connection.cursor()
+        sql = "SELECT * FROM {db_table} {for_update};".format(
+            db_table=SessionMembershipNotification._meta.db_table,
+            for_update=self.new_connection.ops.for_update_sql(),
+        )
+        self.cursor.execute(sql, ())
+        self.cursor.fetchone()
+
+    def end_blocking_transaction(self):
+        # Roll back the blocking transaction.
+        self.cursor.close()
+        self.new_connection.rollback()
+        self.new_connection.set_autocommit(True)
+
+    @override_settings(
+        ENVIRONMENT="production",
+        BASE_URL="https://djangonaut.space",
+    )
+    @patch("home.tasks.session_notifications.email.send")
+    def test_sends_final_email_and_records_notification(self, mock_send):
+        """Test that task sends the final email with a certificate and records it as sent."""
+        send_final_email.call(membership_id=self.membership.pk)
+
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        self.assertEqual(call_kwargs["email_template"], "final_email")
+        self.assertEqual(call_kwargs["recipient_list"], ["graduate@example.com"])
+        self.assertEqual(call_kwargs["context"]["user"], self.user)
+        attachment_name, attachment_content, attachment_mimetype = call_kwargs[
+            "attachments"
+        ][0]
+        self.assertEqual(attachment_name, f"{self.user.username}_certificate.pdf")
+        self.assertEqual(attachment_mimetype, "application/pdf")
+
+        notification = self.membership.notification
+        self.assertIsNotNone(notification.final_email_sent_at)

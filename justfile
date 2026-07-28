@@ -22,7 +22,7 @@ logs:
 
 # Open a Django shell
 shell:
-    {{django}} uv run python manage.py shell
+    {{django}} uv run python manage.py shell_plus
 
 # Create a superuser
 superuser:
@@ -31,6 +31,10 @@ superuser:
 # Run database migrations
 migrate *args:
     {{django}} uv run python manage.py migrate {{args}}
+
+# Show database migration sql
+sqlmigrate *args:
+    {{django}} uv run python manage.py sqlmigrate {{args}}
 
 # Create new migrations
 makemigrations *args:

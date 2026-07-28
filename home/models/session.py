@@ -520,7 +520,7 @@ class SessionMembershipNotification(models.Model):
     session_membership = models.OneToOneField(
         SessionMembership, on_delete=models.CASCADE, related_name="notification"
     )
-    final_email_sent_at = models.DateTimeField()
+    final_email_sent_at = models.DateTimeField(null=True, blank=True)
 
 
 class WaitlistQuerySet(models.QuerySet):

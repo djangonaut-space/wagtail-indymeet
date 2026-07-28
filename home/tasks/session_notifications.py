@@ -14,7 +14,14 @@ from django.urls import reverse
 from django_tasks import task
 
 from home import email
-from home.models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
+from home.models import (
+    Session,
+    SessionMembership,
+    Team,
+    UserSurveyResponse,
+    Waitlist,
+    SessionMembershipNotification,
+)
 
 
 @task()
@@ -267,33 +274,49 @@ def reject_waitlisted_user(waitlist_id: int) -> None:
     waitlist_entry.save(update_fields=["notified_at"])
 
 
-def send_final_email(session_id: int):
-    # This will need to get reworked to work with django-crontask
+def generate_final_pdf(**kwargs):
+    # TODO: Replace with actual PDF generation logic
+    with open("home/tests/static/test.pdf", "rb") as f:
+        return f.read()
+
+
+def schedule_final_email(session_id: int):
     session = Session.objects.get(id=session_id)
-    members = session.session_membership.djangonauts().accepted()
-    notifications = SessionMembershipNotification.objects.filter(
-        session_membership__in=members,
-        final_email_sent_at__isnull=True,
-    ).select_related("session_membership__user")
-    # May need to fix a locking issue with select_related and select_for_update
-    for notification in notifications.select_for_update():
-        with transaction.atomic():
-            certificate_pdf = generate_final_pdf(
-                name=notification.session_membership.user.get_full_name(),
-                date=session.end_date,
-            )
-            email.send(
-                email_template="final_email",
-                recipient_list=[notification.session_membership.user.email],
-                context={"user": notification.session_membership.user},
-                # TODO: Fix mimetype for PDF attachment
-                attachments=[
-                    (
-                        f"{notification.session_membership.user.username}_certificate.pdf",
-                        certificate_pdf,
-                        "application/pdf",
-                    )
-                ],
-            )
-            notification.final_email_sent_at = timezone.now()
-            notification.save(update_fields=["final_email_sent_at"])
+    for membership_id in (
+        session.session_memberships.djangonauts()
+        .accepted()
+        .values_list("id", flat=True)
+    ):
+        send_final_email.enqueue(membership_id=membership_id)
+
+
+@task
+def send_final_email(membership_id: int):
+    with transaction.atomic():
+        notification, _ = SessionMembershipNotification.objects.select_related(
+            "session_membership__user", "session_membership__session"
+        ).get_or_create(
+            session_membership_id=membership_id, defaults={"final_email_sent_at": None}
+        )
+        if notification.final_email_sent_at is not None:
+            return None
+
+        session = notification.session_membership.session
+        certificate_pdf = generate_final_pdf(
+            name=notification.session_membership.user.get_full_name(),
+            date=session.end_date,
+        )
+        email.send(
+            email_template="final_email",
+            recipient_list=[notification.session_membership.user.email],
+            context={"user": notification.session_membership.user},
+            attachments=[
+                (
+                    f"{notification.session_membership.user.username}_certificate.pdf",
+                    certificate_pdf,
+                    "application/pdf",
+                )
+            ],
+        )
+        notification.final_email_sent_at = timezone.now()
+        notification.save(update_fields=["final_email_sent_at"])

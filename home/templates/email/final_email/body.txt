@@ -1,0 +1,28 @@
+Dear {{ user.first_name }},
+
+I hope this email finds you well and full of inspiration following your journey in the Djangonaut Space program. It is with great pleasure that we write to congratulate you on successfully completing your session with us. 🎉
+
+You'll find we've attached a Djangonaut Space Certificate of Completion to make it official!
+
+Over the course of your time in your Djangonaut Space session, you've shown dedication, enthusiasm, and a remarkable commitment to learning and growing within the Django community. Your achievements are stellar, and we believe that you have the potential to inspire others! 🚀
+
+Here are some recommendations to make the most of your experience and continue contributing to the Django community:
+
+- Share Your Story: We have loved reading the first hand experiences of some of our Djangonauts. And we would love to read yours if you haven't already shared! You could write a blog post about your experience in the program if you haven't already done so. You could also propose a talk to a conference. Share your insights, challenges, and the knowledge you've gained. Your unique perspective can inspire others to embark on a similar journey.
+- Mission Debrief: Your feedback is invaluable to us. Please take a few minutes to complete our exit survey: [CLOSING_SURVEY_LINK] Your insights will help us enhance the program for future Djangonauts.
+- Stay Engaged: We encourage you to continue your journey within the Django community. Feel welcome to stick around on the Djangonaut Space Discord server and join our public events in the future. Your participation and contributions are highly valued.
+- Connect: Connect with us on social media!
+  - X: https://x.com/djangonautspace
+  - LinkedIn: https://www.linkedin.com/company/djangonaut-space
+  - Fediverse: https://indieweb.social/@djangonaut
+- Join Django Discord: If you haven't already, consider joining the Django Discord https://chat.djangoproject.com community. It's a fantastic platform to connect with fellow Django enthusiasts, provide answers, ask questions, collaborate on exciting projects, and see lots of friendly faces, including your Djangonaut Space teammates and friends!
+- Celebrate! Don't forget to proudly post your Djangonaut Space certificate on your social media profiles. Celebrate your accomplishments and inspire others to follow in your footsteps and tag us!
+
+Thank you once again for being a part of Djangonaut Space. Your dedication and passion are what make our community thrive. We're excited to see where your journey takes you next, and we hope to continue supporting your growth in the world of Django.
+
+If you have questions, feedback or simply wish to chat, remember that the Djangonaut Space community is here for you - You are always encouraged to drop some animal photos in the Life channel, or share some of your successes in our #wins channel.
+
+Congratulations once again, and we wish you all the best in your future endeavors!
+
+Warm regards,
+Djangonaut Space Organizers

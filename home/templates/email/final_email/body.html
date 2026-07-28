@@ -1,0 +1,63 @@
+{% extends "email/base.html" %}
+{% load email_tags %}
+
+{% block preheader %}Congratulations on completing your Djangonaut Space session!{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Dear {{ user.first_name }},</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    I hope this email finds you well and full of inspiration following your journey in the Djangonaut Space program. It is with great pleasure that we write to congratulate you on successfully completing your session with us. 🎉
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    You'll find we've attached a Djangonaut Space Certificate of Completion to make it official!
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Over the course of your time in your Djangonaut Space session, you've shown dedication, enthusiasm, and a remarkable commitment to learning and growing within the Django community. Your achievements are stellar, and we believe that you have the potential to inspire others! 🚀
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Here are some recommendations to make the most of your experience and continue contributing to the Django community:
+  </p>
+
+  <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px; padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Share Your Story:</strong> We have loved reading the first hand experiences of some of our Djangonauts. And we would love to read yours if you haven't already shared! You could write a blog post about your experience in the program if you haven't already done so. You could also propose a talk to a conference. Share your insights, challenges, and the knowledge you've gained. Your unique perspective can inspire others to embark on a similar journey.</li>
+    <li style="margin-bottom: 8px;"><strong>Mission Debrief:</strong> Your feedback is invaluable to us. Please take a few minutes to complete our exit survey: [CLOSING_SURVEY_LINK] Your insights will help us enhance the program for future Djangonauts.</li>
+    <li style="margin-bottom: 8px;"><strong>Stay Engaged:</strong> We encourage you to continue your journey within the Django community. Feel welcome to stick around on the Djangonaut Space Discord server and join our public events in the future. Your participation and contributions are highly valued.</li>
+    <li style="margin-bottom: 8px;">
+      <strong>Connect:</strong> Connect with us on social media!
+      <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+        <li style="margin-bottom: 4px;">X: <a href="https://x.com/djangonautspace" style="color: #5c0287;">https://x.com/djangonautspace</a></li>
+        <li style="margin-bottom: 4px;">LinkedIn: <a href="https://www.linkedin.com/company/djangonaut-space" style="color: #5c0287;">https://www.linkedin.com/company/djangonaut-space</a></li>
+        <li style="margin-bottom: 4px;">Fediverse: <a href="https://indieweb.social/@djangonaut" style="color: #5c0287;">https://indieweb.social/@djangonaut</a></li>
+      </ul>
+    </li>
+    <li style="margin-bottom: 8px;"><strong>Join Django Discord:</strong> If you haven't already, consider joining the Django Discord <a href="https://chat.djangoproject.com" style="color: #5c0287;">https://chat.djangoproject.com</a> community. It's a fantastic platform to connect with fellow Django enthusiasts, provide answers, ask questions, collaborate on exciting projects, and see lots of friendly faces, including your Djangonaut Space teammates and friends!</li>
+    <li style="margin-bottom: 8px;"><strong>Celebrate!</strong> Don't forget to proudly post your Djangonaut Space certificate on your social media profiles. Celebrate your accomplishments and inspire others to follow in your footsteps and tag us!</li>
+  </ul>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Thank you once again for being a part of Djangonaut Space. Your dedication and passion are what make our community thrive. We're excited to see where your journey takes you next, and we hope to continue supporting your growth in the world of Django.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If you have questions, feedback or simply wish to chat, remember that the Djangonaut Space community is here for you - You are always encouraged to drop some animal photos in the Life channel, or share some of your successes in our #wins channel.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Congratulations once again, and we wish you all the best in your future endeavors!
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Warm regards,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}
