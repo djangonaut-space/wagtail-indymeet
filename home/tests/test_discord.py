@@ -38,11 +38,11 @@ UTC = dt_timezone.utc
 
 
 class DiscordEnabledTests(TestCase):
-    def test_returns_true_when_credentials_present(self):
+    def test_true_with_credentials(self):
         with override_settings(**DISCORD_SETTINGS):
             self.assertTrue(discord_enabled())
 
-    def test_returns_false_when_any_credential_missing(self):
+    def test_false_missing_credential(self):
         cases = [
             dict(DISCORD_BOT_TOKEN="", DISCORD_GUILD_ID="123"),
             dict(DISCORD_BOT_TOKEN="tok", DISCORD_GUILD_ID=""),
@@ -66,7 +66,7 @@ class DiscordClientScheduledEventTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_payload_shape(self):
+    def test_create_payload(self):
         start = dt(2026, 6, 1, 14, 0, tzinfo=UTC)
         end = dt(2026, 6, 1, 15, 0, tzinfo=UTC)
         rsps.add(
@@ -99,7 +99,9 @@ class DiscordClientScheduledEventTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_sends_fields_unchanged(self):
+    def test_create_long_fields(self):
+        """Name/description/location aren't truncated, even at Discord's own
+        length limits."""
         start = dt(2026, 6, 1, 14, 0, tzinfo=UTC)
         end = dt(2026, 6, 1, 15, 0, tzinfo=UTC)
         rsps.add(
@@ -125,7 +127,8 @@ class DiscordClientScheduledEventTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_handles_null_description(self):
+    def test_create_null_description(self):
+        """A null description is sent to Discord as an empty string."""
         start = dt(2026, 6, 1, 14, 0, tzinfo=UTC)
         end = dt(2026, 6, 1, 15, 0, tzinfo=UTC)
         rsps.add(
@@ -147,49 +150,13 @@ class DiscordClientScheduledEventTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_sends_patch_to_scoped_event_url(self):
-        rsps.add(
-            rsps.PATCH,
-            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
-            json={"id": "event-1"},
-        )
-
-        self.client.modify_scheduled_event(
-            guild_id="123",
-            event_id="event-1",
-            payload={"name": "Renamed"},
-        )
-
-        self.assertEqual(rsps.calls[0].request.method, "PATCH")
-        self.assertEqual(
-            rsps.calls[0].request.url,
-            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
-        )
-
-    @override_settings(**DISCORD_SETTINGS)
-    @rsps.activate
-    def test_forwards_payload_unchanged(self):
+    def test_modify_payload(self):
+        """PATCHes the guild-scoped event URL, forwarding the payload
+        unchanged, and returns Discord's response JSON."""
         payload = {
             "name": "Renamed",
             "entity_metadata": {"location": "https://zoom.us/j/999"},
         }
-        rsps.add(
-            rsps.PATCH,
-            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
-            json={"id": "event-1"},
-        )
-
-        self.client.modify_scheduled_event(
-            guild_id="123",
-            event_id="event-1",
-            payload=payload,
-        )
-
-        self.assertEqual(json.loads(rsps.calls[0].request.body), payload)
-
-    @override_settings(**DISCORD_SETTINGS)
-    @rsps.activate
-    def test_returns_updated_event_json(self):
         rsps.add(
             rsps.PATCH,
             f"{BASE_URL}/guilds/123/scheduled-events/event-1",
@@ -199,9 +166,15 @@ class DiscordClientScheduledEventTests(TestCase):
         result = self.client.modify_scheduled_event(
             guild_id="123",
             event_id="event-1",
-            payload={"name": "Renamed"},
+            payload=payload,
         )
 
+        self.assertEqual(rsps.calls[0].request.method, "PATCH")
+        self.assertEqual(
+            rsps.calls[0].request.url,
+            f"{BASE_URL}/guilds/123/scheduled-events/event-1",
+        )
+        self.assertEqual(json.loads(rsps.calls[0].request.body), payload)
         self.assertEqual(result, {"id": "event-1", "name": "Renamed"})
 
 
@@ -214,7 +187,7 @@ class DiscordClientRequestTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_sets_bot_authorization_header(self):
+    def test_auth_header(self):
         rsps.add(rsps.GET, f"{BASE_URL}/foo", json={})
 
         self.client._request("GET", "/foo")
@@ -225,7 +198,8 @@ class DiscordClientRequestTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_logs_response_body_and_reraises_on_http_error(self):
+    def test_http_error(self):
+        """Logs the response body, then re-raises."""
         rsps.add(rsps.GET, f"{BASE_URL}/foo", status=403, body="boom")
 
         with self.assertLogs("home.integrations.discord.client", level="ERROR") as logs:
@@ -241,14 +215,14 @@ class PrepareFieldsTests(TestCase):
         defaults.update(kwargs)
         return EventFactory.build(**defaults)
 
-    def test_returns_fields_unchanged_when_within_limits(self):
+    def test_within_limits(self):
         result = _prepare_fields(self._event(description="A description"))
         self.assertEqual(
             result,
             ("My Event", "A description", "https://zoom.us/j/1"),
         )
 
-    def test_passes_through_title_and_description_without_truncating(self):
+    def test_no_truncation(self):
         """Name/description caps are enforced on the model, so the service no
         longer truncates them; it passes whatever it's given straight through."""
         event = self._event(title="x" * 200, description="y" * 2000)
@@ -258,7 +232,7 @@ class PrepareFieldsTests(TestCase):
         self.assertEqual(len(name), 200)
         self.assertEqual(len(description), 2000)
 
-    def test_raises_on_over_long_zoom_link(self):
+    def test_long_zoom_link_raises(self):
         event = self._event(zoom_link="https://zoom.us/j/" + "z" * 100)
         with self.assertRaises(ValueError):
             _prepare_fields(event)
@@ -274,7 +248,7 @@ class UpdateEventTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_builds_expected_modify_payload(self):
+    def test_payload(self):
         event = EventFactory.build(
             title="My Event",
             description="A description",
@@ -303,7 +277,8 @@ class UpdateEventTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate
-    def test_raises_on_over_long_zoom_link_without_calling_discord(self):
+    def test_long_zoom_link_raises(self):
+        """Validated before Discord is called, so no request is made."""
         event = EventFactory.build(
             title="My Event",
             zoom_link="https://zoom.us/j/" + "z" * 100,
@@ -326,7 +301,7 @@ class SyncEventDiscordTests(TestCase):
 
     @override_settings(DISCORD_BOT_TOKEN="", DISCORD_GUILD_ID="")
     @patch("home.tasks.sync_event.create_event")
-    def test_skips_when_discord_not_configured(self, mock_create):
+    def test_skips_unconfigured(self, mock_create):
         event = EventFactory.create(zoom_link="https://zoom.us/j/abc")
 
         sync_event.call(event_id=event.pk)
@@ -335,14 +310,14 @@ class SyncEventDiscordTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @patch("home.tasks.sync_event.create_event")
-    def test_handles_missing_event(self, mock_create):
+    def test_missing_event(self, mock_create):
         sync_event.call(event_id=999999)
 
         mock_create.assert_not_called()
 
     @override_settings(**DISCORD_SETTINGS)
     @patch("home.tasks.sync_event.create_event")
-    def test_creates_event_and_writes_id(self, mock_create):
+    def test_create(self, mock_create):
         mock_create.return_value = "discord-id-42"
         event = EventFactory.create(zoom_link="https://zoom.us/j/abc")
 
@@ -354,7 +329,7 @@ class SyncEventDiscordTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @patch("home.tasks.sync_event.create_event")
-    def test_skips_when_zoom_link_missing(self, mock_create):
+    def test_skips_no_zoom_link(self, mock_create):
         event = EventFactory.create(zoom_link="")
 
         sync_event.call(event_id=event.pk)
@@ -363,7 +338,7 @@ class SyncEventDiscordTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @patch("home.tasks.sync_event.update_event")
-    def test_updates_when_discord_event_id_present(self, mock_update):
+    def test_update(self, mock_update):
         event = EventFactory.create(
             zoom_link="https://zoom.us/j/existing",
             discord_event_id="discord-456",
@@ -377,7 +352,8 @@ class SyncEventDiscordTests(TestCase):
 
     @override_settings(**DISCORD_SETTINGS)
     @patch("home.tasks.sync_event.create_event")
-    def test_create_error_leaves_id_empty(self, mock_create):
+    def test_create_error(self, mock_create):
+        """A failed create leaves discord_event_id/synced_at unset."""
         mock_create.side_effect = Exception("Discord API down")
         event = EventFactory.create(zoom_link="https://zoom.us/j/abc")
 
@@ -395,7 +371,7 @@ class SyncEventZoomThenDiscordTests(TestCase):
     @override_settings(**ZOOM_SETTINGS, **DISCORD_SETTINGS)
     @patch("home.tasks.sync_event.create_event")
     @patch("home.tasks.sync_event.create_event_meeting")
-    def test_one_run_creates_both(self, mock_zoom, mock_discord):
+    def test_creates_both(self, mock_zoom, mock_discord):
         mock_zoom.return_value = ZoomMeeting("https://zoom.us/j/x", "999")
         mock_discord.return_value = "discord-1"
         event = EventFactory.create(zoom_link="")
