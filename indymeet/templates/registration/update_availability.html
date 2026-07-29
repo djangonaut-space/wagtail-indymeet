@@ -144,12 +144,13 @@
             // JavaScript doesn't provide a simple way to convert "day of week + hour"
             // between timezones - we must go through actual Date objects.
 
-            // Use Jan 7, 2024 as reference (a Sunday) to represent a week
-            const baseDate = new Date('2024-01-07T00:00:00');
-            const localDate = new Date(baseDate);
-
-            // Set the date to the desired local day (0=Sun, 1=Mon, etc.)
-            localDate.setDate(baseDate.getDate() + localDay);
+            // Use the closest date (today or later, within the next 6 days) that
+            // falls on localDay, so the reference date is always as close to "now"
+            // as possible and reflects whichever DST rules currently apply.
+            const localDate = new Date();
+            const currentDay = localDate.getDay();
+            const daysUntilLocalDay = (localDay - currentDay + 7) % 7;
+            localDate.setDate(localDate.getDate() + daysUntilLocalDay);
 
             // Set the time within that day (in user's local timezone)
             localDate.setHours(Math.floor(localHour));
