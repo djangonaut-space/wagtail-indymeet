@@ -1,15 +1,20 @@
 from home import constants
+import csv
+import io
 from datetime import timedelta
 from http import HTTPStatus
+from unittest.mock import MagicMock, patch
 
-from django.test import TestCase
+from django.contrib import admin
+from django.contrib.auth.models import Group
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.factories import ProfileFactory, UserAvailabilityFactory, UserFactory
+from accounts.admin import CustomUserAdmin
+from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserProfile
 from home.factories import SessionFactory, SessionMembershipFactory
-from home.models import SessionMembership
 
 
 class AdminFilterTests(TestCase):
@@ -137,3 +142,134 @@ class AdminFilterTests(TestCase):
             url, {"updated_at__gte": "2020-01-01 00:00:00+00:00"}
         )
         assert response.status_code == HTTPStatus.OK
+
+
+class ExportCsvActionTests(TestCase):
+    """Exercise the shared ExportCsvMixin.export_as_csv admin action."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.superuser = CustomUser.objects.create_superuser(
+            username="admin", email="admin@example.com", password="test"
+        )
+
+    def setUp(self) -> None:
+        self.client.force_login(self.superuser)
+
+    def test_export_csv(self) -> None:
+        """Selected rows come back as a CSV attachment with password excluded."""
+        url = reverse("admin:accounts_customuser_changelist")
+
+        response = self.client.post(
+            url,
+            {"action": "export_as_csv", "_selected_action": [self.superuser.pk]},
+        )
+
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment; filename=", response["Content-Disposition"])
+
+        content = response.content.decode()
+        self.assertIn("username", content)
+        self.assertIn("admin@example.com", content)
+        self.assertNotIn("password", content)
+
+    def test_export_rows_for_queryset(self) -> None:
+        """Rows map to their objects in order; an empty queryset is header-only."""
+        other = UserFactory.create(username="second_user")
+        model_admin = CustomUserAdmin(CustomUser, admin.site)
+        request = RequestFactory().get("/")
+        queryset = CustomUser.objects.filter(
+            pk__in=[self.superuser.pk, other.pk]
+        ).order_by("pk")
+
+        response = model_admin.export_as_csv(request, queryset)
+
+        header, *data_rows = csv.reader(io.StringIO(response.content.decode()))
+        username_col = header.index("username")
+        self.assertEqual(len(data_rows), 2)
+        self.assertEqual(
+            [row[username_col] for row in data_rows],
+            ["admin", "second_user"],
+        )
+
+        empty_response = model_admin.export_as_csv(request, CustomUser.objects.none())
+        rows = empty_response.content.decode().strip().splitlines()
+        self.assertEqual(len(rows), 1)
+        self.assertIn("username", rows[0])
+
+
+class CompareAvailabilityActionTests(TestCase):
+    """Cover both branches of CustomUserAdmin.compare_availability_action."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.superuser = CustomUser.objects.create_superuser(
+            username="admin", email="admin@example.com", password="test"
+        )
+        cls.user_1 = UserFactory.create(username="user_1")
+        cls.user_2 = UserFactory.create(username="user_2")
+
+    def setUp(self) -> None:
+        self.client.force_login(self.superuser)
+
+    def test_redirect_with_selection(self) -> None:
+        """Redirects to the compare page with the selected user IDs."""
+        url = reverse("admin:accounts_customuser_changelist")
+
+        response = self.client.post(
+            url,
+            {
+                "action": "compare_availability_action",
+                "_selected_action": [self.user_1.pk, self.user_2.pk],
+            },
+        )
+
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        expected_prefix = f"{reverse('compare_availability')}?users="
+        self.assertTrue(response["Location"].startswith(expected_prefix))
+        self.assertIn(str(self.user_1.pk), response["Location"])
+        self.assertIn(str(self.user_2.pk), response["Location"])
+
+    def test_empty_selection(self) -> None:
+        """Messages the user and returns None when nothing is selected."""
+        model_admin = CustomUserAdmin(CustomUser, admin.site)
+        model_admin.message_user = MagicMock()
+        request = RequestFactory().post("/")
+
+        result = model_admin.compare_availability_action(
+            request, CustomUser.objects.none()
+        )
+
+        self.assertIsNone(result)
+        model_admin.message_user.assert_called_once()
+
+
+class GroupAdminActionTests(TestCase):
+    """Cover CustomGroupAdmin.recreate_session_organizers_group action."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.superuser = CustomUser.objects.create_superuser(
+            username="admin", email="admin@example.com", password="test"
+        )
+        cls.group = Group.objects.create(name="Session Organizers")
+
+    def setUp(self) -> None:
+        self.client.force_login(self.superuser)
+
+    @patch("accounts.admin.call_command")
+    def test_recreate_group(self, mock_call_command: MagicMock) -> None:
+        """Invokes the setup_session_organizers_group management command."""
+        url = reverse("admin:auth_group_changelist")
+
+        response = self.client.post(
+            url,
+            {
+                "action": "recreate_session_organizers_group",
+                "_selected_action": [self.group.pk],
+            },
+        )
+
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        mock_call_command.assert_called_once_with("setup_session_organizers_group")
