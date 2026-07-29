@@ -1,4 +1,6 @@
 from home import constants
+import csv
+import io
 from datetime import timedelta
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -154,7 +156,8 @@ class ExportCsvActionTests(TestCase):
     def setUp(self) -> None:
         self.client.force_login(self.superuser)
 
-    def test_export_returns_csv_attachment_with_selected_rows(self) -> None:
+    def test_export_csv(self) -> None:
+        """Selected rows come back as a CSV attachment with password excluded."""
         url = reverse("admin:accounts_customuser_changelist")
 
         response = self.client.post(
@@ -171,14 +174,27 @@ class ExportCsvActionTests(TestCase):
         self.assertIn("admin@example.com", content)
         self.assertNotIn("password", content)
 
-    def test_export_with_empty_queryset_writes_header_only(self) -> None:
+    def test_export_rows_for_queryset(self) -> None:
+        """Rows map to their objects in order; an empty queryset is header-only."""
+        other = UserFactory.create(username="second_user")
         model_admin = CustomUserAdmin(CustomUser, admin.site)
         request = RequestFactory().get("/")
+        queryset = CustomUser.objects.filter(
+            pk__in=[self.superuser.pk, other.pk]
+        ).order_by("pk")
 
-        response = model_admin.export_as_csv(request, CustomUser.objects.none())
+        response = model_admin.export_as_csv(request, queryset)
 
-        self.assertEqual(response["Content-Type"], "text/csv")
-        rows = response.content.decode().strip().splitlines()
+        header, *data_rows = csv.reader(io.StringIO(response.content.decode()))
+        username_col = header.index("username")
+        self.assertEqual(len(data_rows), 2)
+        self.assertEqual(
+            [row[username_col] for row in data_rows],
+            ["admin", "second_user"],
+        )
+
+        empty_response = model_admin.export_as_csv(request, CustomUser.objects.none())
+        rows = empty_response.content.decode().strip().splitlines()
         self.assertEqual(len(rows), 1)
         self.assertIn("username", rows[0])
 
@@ -197,7 +213,8 @@ class CompareAvailabilityActionTests(TestCase):
     def setUp(self) -> None:
         self.client.force_login(self.superuser)
 
-    def test_redirects_to_compare_page_with_selected_user_ids(self) -> None:
+    def test_redirect_with_selection(self) -> None:
+        """Redirects to the compare page with the selected user IDs."""
         url = reverse("admin:accounts_customuser_changelist")
 
         response = self.client.post(
@@ -214,7 +231,8 @@ class CompareAvailabilityActionTests(TestCase):
         self.assertIn(str(self.user_1.pk), response["Location"])
         self.assertIn(str(self.user_2.pk), response["Location"])
 
-    def test_empty_selection_messages_user_and_returns_none(self) -> None:
+    def test_empty_selection(self) -> None:
+        """Messages the user and returns None when nothing is selected."""
         model_admin = CustomUserAdmin(CustomUser, admin.site)
         model_admin.message_user = MagicMock()
         request = RequestFactory().post("/")
@@ -240,17 +258,18 @@ class GroupAdminActionTests(TestCase):
     def setUp(self) -> None:
         self.client.force_login(self.superuser)
 
-    def test_recreate_session_organizers_group_runs_command(self) -> None:
+    @patch("accounts.admin.call_command")
+    def test_recreate_group(self, mock_call_command: MagicMock) -> None:
+        """Invokes the setup_session_organizers_group management command."""
         url = reverse("admin:auth_group_changelist")
 
-        with patch("accounts.admin.call_command") as mock_call_command:
-            response = self.client.post(
-                url,
-                {
-                    "action": "recreate_session_organizers_group",
-                    "_selected_action": [self.group.pk],
-                },
-            )
+        response = self.client.post(
+            url,
+            {
+                "action": "recreate_session_organizers_group",
+                "_selected_action": [self.group.pk],
+            },
+        )
 
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         mock_call_command.assert_called_once_with("setup_session_organizers_group")
