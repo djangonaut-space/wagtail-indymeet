@@ -445,11 +445,12 @@ This is used directly by Wagtail. Don't delete it.
       </div>
     </section>
 
-    <section class="bg-white w-full py-16 px-5">
+    <section class="flex flex-col bg-white w-full py-16 px-5 gap-8 md:gap-12">
+
+    <!-- Financial Sponsor -->
       <div class="max-w-[1200px] mx-auto text-center">
 
-        <h2 id="sponsors-heading"
-            class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR FINANCIAL
+        <h2 class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR FINANCIAL
           SPONSORS</h2>
         <div>
           <ul class="links mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center"
@@ -468,6 +469,26 @@ This is used directly by Wagtail. Don't delete it.
           </ul>
         </div>
       </div>
+
+      <!-- Community Partners -->
+      <div class="max-w-[1200px] mx-auto text-center">
+
+        <h2 class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR COMMUNITY
+          PARTNERS</h2>
+        <div>
+          <ul class="links mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center"
+              aria-label="Community Partner logos">
+
+            <li class="flex items-center justify-center">
+              <img src="{% static 'img/logo-psf.png' %}" alt="PSF logo"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+
+            </li>
+
+          </ul>
+        </div>
+      </div>
+
     </section>
 
 
