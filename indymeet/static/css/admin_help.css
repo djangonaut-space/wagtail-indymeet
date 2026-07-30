@@ -1,0 +1,66 @@
+/* Admin Help Styles */
+
+/* ============================================
+   Expandable Help Block
+   ============================================ */
+.help-block {
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+}
+
+.help-block summary {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.help-block[open] summary {
+    margin-bottom: 1rem;
+}
+
+.help-block-content dl {
+    margin: 0;
+}
+
+.help-block-content dt {
+    font-weight: bold;
+    margin-top: 0.75rem;
+}
+
+.help-block-content dt:first-child {
+    margin-top: 0;
+}
+
+.help-block-content dd {
+    margin: 0.15rem 0 0 0;
+}
+
+.help-block-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+}
+
+.help-block-content code {
+    font-size: 0.8em;
+}
+
+/* ============================================
+   Save Notice
+   ============================================ */
+.save-notice {
+    border: 1px solid var(--border-color);
+    border-left-width: 4px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.save-notice ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.25rem;
+}
+
+.save-notice li {
+    margin-bottom: 0.25rem;
+}

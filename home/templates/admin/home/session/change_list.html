@@ -1,0 +1,49 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_help.css' %}">
+{% endblock %}
+
+{% block search %}
+<details class="help-block">
+    <summary>Help: actions &amp; links on this page</summary>
+    <div class="help-block-content">
+        <dl>
+            <dt>Form Teams</dt>
+            <dd>Opens the team formation tool to assign applicants to teams based on availability overlap.</dd>
+
+            <dt>Collect Stats</dt>
+            <dd>Opens a form to pull GitHub contribution stats for the session's teams.</dd>
+
+            <dt>Email Actions</dt>
+            <dd>
+                <ul>
+                    <li><strong>Send application results</strong> &mdash; opens a confirmation page before emailing applicants their acceptance/rejection/waitlist results.</li>
+                    <li><strong>Send acceptance reminder emails</strong> &mdash; opens a confirmation page before reminding accepted applicants to confirm their spot.</li>
+                    <li><strong>Send team welcome emails</strong> &mdash; opens a confirmation page before emailing newly formed teams their welcome message.</li>
+                </ul>
+            </dd>
+
+            <dt>Discord</dt>
+            <dd>
+                <ul>
+                    <li><strong>Set up Discord</strong> &mdash; opens a confirmation page before creating the session's Discord category, team channels, and roles as a background task.</li>
+                    <li><strong>Tear down Discord</strong> &mdash; opens a confirmation page before archiving the session's Discord channels and roles as a background task.</li>
+                    <li><strong>Team messages</strong> &mdash; shows copy-paste welcome text for each team's Discord channel.</li>
+                </ul>
+            </dd>
+
+            <dt>Bulk actions (the "Action:" dropdown below the list)</dt>
+            <dd>
+                <ul>
+                    <li><strong>Auto-allocate Djangonauts to teams</strong> &mdash; [runs immediately] requires exactly one selected session; runs the allocation algorithm to assign eligible applicants to teams.</li>
+                    <li><strong>Preview rejection/waitlist/team-welcome email</strong> &mdash; sends a preview of the email to your own address only; it does not email applicants.</li>
+                </ul>
+            </dd>
+        </dl>
+    </div>
+</details>
+{{ block.super }}
+{% endblock %}
