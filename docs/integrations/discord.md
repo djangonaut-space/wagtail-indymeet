@@ -36,7 +36,7 @@ Grant the bot these permissions when inviting it (or via a role):
 | Manage Events | Create and update scheduled events (event sync) |
 | View Channels, Send Messages, Embed Links, Attach Files, Add Reactions, Use External Emoji, Use External Stickers, Read Message History, Create Public Threads, Create Private Threads, Send Messages in Threads, Pin Messages, Send Voice Messages, Send Polls, Manage Messages, Manage Threads | Channel setup writes overwrites that *allow* these to team/staff roles — Discord only lets the bot allow a permission it holds itself, so without these on the bot's own role, channel creation fails with `403 Missing Permissions` (see `TRUSTED_MEMBER_PERMISSIONS`/`SESSION_STAFF_PERMISSIONS` in `home/integrations/discord/session_service.py`) |
 
-**Role hierarchy caveat:** Discord only lets the bot manage roles *below its own highest role*. Keep the bot's role above every role it manages (team roles, `Djangonauts`, `Captains`, `Navigators`, `Session Organizers`, session-title roles, `past *`, `stars`), otherwise those calls fail with a 403.
+**Role hierarchy caveat:** Discord only lets the bot manage roles *below its own highest role*. Keep the bot's role above every role it manages (team roles, `Djangonauts`, `Captains`, `Navigators`, `Session Organizers`, session-title roles, `past *`, `Stars`), otherwise those calls fail with a 403.
 
 ## Inviting the Bot to a Server
 
@@ -45,7 +45,7 @@ The bot token authenticates the app, but it doesn't put the bot *in* a server �
 1. In the Developer Portal, open the app's **OAuth2 → URL Generator** page.
 2. Under **Scopes**, check `bot`.
 3. Under **Bot Permissions**, check every permission listed in [Bot Permissions](#bot-permissions) above.
-4. Copy the generated URL and open it in a browser, then pick the target server and authorize.
+4. Copy the generated URL and open it in a browser, then pick the target server and authorize. The URL should be: https://discord.com/oauth2/authorize?client_id=1524050868289405040&scope=bot&permissions=2903252132035664
 5. In the server's role list, drag the bot's role above every role it manages (see the caveat above).
 
 ## The Bot's Own Role
@@ -68,7 +68,7 @@ These roles are created automatically when missing:
 
 - One role per team, named exactly after the team (setup)
 - One role per session, named after the session title (teardown)
-- `Past Navigators`, `Past Captains`, `Past Session Organizers`, `stars` (teardown)
+- `Past Navigators`, `Past Captains`, `Past Session Organizers`, `Stars` (teardown)
 
 The expected names are defined as constants in `home/integrations/discord/session_service.py`.
 
