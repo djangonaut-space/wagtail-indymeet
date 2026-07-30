@@ -5,6 +5,15 @@ x-app: &default-app
     - .:/app
   restart: "unless-stopped"
 
+# Rebuild the image automatically when dependency files change, instead of
+# needing a manual --build.
+x-default-watch: &default-watch
+  watch:
+    - action: rebuild
+      path: ./pyproject.toml
+    - action: rebuild
+      path: ./uv.lock
+
 services:
   django:
     <<: *default-app
@@ -17,7 +26,11 @@ services:
       db:
         condition: service_healthy
     env_file:
+      # Later files win, so .env overrides .env.docker for local overrides.
       - ./.env.docker
+      - ./.env
+    develop:
+      <<: *default-watch
 
   worker:
     <<: *default-app
@@ -25,7 +38,11 @@ services:
     depends_on:
       - db
     env_file:
+      # Later files win, so .env overrides .env.docker for local overrides.
       - ./.env.docker
+      - ./.env
+    develop:
+      <<: *default-watch
 
   tailwind:
     <<: *default-app
@@ -33,6 +50,25 @@ services:
     # Without tty, no stdin, and tailwind watcher aborts
     # https://github.com/tailwindlabs/tailwindcss/issues/5324
     tty: true
+    volumes:
+      # The bind mount hides the node_modules baked into the image, so
+      # overlay it with a named volume seeded from the image's copy.
+      - .:/app
+      - tailwind:/app/theme/static_src/node_modules
+    env_file:
+      # Later files win, so .env overrides .env.docker for local overrides.
+      - ./.env.docker
+      - ./.env
+    develop:
+      watch:
+        - action: rebuild
+          path: ./pyproject.toml
+        - action: rebuild
+          path: ./uv.lock
+        - action: rebuild
+          path: ./theme/static_src/package.json
+        - action: rebuild
+          path: ./theme/static_src/package-lock.json
 
   db:
     restart: always
@@ -41,7 +77,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
+      # Later files win, so .env overrides .env.docker for local overrides.
       - ./.env.docker
+      - ./.env
     ports:
       - "5432"
     healthcheck:

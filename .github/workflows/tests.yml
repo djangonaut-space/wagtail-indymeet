@@ -36,12 +36,12 @@ jobs:
           POSTGRES_PASSWORD: "djangonaut"
           POSTGRES_DB: "djangonaut-space"
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Python version
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
 
@@ -51,10 +51,10 @@ jobs:
           sudo apt-get install -y libgdal-dev g++ gdal-bin libpq-dev
 
       - name: Install uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
 
       - name: Set up Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: 'theme/static_src/package.json'
           cache: 'npm'
@@ -71,13 +71,20 @@ jobs:
           uv run python manage.py tailwind build
 
       - name: Run tests
-        run: uv run pytest --cov --cov-branch --cov-report=xml --cov-report=term
+        run: uv run pytest -n auto --cov --cov-branch --cov-report=xml --cov-report=term
+
+      - name: Build test database template
+        env:
+          TEST_DB_TEMPLATE: template_wagtail_indymeet_test
+        run: uv run python manage.py build_test_db_template
 
       - name: Run playwright tests
-        run: uv run pytest --tracing retain-on-failure -m playwright --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
+        env:
+          TEST_DB_TEMPLATE: template_wagtail_indymeet_test
+        run: uv run pytest --tracing retain-on-failure -m playwright -n auto --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
 
       - name: Upload results to Codecov
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354  # v6.0.1
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 

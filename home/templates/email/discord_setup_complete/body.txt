@@ -1,0 +1,21 @@
+Hi {{ name }},
+
+Discord setup for {{ session.title }} has finished{% if report.errors %} with {{ report.errors|length }} error{{ report.errors|length|pluralize }}{% endif %}.
+{% if report.errors %}
+Errors:
+{% for error in report.errors %}- {{ error }}
+{% endfor %}{% endif %}
+Summary:
+- Channels created: {{ report.channels_created|join:", "|default:"none" }}
+- Channels updated: {{ report.channels_updated|join:", "|default:"none" }}
+- Roles created: {{ report.roles_created|join:", "|default:"none" }}
+- Role assignments: {{ report.roles_assigned }}
+{% if report.unresolved %}
+These members could not be matched to a Discord account, so no roles were assigned to them:
+{% for person in report.unresolved %}- {{ person.display_name }} ({{ person.discord_username|default:"no username" }}, {{ person.role }})
+{% endfor %}{% endif %}
+Copy each team's welcome message into the matching team channel from:
+{{ team_messages_url }}
+
+Best regards,
+Djangonaut Space

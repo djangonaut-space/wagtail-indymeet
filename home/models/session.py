@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from home import constants
@@ -90,6 +91,12 @@ class Session(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     title = models.CharField(max_length=255)
+    short_name = models.CharField(
+        max_length=255,
+        help_text=_(
+            "A short name for the session, e.g. 'Session 1' - without the year."
+        ),
+    )
     slug = models.SlugField(
         help_text="This is used in the URL to identify the session.", unique=True
     )
@@ -143,6 +150,33 @@ class Session(models.Model):
         blank=True,
         help_text=_("This should be a newly generated invite to the Discord server."),
     )
+    discord_category_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text=_(
+            "Discord channel category ID for this session, set by the "
+            "'Set up Discord' admin action."
+        ),
+    )
+    discord_announcements_channel_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text=_(
+            "Discord ID of the session-announcements channel, set by the "
+            "'Set up Discord' admin action."
+        ),
+    )
+    discord_capnav_channel_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text=_(
+            "Discord ID of the captains-and-navigators channel, set by the "
+            "'Set up Discord' admin action."
+        ),
+    )
     feedback_form_url = models.URLField(
         blank=True,
         help_text=_(
@@ -166,6 +200,10 @@ class Session(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def short_name_slug(self) -> str:
+        return slugify(self.short_name)
 
     def application_start_anywhere_on_earth(self):
         aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
@@ -266,6 +304,27 @@ class Session(models.Model):
 
         return scopes
 
+    def record_discord_category(self, category_id: str) -> None:
+        """Persist the Discord category id, marking this session's Discord active.
+
+        Setup records the category id here; a non-empty value is what
+        ``SessionQuerySet.with_active_discord`` treats as the guild-wide Discord
+        lock. Paired with ``clear_discord_setup``.
+        """
+        self.discord_category_id = category_id
+        self.save(update_fields=["discord_category_id"])
+
+    def clear_discord_setup(self) -> None:
+        """Clear the recorded category so the session is no longer 'active'.
+
+        Teardown archives the channels and frees the program roles, so the
+        session no longer holds the guild-wide Discord lock; clearing
+        ``discord_category_id`` lets the next session's setup proceed. See
+        ``SessionQuerySet.with_active_discord``.
+        """
+        self.discord_category_id = ""
+        self.save(update_fields=["discord_category_id"])
+
 
 class Team(models.Model):
     # Minimum required overlap hours for team formation
@@ -293,6 +352,24 @@ class Team(models.Model):
         null=True,
         help_text=_("Link to the team's Google Drive folder with workbooks"),
     )
+    discord_channel_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text=_(
+            "Discord ID of the team's channel, set by the 'Set up Discord' "
+            "admin action."
+        ),
+    )
+    discord_voice_channel_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text=_(
+            "Discord ID of the team's voice channel, set by the 'Set up "
+            "Discord' admin action and deleted by teardown."
+        ),
+    )
 
     def __str__(self) -> str:
         return f"{self.name} - {self.project.name}"
@@ -302,6 +379,11 @@ class Team(models.Model):
         return reverse(
             "team_detail", kwargs={"session_slug": self.session.slug, "pk": self.pk}
         )
+
+    def clear_discord_voice_channel(self) -> None:
+        """Forget the team's voice channel id after teardown deletes it."""
+        self.discord_voice_channel_id = ""
+        self.save(update_fields=["discord_voice_channel_id"])
 
 
 class ProjectPreferenceQuerySet(models.QuerySet):

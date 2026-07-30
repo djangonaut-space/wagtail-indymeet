@@ -1,6 +1,7 @@
 import pytest
 from django.core import mail, management
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 
 from accounts.factories import UserFactory
 
@@ -9,6 +10,12 @@ User = get_user_model()
 
 @pytest.mark.django_db
 class TestNotifyUnusablePasswordUsersCommand:
+
+    @pytest.fixture(autouse=True)
+    def settings(self, settings):
+        settings.ENVIRONMENT = "production"
+        return settings
+
     def test_sends_email_to_unusable_password_user(self):
         user = UserFactory.create(is_active=True)
         user.set_unusable_password()

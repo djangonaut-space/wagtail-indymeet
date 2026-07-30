@@ -17,17 +17,18 @@ This is used directly by Wagtail. Don't delete it.
 
         <div class="hidden lg:flex gap-6 justify-end">
           <div class="relative inline-block" x-data="{ aboutOpen: false }" @mouseleave="aboutOpen = false">
-            <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple flex items-center gap-1"
-               href="{% url 'event_list' %}"
-               @mouseenter="aboutOpen = true"
-               @focus="aboutOpen = true"
+            <button type="button"
+                    class="button-secondary text-white font-bold cursor-pointer hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple flex items-center gap-1"
+                    @mouseenter="aboutOpen = true"
+                    @focus="aboutOpen = true"
+                    @click="aboutOpen = !aboutOpen"
             >
               About
               <svg class="w-4 h-4 transition-transform duration-200" :class="aboutOpen ? 'rotate-180' : ''" fill="none"
                    stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
-            </a>
+            </button>
 
             <div x-show="aboutOpen"
                  x-cloak
@@ -183,10 +184,10 @@ This is used directly by Wagtail. Don't delete it.
 
         {% if not user.is_authenticated %}
           <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2"
-             href="{% url "event_list" %}">Login</a>
+             href="{% url "login" %}">Login</a>
 
           <a class="bg-white text-[#202020] text-center py-3 rounded-xl font-bold hover:bg-ds-purple no-underline hover:text-white focus-visible:ring-2"
-             href="{% url "event_list" %}">Sign up</a>
+             href="{% url "signup" %}">Sign up</a>
         {% else %}
           <span role="separator" class="my-1 border-t border-gray-500"></span>
           <a href="{% url 'user_sessions' %}"
@@ -444,11 +445,12 @@ This is used directly by Wagtail. Don't delete it.
       </div>
     </section>
 
-    <section class="bg-white w-full py-16 px-5">
+    <section class="flex flex-col bg-white w-full py-16 px-5 gap-8 md:gap-12">
+
+    <!-- Financial Sponsor -->
       <div class="max-w-[1200px] mx-auto text-center">
 
-        <h2 id="sponsors-heading"
-            class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR FINANCIAL
+        <h2 class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR FINANCIAL
           SPONSORS</h2>
         <div>
           <ul class="links mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center"
@@ -467,6 +469,26 @@ This is used directly by Wagtail. Don't delete it.
           </ul>
         </div>
       </div>
+
+      <!-- Community Partners -->
+      <div class="max-w-[1200px] mx-auto text-center">
+
+        <h2 class="block text-center text-sm font-semibold tracking-widest text-gray-500 mb-12 uppercase">OUR COMMUNITY
+          PARTNERS</h2>
+        <div>
+          <ul class="links mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16 items-center"
+              aria-label="Community Partner logos">
+
+            <li class="flex items-center justify-center">
+              <img src="{% static 'img/logo-psf.png' %}" alt="PSF logo"
+                   class="h-auto max-h-12 lg:max-h-14 w-full object-contain opacity-80 hover:opacity-100 transition duration-300">
+
+            </li>
+
+          </ul>
+        </div>
+      </div>
+
     </section>
 
 

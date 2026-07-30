@@ -110,6 +110,17 @@ class SessionQuerySet(QuerySet):
             )
         )
 
+    def with_active_discord(self) -> SessionQuerySet:
+        """Sessions whose Discord is currently set up (category id recorded).
+
+        Setup records ``discord_category_id`` and teardown clears it, so a
+        non-empty value marks a session whose program roles are live on the
+        guild. The setup/teardown views use this to enforce a single active
+        Discord session at a time — teardown strips program roles guild-wide,
+        so overlapping active sessions would cut each other off.
+        """
+        return self.exclude(discord_category_id="")
+
     def get_accepting_applications(self) -> Session | None:
         aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
         aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
@@ -159,6 +170,14 @@ class SessionMembershipQuerySet(QuerySet):
         return self.exclude(user__profile__github_username="").annotate(
             annotated_github_username=F("user__profile__github_username")
         )
+
+    def without_discord_username(self) -> SessionMembershipQuerySet:
+        """Filter to memberships whose user has no Discord username configured.
+
+        These are the members the Discord setup/teardown actions can't map to
+        a guild member, so the confirmation views surface them for follow-up.
+        """
+        return self.filter(user__profile__discord_username="")
 
     def navigators(self):
         """Filter to only Navigators."""

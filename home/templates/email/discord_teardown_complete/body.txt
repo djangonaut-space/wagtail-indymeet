@@ -1,0 +1,21 @@
+Hi {{ name }},
+
+Discord teardown for {{ session.title }} has finished{% if report.errors %} with {{ report.errors|length }} error{{ report.errors|length|pluralize }}{% endif %}.
+{% if report.errors %}
+Errors:
+{% for error in report.errors %}- {{ error }}
+{% endfor %}{% endif %}
+Summary:
+- Channels archived: {{ report.channels_processed|join:", "|default:"none" }}
+- Channels deleted: {{ report.channels_deleted|join:", "|default:"none" }}
+- Roles created: {{ report.roles_created|join:", "|default:"none" }}
+- Members updated: {{ report.members_updated }}
+{% if report.roles_stripped %}
+Active roles removed:
+{% for role, count in report.roles_stripped.items %}- {{ role }}: {{ count }} member{{ count|pluralize }}
+{% endfor %}{% endif %}{% if report.unresolved %}
+These members could not be matched to a Discord account, so they kept no channel access and received no alumni roles:
+{% for person in report.unresolved %}- {{ person.display_name }} ({{ person.discord_username|default:"no username" }}, {{ person.role }})
+{% endfor %}{% endif %}
+Best regards,
+Djangonaut Space

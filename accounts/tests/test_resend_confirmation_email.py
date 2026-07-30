@@ -1,6 +1,7 @@
 from django.core import mail
 from django.test import Client
 from django.test import TestCase
+from django.test import override_settings
 from django.urls import reverse
 
 from accounts.factories import UserFactory
@@ -22,6 +23,7 @@ class ResendConfirmationEmailViewTests(TestCase):
             f"{reverse('login')}?next={self.resend_confirmation_email_url}",
         )
 
+    @override_settings(ENVIRONMENT="production")
     def test_get_update_email_subscription_url(self):
         self.client.force_login(self.user)
         response = self.client.post(self.resend_confirmation_email_url, {}, follow=True)

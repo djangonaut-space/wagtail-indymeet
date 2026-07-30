@@ -49,6 +49,7 @@ test = [
     "unittest_parametrize",
     "faker",
     "responses>=0.26.0",
+    "pytest-xdist>=3.8.0",
 ]
 dev = [
     "pre-commit",

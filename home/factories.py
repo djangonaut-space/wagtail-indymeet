@@ -54,6 +54,7 @@ class SessionFactory(factory.django.DjangoModelFactory):
     start_date = factory.Faker("date_object")
     end_date = factory.Faker("date_object")
     title = factory.Sequence(lambda n: "Session %d" % n)
+    short_name = factory.Sequence(lambda n: "Session %d" % n)
     slug = factory.Sequence(lambda n: "session-%d" % n)
     invitation_date = factory.Faker("date_object")
     application_start_date = factory.Faker("date_object")

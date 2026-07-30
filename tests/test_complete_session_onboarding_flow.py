@@ -233,6 +233,7 @@ class TestCompleteSessionOnboardingFlow:
         app_start_date: str,
         app_end_date: str,
         invitation_date: str,
+        short_name: str = "Session 1",
     ) -> int:
         """
         Helper to create a Session via Django admin.
@@ -246,6 +247,7 @@ class TestCompleteSessionOnboardingFlow:
 
         # Fill in the form
         page.locator("#id_title").fill(title)
+        page.locator("#id_short_name").fill(short_name)
         page.locator("#id_slug").fill(slug)
         page.locator("#id_start_date").fill(start_date)
         page.locator("#id_end_date").fill(end_date)
@@ -1112,7 +1114,7 @@ class TestCompleteSessionOnboardingFlow:
 
     @patch("django_recaptcha.fields.ReCaptchaField.validate", return_value=True)
     def test_complete_session_onboarding_flow(
-        self, mock_captcha, page: Page, db, pause_at_end
+        self, mock_captcha, page: Page, db, pause_at_end, settings
     ):
         """
         Complete end-to-end test for the session flow.
@@ -1123,6 +1125,8 @@ class TestCompleteSessionOnboardingFlow:
             uv run pytest -m playwright -k 'test_complete_session_onboarding_flow' \
                 --headed --pause-at-end
         """
+        # Allow emails to pass through for tests
+        settings.ENVIRONMENT = "production"
         # ======================================================================
         # PHASE 1: Navigator and Captain onboard
         # ======================================================================
