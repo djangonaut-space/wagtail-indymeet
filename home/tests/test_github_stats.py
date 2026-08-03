@@ -90,8 +90,9 @@ class GitHubStatsCollectorTests(SimpleTestCase):
     def test_init_with_token(self, mock_github_class):
         collector = GitHubStatsCollector(self.mock_token)
         mock_github_class.assert_called_once()
-        auth = mock_github_class.call_args.kwargs["auth"]
-        self.assertEqual(auth.token, self.mock_token)
+        self.assertEqual(
+            mock_github_class.call_args.kwargs["auth"].token, self.mock_token
+        )
         self.assertIsNotNone(collector.github)
 
     @patch("home.services.github_stats.Github")
@@ -99,8 +100,9 @@ class GitHubStatsCollectorTests(SimpleTestCase):
         with override_settings(GITHUB_TOKEN="settings_token"):
             GitHubStatsCollector()
             mock_github_class.assert_called_once()
-            auth = mock_github_class.call_args.kwargs["auth"]
-            self.assertEqual(auth.token, "settings_token")
+            self.assertEqual(
+                mock_github_class.call_args.kwargs["auth"].token, "settings_token"
+            )
 
     @patch("home.services.github_stats.Github")
     def test_init_disables_retries_for_loud_rate_limit_failure(self, mock_github_class):
