@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim
 
 ARG NODE_MAJOR=20
 
