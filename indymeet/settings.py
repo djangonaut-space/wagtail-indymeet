@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "django.forms",
     # other
     "django_extensions",
@@ -305,8 +306,9 @@ class FormRenderer(TemplatesSetting):
 
 FORM_RENDERER = "indymeet.settings.FormRenderer"
 
-# Should be removed in Django 6.0
-FORMS_URLFIELD_ASSUME_HTTPS = True
+# Transitional setting: opts into Django 7.0's default of urlize/urlizetrunc
+# linking bare domains as https:// instead of http://.
+URLIZE_ASSUME_HTTPS = True
 
 # Cloudflare settings
 CLOUDFLARE_BEARER_TOKEN = os.getenv("CLOUDFLARE_BEARER_TOKEN")

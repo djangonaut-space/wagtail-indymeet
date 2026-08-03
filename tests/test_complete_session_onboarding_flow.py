@@ -892,8 +892,8 @@ class TestCompleteSessionOnboardingFlow:
         # Clear mail outbox
         mail.outbox.clear()
 
-        # Click "Go" button
-        page.get_by_role("button", name="Go").click()
+        # Click "Run" button
+        page.get_by_role("button", name="Run").click()
         page.wait_for_load_state("networkidle")
 
         # Verify success message

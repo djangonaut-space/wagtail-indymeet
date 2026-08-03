@@ -102,7 +102,7 @@ class BuildTestDbTemplateCommandTests(SimpleTestCase):
             management.call_command("build_test_db_template", stdout=out)
 
         connection.creation.create_test_db.assert_called_once_with(
-            verbosity=1, autoclobber=True, serialize=False, keepdb=False
+            verbosity=1, autoclobber=True, keepdb=False
         )
         # While building, the template is a plain database (no TEMPLATE key)
         # named after the template, not cloned from itself.
