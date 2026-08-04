@@ -199,7 +199,10 @@ class TestAvailabilityForm:
 
         availability = UserAvailability.objects.create(user=user)
         form = UserAvailabilityForm(
-            data={"slots": [24.0, 48.0, 72.0]},  # Mon, Tue, Wed at 00:00
+            data={
+                "slots": [24.0, 48.0, 72.0],  # Mon, Tue, Wed at 00:00
+                "slots_timezone": DEFAULT_TIMEZONE,
+            },
             instance=availability,
         )
 
@@ -210,7 +213,10 @@ class TestAvailabilityForm:
         from accounts.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(user=user)
-        form = UserAvailabilityForm(data={"slots": []}, instance=availability)
+        form = UserAvailabilityForm(
+            data={"slots": [], "slots_timezone": DEFAULT_TIMEZONE},
+            instance=availability,
+        )
 
         assert form.is_valid()
 
@@ -263,8 +269,9 @@ class TestAvailabilityForm:
         assert not form.is_valid()
         assert "slots_timezone" in form.errors
 
-    def test_form_omitted_timezone_preserves_existing_timezone(self, user):
-        """Test legacy/partial submissions do not reset saved timezone."""
+    def test_form_requires_timezone(self, user):
+        """Test that omitting the timezone fails validation instead of silently
+        falling back to the previously saved value."""
         from accounts.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(
@@ -274,11 +281,8 @@ class TestAvailabilityForm:
         )
         form = UserAvailabilityForm(data={"slots": [33.0, 33.5]}, instance=availability)
 
-        assert form.is_valid()
-        saved_availability = form.save()
-
-        assert saved_availability.slots == [33.0, 33.5]
-        assert saved_availability.slots_timezone == US_EASTERN_TIMEZONE
+        assert not form.is_valid()
+        assert "slots_timezone" in form.errors
 
 
 @pytest.mark.django_db
@@ -391,7 +395,11 @@ class TestUserAvailabilityFormEdgeCases:
         availability = UserAvailability.objects.create(user=user)
         # JSONField should handle conversion, but let's test with proper list
         form = UserAvailabilityForm(
-            data={"slots": [24.0, "invalid", 48.0]}, instance=availability
+            data={
+                "slots": [24.0, "invalid", 48.0],
+                "slots_timezone": DEFAULT_TIMEZONE,
+            },
+            instance=availability,
         )
 
         # Form should still be valid as JSONField accepts lists
@@ -403,7 +411,10 @@ class TestUserAvailabilityFormEdgeCases:
         from accounts.forms import UserAvailabilityForm
 
         availability = UserAvailability.objects.create(user=user)
-        form = UserAvailabilityForm(data={}, instance=availability)  # No slots provided
+        form = UserAvailabilityForm(
+            data={"slots_timezone": DEFAULT_TIMEZONE},  # No slots provided
+            instance=availability,
+        )
 
         # Should be valid - slots is not required
         assert form.is_valid()
@@ -418,7 +429,8 @@ class TestUserAvailabilityFormEdgeCases:
         )
         # JSONField converts empty list to empty list (valid value)
         form = UserAvailabilityForm(
-            data={"slots": json.dumps([])}, instance=availability
+            data={"slots": json.dumps([]), "slots_timezone": DEFAULT_TIMEZONE},
+            instance=availability,
         )
 
         assert form.is_valid()

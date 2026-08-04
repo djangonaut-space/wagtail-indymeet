@@ -210,7 +210,6 @@ class UserAvailabilityForm(forms.ModelForm):
     )
     slots_timezone = forms.ChoiceField(
         choices=TIMEZONE_CHOICES,
-        required=False,
         initial="UTC",
         label="Timezone",
         help_text="The timezone for the weekly times selected below.",
@@ -224,15 +223,6 @@ class UserAvailabilityForm(forms.ModelForm):
     class Meta:
         model = UserAvailability
         fields = ("slots", "slots_timezone")
-
-    def clean_slots_timezone(self) -> str:
-        """Default omitted timezone submissions without overwriting saved rows."""
-        slots_timezone = self.cleaned_data.get("slots_timezone")
-        if slots_timezone:
-            return slots_timezone
-        if self.instance and self.instance.pk:
-            return self.instance.slots_timezone or "UTC"
-        return "UTC"
 
 
 class DeleteAccountForm(forms.Form):
