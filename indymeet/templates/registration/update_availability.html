@@ -57,6 +57,7 @@
 
         <form method="post" id="availability-form">
             {% csrf_token %}
+            {{ form.media }}
             <div class="mb-4">
                 <label for="{{ form.slots_timezone.id_for_label }}" class="mb-1 block font-semibold">
                     {{ form.slots_timezone.label }}

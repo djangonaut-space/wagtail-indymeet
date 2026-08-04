@@ -389,6 +389,16 @@ class TestAvailabilityPage:
         return user
 
     @pytest.fixture
+    def context(self, new_context, live_server) -> BrowserContext:
+        """Spoof a non-UTC browser timezone so the timezone auto-detect
+        behavior in availability_timezone_autodetect.js can be asserted on
+        deterministically, regardless of the host machine's timezone."""
+        return new_context(
+            base_url=live_server.url,
+            timezone_id=PACIFIC_AUCKLAND_TIMEZONE,
+        )
+
+    @pytest.fixture
     def mobile_page(self, new_context, live_server):
         context = new_context(
             base_url=live_server.url,
@@ -403,10 +413,16 @@ class TestAvailabilityPage:
     def test_availability_workflow(self, page: Page, authenticated_user, mobile_page):
         """
         Complete workflow test for availability page:
-        1. Select a block of time and save
-        2. Go back and confirm block is selected
+        1. Confirm timezone is auto-detected from the browser (no slots yet),
+           select a block of time, and save without touching the timezone
+           field to confirm the auto-detected value is actually persisted
+           (not just displayed)
+        2. Switch to an explicit timezone and save; confirm it is preserved
+           on reload rather than clobbered by auto-detection now that slots
+           exist
         3. Clear availability and save
-        4. Go back and confirm block is removed
+        4. Go back and confirm block is removed and the timezone reverts to
+           the auto-detected browser timezone now that slots are empty again
         5. Select multiple scattered slots and save
         6. Go back and confirm slots remain
         7. Mobile — tap to select, then tap to deselect
@@ -437,7 +453,10 @@ class TestAvailabilityPage:
 
         timezone_select = page.get_by_label("Timezone")
         expect(timezone_select).to_be_visible()
-        timezone_select.select_option(US_EASTERN_TIMEZONE)
+
+        # No slots exist yet, so the timezone should be auto-detected from
+        # the browser (spoofed to Pacific/Auckland by the `context` fixture)
+        expect(timezone_select).to_have_value(PACIFIC_AUCKLAND_TIMEZONE)
 
         # Select a block of time slots (Monday 9:00 AM - 10:30 AM)
         # The grid is organized as: columns = days (0-6), rows = times
@@ -460,21 +479,42 @@ class TestAvailabilityPage:
         expect(monday_10am).to_have_class(re.compile(r".*\bselected\b.*"))
         expect(monday_1030am).to_have_class(re.compile(r".*\bselected\b.*"))
 
-        # Save
+        # Save without touching the timezone field, so this proves the
+        # auto-detected value actually gets submitted, not just displayed:
+        # the page's own script snapshots the select's value into JS state
+        # once at load, and only updates that snapshot in response to a
+        # "change" event, which is exactly what the auto-detect script must
+        # dispatch after setting the value programmatically.
         page.get_by_role("button", name="Save Availability").first.click()
         page.wait_for_load_state("networkidle")
 
         # Should redirect to profile
         expect(page).to_have_url(re.compile(r".*/profile/?$"))
 
-        # Step 2: Go back to availability page and confirm block is still selected
+        # Confirm the auto-detected timezone round-tripped into the saved
+        # data (not just the on-load DOM value we already checked above)
+        page.goto(reverse("availability"))
+        page.wait_for_load_state("networkidle")
+        page.locator("#availability-grid tbody tr").first.wait_for(state="visible")
+
+        expect(timezone_select).to_have_value(PACIFIC_AUCKLAND_TIMEZONE)
+        expect(monday_9am).to_have_class(re.compile(r".*\bselected\b.*"))
+
+        # Step 2: Switch to an explicit timezone and save; confirm it is
+        # preserved on reload rather than clobbered by auto-detection now
+        # that slots exist
+        timezone_select.select_option(US_EASTERN_TIMEZONE)
+        page.get_by_role("button", name="Save Availability").first.click()
+        page.wait_for_load_state("networkidle")
+
         page.goto(reverse("availability"))
         page.wait_for_load_state("networkidle")
 
         # Wait for grid to be generated
         page.locator("#availability-grid tbody tr").first.wait_for(state="visible")
 
-        # Wait for grid to render and data to load
+        # The saved timezone should be preserved, not overwritten by
+        # browser auto-detection, since slots now exist.
         expect(timezone_select).to_have_value(US_EASTERN_TIMEZONE)
         expect(monday_9am).to_have_class(re.compile(r".*\bselected\b.*"))
 
@@ -510,6 +550,10 @@ class TestAvailabilityPage:
         expect(monday_930am).not_to_have_class(re.compile(r".*\bselected\b.*"))
         expect(monday_10am).not_to_have_class(re.compile(r".*\bselected\b.*"))
         expect(monday_1030am).not_to_have_class(re.compile(r".*\bselected\b.*"))
+
+        # Slots are empty again, so the timezone should auto-detect back to
+        # the browser's timezone
+        expect(timezone_select).to_have_value(PACIFIC_AUCKLAND_TIMEZONE)
 
         # Step 5: Select a different block of time slots to verify selection works
         # Select: Tuesday 2:00 PM to Tuesday 3:00 PM (3 slots)

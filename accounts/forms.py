@@ -201,6 +201,10 @@ class UserAvailabilityForm(forms.ModelForm):
     The actual slot selection happens via JavaScript on the frontend.
     This form handles the JSON slot data and the timezone those local
     wall-clock slots are defined in.
+
+    When no slots have been selected yet, `accounts/static/js/availability_timezone_autodetect.js`
+    (loaded via the Media class below) pre-selects the browser's detected
+    timezone in the slots_timezone field.
     """
 
     slots = forms.JSONField(
@@ -222,6 +226,9 @@ class UserAvailabilityForm(forms.ModelForm):
     class Meta:
         model = UserAvailability
         fields = ("slots", "slots_timezone")
+
+    class Media:
+        js = ("js/availability_timezone_autodetect.js",)
 
 
 class DeleteAccountForm(forms.Form):
