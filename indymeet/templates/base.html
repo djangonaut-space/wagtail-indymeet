@@ -85,6 +85,25 @@
         <script defer data-domain="djangonaut.space" src="https://plausible.io/js/script.js"></script>
         <script src="{% static "js/alpine.min.js" %}" defer></script>
         <script src="{% static "js/htmx.min.js" %}"></script>
+        <script>
+            document.addEventListener('htmx:configRequest', function (event) {
+                event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+            });
+        </script>
+        {% if request.user.is_authenticated %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                var storedTimezone = "{{ request.user.profile.timezone|default:'' }}";
+                if (browserTimezone && browserTimezone !== storedTimezone) {
+                    htmx.ajax('POST', '{% url "update_timezone" %}', {
+                        values: {timezone: browserTimezone},
+                        swap: 'none',
+                    });
+                }
+            });
+        </script>
+        {% endif %}
     </head>
 
     <body class="flex flex-col h-screen {% block body_class %}{% endblock %}">

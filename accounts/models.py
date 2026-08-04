@@ -179,6 +179,12 @@ class UserProfile(models.Model):
         help_text="The roles you are interested in. Djangonaut is the mentee role, "
         "the rest are volunteer roles.",
     )
+    timezone = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text="IANA timezone name detected from the user's browser.",
+    )
 
     class Meta:
         constraints = [
