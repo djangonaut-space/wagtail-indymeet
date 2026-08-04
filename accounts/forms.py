@@ -210,7 +210,6 @@ class UserAvailabilityForm(forms.ModelForm):
     )
     slots_timezone = forms.ChoiceField(
         choices=TIMEZONE_CHOICES,
-        initial="UTC",
         label="Timezone",
         help_text="The timezone for the weekly times selected below.",
         widget=forms.Select(
