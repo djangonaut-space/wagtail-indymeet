@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
 from home import constants
+from home.availability import utc_slot_to_local_slot
 
 from .models import CustomUser
 from .models import UserAvailability
@@ -229,6 +230,23 @@ class UserAvailabilityForm(forms.ModelForm):
 
     class Media:
         js = ("js/availability_timezone_autodetect.js",)
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get("instance")
+        if instance is not None and instance.slots_timezone == "UTC":
+            # If slots_timezone is still the default "UTC" (never explicitly set)
+            # and the user's UserProfile.timezone is known and different, convert
+            # the slots to that timezone for display. This transformation is
+            # applied to the in-memory instance only and is not saved unless the
+            # user submits the form.
+            profile_timezone = instance.user.profile.timezone
+            if profile_timezone and profile_timezone != "UTC":
+                instance.slots = [
+                    utc_slot_to_local_slot(slot, profile_timezone)
+                    for slot in instance.slots
+                ]
+                instance.slots_timezone = profile_timezone
+        super().__init__(*args, **kwargs)
 
 
 class DeleteAccountForm(forms.Form):

@@ -4,9 +4,12 @@ import json
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 from django.urls import reverse
 
+from accounts.forms import UserAvailabilityForm
 from accounts.models import UserAvailability
+from home.availability import utc_slot_to_local_slot
 from tests.timezones import (
     CENTRAL_EUROPEAN_TIMEZONE,
     DEFAULT_TIMEZONE,
@@ -190,14 +193,21 @@ class TestAvailabilityView:
         assert availability.slots_timezone == US_EASTERN_TIMEZONE
 
 
-class TestAvailabilityForm:
+class TestAvailabilityForm(TestCase):
     """Test the UserAvailabilityForm."""
 
-    def test_form_valid_with_slots(self, user):
-        """Test form validation with valid slot data."""
-        from accounts.forms import UserAvailabilityForm
+    @classmethod
+    def setUpTestData(cls):
+        """Create a shared test user for all tests in this class."""
+        cls.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
 
-        availability = UserAvailability.objects.create(user=user)
+    def test_form_valid_with_slots(self):
+        """Test form validation with valid slot data."""
+        availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(
             data={
                 "slots": [24.0, 48.0, 72.0],  # Mon, Tue, Wed at 00:00
@@ -208,11 +218,9 @@ class TestAvailabilityForm:
 
         assert form.is_valid()
 
-    def test_form_valid_with_empty_slots(self, user):
+    def test_form_valid_with_empty_slots(self):
         """Test form validation with empty slots."""
-        from accounts.forms import UserAvailabilityForm
-
-        availability = UserAvailability.objects.create(user=user)
+        availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(
             data={"slots": [], "slots_timezone": DEFAULT_TIMEZONE},
             instance=availability,
@@ -220,11 +228,9 @@ class TestAvailabilityForm:
 
         assert form.is_valid()
 
-    def test_form_saves_slots(self, user):
+    def test_form_saves_slots(self):
         """Test that the form saves slot data correctly."""
-        from accounts.forms import UserAvailabilityForm
-
-        availability = UserAvailability.objects.create(user=user)
+        availability = UserAvailability.objects.create(user=self.user)
         test_slots = [
             24.0,
             36.0,
@@ -242,11 +248,9 @@ class TestAvailabilityForm:
         assert saved_availability.slots == test_slots
         assert saved_availability.slots_timezone == CENTRAL_EUROPEAN_TIMEZONE
 
-    def test_form_timezone_choices_include_iana_zones(self, user):
+    def test_form_timezone_choices_include_iana_zones(self):
         """Test that the timezone selector offers IANA timezone names."""
-        from accounts.forms import UserAvailabilityForm
-
-        availability = UserAvailability.objects.create(user=user)
+        availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(instance=availability)
         timezone_values = {
             value for value, label in form.fields["slots_timezone"].choices
@@ -256,11 +260,9 @@ class TestAvailabilityForm:
         assert US_EASTERN_TIMEZONE in timezone_values
         assert CENTRAL_EUROPEAN_TIMEZONE in timezone_values
 
-    def test_form_rejects_invalid_timezone(self, user):
+    def test_form_rejects_invalid_timezone(self):
         """Test that availability cannot be saved with an unknown timezone."""
-        from accounts.forms import UserAvailabilityForm
-
-        availability = UserAvailability.objects.create(user=user)
+        availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(
             data={"slots": [24.0], "slots_timezone": "Not/AZone"},
             instance=availability,
@@ -269,13 +271,11 @@ class TestAvailabilityForm:
         assert not form.is_valid()
         assert "slots_timezone" in form.errors
 
-    def test_form_requires_timezone(self, user):
+    def test_form_requires_timezone(self):
         """Test that omitting the timezone fails validation instead of silently
         falling back to the previously saved value."""
-        from accounts.forms import UserAvailabilityForm
-
         availability = UserAvailability.objects.create(
-            user=user,
+            user=self.user,
             slots=[33.0],
             slots_timezone=US_EASTERN_TIMEZONE,
         )
@@ -283,6 +283,47 @@ class TestAvailabilityForm:
 
         assert not form.is_valid()
         assert "slots_timezone" in form.errors
+
+    def test_converts_utc_slots_to_profile_timezone(self):
+        """UserAvailabilityForm.__init__ should convert default-UTC slots
+        to the user's UserProfile.timezone (e.g. detected by the browser)
+        for display, so the grid and timezone field show the same
+        timezone the JS auto-detect would have picked."""
+        self.user.profile.timezone = US_EASTERN_TIMEZONE
+        self.user.profile.save()
+        availability = UserAvailability.objects.create(
+            user=self.user,
+            slots=[33.0, 36.0],  # Mon 09:00, Mon 12:00 UTC
+            slots_timezone=DEFAULT_TIMEZONE,
+        )
+
+        form = UserAvailabilityForm(instance=availability)
+
+        expected_slots = [
+            utc_slot_to_local_slot(33.0, US_EASTERN_TIMEZONE),
+            utc_slot_to_local_slot(36.0, US_EASTERN_TIMEZONE),
+        ]
+        assert form.instance.slots == expected_slots
+        assert form.instance.slots_timezone == US_EASTERN_TIMEZONE
+        # form.initial is derived from the instance, so the rendered
+        # select reflects the conversion too.
+        assert form.initial["slots_timezone"] == US_EASTERN_TIMEZONE
+
+    def test_skips_conversion_when_timezone_customized(self):
+        """Once a user has explicitly saved a non-UTC timezone, it must
+        never be silently overridden by their profile timezone."""
+        self.user.profile.timezone = US_EASTERN_TIMEZONE
+        self.user.profile.save()
+        availability = UserAvailability.objects.create(
+            user=self.user,
+            slots=[33.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+
+        form = UserAvailabilityForm(instance=availability)
+
+        assert form.instance.slots == [33.0]
+        assert form.instance.slots_timezone == CENTRAL_EUROPEAN_TIMEZONE
 
 
 @pytest.mark.django_db
