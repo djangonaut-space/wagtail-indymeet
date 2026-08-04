@@ -1,7 +1,7 @@
 """Views for comparing availability across multiple users."""
 
 from dataclasses import asdict, dataclass
-from datetime import date, datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django import forms
@@ -73,7 +73,6 @@ def build_grid_data(
     selected_users: list[CustomUser],
     user_slots: dict[int, set[float]],
     timezone_name: str = "UTC",
-    reference_date: date | None = None,
 ) -> tuple[list[GridRow], slotAvailabilities]:
     """
     Build grid rows and slot availability mapping.
@@ -97,11 +96,7 @@ def build_grid_data(
 
             for day in range(7):
                 local_slot = (day * 24.0) + time_value
-                utc_slot = local_slot_to_utc_slot(
-                    local_slot,
-                    timezone_name,
-                    reference_date,
-                )
+                utc_slot = local_slot_to_utc_slot(local_slot, timezone_name)
 
                 available_user_ids = [
                     user.id
@@ -118,12 +113,8 @@ def build_grid_data(
                         color=get_slot_color(len(available_user_ids), total_count),
                         available_count=len(available_user_ids),
                         total_count=total_count,
-                        display_time=format_slot_as_time(
-                            utc_slot,
-                            timezone_name,
-                            reference_date,
-                        ),
-                        utc_datetime=slot_to_datetime(utc_slot, reference_date),
+                        display_time=format_slot_as_time(utc_slot, timezone_name),
+                        utc_datetime=slot_to_datetime(utc_slot),
                     )
                 )
 

@@ -80,28 +80,24 @@ class AvailabilityWindow:
         """
         Return a datetime object representing the start of this window.
 
-        Uses a reference date to create an actual UTC datetime that can be used
-        with templatetags like time_is_link.
-
         Returns:
             UTC datetime for the start of this availability window
         """
         return slot_to_datetime(self.slot_range[0])
 
 
-def get_reference_week_start(reference_date: date | None = None) -> date:
-    """Return the Sunday starting the reference week for timezone conversion.
+def get_reference_week_start() -> date:
+    """Return the Sunday starting this week, for timezone conversion.
 
     Availability is stored as hours from Sunday 00:00, so timezone conversion
     needs a real calendar week to apply the correct UTC offset/DST rules.
 
     Example:
-        ``get_reference_week_start(date(2024, 6, 17))`` returns
-        ``date(2024, 6, 16)`` because June 17, 2024 is a Monday and that
-        reference week starts on Sunday, June 16.
+        On a Monday, June 17 2024, this returns ``date(2024, 6, 16)`` because
+        that week starts on Sunday, June 16.
     """
-    reference_date = reference_date or datetime.now().date()
-    return reference_date - timedelta(days=(reference_date.weekday() + 1) % 7)
+    today = datetime.now().date()
+    return today - timedelta(days=(today.weekday() + 1) % 7)
 
 
 def _slot_datetime_components(slot: float) -> tuple[int, int, int]:
@@ -116,34 +112,30 @@ def _slot_datetime_components(slot: float) -> tuple[int, int, int]:
     return day_offset, hours, minutes
 
 
-def _datetime_to_slot(value: datetime, reference_week_start: date) -> float:
+def _datetime_to_slot(value: datetime, week_start: date) -> float:
     """Convert a datetime to a wall-clock weekly slot.
 
     Use calendar day/hour components rather than elapsed seconds so DST gaps or
-    folds within the reference week do not shift the wall-clock slot number.
+    folds within the week do not shift the wall-clock slot number.
     """
-    day_offset = (value.date() - reference_week_start).days
+    day_offset = (value.date() - week_start).days
     hours = value.hour + (value.minute / 60)
     return round(((day_offset * 24) + hours) % HOURS_PER_WEEK, 6)
 
 
-def slot_to_datetime(
-    slot: float,
-    reference_date: date | None = None,
-    timezone_name: str = "UTC",
-) -> datetime:
+def slot_to_datetime(slot: float, timezone_name: str = "UTC") -> datetime:
     """
     Convert a weekly slot value to a timezone-aware datetime.
 
-    This creates a concrete datetime for the current reference week. The date is
-    arbitrary because availability is weekly and recurring, but anchoring slots
-    to a real week lets zoneinfo apply that week's UTC offset/DST rules.
+    This creates a concrete datetime for this week (Sunday-Saturday). The date
+    is arbitrary because availability is weekly and recurring, but anchoring
+    slots to a real week lets zoneinfo apply that week's UTC offset/DST rules.
 
     Ambiguous or nonexistent local times intentionally inherit Python
     ``datetime``/``zoneinfo`` defaults (``fold=0`` and no validation). The first
     pass documents that behavior instead of blocking rare DST edge cells in the UI.
     """
-    week_start = get_reference_week_start(reference_date)
+    week_start = get_reference_week_start()
     day_offset, hours, minutes = _slot_datetime_components(slot)
     target_date = week_start + timedelta(days=day_offset)
     return datetime.combine(
@@ -153,36 +145,28 @@ def slot_to_datetime(
     )
 
 
-def local_slot_to_utc_slot(
-    slot: float,
-    timezone_name: str,
-    reference_date: date | None = None,
-) -> float:
+def local_slot_to_utc_slot(slot: float, timezone_name: str) -> float:
     """Convert a local wall-clock weekly slot to a comparable UTC slot.
 
-    Non-hour-aligned timezones can produce quarter-hour UTC reference slots
+    Non-hour-aligned timezones can produce quarter-hour UTC slots
     (for example ``27.25``). That is allowed for now, even though the UI grid
     still displays 30-minute local cells.
 
     Example:
-        ``local_slot_to_utc_slot(33.0, "America/New_York", date(2024, 6, 17))``
-        returns ``37.0`` because Monday 09:00 in New York is Monday 13:00 UTC
-        during that reference week.
+        If today falls in the week of June 16-22, 2024,
+        ``local_slot_to_utc_slot(33.0, "America/New_York")`` returns ``37.0``
+        because Monday 09:00 in New York is Monday 13:00 UTC that week.
     """
-    local_datetime = slot_to_datetime(slot, reference_date, timezone_name)
+    local_datetime = slot_to_datetime(slot, timezone_name)
     utc_datetime = local_datetime.astimezone(timezone.utc)
-    return _datetime_to_slot(utc_datetime, get_reference_week_start(reference_date))
+    return _datetime_to_slot(utc_datetime, get_reference_week_start())
 
 
-def utc_slot_to_local_slot(
-    slot: float,
-    timezone_name: str,
-    reference_date: date | None = None,
-) -> float:
+def utc_slot_to_local_slot(slot: float, timezone_name: str) -> float:
     """Convert a comparable UTC weekly slot to a viewer-local weekly slot."""
-    utc_datetime = slot_to_datetime(slot, reference_date, "UTC")
+    utc_datetime = slot_to_datetime(slot, "UTC")
     local_datetime = utc_datetime.astimezone(ZoneInfo(timezone_name))
-    return _datetime_to_slot(local_datetime, get_reference_week_start(reference_date))
+    return _datetime_to_slot(local_datetime, get_reference_week_start())
 
 
 def _convert_to_12hour_format(hour_24: int) -> tuple[int, str]:
@@ -255,20 +239,17 @@ def get_user_slots(user: "CustomUser") -> list[float]:
         return []
 
 
-def get_user_utc_slots(
-    user: "CustomUser",
-    reference_date: date | None = None,
-) -> list[float]:
-    """Get a user's local availability slots converted to UTC reference slots.
+def get_user_utc_slots(user: "CustomUser") -> list[float]:
+    """Get a user's local availability slots converted to UTC slots.
 
     The user's ``availability.slots`` are local wall-clock weekly coordinates in
     ``availability.slots_timezone``. This returns the comparable UTC slot values
     used for overlap calculations.
 
     Example:
-    A user with ``slots=[33.0]`` and
-    ``slots_timezone="America/New_York"`` returns ``[37.0]`` for the
-    reference week containing ``date(2024, 6, 17)``.
+    If today falls in the week of June 16-22, 2024, a user with
+    ``slots=[33.0]`` and ``slots_timezone="America/New_York"`` returns
+    ``[37.0]``.
     """
     try:
         availability = user.availability
@@ -276,7 +257,7 @@ def get_user_utc_slots(
         return []
 
     return [
-        local_slot_to_utc_slot(float(slot), availability.slots_timezone, reference_date)
+        local_slot_to_utc_slot(float(slot), availability.slots_timezone)
         for slot in availability.slots
     ]
 
@@ -339,19 +320,18 @@ def count_one_hour_blocks(slots: list[float]) -> int:
 
 def calculate_overlap(
     users: list["CustomUser"],
-    reference_date: date | None = None,
 ) -> tuple[list[float], int]:
     """
-    Find UTC reference slots where ALL users are available simultaneously.
+    Find UTC slots where ALL users are available simultaneously.
 
     Each user's stored slots are local wall-clock weekly slots in their own
     ``slots_timezone``. This function converts every user's slots to comparable
-    UTC reference slots for the requested reference week before intersecting.
+    UTC slots for this week before intersecting.
     """
     if not users:
         return [], 0
 
-    all_user_slots = [set(get_user_utc_slots(user, reference_date)) for user in users]
+    all_user_slots = [set(get_user_utc_slots(user)) for user in users]
 
     # Find intersection of all users' availability.
     overlapping_slots = set.intersection(*all_user_slots)
@@ -367,7 +347,6 @@ def calculate_team_overlap(
     navigator_users: list["CustomUser"],
     captain_user: "CustomUser | None",
     djangonaut_users: list["CustomUser"],
-    reference_date: date | None = None,
 ) -> dict[str, int | list[float] | list[dict] | bool]:
     """
     Calculate availability overlaps for an entire team.
@@ -380,11 +359,10 @@ def calculate_team_overlap(
         navigator_users: List of navigator CustomUser instances
         captain_user: Captain CustomUser instance (can be None)
         djangonaut_users: List of djangonaut CustomUser instances
-        reference_date: Date inside the reference week; defaults to today
 
     Returns:
         Dictionary with:
-        - navigator_meeting_slots: UTC reference slots for navigator meetings
+        - navigator_meeting_slots: UTC slots for navigator meetings
         - navigator_meeting_hours: Number of 1-hour blocks for navigator meetings
         - captain_meetings: List of dicts with djangonaut info and overlap data
         - is_valid: Boolean indicating if team meets minimum requirements (5 hours)
@@ -399,9 +377,7 @@ def calculate_team_overlap(
     # Calculate navigator meeting overlap (navigators + djangonauts, no captain).
     navigator_meeting_participants = navigator_users + djangonaut_users
     if navigator_meeting_participants:
-        nav_slots, nav_hours = calculate_overlap(
-            navigator_meeting_participants, reference_date
-        )
+        nav_slots, nav_hours = calculate_overlap(navigator_meeting_participants)
         result["navigator_meeting_slots"] = nav_slots
         result["navigator_meeting_hours"] = nav_hours
         result["is_valid"] = nav_hours >= Team.MIN_NAVIGATOR_MEETING_HOURS
@@ -410,7 +386,7 @@ def calculate_team_overlap(
     if captain_user and djangonaut_users:
         captain_meetings = []
         for djangonaut in djangonaut_users:
-            slots, hours = calculate_overlap([captain_user, djangonaut], reference_date)
+            slots, hours = calculate_overlap([captain_user, djangonaut])
             captain_meetings.append(
                 {
                     "djangonaut": djangonaut,
@@ -450,41 +426,34 @@ def _format_local_slot_as_time(slot: float) -> str:
     return f"{day_name} {hours12}:{minutes:02d} {period}"
 
 
-def format_slot_as_time(
-    slot: float,
-    timezone_name: str = "UTC",
-    reference_date: date | None = None,
-) -> str:
+def format_slot_as_time(slot: float, timezone_name: str = "UTC") -> str:
     """
-    Format a UTC reference slot as a human-readable time string.
+    Format a UTC slot as a human-readable time string.
 
     Args:
-        slot: UTC reference slot value (0.0 = Sunday 00:00 UTC)
+        slot: UTC slot value (0.0 = Sunday 00:00 UTC)
         timezone_name: IANA timezone name for display conversion
-        reference_date: Date inside the reference week; defaults to today
 
     Returns:
         Formatted string like "Mon 2:30 PM"
     """
-    local_slot = utc_slot_to_local_slot(slot, timezone_name, reference_date)
+    local_slot = utc_slot_to_local_slot(slot, timezone_name)
     return _format_local_slot_as_time(local_slot)
 
 
 def format_slots_as_ranges(
     slots: list[float],
     timezone_name: str = "UTC",
-    reference_date: date | None = None,
 ) -> list[str]:
     """
-    Format UTC reference slots as time ranges for display.
+    Format UTC slots as time ranges for display.
 
     Groups consecutive viewer-local slots into ranges like
     "Mon 2:00 PM - 3:30 PM".
 
     Args:
-        slots: Sorted UTC reference slot values
+        slots: Sorted UTC slot values
         timezone_name: IANA timezone name for display conversion
-        reference_date: Date inside the reference week; defaults to today
 
     Returns:
         List of formatted time range strings
@@ -493,8 +462,7 @@ def format_slots_as_ranges(
         return []
 
     converted_slots = [
-        utc_slot_to_local_slot(float(slot), timezone_name, reference_date)
-        for slot in slots
+        utc_slot_to_local_slot(float(slot), timezone_name) for slot in slots
     ]
     sorted_slots = sorted(converted_slots)
 
@@ -519,15 +487,13 @@ def format_slots_as_ranges(
 def format_availability_by_day(
     slots: list[float],
     timezone_name: str = "UTC",
-    reference_date: date | None = None,
 ) -> dict[str, list[str]]:
     """
-    Format UTC reference slots grouped by display-local day.
+    Format UTC slots grouped by display-local day.
 
     Args:
-        slots: List of UTC reference slot values
+        slots: List of UTC slot values
         timezone_name: IANA timezone name for display conversion
-        reference_date: Date inside the reference week; defaults to today
 
     Returns:
         Dict mapping day names to lists of time ranges
@@ -537,8 +503,7 @@ def format_availability_by_day(
         return {}
 
     converted_slots = [
-        utc_slot_to_local_slot(float(slot), timezone_name, reference_date)
-        for slot in slots
+        utc_slot_to_local_slot(float(slot), timezone_name) for slot in slots
     ]
 
     day_slots = {day: [] for day in DAYS}
@@ -600,30 +565,27 @@ def format_time_range(start_hour: float, end_hour: float) -> str:
 def calculate_user_overlap(
     user1: "CustomUser",
     user2: "CustomUser",
-    reference_date: date | None = None,
 ) -> list[float]:
     """
-    Calculate overlapping UTC reference slots between two individual users.
+    Calculate overlapping UTC slots between two individual users.
 
     Args:
         user1: First CustomUser instance
         user2: Second CustomUser instance
-        reference_date: Date inside the reference week; defaults to today
 
     Returns:
-        Sorted UTC reference slots where both users are available
+        Sorted UTC slots where both users are available
     """
-    slots, _ = calculate_overlap([user1, user2], reference_date)
+    slots, _ = calculate_overlap([user1, user2])
     return slots
 
 
 def find_best_one_hour_windows(
     users: list["CustomUser"],
     top_n: int = 5,
-    reference_date: date | None = None,
 ) -> list[AvailabilityWindow]:
     """
-    Find top N one-hour UTC reference windows with most user availability.
+    Find top N one-hour UTC windows with most user availability.
 
     Analyzes all possible 1-hour windows (335 total across a week) and returns
     the windows with the most users available, ranked by availability.
@@ -631,16 +593,13 @@ def find_best_one_hour_windows(
     Args:
         users: List of CustomUser instances to analyze
         top_n: Number of top windows to return (default 5)
-        reference_date: Date inside the reference week; defaults to today
 
     Returns:
         List of AvailabilityWindow instances sorted by availability (descending)
     """
     one_hour_windows = {}
     total_possible_windows = int(HOURS_PER_WEEK / SLOT_INCREMENT) - 1
-    user_slots_by_id = {
-        user.id: set(get_user_utc_slots(user, reference_date)) for user in users
-    }
+    user_slots_by_id = {user.id: set(get_user_utc_slots(user)) for user in users}
 
     for i in range(total_possible_windows):
         start_slot = i * SLOT_INCREMENT
@@ -658,10 +617,8 @@ def find_best_one_hour_windows(
                 unavailable_users.append(user)
 
         if len(available_users) > 1:
-            start_time = format_slot_as_time(start_slot, reference_date=reference_date)
-            end_time = format_slot_as_time(
-                end_slot + SLOT_INCREMENT, reference_date=reference_date
-            )
+            start_time = format_slot_as_time(start_slot)
+            end_time = format_slot_as_time(end_slot + SLOT_INCREMENT)
             end_time_only = end_time.split(" ", 1)[1]
             formatted_time = f"{start_time} - {end_time_only}"
 
@@ -684,7 +641,6 @@ def find_best_one_hour_windows(
 def find_best_one_hour_windows_with_roles(
     user_roles: dict["CustomUser", str],
     top_n: int = 5,
-    reference_date: date | None = None,
 ) -> list[AvailabilityWindow]:
     """
     Find top N one-hour windows with availability and role information.
@@ -696,13 +652,12 @@ def find_best_one_hour_windows_with_roles(
     Args:
         user_roles: Maps each user to their role
         top_n: Number of top windows to return (default 5)
-        reference_date: Date inside the reference week; defaults to today
 
     Returns:
         List of AvailabilityWindow instances with role_counts and
         unavailable_member_ids populated
     """
-    windows = find_best_one_hour_windows(list(user_roles.keys()), top_n, reference_date)
+    windows = find_best_one_hour_windows(list(user_roles.keys()), top_n)
 
     for window in windows:
         role_counts = {role: 0 for role, _ in SessionMembership.ROLES}

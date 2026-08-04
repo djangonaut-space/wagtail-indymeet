@@ -1,11 +1,11 @@
 """Tests for team formation functionality."""
 
-import datetime
 import json
 
 from django.contrib.admin.sites import site
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserAvailability
@@ -126,9 +126,8 @@ class AvailabilityUtilsTestCase(TestCase):
             slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
         )
 
-        slots, hours = calculate_overlap(
-            [ny_user, berlin_user], datetime.date(2024, 6, 17)
-        )
+        with freeze_time("2024-06-17"):
+            slots, hours = calculate_overlap([ny_user, berlin_user])
 
         self.assertEqual(slots, [37.0, 37.5])
         self.assertEqual(hours, 1)
@@ -170,14 +169,11 @@ class AvailabilityUtilsTestCase(TestCase):
         # Saturday 23:30 (11:30 PM)
         self.assertEqual(format_slot_as_time(167.5), "Sat 11:30 PM")
 
-        self.assertEqual(
-            format_slot_as_time(
-                37.0,
-                US_EASTERN_TIMEZONE,
-                datetime.date(2024, 6, 17),
-            ),
-            "Mon 9:00 AM",
-        )
+        with freeze_time("2024-06-17"):
+            self.assertEqual(
+                format_slot_as_time(37.0, US_EASTERN_TIMEZONE),
+                "Mon 9:00 AM",
+            )
 
     def test_format_slots_as_ranges(self):
         """Test formatting slots as time ranges."""
@@ -196,11 +192,8 @@ class AvailabilityUtilsTestCase(TestCase):
         ranges = format_slots_as_ranges([])
         self.assertEqual(ranges, [])
 
-        ranges = format_slots_as_ranges(
-            [37.0, 37.5],
-            US_EASTERN_TIMEZONE,
-            datetime.date(2024, 6, 17),
-        )
+        with freeze_time("2024-06-17"):
+            ranges = format_slots_as_ranges([37.0, 37.5], US_EASTERN_TIMEZONE)
         self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
 
 

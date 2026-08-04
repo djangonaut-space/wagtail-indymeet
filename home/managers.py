@@ -392,15 +392,12 @@ class UserSurveyResponseQuerySet(QuerySet):
         )
         return self.filter(~Exists(has_team_assignment))
 
-    def with_availability_overlap(
-        self, slots: list[float], reference_date: datetime.date | None = None
-    ):
+    def with_availability_overlap(self, slots: list[float]):
         """
         Filter responses for users with availability overlap with UTC reference slots.
 
         Args:
             slots: UTC reference slots to check overlap with
-            reference_date: Date inside the reference week; defaults to today
         """
         if not slots:
             return self.none()
@@ -417,18 +414,17 @@ class UserSurveyResponseQuerySet(QuerySet):
             if user.id in seen_user_ids:
                 continue
             seen_user_ids.add(user.id)
-            if target_slots.intersection(get_user_utc_slots(user, reference_date)):
+            if target_slots.intersection(get_user_utc_slots(user)):
                 matching_user_ids.append(user.id)
 
         return self.filter(user_id__in=matching_user_ids)
 
-    def with_navigator_overlap(self, team, reference_date: datetime.date | None = None):
+    def with_navigator_overlap(self, team):
         """
         Filter responses for users with availability overlap with team navigators.
 
         Args:
             team: Team instance whose navigators to check overlap with
-            reference_date: Date inside the reference week; defaults to today
         """
 
         from home.availability import get_user_utc_slots
@@ -442,19 +438,18 @@ class UserSurveyResponseQuerySet(QuerySet):
         )
         navigator_slots = set()
         for membership in navigator_memberships:
-            navigator_slots.update(get_user_utc_slots(membership.user, reference_date))
+            navigator_slots.update(get_user_utc_slots(membership.user))
 
         if not navigator_slots:
             return self.none()
-        return self.with_availability_overlap(list(navigator_slots), reference_date)
+        return self.with_availability_overlap(list(navigator_slots))
 
-    def with_captain_overlap(self, team, reference_date: datetime.date | None = None):
+    def with_captain_overlap(self, team):
         """
         Filter responses for users with availability overlap with team captain.
 
         Args:
             team: Team instance whose captain to check overlap with
-            reference_date: Date inside the reference week; defaults to today
         """
 
         from home.availability import get_user_utc_slots
@@ -468,11 +463,11 @@ class UserSurveyResponseQuerySet(QuerySet):
         )
         captain_slots = set()
         for membership in captain_memberships:
-            captain_slots.update(get_user_utc_slots(membership.user, reference_date))
+            captain_slots.update(get_user_utc_slots(membership.user))
 
         if not captain_slots:
             return self.none()
-        return self.with_availability_overlap(list(captain_slots), reference_date)
+        return self.with_availability_overlap(list(captain_slots))
 
     def with_full_team_formation_data(self, session):
         """

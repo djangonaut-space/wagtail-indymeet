@@ -116,32 +116,22 @@ class BuildGridDataTests(TestCase):
         cell = rows[0].cells[0]
         self.assertEqual(cell.utc_datetime, slot_to_datetime(0.0))
 
+    @freeze_time("2024-06-17")
     def test_utc_datetime_accounts_for_viewer_timezone(self) -> None:
         """utc_datetime converts back to UTC for the viewer timezone."""
-        reference_date = datetime(2024, 6, 17).date()
-        rows_timezone, _ = build_grid_data(
-            [],
-            {},
-            US_EASTERN_TIMEZONE,
-            reference_date=reference_date,
-        )
+        rows_timezone, _ = build_grid_data([], {}, US_EASTERN_TIMEZONE)
         # New York is UTC-4 in June, so local Sun 00:00 maps to UTC Sun 04:00.
         utc_dt = rows_timezone[0].cells[0].utc_datetime
-        self.assertEqual(utc_dt, slot_to_datetime(4.0, reference_date))
+        self.assertEqual(utc_dt, slot_to_datetime(4.0))
         # Display time should still show local time.
         self.assertEqual(rows_timezone[0].cells[0].display_time, "Sun 12:00 AM")
 
+    @freeze_time("2024-06-17")
     def test_grid_allows_quarter_hour_viewer_timezone_without_matching_cells(
         self,
     ) -> None:
         """Quarter-hour viewer zones are accepted despite imperfect grid fit."""
-        reference_date = datetime(2024, 6, 17).date()
-        rows_timezone, _ = build_grid_data(
-            [],
-            {},
-            QUARTER_HOUR_TIMEZONE,
-            reference_date=reference_date,
-        )
+        rows_timezone, _ = build_grid_data([], {}, QUARTER_HOUR_TIMEZONE)
 
         # Local Sunday 00:00 in Kathmandu maps to Saturday 18:15 UTC. This is
         # allowed, but exposes the first-pass limitation: the displayed grid is
@@ -149,10 +139,11 @@ class BuildGridDataTests(TestCase):
         # quarter-hour aligned.
         self.assertEqual(
             rows_timezone[0].cells[0].utc_datetime,
-            slot_to_datetime(162.25, reference_date),
+            slot_to_datetime(162.25),
         )
         self.assertEqual(rows_timezone[0].cells[0].display_time, "Sun 12:00 AM")
 
+    @freeze_time("2024-06-17")
     def test_mixed_timezone_users_overlap_in_viewer_grid(self) -> None:
         """Users in different slot timezones overlap by derived UTC slots."""
         ny_user = UserFactory.create()
@@ -163,7 +154,6 @@ class BuildGridDataTests(TestCase):
             [ny_user, berlin_user],
             user_slots,
             DEFAULT_TIMEZONE,
-            reference_date=datetime(2024, 6, 17).date(),
         )
 
         # Monday 13:00 UTC should contain both users.
