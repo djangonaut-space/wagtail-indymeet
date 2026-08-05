@@ -16,6 +16,7 @@ from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 from home import constants
+from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
 from indymeet.admin import DescriptiveSearchMixin
@@ -30,6 +31,7 @@ from .forms import (
 )
 from .models import (
     Announcement,
+    DiscordRole,
     Event,
     Project,
     Question,
@@ -853,6 +855,7 @@ class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     }
     readonly_fields = (
         "approval_note",
+        "mentioned_roles",
         "posted_at",
         "emailed_for_approval_at",
         "created_at",
@@ -863,6 +866,19 @@ class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         """Filter announcements to only those for sessions the user organizes."""
         return super().get_queryset(request).for_admin_site(request.user)
+
+    @admin.display(description="Roles this message will ping")
+    def mentioned_roles(self, obj) -> str:
+        """Which ``@names`` in the copy resolve to a real Discord role.
+
+        The message stores the names, not the ids, so nothing in the form
+        itself shows whether an ``@mention`` will actually notify anyone.
+        This is where an organizer catches a typo before approving.
+        """
+        _, roles = resolve_role_mentions(obj.message)
+        if not roles:
+            return "None"
+        return ", ".join(role.name for role in roles)
 
     @admin.display(description="Approved", boolean=True, ordering="approved_at")
     def approved(self, obj):
@@ -894,6 +910,23 @@ class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "or belong to a session without an active Discord."
             )
         self.message_user(request, message, messages.SUCCESS)
+
+
+@admin.register(DiscordRole)
+class DiscordRoleAdmin(admin.ModelAdmin):
+    """Read-only view of the roles an announcement can ping.
+
+    The rows are a mirror of the Discord server, rewritten wholesale by the
+    Discord session setup action and the ``sync_discord_roles`` command, so
+    editing them here would only be undone on the next sync.
+    """
+
+    list_display = ("name", "discord_id", "updated_at")
+    search_fields = ("name",)
+    readonly_fields = ("name", "discord_id", "created_at", "updated_at")
+
+    def has_add_permission(self, request) -> bool:
+        return False
 
 
 @admin.register(Team)

@@ -8,7 +8,7 @@ from django.utils import timezone
 from django_tasks import task
 
 from home import email
-from home.integrations.discord.service import create_message
+from home.integrations.discord.service import create_message, resolve_role_mentions
 from home.models import Announcement
 
 
@@ -44,9 +44,11 @@ def post_announcement(announcement_id: int) -> None:
         )
         if announcement is None:
             return
+        content, roles = resolve_role_mentions(announcement.discord_content)
         create_message(
             channel=announcement.session.discord_announcements_channel_id,
-            message=announcement.discord_content,
+            message=content,
+            mention_role_ids=[role.discord_id for role in roles],
         )
         announcement.posted_at = timezone.now()
         announcement.save(update_fields=["posted_at", "updated_at"])

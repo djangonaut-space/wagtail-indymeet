@@ -80,7 +80,11 @@ def stub_discord_api(
     def create_role(request):
         counters["role"] += 1
         payload = json.loads(request.body)
-        return 200, {}, json.dumps({"id": f"new-role-{counters['role']}", **payload})
+        role = {"id": f"new-role-{counters['role']}", **payload}
+        # Visible to a later GET, the way the real server behaves — the role
+        # mirror re-reads the list after setup has created its team roles.
+        roles.append(role)
+        return 200, {}, json.dumps(role)
 
     @_endpoint(rsps.GET, f"{GUILD_URL}/channels")
     def get_channels(request):

@@ -1,9 +1,14 @@
 import logging
+import re
 from datetime import timedelta
+from functools import lru_cache
 
 from django.conf import settings
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 
 from home.integrations.discord.client import DiscordClient
+from home.models import DiscordRole
 
 logger = logging.getLogger(__name__)
 
@@ -87,11 +92,86 @@ class DiscordMessageTooLong(ValueError):
     pass
 
 
-def create_message(*, channel: str, message: str) -> dict:
-    """Post a message to a Discord channel. Returns the created message as JSON."""
+def create_message(
+    *, channel: str, message: str, mention_role_ids: list[str] | None = None
+) -> dict:
+    """Post a message to a Discord channel. Returns the created message as JSON.
+
+    ``mention_role_ids`` is the exhaustive list of roles the message is
+    allowed to ping. Everything else Discord would otherwise parse out of the
+    content — ``@everyone``, ``@here``, individual users — is suppressed, so
+    copy nobody vetted for mentions can't notify the whole server.
+    """
     if len(message) > MESSAGE_CONTENT_MAX:
         raise DiscordMessageTooLong(
             f"Message is {len(message)} characters, over Discord's "
             f"{MESSAGE_CONTENT_MAX}-character content limit."
         )
-    return discord_client.create_message(channel_id=channel, content=message)
+    return discord_client.create_message(
+        channel_id=channel,
+        content=message,
+        allowed_mentions={"parse": [], "roles": list(mention_role_ids or [])},
+    )
+
+
+# An "@" that starts a mention: not part of a word (which would make it an
+# email address) and not already following another "@". The name that follows
+# must not run into a further word character, so "@Captainsville" is not a
+# ping for the "Captains" role.
+_MENTION_PREFIX = r"(?<![\w@])@("
+_MENTION_SUFFIX = r")(?!\w)"
+
+# The DiscordRole mirror rarely changes (only when sync_discord_roles runs),
+# but resolve_role_mentions is called once per announcement row in the admin
+# list and once per scheduled post, so querying it every time is an N+1.
+# The signal below clears the cache whenever a role is synced, renamed, or
+# removed, so it never serves stale data within this process.
+
+
+@lru_cache(maxsize=1)
+def _cached_roles() -> dict[str, DiscordRole]:
+    """The DiscordRole mirror, keyed by casefolded name."""
+    return {role.name.casefold(): role for role in DiscordRole.objects.all()}
+
+
+@receiver([post_save, post_delete], sender=DiscordRole)
+def _invalidate_role_mention_cache(**kwargs) -> None:
+    _cached_roles.cache_clear()
+
+
+def resolve_role_mentions(content: str) -> tuple[str, list[DiscordRole]]:
+    """Rewrite every known ``@Role`` in ``content`` as a Discord role mention.
+
+    This allows a mention to work as the API requires the ID, not the role name.
+    Only ``@names`` that match a mirrored role are rewritten. Anything else is
+    left exactly as typed, so an unknown handle, a channel reference and
+    ``CoC@djangonaut.space`` all still post as the text an organizer wrote.
+
+    Args:
+        content: The message as an organizer wrote it.
+
+    Returns:
+        The rewritten message, and the roles it mentions in the order they
+        first appear. Callers pass those to Discord as the allow-list of what
+        the message may actually ping.
+    """
+    roles = _cached_roles()
+    if not roles:
+        return content, []
+
+    # Longest name first so "@Session Organizers" wins over a "Session" role
+    # instead of matching the short one and leaving " Organizers" dangling.
+    names = sorted(roles, key=len, reverse=True)
+    pattern = re.compile(
+        _MENTION_PREFIX + "|".join(re.escape(name) for name in names) + _MENTION_SUFFIX,
+        re.IGNORECASE,
+    )
+    # Keyed by id and insertion-ordered: a role mentioned twice is listed once.
+    mentioned: dict[str, DiscordRole] = {}
+
+    def replace(match: re.Match) -> str:
+        role = roles[match.group(1).casefold()]
+        mentioned[role.discord_id] = role
+        return role.mention
+
+    return pattern.sub(replace, content), list(mentioned.values())

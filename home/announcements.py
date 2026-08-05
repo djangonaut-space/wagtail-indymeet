@@ -16,12 +16,15 @@ A template only sets ``needs_approval`` when a human genuinely has to touch
 it. The weeks whose copy is complete once the session fields are filled in
 post on their own, and carry no approval note.
 
-Two things intentionally *not* in here:
+The ``@Djangonauts``-style mentions below are role pings: at post time each
+one that names a role on the Discord server is swapped for the ``<@&ROLE_ID>``
+form Discord actually notifies on (see
+``home.integrations.discord.service``). Names that don't match a role post
+as plain text, so the role names here have to match the server's exactly.
 
-* The guest-speaker announcement. It is event-driven (sent the Friday before
-  a talk), not anchored to a session week, so organizers add it by hand.
-* Role pings. Discord only pings on ``<@&ROLE_ID>``; the literal
-  ``@Djangonauts`` below posts as plain text.
+One thing intentionally *not* in here: the guest-speaker announcement. It is
+event-driven (sent the Friday before a talk), not anchored to a session week,
+so organizers add it by hand.
 """
 
 from dataclasses import dataclass

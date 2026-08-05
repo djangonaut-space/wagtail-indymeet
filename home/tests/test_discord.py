@@ -306,8 +306,24 @@ class CreateMessageTests(TestCase):
 
         result = create_message(channel="chan-1", message="hi")
 
-        self.assertEqual(json.loads(rsps.calls[0].request.body), {"content": "hi"})
+        self.assertEqual(
+            json.loads(rsps.calls[0].request.body),
+            {"content": "hi", "allowed_mentions": {"parse": [], "roles": []}},
+        )
         self.assertEqual(result, {"id": "1", "content": "hi"})
+
+    @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
+    def test_only_the_given_roles_may_ping(self):
+        """An empty ``parse`` is what stops stray copy from @everyone-ing."""
+        rsps.add(rsps.POST, f"{BASE_URL}/channels/chan-1/messages", json={"id": "1"})
+
+        create_message(channel="chan-1", message="hi <@&7>", mention_role_ids=["7"])
+
+        self.assertEqual(
+            json.loads(rsps.calls[0].request.body)["allowed_mentions"],
+            {"parse": [], "roles": ["7"]},
+        )
 
     @override_settings(**DISCORD_SETTINGS)
     @rsps.activate

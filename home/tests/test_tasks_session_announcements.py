@@ -5,6 +5,7 @@ Tuesday-email to following-Monday-post timing the program relies on.
 """
 
 import datetime
+import json
 
 import responses as rsps
 from django.core import mail
@@ -17,6 +18,7 @@ from accounts.factories import UserFactory
 from home import constants
 from home.factories import (
     AnnouncementFactory,
+    DiscordRoleFactory,
     SessionFactory,
     SessionMembershipFactory,
 )
@@ -65,11 +67,30 @@ class PostAnnouncementTests(TestCase):
         post_announcement.call(announcement_id=announcement.pk)
 
         self.assertEqual(
-            rsps.calls[0].request.body,
-            b'{"content": "**Week 3**\\n\\nHello team"}',
+            json.loads(rsps.calls[0].request.body)["content"],
+            "**Week 3**\n\nHello team",
         )
         announcement.refresh_from_db()
         self.assertIsNotNone(announcement.posted_at)
+
+    @rsps.activate
+    def test_pings_mentioned_roles(self):
+        """@Role in the copy posts as an id, and is allow-listed to notify."""
+        rsps.add(rsps.POST, f"{BASE_URL}/channels/chan-1/messages", json={"id": "1"})
+        DiscordRoleFactory(name="Djangonauts", discord_id="r-dj")
+        announcement = AnnouncementFactory(
+            session=self.session,
+            week_number=1,
+            message="Hello @Djangonauts and @Captains",
+            needs_approval=False,
+        )
+
+        post_announcement.call(announcement_id=announcement.pk)
+
+        body = json.loads(rsps.calls[0].request.body)
+        # @Captains has no mirrored role, so it stays the text as written.
+        self.assertEqual(body["content"], "**Week 1**\n\nHello <@&r-dj> and @Captains")
+        self.assertEqual(body["allowed_mentions"], {"parse": [], "roles": ["r-dj"]})
 
     @rsps.activate
     def test_rerun_does_not_repost(self):

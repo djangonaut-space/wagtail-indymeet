@@ -22,6 +22,7 @@
     <li>Channels updated: {{ report.channels_updated|join:", "|default:"none" }}</li>
     <li>Roles created: {{ report.roles_created|join:", "|default:"none" }}</li>
     <li>Role assignments: {{ report.roles_assigned }}</li>
+    <li>Roles available to mention in announcements: {{ report.roles_synced }}</li>
     <li>Weekly announcements created: {{ report.announcements_created }}</li>
   </ul>
 

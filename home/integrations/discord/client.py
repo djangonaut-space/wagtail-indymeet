@@ -245,9 +245,20 @@ class DiscordClient:
         response = self._request("PATCH", f"/channels/{channel_id}", json=payload)
         return response.json()
 
-    def create_message(self, *, channel_id: str, content: str) -> dict:
-        """Post a message to a text channel and return the created message as JSON."""
+    def create_message(
+        self, *, channel_id: str, content: str, allowed_mentions: dict | None = None
+    ) -> dict:
+        """Post a message to a text channel and return the created message as JSON.
+
+        ``allowed_mentions`` is Discord's allow-list for which of the mentions
+        in ``content`` actually notify anyone; omitting it lets Discord ping
+        everything the content parses to.
+        https://docs.discord.com/developers/resources/message#allowed-mentions-object
+        """
+        payload = {"content": content}
+        if allowed_mentions is not None:
+            payload["allowed_mentions"] = allowed_mentions
         response = self._request(
-            "POST", f"/channels/{channel_id}/messages", json={"content": content}
+            "POST", f"/channels/{channel_id}/messages", json=payload
         )
         return response.json()

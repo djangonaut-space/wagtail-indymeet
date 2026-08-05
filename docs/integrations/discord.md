@@ -34,6 +34,7 @@ Grant the bot these permissions when inviting it (or via a role):
 | Manage Channels | Create/update the session category and channels, edit permission overwrites |
 | Manage Roles | Create team/session/alumni roles and assign/remove member roles |
 | Manage Events | Create and update scheduled events (event sync) |
+| Mention @everyone, @here and All Roles | Ping roles from session announcements. Discord requires this to mention a role that isn't flagged *Allow anyone to @mention this role*; without it the mention still posts, it just doesn't notify. The message's `allowed_mentions` allow-list is what keeps this from ever pinging the whole server (see `home/integrations/discord/service.py`) |
 | View Channels, Send Messages, Embed Links, Attach Files, Add Reactions, Use External Emoji, Use External Stickers, Read Message History, Create Public Threads, Create Private Threads, Send Messages in Threads, Pin Messages, Send Voice Messages, Send Polls, Manage Messages, Manage Threads | Channel setup writes overwrites that *allow* these to team/staff roles — Discord only lets the bot allow a permission it holds itself, so without these on the bot's own role, channel creation fails with `403 Missing Permissions` (see `TRUSTED_MEMBER_PERMISSIONS`/`SESSION_STAFF_PERMISSIONS` in `home/integrations/discord/session_service.py`) |
 
 **Role hierarchy caveat:** Discord only lets the bot manage roles *below its own highest role*. Keep the bot's role above every role it manages (team roles, `Djangonauts`, `Captains`, `Navigators`, `Session Organizers`, session-title roles, `past *`, `Stars`), otherwise those calls fail with a 403.
@@ -45,7 +46,7 @@ The bot token authenticates the app, but it doesn't put the bot *in* a server �
 1. In the Developer Portal, open the app's **OAuth2 → URL Generator** page.
 2. Under **Scopes**, check `bot`.
 3. Under **Bot Permissions**, check every permission listed in [Bot Permissions](#bot-permissions) above.
-4. Copy the generated URL and open it in a browser, then pick the target server and authorize. The URL should be: https://discord.com/oauth2/authorize?client_id=1524050868289405040&scope=bot&permissions=2903252132035664
+4. Copy the generated URL and open it in a browser, then pick the target server and authorize. The URL should be: https://discord.com/oauth2/authorize?client_id=1524050868289405040&scope=bot&permissions=2903252132166736
 5. In the server's role list, drag the bot's role above every role it manages (see the caveat above).
 
 ## The Bot's Own Role
