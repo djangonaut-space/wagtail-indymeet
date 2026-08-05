@@ -10,6 +10,7 @@ from django.db.models import Q
 
 from accounts.models import CustomUser, UserAvailability, UserProfile
 from home.models import (
+    Announcement,
     Project,
     ResourceLink,
     Session,
@@ -27,6 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         permissions_to_add = [
+            (Announcement, ["view", "add", "change"]),
             (CustomUser, ["view"]),
             (ResourceLink, ["view", "add"]),
             (Session, ["view", "add", "change"]),

@@ -28,6 +28,7 @@ from .forms import (
     SurveyCSVImportForm,
 )
 from .models import (
+    Announcement,
     Event,
     Project,
     Question,
@@ -831,6 +832,57 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         """Filter sessions to only those the user organizes."""
         return super().get_queryset(request).for_admin_site(request.user)
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+    list_display = (
+        "session",
+        "week_number",
+        "post_date",
+        "needs_approval",
+        "approved_at",
+        "posted_at",
+        "emailed_for_approval_at",
+        "approval_note",
+    )
+    list_filter = ("session", "needs_approval", "post_date")
+    search_fields = ("session__title", "message", "approval_note")
+    readonly_fields = (
+        "approval_note",
+        "posted_at",
+        "emailed_for_approval_at",
+        "created_at",
+        "updated_at",
+    )
+    actions = ["post_announcements_action"]
+
+    def get_queryset(self, request):
+        """Filter announcements to only those for sessions the user organizes."""
+        return super().get_queryset(request).for_admin_site(request.user)
+
+    @admin.action(description="Post selected announcements to Discord now")
+    def post_announcements_action(self, request, queryset):
+        """
+        Post the selected announcements without waiting for their post date.
+
+        Announcements still awaiting approval, ones already posted, and ones
+        whose session has no live Discord channel are skipped, so the count in
+        the message may be lower than the number selected.
+        """
+        postable = queryset.approved().not_posted().for_active_discord_sessions()
+        count = 0
+        for announcement_id in postable.values_list("id", flat=True):
+            tasks.post_announcement.enqueue(announcement_id=announcement_id)
+            count += 1
+        skipped = len(queryset) - count
+        message = f"Successfully queued {count} announcement(s) for posting."
+        if skipped:
+            message += (
+                f" Skipped {skipped} that were unapproved, already posted, "
+                "or belong to a session without an active Discord."
+            )
+        self.message_user(request, message, messages.SUCCESS)
 
 
 @admin.register(Team)
