@@ -251,25 +251,16 @@ class Session(models.Model):
         """
         Get the current week number of the session (1-indexed).
 
-        Week boundaries here follow the session's own start weekday, which is
-        not necessarily a Monday. Announcement scheduling needs calendar weeks
-        instead, so it uses ``week_number_for`` rather than this property.
-
         Returns:
             Week number if session is current, None if session hasn't started or has ended.
         """
         now = timezone.now().date()
         if now > self.end_date:
             return None
-        days_elapsed = (now - self.start_date).days
-        return (days_elapsed // 7) + 1
+        return self.week_number_for(now)
 
     def week_start_date(self, week_number: int) -> datetime.date:
-        """The Monday that opens the given session week.
-
-        Week 1 is the official starting week, so week 0 is the Monday before
-        the session begins.
-        """
+        """The Monday that opens the given session week."""
         monday_of_start_week = self.start_date - datetime.timedelta(
             days=self.start_date.weekday()
         )
