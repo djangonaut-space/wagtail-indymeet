@@ -232,7 +232,7 @@ Key variables (see `.env.template` files):
 
 ```bash
 # Services
-just up                          # Start all services, rebuilding on dependency file changes (docker compose up --watch --detached)
+just up                          # Start all services
 just down                        # Stop all services
 just logs                        # Follow Django logs
 
