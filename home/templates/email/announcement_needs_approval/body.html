@@ -11,11 +11,6 @@
     The <strong>Week {{ announcement.week_number }}</strong> announcement for <strong>{{ session.title }}</strong> is scheduled to post on <strong>{{ announcement.post_date|date:"l, j F Y" }}</strong> and needs your approval before it goes out.
   </p>
 
-  <p style="font-family: Helvetica, sans-serif; font-size: 14px; font-weight: bold; margin: 0; margin-bottom: 8px;">Message:</p>
-  <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #5c0287; margin-bottom: 16px; font-family: Helvetica, sans-serif; font-size: 14px;">
-    {{ announcement.discord_content|urlize|linebreaks }}
-  </div>
-
   {% if announcement.approval_note %}
   <p style="font-family: Helvetica, sans-serif; font-size: 14px; font-weight: bold; margin: 0; margin-bottom: 8px;">Note for reviewers:</p>
   <div style="font-family: Helvetica, sans-serif; font-size: 14px; margin: 0; margin-bottom: 16px;">{{ announcement.approval_note|urlize|linebreaks }}</div>
@@ -25,5 +20,12 @@
     Review the announcement below and approve it so it can be posted:
   </p>
 {% endblock before_cta %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 14px; font-weight: bold; margin: 0; margin-bottom: 8px;">Message:</p>
+  <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #5c0287; margin-bottom: 16px; font-family: Helvetica, sans-serif; font-size: 14px;">
+    {{ announcement.discord_content|urlize|linebreaks }}
+  </div>
+{% endblock after_cta %}
 
 {% block cta_button_text %}Review announcement{% endblock cta_button_text %}
