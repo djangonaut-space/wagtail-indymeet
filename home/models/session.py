@@ -14,6 +14,7 @@ from home.managers import (
     SessionQuerySet,
     TeamQuerySet,
 )
+from home.models.base import BaseModel
 from home.services.github_stats import Author, TeamScope
 
 
@@ -250,6 +251,10 @@ class Session(models.Model):
         """
         Get the current week number of the session (1-indexed).
 
+        Week boundaries here follow the session's own start weekday, which is
+        not necessarily a Monday. Announcement scheduling needs calendar weeks
+        instead, so it uses ``week_number_for`` rather than this property.
+
         Returns:
             Week number if session is current, None if session hasn't started or has ended.
         """
@@ -258,6 +263,26 @@ class Session(models.Model):
             return None
         days_elapsed = (now - self.start_date).days
         return (days_elapsed // 7) + 1
+
+    def week_start_date(self, week_number: int) -> datetime.date:
+        """The Monday that opens the given session week.
+
+        Week 1 is the official starting week, so week 0 is the Monday before
+        the session begins.
+        """
+        monday_of_start_week = self.start_date - datetime.timedelta(
+            days=self.start_date.weekday()
+        )
+        return monday_of_start_week + datetime.timedelta(weeks=week_number - 1)
+
+    @property
+    def week_one_start(self) -> datetime.date:
+        """The Monday of the session's official first week."""
+        return self.week_start_date(1)
+
+    def week_number_for(self, post_date: datetime.date) -> int:
+        """The session week a calendar date falls in. Inverse of week_start_date."""
+        return ((post_date - self.week_one_start).days // 7) + 1
 
     @property
     def status(self) -> str:

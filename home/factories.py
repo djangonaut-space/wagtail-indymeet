@@ -10,6 +10,7 @@ from django.utils import timezone
 from accounts.factories import UserFactory
 from home import constants
 from home.models import (
+    Announcement,
     Event,
     Project,
     ProjectPreference,
@@ -171,6 +172,19 @@ class WaitlistFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     session = factory.SubFactory(SessionFactory)
+
+
+class AnnouncementFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Announcement
+
+    session = factory.SubFactory(SessionFactory)
+    # Session-relative so the default announcement lands on a real session
+    # week, and week_number is left to Announcement.save() to derive.
+    post_date = factory.LazyAttribute(lambda o: o.session.week_start_date(1))
+    week_number = None
+    message = factory.Sequence(lambda n: "Announcement message %d" % n)
+    approval_note = ""
 
 
 class TestimonialFactory(factory.django.DjangoModelFactory):

@@ -1,3 +1,4 @@
+from .announcement import *
 from .blog import *
 from .event import *
 from .resource import *

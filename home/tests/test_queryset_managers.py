@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home.factories import (
+    AnnouncementFactory,
     EventFactory,
     SessionFactory,
     SessionMembershipFactory,
@@ -18,7 +19,14 @@ from home.factories import (
     TeamFactory,
     UserSurveyResponseFactory,
 )
-from home.models import Event, Session, SessionMembership, UserSurveyResponse, Waitlist
+from home.models import (
+    Announcement,
+    Event,
+    Session,
+    SessionMembership,
+    UserSurveyResponse,
+    Waitlist,
+)
 
 
 class EventQuerySetTestCase(TestCase):
@@ -986,3 +994,138 @@ class SessionQuerySetTestCase(TestCase):
         # Should find the session because we're using AoE late timezone (UTC-12)
         # which makes "today" end later
         self.assertIsNotNone(result)
+
+
+class AnnouncementQuerySetTestCase(TestCase):
+    """Test AnnouncementQuerySet methods."""
+
+    def test_needs_posting(self):
+        today = timezone.now().date()
+        not_needing_approval = AnnouncementFactory(
+            needs_approval=False, post_date=today, posted_at=None
+        )
+        approved = AnnouncementFactory(
+            needs_approval=True,
+            approved_at=timezone.now(),
+            post_date=today,
+            posted_at=None,
+        )
+        # Excluded: still awaiting approval.
+        AnnouncementFactory(
+            needs_approval=True, approved_at=None, post_date=today, posted_at=None
+        )
+        # Excluded: scheduled in the future.
+        AnnouncementFactory(
+            needs_approval=False,
+            post_date=today + timedelta(days=1),
+            posted_at=None,
+        )
+        # Excluded: already posted.
+        AnnouncementFactory(
+            needs_approval=False, post_date=today, posted_at=timezone.now()
+        )
+
+        self.assertCountEqual(
+            Announcement.objects.needs_posting(), [not_needing_approval, approved]
+        )
+
+    def test_not_yet_emailed(self):
+        not_emailed = AnnouncementFactory(emailed_for_approval_at=None)
+        # Excluded: already emailed for approval.
+        AnnouncementFactory(emailed_for_approval_at=timezone.now())
+
+        self.assertCountEqual(Announcement.objects.not_yet_emailed(), [not_emailed])
+
+    def test_approved(self):
+        not_needing_approval = AnnouncementFactory(needs_approval=False)
+        signed_off = AnnouncementFactory(
+            needs_approval=True, approved_at=timezone.now()
+        )
+        # Excluded: needs approval and hasn't got it.
+        AnnouncementFactory(needs_approval=True, approved_at=None)
+
+        self.assertCountEqual(
+            Announcement.objects.approved(), [not_needing_approval, signed_off]
+        )
+
+    def test_for_active_discord_sessions(self):
+        """Both the category and the announcements channel must be recorded."""
+        live = AnnouncementFactory(
+            session__discord_category_id="cat-1",
+            session__discord_announcements_channel_id="chan-1",
+        )
+        # Excluded: Discord was never set up (or has been torn down).
+        AnnouncementFactory(
+            session__discord_category_id="",
+            session__discord_announcements_channel_id="chan-2",
+        )
+        # Excluded: no announcements channel to post into.
+        AnnouncementFactory(
+            session__discord_category_id="cat-3",
+            session__discord_announcements_channel_id="",
+        )
+
+        self.assertCountEqual(
+            Announcement.objects.for_active_discord_sessions(), [live]
+        )
+
+    def test_for_admin_site(self):
+        """Organizers see only their sessions' announcements; superusers see all."""
+        organizer = UserFactory()
+        organized = AnnouncementFactory()
+        SessionMembershipFactory(
+            user=organizer, session=organized.session, role=constants.ORGANIZER
+        )
+        other = AnnouncementFactory()
+
+        self.assertCountEqual(
+            Announcement.objects.for_admin_site(organizer), [organized]
+        )
+        self.assertCountEqual(
+            Announcement.objects.for_admin_site(UserFactory(is_superuser=True)),
+            [organized, other],
+        )
+
+    def test_awaiting_approval(self):
+        today = timezone.now().date()
+        within_window = AnnouncementFactory(
+            needs_approval=True,
+            approved_at=None,
+            posted_at=None,
+            post_date=today + timedelta(days=6),
+        )
+        past_post_date = AnnouncementFactory(
+            needs_approval=True,
+            approved_at=None,
+            posted_at=None,
+            post_date=today - timedelta(days=3),
+        )
+        # Excluded: doesn't require approval.
+        AnnouncementFactory(
+            needs_approval=False, approved_at=None, posted_at=None, post_date=today
+        )
+        # Excluded: already approved.
+        AnnouncementFactory(
+            needs_approval=True,
+            approved_at=timezone.now(),
+            posted_at=None,
+            post_date=today,
+        )
+        # Excluded: already posted.
+        AnnouncementFactory(
+            needs_approval=True,
+            approved_at=None,
+            posted_at=timezone.now(),
+            post_date=today,
+        )
+        # Excluded: scheduled beyond the six day window.
+        AnnouncementFactory(
+            needs_approval=True,
+            approved_at=None,
+            posted_at=None,
+            post_date=today + timedelta(days=7),
+        )
+
+        self.assertCountEqual(
+            Announcement.objects.awaiting_approval(), [within_window, past_post_date]
+        )
