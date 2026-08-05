@@ -90,3 +90,17 @@ class AnnouncementAdminTests(TestCase):
         self.assertCountEqual(
             self.admin.get_queryset(self._get_request()), [theirs, other]
         )
+
+    def test_approved_display(self):
+        """The column reflects real approval state, not the raw boolean."""
+        not_required = AnnouncementFactory(session=self.session, needs_approval=False)
+        pending = AnnouncementFactory(
+            session=self.session, needs_approval=True, approved_at=None
+        )
+        approved = AnnouncementFactory(
+            session=self.session, needs_approval=True, approved_at=timezone.now()
+        )
+
+        self.assertIs(self.admin.approved(not_required), True)
+        self.assertIs(self.admin.approved(pending), False)
+        self.assertIs(self.admin.approved(approved), True)

@@ -1,9 +1,10 @@
 from datetime import date, timedelta
 
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Exists, F, Max, OuterRef
+from django.db.models import Count, Exists, F, Max, OuterRef, TextField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -840,14 +841,16 @@ class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "session",
         "week_number",
         "post_date",
-        "needs_approval",
-        "approved_at",
+        "approved",
         "posted_at",
         "emailed_for_approval_at",
         "approval_note",
     )
     list_filter = ("session", "needs_approval", "post_date")
     search_fields = ("session__title", "message", "approval_note")
+    formfield_overrides = {
+        TextField: {"widget": forms.Textarea(attrs={"rows": 20, "cols": 100})},
+    }
     readonly_fields = (
         "approval_note",
         "posted_at",
@@ -860,6 +863,14 @@ class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         """Filter announcements to only those for sessions the user organizes."""
         return super().get_queryset(request).for_admin_site(request.user)
+
+    @admin.display(description="Approved", boolean=True, ordering="approved_at")
+    def approved(self, obj):
+        """Show approval as a real yes/no instead of raw ``needs_approval``."""
+        if not obj.needs_approval:
+            # If approval isn't needed, it's "approved", so show green.
+            return True
+        return bool(obj.approved_at)
 
     @admin.action(description="Post selected announcements to Discord now")
     def post_announcements_action(self, request, queryset):
