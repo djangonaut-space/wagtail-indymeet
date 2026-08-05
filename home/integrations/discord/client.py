@@ -244,3 +244,10 @@ class DiscordClient:
         """
         response = self._request("PATCH", f"/channels/{channel_id}", json=payload)
         return response.json()
+
+    def create_message(self, *, channel_id: str, content: str) -> dict:
+        """Post a message to a text channel and return the created message as JSON."""
+        response = self._request(
+            "POST", f"/channels/{channel_id}/messages", json={"content": content}
+        )
+        return response.json()

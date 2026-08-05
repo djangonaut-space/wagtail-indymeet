@@ -31,6 +31,10 @@ NAME_MAX = 100
 DESCRIPTION_MAX = 1000
 LOCATION_MAX = 100
 
+# Discord's documented cap on message content length.
+# https://docs.discord.com/developers/resources/message#create-message
+MESSAGE_CONTENT_MAX = 2000
+
 
 def _prepare_fields(event) -> tuple[str, str, str]:
     """Return the event's (name, description, location) for a Discord event.
@@ -77,3 +81,17 @@ def update_event(event) -> None:
             "scheduled_end_time": (event.start_time + EVENT_DURATION).isoformat(),
         },
     )
+
+
+class DiscordMessageTooLong(ValueError):
+    pass
+
+
+def create_message(*, channel: str, message: str) -> dict:
+    """Post a message to a Discord channel. Returns the created message as JSON."""
+    if len(message) > MESSAGE_CONTENT_MAX:
+        raise DiscordMessageTooLong(
+            f"Message is {len(message)} characters, over Discord's "
+            f"{MESSAGE_CONTENT_MAX}-character content limit."
+        )
+    return discord_client.create_message(channel_id=channel, content=message)

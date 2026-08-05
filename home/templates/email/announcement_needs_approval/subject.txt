@@ -1,0 +1,1 @@
+Week {{ announcement.week_number }} announcement needs approval by {{ announcement.post_date|date:"Y-m-d" }}

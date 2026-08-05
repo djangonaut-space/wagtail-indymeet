@@ -227,3 +227,16 @@ class DiscordClientSessionMethodsTests(TestCase):
 
         self.assertEqual(channel, {"id": "12"})
         self.assertEqual(request_json(rsps.calls[0]), payload)
+
+    @rsps.activate
+    def test_create_message(self):
+        rsps.add(
+            rsps.POST,
+            f"{BASE_URL}/channels/12/messages",
+            json={"id": "999", "content": "Hello team"},
+        )
+
+        message = self.client.create_message(channel_id="12", content="Hello team")
+
+        self.assertEqual(message, {"id": "999", "content": "Hello team"})
+        self.assertEqual(request_json(rsps.calls[0]), {"content": "Hello team"})

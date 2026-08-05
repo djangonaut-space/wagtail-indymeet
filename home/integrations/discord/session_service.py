@@ -176,6 +176,7 @@ class SetupReport:
     channels_updated: list[str] = field(default_factory=list)
     roles_created: list[str] = field(default_factory=list)
     roles_assigned: int = 0
+    announcements_created: int = 0
     unresolved: list[MemberResolution] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 

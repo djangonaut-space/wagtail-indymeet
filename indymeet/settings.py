@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "django.forms",
     # other
+    "crontask",
     "django_extensions",
     "django_filters",
     "django_tasks",

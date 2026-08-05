@@ -8,6 +8,8 @@ confirmation pages, the redirect, and the emailed report. The orchestration
 internals are covered in test_session_service.
 """
 
+from datetime import date
+
 import responses as rsps
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -15,12 +17,14 @@ from django.urls import reverse
 
 from accounts.factories import UserFactory
 from home import constants
+from home.announcements import WEEKLY_ANNOUNCEMENTS
 from home.factories import (
     OrganizerFactory,
     SessionFactory,
     SessionMembershipFactory,
     TeamFactory,
 )
+from home.models import Session
 from home.tests.discord.stubs import (
     GUILD_URL,
     STANDING_GUILD_ROLES,
@@ -90,6 +94,41 @@ class DiscordSetupViewTests(DiscordViewsTestCase):
         self.assertIn("Jane Doe", email_message.body)
         # No errors, so no superusers are CCed.
         self.assertEqual(email_message.cc, [])
+
+    @rsps.activate
+    def test_post_generates_announcements(self):
+        """Setup seeds the session's weekly announcements and reports the count."""
+        stub_discord_api(roles=STANDING_GUILD_ROLES)
+        Session.objects.filter(pk=self.session.pk).update(
+            start_date=date(2026, 1, 14), end_date=date(2026, 3, 18)
+        )
+
+        self.client.post(self.url())
+
+        self.assertEqual(self.session.announcements.count(), len(WEEKLY_ANNOUNCEMENTS))
+        self.assertIn(
+            f"Weekly announcements created: {len(WEEKLY_ANNOUNCEMENTS)}",
+            mail.outbox[0].body,
+        )
+
+    @rsps.activate
+    def test_rerun_preserves_announcements(self):
+        """Setup is rerun after fixing errors, so it must not revert edited copy."""
+        stub_discord_api(roles=STANDING_GUILD_ROLES)
+        Session.objects.filter(pk=self.session.pk).update(
+            start_date=date(2026, 1, 14), end_date=date(2026, 3, 18)
+        )
+        self.client.post(self.url())
+        edited = self.session.announcements.get(week_number=2)
+        edited.message = "Organizer rewrote this"
+        edited.save()
+
+        self.client.post(self.url())
+
+        edited.refresh_from_db()
+        self.assertEqual(edited.message, "Organizer rewrote this")
+        self.assertEqual(self.session.announcements.count(), len(WEEKLY_ANNOUNCEMENTS))
+        self.assertIn("Weekly announcements created: 0", mail.outbox[1].body)
 
     @override_settings(
         ALLOWED_EMAILS_FOR_TESTING=["admin@example.com", "other-admin@example.com"]

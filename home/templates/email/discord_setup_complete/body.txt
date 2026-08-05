@@ -10,6 +10,7 @@ Summary:
 - Channels updated: {{ report.channels_updated|join:", "|default:"none" }}
 - Roles created: {{ report.roles_created|join:", "|default:"none" }}
 - Role assignments: {{ report.roles_assigned }}
+- Weekly announcements created: {{ report.announcements_created }}
 {% if report.unresolved %}
 These members could not be matched to a Discord account, so no roles were assigned to them:
 {% for person in report.unresolved %}- {{ person.display_name }} ({{ person.discord_username|default:"no username" }}, {{ person.role }})
