@@ -5,7 +5,7 @@ and for syncing users to the Buttondown newsletter.
 
 from home import constants
 from django.contrib.auth.models import Group
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from accounts.models import UserProfile
@@ -57,5 +57,43 @@ def sync_buttondown_on_profile_save(
     subscription status in sync with any profile changes.
     """
     if not buttondown_enabled() or raw or not instance.email_confirmed:
+        return
+    sync_user_to_buttondown.enqueue(instance.user_id)
+
+
+@receiver(
+    post_save,
+    sender=SessionMembership,
+    dispatch_uid="accounts.sync_buttondown_on_membership_save",
+)
+def sync_buttondown_on_membership_save(
+    sender, instance: SessionMembership, raw: bool, **kwargs
+) -> None:
+    """
+    Enqueue a Buttondown sync when a SessionMembership is saved.
+
+    Role and session tags are derived live from accepted memberships, so any
+    change to a membership (role, acceptance) needs to be reflected in Buttondown.
+    """
+    if not buttondown_enabled() or raw or not instance.user.profile.email_confirmed:
+        return
+    sync_user_to_buttondown.enqueue(instance.user_id)
+
+
+@receiver(
+    post_delete,
+    sender=SessionMembership,
+    dispatch_uid="accounts.sync_buttondown_on_membership_delete",
+)
+def sync_buttondown_on_membership_delete(
+    sender, instance: SessionMembership, **kwargs
+) -> None:
+    """
+    Enqueue a Buttondown sync when a SessionMembership is deleted.
+
+    Removing a membership can drop role/session tags, so Buttondown needs
+    to be resynced to reflect the user's remaining memberships.
+    """
+    if not buttondown_enabled() or not instance.user.profile.email_confirmed:
         return
     sync_user_to_buttondown.enqueue(instance.user_id)
