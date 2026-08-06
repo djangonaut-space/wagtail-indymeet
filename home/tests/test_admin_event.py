@@ -204,8 +204,9 @@ class EventAdminSendCalendarInvitesTests(TestCase):
             is_superuser=True,
         )
 
-    def _get_request(self):
-        request = self.factory.post("/admin/home/event/")
+    def _get_request(self, apply=True):
+        data = {"apply": "1"} if apply else {}
+        request = self.factory.post("/admin/home/event/", data)
         request.user = self.superuser
         middleware = SessionMiddleware(lambda req: None)
         middleware.process_request(request)
@@ -219,6 +220,22 @@ class EventAdminSendCalendarInvitesTests(TestCase):
             end_time=datetime(2025, 9, 1, 20, 0, tzinfo=dt_timezone.utc),
             **kwargs,
         )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_shows_confirmation_page_without_apply(self, mock_send):
+        """Without the apply flag, the action renders a confirmation page and
+        queues nothing."""
+        event = self._make_event(is_public=False, title="Unconfirmed Event")
+
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Unconfirmed Event", response.content)
+        mock_send.assert_not_called()
+        event.refresh_from_db()
+        self.assertIsNone(event.calendar_invites_sent_at)
 
     @patch("home.tasks.event_notifications.email.send")
     def test_session_event_sends_to_session_members(self, mock_send):
