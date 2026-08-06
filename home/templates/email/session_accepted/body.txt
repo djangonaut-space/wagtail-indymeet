@@ -1,3 +1,4 @@
+{% load email_tags %}
 Hello,
 
 Congratulations! You've been selected to join the Djangonaut Program! 🎊 You will be working on the {{ membership.team.project.name }} project.

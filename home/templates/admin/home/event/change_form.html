@@ -1,0 +1,20 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_help.css' %}">
+{% endblock %}
+
+{% block form_top %}
+{{ block.super }}
+<div class="save-notice">
+    <strong>What happens when you save this event:</strong>
+    <ul>
+        <li>A Zoom meeting is created (on first save) or updated (on later saves) to match the event's title, start time, and end time.</li>
+        <li>If the event has a Zoom link, a matching Discord scheduled event is created or updated, using the Zoom link as the event's location.</li>
+        <li>Calendar invite emails are <strong>not</strong> sent automatically &mdash; use the "Send calendar invites to event members" action from the Events list, which only sends once per event.</li>
+        <li>Zoom/Discord sync runs in the background, so the "Zoom synced"/"Discord synced" columns on the Events list may take a moment to update after saving.</li>
+    </ul>
+</div>
+{% endblock %}

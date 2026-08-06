@@ -7,21 +7,13 @@ from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from accounts.models import UserAvailability
-from home import email
+
 from home.managers import (
     SurveyQuerySet,
     UserQuestionResponseQuerySet,
     UserSurveyResponseQuerySet,
 )
-
-
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
+from home.models.base import BaseModel
 
 
 class Survey(BaseModel):

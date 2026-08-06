@@ -892,8 +892,8 @@ class TestCompleteSessionOnboardingFlow:
         # Clear mail outbox
         mail.outbox.clear()
 
-        # Click "Go" button
-        page.get_by_role("button", name="Go").click()
+        # Click "Run" button
+        page.get_by_role("button", name="Run").click()
         page.wait_for_load_state("networkidle")
 
         # Verify success message
@@ -1076,21 +1076,16 @@ class TestCompleteSessionOnboardingFlow:
         # Click the toggle button to switch to UTC
         toggle_button.click()
 
-        # Wait for any HTMX requests to complete
-        page.wait_for_load_state("networkidle")
-
-        # Wait for the availability section to be re-rendered after HTMX swap
-        page.wait_for_selector("#team-availability-section", state="attached")
+        # Wait for the timezone display to update to UTC. expect() polls/retries until
+        # this passes, unlike wait_for_load_state("networkidle") which can resolve before
+        # htmx's fetch (queued asynchronously by the click handler) has even started,
+        # racing the assertion against the swap.
+        expect(timezone_span).to_have_text("UTC", timeout=5000)
+        updated_timezone = timezone_span.text_content().strip()
 
         # Verify button is still visible after click (ensures page didn't error)
         expect(toggle_button).to_be_visible()
         expect(button_text_span).to_be_visible()
-
-        # Get the updated timezone display
-        updated_timezone = timezone_span.text_content().strip()
-        assert (
-            updated_timezone == "UTC"
-        ), f"After toggle, timezone should be UTC, got: {updated_timezone}"
 
         # Check if individual member overlap times updated
         # Re-query the overlap sections after the toggle

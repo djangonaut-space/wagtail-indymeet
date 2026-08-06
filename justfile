@@ -9,8 +9,8 @@ test_db_template := "template_wagtail_indymeet_test"
 django_playwright := "docker compose exec -e TEST_DB_TEMPLATE=" + test_db_template + " django"
 
 # Start all services in the background with file watching. Pass --attached to stream logs in the foreground instead.
-up attached="":
-    docker compose {{ if attached == "--attached" { "up --watch" } else { "watch" } }}
+up:
+    docker compose up -d
 
 # Stop all services
 down:
@@ -18,7 +18,7 @@ down:
 
 # Follow Django and worker logs
 logs:
-    docker compose logs -f django worker
+    docker compose logs -f django worker scheduler
 
 # Open a Django shell
 shell:

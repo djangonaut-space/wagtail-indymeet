@@ -1,9 +1,10 @@
 from datetime import date, timedelta
 
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Exists, F, Max, OuterRef
+from django.db.models import Count, Exists, F, Max, OuterRef, TextField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -15,6 +16,7 @@ from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 from home import constants
+from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
 from indymeet.admin import DescriptiveSearchMixin
@@ -28,6 +30,8 @@ from .forms import (
     SurveyCSVImportForm,
 )
 from .models import (
+    Announcement,
+    DiscordRole,
     Event,
     Project,
     Question,
@@ -831,6 +835,98 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         """Filter sessions to only those the user organizes."""
         return super().get_queryset(request).for_admin_site(request.user)
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+    list_display = (
+        "session",
+        "week_number",
+        "post_date",
+        "approved",
+        "posted_at",
+        "emailed_for_approval_at",
+        "approval_note",
+    )
+    list_filter = ("session", "needs_approval", "post_date")
+    search_fields = ("session__title", "message", "approval_note")
+    formfield_overrides = {
+        TextField: {"widget": forms.Textarea(attrs={"rows": 20, "cols": 100})},
+    }
+    readonly_fields = (
+        "approval_note",
+        "mentioned_roles",
+        "posted_at",
+        "emailed_for_approval_at",
+        "created_at",
+        "updated_at",
+    )
+    actions = ["post_announcements_action"]
+
+    def get_queryset(self, request):
+        """Filter announcements to only those for sessions the user organizes."""
+        return super().get_queryset(request).for_admin_site(request.user)
+
+    @admin.display(description="Roles this message will ping")
+    def mentioned_roles(self, obj) -> str:
+        """Which ``@names`` in the copy resolve to a real Discord role.
+
+        The message stores the names, not the ids, so nothing in the form
+        itself shows whether an ``@mention`` will actually notify anyone.
+        This is where an organizer catches a typo before approving.
+        """
+        _, roles = resolve_role_mentions(obj.message)
+        if not roles:
+            return "None"
+        return ", ".join(role.name for role in roles)
+
+    @admin.display(description="Approved", boolean=True, ordering="approved_at")
+    def approved(self, obj):
+        """Show approval as a real yes/no instead of raw ``needs_approval``."""
+        if not obj.needs_approval:
+            # If approval isn't needed, it's "approved", so show green.
+            return True
+        return bool(obj.approved_at)
+
+    @admin.action(description="Post selected announcements to Discord now")
+    def post_announcements_action(self, request, queryset):
+        """
+        Post the selected announcements without waiting for their post date.
+
+        Announcements still awaiting approval, ones already posted, and ones
+        whose session has no live Discord channel are skipped, so the count in
+        the message may be lower than the number selected.
+        """
+        postable = queryset.approved().not_posted().for_active_discord_sessions()
+        count = 0
+        for announcement_id in postable.values_list("id", flat=True):
+            tasks.post_announcement.enqueue(announcement_id=announcement_id)
+            count += 1
+        skipped = len(queryset) - count
+        message = f"Successfully queued {count} announcement(s) for posting."
+        if skipped:
+            message += (
+                f" Skipped {skipped} that were unapproved, already posted, "
+                "or belong to a session without an active Discord."
+            )
+        self.message_user(request, message, messages.SUCCESS)
+
+
+@admin.register(DiscordRole)
+class DiscordRoleAdmin(admin.ModelAdmin):
+    """Read-only view of the roles an announcement can ping.
+
+    The rows are a mirror of the Discord server, rewritten wholesale by the
+    Discord session setup action and the ``sync_discord_roles`` command, so
+    editing them here would only be undone on the next sync.
+    """
+
+    list_display = ("name", "discord_id", "updated_at")
+    search_fields = ("name",)
+    readonly_fields = ("name", "discord_id", "created_at", "updated_at")
+
+    def has_add_permission(self, request) -> bool:
+        return False
 
 
 @admin.register(Team)

@@ -16,7 +16,9 @@ from django.test import TestCase, override_settings
 from home.factories import EventFactory
 from home.integrations.discord.client import BASE_URL, DiscordClient
 from home.integrations.discord.service import (
+    MESSAGE_CONTENT_MAX,
     _prepare_fields,
+    create_message,
     discord_enabled,
     update_event,
 )
@@ -288,6 +290,46 @@ class UpdateEventTests(TestCase):
 
         with self.assertRaises(ValueError):
             update_event(event)
+
+        self.assertEqual(len(rsps.calls), 0)
+
+
+class CreateMessageTests(TestCase):
+    @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
+    def test_posts_message_to_channel(self):
+        rsps.add(
+            rsps.POST,
+            f"{BASE_URL}/channels/chan-1/messages",
+            json={"id": "1", "content": "hi"},
+        )
+
+        result = create_message(channel="chan-1", message="hi")
+
+        self.assertEqual(
+            json.loads(rsps.calls[0].request.body),
+            {"content": "hi", "allowed_mentions": {"parse": [], "roles": []}},
+        )
+        self.assertEqual(result, {"id": "1", "content": "hi"})
+
+    @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
+    def test_only_the_given_roles_may_ping(self):
+        """An empty ``parse`` is what stops stray copy from @everyone-ing."""
+        rsps.add(rsps.POST, f"{BASE_URL}/channels/chan-1/messages", json={"id": "1"})
+
+        create_message(channel="chan-1", message="hi <@&7>", mention_role_ids=["7"])
+
+        self.assertEqual(
+            json.loads(rsps.calls[0].request.body)["allowed_mentions"],
+            {"parse": [], "roles": ["7"]},
+        )
+
+    @override_settings(**DISCORD_SETTINGS)
+    @rsps.activate
+    def test_raises_on_over_long_message(self):
+        with self.assertRaises(ValueError):
+            create_message(channel="chan-1", message="x" * (MESSAGE_CONTENT_MAX + 1))
 
         self.assertEqual(len(rsps.calls), 0)
 

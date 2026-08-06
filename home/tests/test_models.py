@@ -9,6 +9,7 @@ from freezegun import freeze_time
 from accounts.factories import UserFactory
 from home.constants import SRID_WGS84
 from home.factories import (
+    AnnouncementFactory,
     EventFactory,
     ProjectFactory,
     QuestionFactory,
@@ -102,17 +103,17 @@ class SessionTests(TestCase):
             self.assertFalse(session.is_current_or_upcoming())
 
     def test_current_week_before_start(self):
-        """Test current_week returns None before session starts."""
+        """Weeks are Monday-Sunday, so a start date's own week can begin before it."""
         session = SessionFactory.create(
-            start_date=datetime(2024, 6, 1).date(),
+            start_date=datetime(2024, 6, 1).date(),  # Saturday
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-05-24"):
-            self.assertEqual(session.current_week, -1)
-
-        with freeze_time("2024-05-31"):
+        with freeze_time("2024-05-24"):  # Before week 1's Monday (2024-05-27)
             self.assertEqual(session.current_week, 0)
+
+        with freeze_time("2024-05-31"):  # Within week 1, before the start date
+            self.assertEqual(session.current_week, 1)
 
     def test_current_week_first_day(self):
         """Test current_week returns 1 on first day of session."""
@@ -131,7 +132,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-06-07"):  # 6 days later (still week 1)
+        with freeze_time("2024-06-02"):  # Sunday, last day of week 1
             self.assertEqual(session.current_week, 1)
 
     def test_current_week_second_week(self):
@@ -159,11 +160,12 @@ class SessionTests(TestCase):
         """Test current_week on last day of session."""
         session = SessionFactory.create(
             start_date=datetime(2024, 6, 1).date(),
-            end_date=datetime(2024, 6, 21).date(),  # 20 days = 3 weeks
+            end_date=datetime(2024, 6, 21).date(),
         )
 
+        # 25 days after week 1's Monday (2024-05-27) = week 4
         with freeze_time("2024-06-21"):
-            self.assertEqual(session.current_week, 3)
+            self.assertEqual(session.current_week, 4)
 
     def test_current_week_after_end(self):
         """Test current_week returns None after session ends."""
@@ -242,6 +244,72 @@ class SessionTests(TestCase):
 
         session.refresh_from_db()
         self.assertEqual(session.discord_category_id, "")
+
+
+class SessionWeekTestCase(TestCase):
+    def setUp(self):
+        # A Wednesday, so the Monday snapping is actually exercised.
+        self.session = SessionFactory(
+            start_date=datetime(2026, 1, 14).date(),
+            end_date=datetime(2026, 3, 18).date(),
+        )
+
+    def test_week_one_start(self):
+        """The Wednesday start date snaps back to the Monday of that week."""
+        self.assertEqual(self.session.week_one_start, datetime(2026, 1, 12).date())
+
+    def test_week_start_date(self):
+        """Week 0 opens the Monday before the session's official first week."""
+        self.assertEqual(self.session.week_start_date(0), datetime(2026, 1, 5).date())
+        self.assertEqual(self.session.week_start_date(1), datetime(2026, 1, 12).date())
+        self.assertEqual(self.session.week_start_date(8), datetime(2026, 3, 2).date())
+
+    def test_week_number_for(self):
+        """week_number_for inverts week_start_date across the whole session."""
+        for week_number in range(0, 9):
+            with self.subTest(week_number=week_number):
+                post_date = self.session.week_start_date(week_number)
+                self.assertEqual(self.session.week_number_for(post_date), week_number)
+
+    def test_week_number_for_mid_week(self):
+        """Any day in a week resolves to that week, not the next one."""
+        self.assertEqual(self.session.week_number_for(datetime(2026, 1, 18).date()), 1)
+        self.assertEqual(self.session.week_number_for(datetime(2026, 1, 19).date()), 2)
+
+
+class AnnouncementModelTestCase(TestCase):
+    def setUp(self):
+        self.session = SessionFactory(
+            start_date=datetime(2026, 1, 14).date(),
+            end_date=datetime(2026, 3, 18).date(),
+        )
+
+    def test_derives_week_number(self):
+        """A blank week number is filled in from the post date on save."""
+        announcement = AnnouncementFactory(
+            session=self.session,
+            week_number=None,
+            post_date=datetime(2026, 1, 26).date(),
+        )
+
+        self.assertEqual(announcement.week_number, 3)
+
+    def test_keeps_explicit_week_number(self):
+        """An organizer's off-cycle week number isn't overwritten by the date."""
+        announcement = AnnouncementFactory(
+            session=self.session,
+            week_number=7,
+            post_date=datetime(2026, 1, 26).date(),
+        )
+
+        self.assertEqual(announcement.week_number, 7)
+
+    def test_discord_content(self):
+        announcement = AnnouncementFactory(
+            session=self.session, week_number=4, message="Halfway there"
+        )
+
+        self.assertEqual(announcement.discord_content, "**Week 4**\n\nHalfway there")
 
 
 class UserQuestionResponseTests(TestCase):

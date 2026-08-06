@@ -8,12 +8,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # SignUpField has a FK to SignUpPage's page_ptr_id column, so it must be
+        # dropped before that column is removed (Django >=6.0 no longer issues
+        # DROP COLUMN ... CASCADE, so the dependent constraint must be gone first).
+        migrations.DeleteModel(
+            name="SignUpField",
+        ),
         migrations.RemoveField(
             model_name="signuppage",
             name="page_ptr",
-        ),
-        migrations.DeleteModel(
-            name="SignUpField",
         ),
         migrations.DeleteModel(
             name="SignUpPage",

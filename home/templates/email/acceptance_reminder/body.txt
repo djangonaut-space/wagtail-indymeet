@@ -1,3 +1,4 @@
+{% load email_tags %}
 Hello,
 
 We emailed you an invitation to join the Djangonaut Program and it's not too late to confirm your place as a Djangonaut! ⏰

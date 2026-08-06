@@ -75,6 +75,25 @@ via GitHub actions. You need to be able to connect to the server.
   git push djangonaut-space my-feature-branch:main
   ```
 
+## Scaling process types
+
+The ``Procfile`` declares three long-running process types: ``web``,
+``worker`` (runs background tasks) and ``scheduler`` (fires the cron
+schedules that enqueue those tasks). Dokku does **not** start a newly
+added process type on its own, so after deploying a release that adds
+one you have to scale it up explicitly:
+
+```bash
+# Staging
+dokku ps:scale staging web=1 worker=1 scheduler=1
+
+# Production
+dokku ps:scale djangonaut-space web=1 worker=1 scheduler=1
+```
+
+Keep ``scheduler`` at exactly 1. It holds no lock by default, so a
+second instance would enqueue every scheduled task twice.
+
 ## Configuring deployment key for CI/CD
 
 On the server:
