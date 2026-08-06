@@ -93,9 +93,10 @@ class Event(ClusterableModel):
     extra_emails = ArrayField(
         models.EmailField(blank=True),
         default=list,
+        blank=True,
         help_text=(
             "List of email addresses to include in calendar invites "
-            "(e.g. guest speakers).",
+            "(e.g. guest speakers)."
         ),
     )
 

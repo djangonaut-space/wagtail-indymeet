@@ -517,7 +517,6 @@ class EventAdminSaveModelTests(TestCase):
 
         mock_dispatch.assert_called_once_with(event)
         stored = list(request._messages)
-        self.assertEqual(len(stored), 1)
         self.assertEqual(stored[0].level, messages.INFO)
         self.assertEqual(str(stored[0]), "Syncing now.")
 
@@ -532,9 +531,22 @@ class EventAdminSaveModelTests(TestCase):
         self.admin.save_model(request, event, form=None, change=False)
 
         stored = list(request._messages)
-        self.assertEqual(len(stored), 1)
         self.assertEqual(stored[0].level, messages.WARNING)
         self.assertEqual(str(stored[0]), "No Zoom configured.")
+
+    @patch("home.admin.dispatch_event_sync")
+    def test_reminds_to_send_calendar_invites(self, mock_dispatch):
+        """Saving always shows a reminder to use the calendar invites action."""
+        mock_dispatch.return_value = EventSyncDecision(
+            EventSyncStatus.QUEUED, "Syncing now."
+        )
+        request = self._get_request()
+        event = EventFactory.build(zoom_link="https://zoom.us/j/x")
+
+        self.admin.save_model(request, event, form=None, change=False)
+
+        stored = [str(m) for m in request._messages]
+        self.assertTrue(any("Send calendar invites" in m for m in stored))
 
 
 class EventAdminSyncedDisplayTests(TestCase):
@@ -598,3 +610,24 @@ class CalendarInvitesSentFilterTests(TestCase):
 
         self.assertEqual(self._filtered("yes", queryset), {sent})
         self.assertEqual(self._filtered("no", queryset), {unsent})
+
+
+class EventAdminReadonlyFieldsTests(TestCase):
+    """Tests for EventAdmin's readonly_fields and fieldsets configuration."""
+
+    def test_sync_id_fields_are_readonly(self):
+        readonly = EventAdmin(Event, AdminSite()).readonly_fields
+        self.assertIn("zoom_meeting_id", readonly)
+        self.assertIn("discord_event_id", readonly)
+
+    def test_fieldsets_include_every_editable_field(self):
+        """Every field the form would otherwise render must be grouped
+        somewhere, or Django's admin checks fail."""
+        admin_instance = EventAdmin(Event, AdminSite())
+        request = RequestFactory().get("/admin/home/event/add/")
+        fielded = {
+            field for _, opts in admin_instance.fieldsets for field in opts["fields"]
+        }
+
+        form = admin_instance.get_form(request)
+        self.assertTrue(set(form.base_fields).issubset(fielded))

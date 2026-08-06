@@ -191,7 +191,37 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "discord_synced",
     ]
     list_filter = ("session", CalendarInvitesSentFilter)
-    readonly_fields = ("zoom_synced_at", "discord_synced_at")
+    readonly_fields = (
+        "zoom_meeting_id",
+        "zoom_synced_at",
+        "discord_event_id",
+        "discord_synced_at",
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "title",
+                    "slug",
+                    "start_time",
+                    "end_time",
+                    "description",
+                    "is_published",
+                    "is_public",
+                    "session",
+                    "extra_emails",
+                    "calendar_invites_sent_at",
+                )
+            },
+        ),
+        (
+            "Public-facing",
+            {"fields": ("cover_image", "cover_image_caption", "video_link")},
+        ),
+        ("Zoom", {"fields": ("zoom_link", "zoom_meeting_id", "zoom_synced_at")}),
+        ("Discord", {"fields": ("discord_event_id", "discord_synced_at")}),
+    )
 
     @admin.display(description="Zoom synced", boolean=True, ordering="zoom_synced_at")
     def zoom_synced(self, obj: Event) -> bool:
@@ -228,6 +258,12 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             else messages.INFO
         )
         self.message_user(request, decision.message, level)
+        self.message_user(
+            request,
+            'Remember to use the "Send calendar invites to event members" '
+            "action to notify members about this event.",
+            messages.INFO,
+        )
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Pre-populate the add form with data from an existing event.
