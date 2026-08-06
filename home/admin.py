@@ -153,6 +153,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "send_calendar_invites",
         "retry_event_sync",
     ]
+    ordering = ("-start_time",)
     list_display = [
         "title",
         "start_time",
