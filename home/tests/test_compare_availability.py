@@ -21,6 +21,7 @@ from home.views.compare_availability import (
     CompareAvailabilityForm,
     build_grid_data,
     get_slot_color,
+    get_user_compare_timezone,
 )
 from home.widgets import TomSelectMultipleWidget
 from tests.timezones import (
@@ -273,6 +274,21 @@ class CompareAvailabilityTests(TestCase):
         captain_option = content[captain_option_start:captain_option_end]
         self.assertIn("selected", captain_option)
 
+    def test_uses_requesting_users_availability_timezone(self) -> None:
+        """The page initializes the grid timezone from the requesting user."""
+        membership = OrganizerFactory.create()
+        UserAvailabilityFactory.create(
+            user=membership.user,
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+
+        self.client.force_login(membership.user)
+        response = self.client.get(f"{self.url}?users={self.captain.id}")
+
+        self.assertEqual(response.context["timezone_name"], US_EASTERN_TIMEZONE)
+        self.assertContains(response, f"availabilityGrid('{US_EASTERN_TIMEZONE}')")
+        self.assertContains(response, f'"timezone": "{US_EASTERN_TIMEZONE}"')
+
 
 @freeze_time("2024-06-15")
 class CompareAvailabilityGridTests(TestCase):
@@ -450,17 +466,43 @@ class CompareAvailabilityFormTests(TestCase):
         self.assertEqual(form.cleaned_data["users"], {self.member.id})
 
     def test_timezone_defaults_to_utc(self) -> None:
-        """Timezone defaults to UTC when not submitted."""
+        """Timezone defaults to UTC when the user has no availability timezone."""
         form = self._make_form(self.organizer, "")
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["timezone"], DEFAULT_TIMEZONE)
         self.assertEqual(form.get_timezone_name(), DEFAULT_TIMEZONE)
 
+    def test_timezone_defaults_to_user_availability_timezone(self) -> None:
+        """Timezone defaults to the requesting user's availability timezone."""
+        UserAvailabilityFactory.create(
+            user=self.organizer,
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        form = self._make_form(self.organizer, "")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["timezone"], US_EASTERN_TIMEZONE)
+        self.assertEqual(form.get_timezone_name(), US_EASTERN_TIMEZONE)
+
+    def test_get_user_compare_timezone_falls_back_to_utc(self) -> None:
+        """Users without availability compare in UTC by default."""
+        user = UserFactory.create()
+        self.assertEqual(get_user_compare_timezone(user), DEFAULT_TIMEZONE)
+
     def test_timezone_accepts_valid_iana_name(self) -> None:
-        """Timezone accepts valid IANA names from the browser."""
+        """Timezone accepts valid submitted IANA names."""
         form = self._make_form(self.organizer, f"timezone={US_EASTERN_TIMEZONE}")
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["timezone"], US_EASTERN_TIMEZONE)
+
+    def test_submitted_timezone_overrides_user_availability_timezone(self) -> None:
+        """An explicit submitted timezone overrides the user's default timezone."""
+        UserAvailabilityFactory.create(
+            user=self.organizer,
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        form = self._make_form(self.organizer, f"timezone={PACIFIC_AUCKLAND_TIMEZONE}")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["timezone"], PACIFIC_AUCKLAND_TIMEZONE)
 
     def test_timezone_rejects_invalid_name(self) -> None:
         """Timezone rejects non-IANA names."""

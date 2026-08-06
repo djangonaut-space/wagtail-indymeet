@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from accounts.models import CustomUser
+from home import constants
 from home.availability import (
     format_slot_as_time,
     get_user_utc_slots,
@@ -19,6 +20,22 @@ from home.models import Session, SessionMembership
 from home.widgets import TomSelectMultipleWidget
 
 slotAvailabilities = dict[str, list[int]]
+
+
+def get_user_compare_timezone(user: CustomUser) -> str:
+    """Return the user's preferred timezone for comparing availability."""
+    default_timezone = constants.DEFAULT_AVAILABILITY_TIMEZONE
+    availability = getattr(user, "availability", None)
+    timezone_name = (
+        availability.slots_timezone
+        if availability and availability.slots_timezone
+        else default_timezone
+    )
+    try:
+        ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        return default_timezone
+    return timezone_name
 
 
 @dataclass
@@ -147,7 +164,7 @@ class CompareAvailabilityForm(forms.Form):
         required=False,
         widget=TomSelectMultipleWidget(),
     )
-    timezone = forms.CharField(required=False, initial="UTC")
+    timezone = forms.CharField(required=False)
 
     def __init__(self, data=None, *args, user: CustomUser, **kwargs):
         """
@@ -162,6 +179,8 @@ class CompareAvailabilityForm(forms.Form):
         """
         super().__init__(data, *args, **kwargs)
         self.user = user
+        self.default_timezone = get_user_compare_timezone(user)
+        self.fields["timezone"].initial = self.default_timezone
         session = None
         session_membership = None
         if session_id := (data and data.get("session")):
@@ -188,8 +207,8 @@ class CompareAvailabilityForm(forms.Form):
         ]
 
     def clean_timezone(self) -> str:
-        """Return a valid IANA timezone name, defaulting to UTC when omitted."""
-        timezone_name = self.cleaned_data.get("timezone") or "UTC"
+        """Return a valid IANA timezone name, defaulting to the user's timezone."""
+        timezone_name = self.cleaned_data.get("timezone") or self.default_timezone
         try:
             ZoneInfo(timezone_name)
         except ZoneInfoNotFoundError as exc:
@@ -227,7 +246,7 @@ class CompareAvailabilityForm(forms.Form):
 
     def get_timezone_name(self) -> str:
         """Return the validated viewer timezone name."""
-        return self.cleaned_data.get("timezone", "UTC")
+        return self.cleaned_data.get("timezone") or self.default_timezone
 
 
 @login_required
@@ -243,12 +262,15 @@ def compare_availability(request):
     form = CompareAvailabilityForm(data=request.GET, user=request.user)
     if form.is_valid():
         selected_user_ids = form.cleaned_data.get("users", [])
+        timezone_name = form.get_timezone_name()
     else:
         selected_user_ids = []
+        timezone_name = form.default_timezone
     context = {
         "form": form,
         "selected_user_ids": selected_user_ids,
         "session_id": form.data.get("session"),
+        "timezone_name": timezone_name,
     }
     return render(request, "home/compare_availability.html", context)
 
@@ -273,7 +295,7 @@ def compare_availability_grid(request):
             user_slots[user.id] = set(slots)
     else:
         selected_users = []
-        timezone_name = "UTC"
+        timezone_name = form.default_timezone
         user_slots = {}
 
     grid_rows, slot_availabilities = build_grid_data(

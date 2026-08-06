@@ -35,7 +35,7 @@
 {% block content %}
 <main class="section my-3 mx-5">
     <div class="section-container max-w-7xl"
-         x-data="availabilityGrid()">
+         x-data="availabilityGrid('{{ timezone_name|escapejs }}')">
         <nav class="mb-4 text-sm" aria-label="breadcrumb">
             <ol class="flex items-center gap-2">
                 <li><a href="{% url 'user_sessions' %}">{% trans "My Sessions" %}</a></li>
@@ -88,16 +88,16 @@
         </form>
 
         {% comment %}
-            The grid is loaded via htmx so we can inject the browser's IANA
-            timezone name (not available server-side) into the request via hx-vals.
-            After htmx settles the response, we hydrate Alpine.js state from the
-            JSON script tags rendered by the grid partial and reset any pinned
-            slot since the grid contents have changed.
+            The grid is loaded via htmx so we can inject the server-selected
+            viewer timezone into the request via hx-vals. After htmx settles the
+            response, we hydrate Alpine.js state from the JSON script tags
+            rendered by the grid partial and reset any pinned slot since the grid
+            contents have changed.
         {% endcomment %}
         <div id="availability-grid-container"
              hx-get="{% url 'compare_availability_grid' %}?{{ request.GET.urlencode }}"
              hx-trigger="load"
-             hx-vals='js:{"timezone": Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"}'
+             hx-vals='js:{"timezone": "{{ timezone_name|escapejs }}"}'
              hx-swap="innerHTML"
              hx-disinherit="*"
              @htmx:after-settle="
@@ -117,7 +117,7 @@
 </main>
 {{ form.media.js }}
 <script>
-function availabilityGrid() {
+function availabilityGrid(initialTimezone) {
     return {
         slotAvailabilities: {},
         users: [],
@@ -126,7 +126,7 @@ function availabilityGrid() {
         hoveredUser: null,
         activeDisplayTime: '',
         activeTimeIsUrl: '',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        timezone: initialTimezone,
 
         get activeSlot() {
             return this.fixedSlot || this.hoveredSlot;
