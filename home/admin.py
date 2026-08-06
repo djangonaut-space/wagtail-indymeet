@@ -157,8 +157,8 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "title",
         "start_time",
         "calendar_invites_sent_at",
-        "zoom_synced_at",
-        "discord_synced_at",
+        "zoom_synced",
+        "discord_synced",
     ]
     readonly_fields = ("zoom_synced_at", "discord_synced_at")
     field_help_text = {
@@ -176,6 +176,16 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         if formfield and db_field.name in self.field_help_text:
             formfield.help_text = self.field_help_text[db_field.name]
         return formfield
+
+    @admin.display(description="Zoom synced", boolean=True, ordering="zoom_synced_at")
+    def zoom_synced(self, obj: Event) -> bool:
+        return obj.zoom_synced_at is not None
+
+    @admin.display(
+        description="Discord synced", boolean=True, ordering="discord_synced_at"
+    )
+    def discord_synced(self, obj: Event) -> bool:
+        return obj.discord_synced_at is not None
 
     def save_model(self, request, obj, form, change) -> None:
         """Save the event, then dispatch the Zoom/Discord sync and report back.
