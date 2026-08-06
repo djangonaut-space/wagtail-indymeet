@@ -4,6 +4,7 @@ import json
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -431,8 +432,6 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_with_invalid_json(self, user):
         """Test form validation with mixed data types."""
-        from accounts.forms import UserAvailabilityForm
-
         availability = UserAvailability.objects.create(user=user)
         # JSONField should handle conversion, but let's test with proper list
         form = UserAvailabilityForm(
@@ -449,8 +448,6 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_with_none_slots(self, user):
         """Test form with None value for slots."""
-        from accounts.forms import UserAvailabilityForm
-
         availability = UserAvailability.objects.create(user=user)
         form = UserAvailabilityForm(
             data={"slots_timezone": DEFAULT_TIMEZONE},  # No slots provided
@@ -462,8 +459,6 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_clears_slots_on_empty_submit(self, user):
         """Test that submitting empty list clears slots."""
-        from accounts.forms import UserAvailabilityForm
-
         availability = UserAvailability.objects.create(
             user=user,
             slots=[24.0, 48.0, 72.0],  # Mon, Tue, Wed at 00:00
@@ -642,7 +637,6 @@ class TestUserAvailabilityModelEdgeCases:
 
     def test_one_to_one_relationship(self, user):
         """Test that a user can only have one availability record."""
-        from django.db import IntegrityError
 
         UserAvailability.objects.create(user=user)
 
