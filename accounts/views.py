@@ -26,6 +26,7 @@ from django.views.generic.edit import CreateView
 from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
 
+from home import constants
 from home.email import send
 from home.models import Testimonial
 
@@ -256,6 +257,13 @@ class UpdateAvailabilityView(LoginRequiredMixin, UpdateView):
             user=self.request.user
         )
         return availability
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["default_availability_timezone"] = (
+            constants.DEFAULT_AVAILABILITY_TIMEZONE
+        )
+        return context
 
     def get_success_url(self):
         messages.add_message(

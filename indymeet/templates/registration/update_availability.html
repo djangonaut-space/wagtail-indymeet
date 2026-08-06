@@ -50,7 +50,7 @@
             <p class="text-sm">
                 <strong>{% translate "Instructions:" %}</strong>
                 {% blocktranslate %}
-                    Click or tap to select individual time slots, or drag to select a range. Click or tap a selected slot to remove it. Times are saved as weekly local times in the timezone selected below. Your browser timezone is<span id="local-timezone"></span>.
+                    Click or tap to select individual time slots, or drag to select a range. Click or tap a selected slot to remove it. Times are saved as weekly local times in the timezone selected below. <span id="local-timezone"></span>
                 {% endblocktranslate %}
             </p>
         </div>
@@ -130,10 +130,43 @@
 </main>
 
 <script>
-    const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (browserTimezone) {
-        document.getElementById("local-timezone").textContent = ` (${browserTimezone})`;
-    }
+    (() => {
+        function getBrowserTimezone() {
+            try {
+                if (typeof Intl === "undefined" || !Intl.DateTimeFormat) {
+                    return "";
+                }
+                return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+            } catch {
+                return "";
+            }
+        }
+
+        function updateTimezoneHelpText() {
+            const timezoneDisplay = document.getElementById("local-timezone");
+            const timezoneSelect = document.getElementById("id_slots_timezone");
+            if (!timezoneDisplay) {
+                return;
+            }
+
+            const browserTimezone = getBrowserTimezone();
+            if (browserTimezone) {
+                timezoneDisplay.textContent = `Your browser timezone is ${browserTimezone}.`;
+                return;
+            }
+
+            const selectedTimezone = timezoneSelect && timezoneSelect.value
+                ? timezoneSelect.value
+                : "{{ default_availability_timezone }}";
+            timezoneDisplay.textContent = `Using selected timezone: ${selectedTimezone}.`;
+        }
+
+        const timezoneSelect = document.getElementById("id_slots_timezone");
+        if (timezoneSelect) {
+            timezoneSelect.addEventListener("change", updateTimezoneHelpText);
+        }
+        updateTimezoneHelpText();
+    })();
 </script>
 
 <script type="module">

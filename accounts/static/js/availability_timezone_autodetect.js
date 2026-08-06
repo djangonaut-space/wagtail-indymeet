@@ -1,3 +1,14 @@
+function getBrowserTimezone() {
+    try {
+        if (typeof Intl === "undefined" || !Intl.DateTimeFormat) {
+            return "";
+        }
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    } catch {
+        return "";
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const slotsField = document.getElementById("id_slots");
     const timezoneSelect = document.getElementById("id_slots_timezone");
@@ -11,7 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const browserTimezone = getBrowserTimezone();
+    if (!browserTimezone) {
+        return;
+    }
+
     const hasMatchingOption = Array.from(timezoneSelect.options).some(
         (option) => option.value === browserTimezone
     );

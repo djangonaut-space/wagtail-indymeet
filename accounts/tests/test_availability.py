@@ -128,6 +128,7 @@ class TestAvailabilityView:
         assert response.status_code == 200
         assert "availability-grid" in content
         assert "id_slots_timezone" in content
+        assert response.context["default_availability_timezone"] == DEFAULT_TIMEZONE
 
     def test_availability_view_creates_object(self, client, user):
         """Test that the view creates a UserAvailability object if none exists."""
