@@ -45,7 +45,13 @@ class Event(ClusterableModel):
         validators=[MaxLengthValidator(DESCRIPTION_MAX)],
         help_text=f"Capped at {DESCRIPTION_MAX} characters to fit Discord scheduled events.",
     )
-    is_published = models.BooleanField(default=False)
+    is_published = models.BooleanField(
+        default=False,
+        help_text=(
+            "Check this to make the event go live on the public calendar and "
+            "detail pages, regardless of what Public is set to."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     session = models.ForeignKey(
         "Session",
@@ -74,7 +80,16 @@ class Event(ClusterableModel):
         default="",
         help_text="Link to the recording (e.g. YouTube) after the event has taken place.",
     )
-    is_public = models.BooleanField(default=True)
+    is_public = models.BooleanField(
+        default=True,
+        help_text=(
+            "Controls visibility, not whether the event is live: public events "
+            "are visible to everyone, private events only to authenticated "
+            "members of the linked session. For events with no session, this "
+            "also decides who receives the calendar invite; session events "
+            "always invite their session's members regardless of this setting."
+        ),
+    )
     extra_emails = ArrayField(
         models.EmailField(blank=True),
         default=list,

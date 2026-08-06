@@ -163,21 +163,6 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "discord_synced",
     ]
     readonly_fields = ("zoom_synced_at", "discord_synced_at")
-    field_help_text = {
-        "is_public": (
-            "Public events are visible to everyone; private events only appear "
-            "to authenticated members of the linked session."
-        ),
-        "is_published": (
-            "Only published events show up on the public calendar and detail pages."
-        ),
-    }
-
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if formfield and db_field.name in self.field_help_text:
-            formfield.help_text = self.field_help_text[db_field.name]
-        return formfield
 
     @admin.display(description="Zoom synced", boolean=True, ordering="zoom_synced_at")
     def zoom_synced(self, obj: Event) -> bool:
