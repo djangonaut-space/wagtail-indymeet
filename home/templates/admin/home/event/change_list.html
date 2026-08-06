@@ -23,7 +23,7 @@
                             <li>Private event (no session) &mdash; no extra recipients; still sends to the event's configured extra emails (e.g. sessions@djangonaut.space).</li>
                         </ul>
                     </li>
-                    <li><strong>Retry Zoom/Discord sync</strong> <code>[runs immediately]</code> &mdash; re-attempts the Zoom/Discord sync for selected events that aren't fully synced yet.</li>
+                    <li><strong>Resync to Zoom and Discord</strong> <code>[runs immediately]</code> &mdash; force-resyncs the selected events, updating the existing Zoom meeting/Discord event even if already synced. If calendar invites were already sent, recipients' calendars won't reflect the updated details.</li>
                 </ul>
                 Only "Send calendar invites to event members" shows a confirmation page first &mdash; the other actions run right away when you choose them from the dropdown and click "Go".
             </dd>

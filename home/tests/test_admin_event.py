@@ -406,8 +406,8 @@ class EventAdminCalendarInviteEmailActionTests(TestCase):
         self.assertEqual(stored[0].level, messages.ERROR)
 
 
-class EventAdminRetryEventSyncActionTests(TestCase):
-    """Tests for the retry_event_sync admin action."""
+class EventAdminResyncEventActionTests(TestCase):
+    """Tests for the resync_event admin action."""
 
     def setUp(self):
         self.factory = RequestFactory()
@@ -429,26 +429,17 @@ class EventAdminRetryEventSyncActionTests(TestCase):
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.operations.sync_event")
-    def test_queues_events_that_are_not_fully_synced(self, mock_task):
-        """Action enqueues events missing a Zoom link or Discord event and
-        skips events that already have both."""
-        missing_zoom = EventFactory.create(zoom_link="", discord_event_id="")
-        missing_discord = EventFactory.create(
-            zoom_link="https://zoom.us/j/x", discord_event_id=""
-        )
+    def test_queues_already_synced_events(self, mock_task):
+        """Action force-resyncs events even if Zoom/Discord are already set."""
         fully_synced = EventFactory.create(
             zoom_link="https://zoom.us/j/y", discord_event_id="d1"
         )
-        queryset = Event.objects.filter(
-            pk__in=[missing_zoom.pk, missing_discord.pk, fully_synced.pk]
+
+        self.admin.resync_event(
+            self._get_request(), Event.objects.filter(pk=fully_synced.pk)
         )
 
-        self.admin.retry_event_sync(self._get_request(), queryset)
-
-        enqueued_ids = {
-            call.kwargs["event_id"] for call in mock_task.enqueue.call_args_list
-        }
-        self.assertEqual(enqueued_ids, {missing_zoom.pk, missing_discord.pk})
+        mock_task.enqueue.assert_called_once_with(event_id=fully_synced.pk)
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.operations.sync_event")
@@ -456,25 +447,11 @@ class EventAdminRetryEventSyncActionTests(TestCase):
         event = EventFactory.create(zoom_link="", discord_event_id="")
         request = self._get_request()
 
-        self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
+        self.admin.resync_event(request, Event.objects.filter(pk=event.pk))
 
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
-        self.assertIn("queued for 1 event(s)", str(stored[0]))
-
-    @patch("home.operations.sync_event")
-    def test_shows_info_message_for_already_synced_events(self, mock_task):
-        event = EventFactory.create(
-            zoom_link="https://zoom.us/j/x", discord_event_id="d1"
-        )
-        request = self._get_request()
-
-        self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
-
-        stored = list(request._messages)
-        self.assertEqual(len(stored), 1)
-        self.assertIn("already synced", str(stored[0]))
-        mock_task.enqueue.assert_not_called()
+        self.assertIn("resync queued for 1 event(s)", str(stored[0]))
 
     @override_settings(**ZOOM_DISABLED)
     @patch("home.operations.sync_event")
@@ -483,12 +460,29 @@ class EventAdminRetryEventSyncActionTests(TestCase):
         request = self._get_request()
 
         with self.assertLogs("home.operations", level="WARNING"):
-            self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
+            self.admin.resync_event(request, Event.objects.filter(pk=event.pk))
 
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
         self.assertIn("Zoom isn't configured", str(stored[0]))
         mock_task.enqueue.assert_not_called()
+
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.operations.sync_event")
+    def test_shows_warning_when_invites_already_sent(self, _mock_task):
+        """Resyncing an event that already emailed invites warns that those
+        recipients won't see the updated Zoom/Discord details."""
+        event = EventFactory.create(
+            zoom_link="https://zoom.us/j/y",
+            discord_event_id="d1",
+            calendar_invites_sent_at=datetime(2024, 1, 1, tzinfo=dt_timezone.utc),
+        )
+        request = self._get_request()
+
+        self.admin.resync_event(request, Event.objects.filter(pk=event.pk))
+
+        stored = [str(m) for m in request._messages]
+        self.assertTrue(any("won't reflect the updated" in m for m in stored))
 
 
 class EventAdminSaveModelTests(TestCase):
