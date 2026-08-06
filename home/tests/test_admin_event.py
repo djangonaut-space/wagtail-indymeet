@@ -521,3 +521,22 @@ class EventAdminSaveModelTests(TestCase):
         self.assertEqual(len(stored), 1)
         self.assertEqual(stored[0].level, messages.WARNING)
         self.assertEqual(str(stored[0]), "No Zoom configured.")
+
+
+class EventAdminSyncedDisplayTests(TestCase):
+    """Tests for the zoom_synced/discord_synced list_display methods."""
+
+    def setUp(self):
+        self.admin = EventAdmin(Event, AdminSite())
+
+    def test_reflects_synced_at_timestamps(self):
+        """Each method is True only when its *_synced_at timestamp is set."""
+        synced = EventFactory.build(
+            zoom_synced_at=datetime.now(dt_timezone.utc), discord_synced_at=None
+        )
+        unsynced = EventFactory.build(zoom_synced_at=None, discord_synced_at=None)
+
+        self.assertTrue(self.admin.zoom_synced(synced))
+        self.assertFalse(self.admin.discord_synced(synced))
+        self.assertFalse(self.admin.zoom_synced(unsynced))
+        self.assertFalse(self.admin.discord_synced(unsynced))
