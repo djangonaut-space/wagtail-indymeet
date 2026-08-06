@@ -11,6 +11,8 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import Http404, HttpResponseRedirect
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.formats import date_format
 
 from accounts.factories import UserFactory
 from home.admin import EventAdmin
@@ -18,6 +20,7 @@ from home.factories import EventFactory, SessionFactory, SessionMembershipFactor
 from home.models import Event
 from home.operations import EventSyncDecision, EventSyncStatus
 from home.preview_email import calendar_invite_email_action
+from home.templatetags.email_tags import time_is_link
 
 ZOOM_SETTINGS = dict(
     ZOOM_ACCOUNT_ID="acct",
@@ -540,3 +543,23 @@ class EventAdminSyncedDisplayTests(TestCase):
         self.assertFalse(self.admin.discord_synced(synced))
         self.assertFalse(self.admin.zoom_synced(unsynced))
         self.assertFalse(self.admin.discord_synced(unsynced))
+
+
+class EventAdminStartTimeLinkTests(TestCase):
+    """Tests for the start_time_link list_display method."""
+
+    def test_links_to_time_is_comparison(self):
+        """The start time renders in DATETIME_FORMAT, followed by a
+        (time.is) link."""
+        event = EventFactory.build(
+            start_time=datetime(2025, 9, 1, 18, 0, tzinfo=dt_timezone.utc)
+        )
+
+        html = EventAdmin(Event, AdminSite()).start_time_link(event)
+
+        self.assertIn(time_is_link(event.start_time), html)
+        expected = date_format(
+            timezone.template_localtime(event.start_time), "DATETIME_FORMAT"
+        )
+        self.assertIn(expected, html)
+        self.assertIn("(time.is)", html)
