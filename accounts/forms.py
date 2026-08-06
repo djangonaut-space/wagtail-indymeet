@@ -233,14 +233,20 @@ class UserAvailabilityForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get("instance")
-        if instance is not None and instance.slots_timezone == "UTC":
-            # If slots_timezone is still the default "UTC" (never explicitly set)
-            # and the user's UserProfile.timezone is known and different, convert
-            # the slots to that timezone for display. This transformation is
-            # applied to the in-memory instance only and is not saved unless the
-            # user submits the form.
+        if (
+            instance is not None
+            and instance.slots_timezone == constants.DEFAULT_AVAILABILITY_TIMEZONE
+        ):
+            # If slots_timezone is still the default availability timezone
+            # (never explicitly set) and the user's UserProfile.timezone is known
+            # and different, convert the slots to that timezone for display. This
+            # transformation is applied to the in-memory instance only and is not
+            # saved unless the user submits the form.
             profile_timezone = instance.user.profile.timezone
-            if profile_timezone and profile_timezone != "UTC":
+            if (
+                profile_timezone
+                and profile_timezone != constants.DEFAULT_AVAILABILITY_TIMEZONE
+            ):
                 instance.slots = [
                     utc_slot_to_local_slot(slot, profile_timezone)
                     for slot in instance.slots
