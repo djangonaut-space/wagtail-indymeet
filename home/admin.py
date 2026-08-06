@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import path, reverse
 from django.utils import timezone
+from django.utils.formats import date_format
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from github import GithubException
 from import_export import fields, resources
@@ -19,6 +21,7 @@ from home import constants
 from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
+from home.templatetags.email_tags import time_is_link
 from indymeet.admin import DescriptiveSearchMixin
 
 from . import preview_email, tasks
@@ -157,7 +160,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     ordering = ("-start_time",)
     list_display = [
         "title",
-        "start_time",
+        "start_time_link",
         "calendar_invites_sent_at",
         "zoom_synced",
         "discord_synced",
@@ -173,6 +176,17 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     )
     def discord_synced(self, obj: Event) -> bool:
         return obj.discord_synced_at is not None
+
+    @admin.display(description="Start time", ordering="start_time")
+    def start_time_link(self, obj: Event) -> str:
+        formatted = date_format(
+            timezone.template_localtime(obj.start_time), "DATETIME_FORMAT"
+        )
+        return format_html(
+            '{} <a href="{}" target="_blank" rel="noopener">(time.is)</a>',
+            formatted,
+            time_is_link(obj.start_time),
+        )
 
     def save_model(self, request, obj, form, change) -> None:
         """Save the event, then dispatch the Zoom/Discord sync and report back.
