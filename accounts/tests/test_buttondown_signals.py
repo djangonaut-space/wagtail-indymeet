@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from accounts.factories import UserFactory
 from accounts.models import ButtondownAccount
+from home.factories import SessionMembershipFactory
 
 BD_SETTINGS = {"BUTTONDOWN_API_KEY": "test-api-key"}
 _BASE_URL = "https://api.buttondown.email/v1"
@@ -116,5 +117,83 @@ class ButtondownSignalTests(TestCase):
 
         user.profile.bio = "updated"
         user.profile.save_base(raw=True)
+
+        self.assertEqual(len(rsps.calls), 0)
+
+    @override_settings(**BD_SETTINGS)
+    @rsps.activate
+    def test_membership_save_syncs(self):
+        """A SessionMembership save syncs Buttondown when the user's email is confirmed."""
+        user = UserFactory.create()
+        ButtondownAccount.objects.create(
+            user=user, buttondown_identifier="bd-uuid-signal"
+        )
+        rsps.add(
+            rsps.PATCH,
+            f"{_BASE_URL}/subscribers/bd-uuid-signal",
+            json={"id": "bd-uuid-signal"},
+        )
+        user.profile.email_confirmed = True
+        user.profile.save()
+        calls_before = len(rsps.calls)
+
+        SessionMembershipFactory.create(user=user)
+
+        self.assertEqual(len(rsps.calls), calls_before + 1)
+        self.assertEqual(rsps.calls[-1].request.method, "PATCH")
+
+    @override_settings(**BD_SETTINGS)
+    @rsps.activate
+    def test_membership_save_unconfirmed_email(self):
+        """A SessionMembership save does not sync when the user's email isn't confirmed."""
+        user = UserFactory.create()
+
+        SessionMembershipFactory.create(user=user)
+
+        self.assertEqual(len(rsps.calls), 0)
+
+    @override_settings(BUTTONDOWN_API_KEY="")
+    @rsps.activate
+    def test_membership_save_not_configured(self):
+        """A SessionMembership save does not sync when Buttondown isn't configured."""
+        user = UserFactory.create()
+        user.profile.email_confirmed = True
+        user.profile.save()
+
+        SessionMembershipFactory.create(user=user)
+
+        self.assertEqual(len(rsps.calls), 0)
+
+    @override_settings(**BD_SETTINGS)
+    @rsps.activate
+    def test_membership_delete_syncs(self):
+        """Deleting a SessionMembership syncs Buttondown when the user's email is confirmed."""
+        user = UserFactory.create()
+        ButtondownAccount.objects.create(
+            user=user, buttondown_identifier="bd-uuid-signal"
+        )
+        rsps.add(
+            rsps.PATCH,
+            f"{_BASE_URL}/subscribers/bd-uuid-signal",
+            json={"id": "bd-uuid-signal"},
+        )
+        user.profile.email_confirmed = True
+        user.profile.save()
+        membership = SessionMembershipFactory.create(user=user)
+        calls_before = len(rsps.calls)
+
+        membership.delete()
+
+        self.assertEqual(len(rsps.calls), calls_before + 1)
+        self.assertEqual(rsps.calls[-1].request.method, "PATCH")
+
+    @override_settings(**BD_SETTINGS)
+    @rsps.activate
+    def test_membership_delete_unconfirmed_email(self):
+        """Deleting a SessionMembership does not sync when the user's email isn't confirmed."""
+        user = UserFactory.create()
+        membership = SessionMembershipFactory.create(user=user)
+
+        membership.delete()
 
         self.assertEqual(len(rsps.calls), 0)
