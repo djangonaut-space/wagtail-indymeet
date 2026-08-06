@@ -22,9 +22,10 @@ class EventSyncDecision(NamedTuple):
 def dispatch_event_sync(event: Event) -> EventSyncDecision:
     """Decide whether an event needs external syncing and enqueue the task.
 
-    Called from ``EventAdmin.save_model`` after the event is saved.
-    Returns a decision the admin maps to a user-facing message. No
-    Zoom link and Zoom not configured will be logged for maintainers.
+    Called from ``EventAdmin.save_model`` after the event is saved, and from
+    the "Resync to Zoom and Discord" admin action. Returns a decision the
+    admin maps to a user-facing message. No Zoom link and Zoom not configured
+    will be logged for maintainers.
     """
     has_external_state = bool(
         event.zoom_link or event.zoom_meeting_id or event.discord_event_id

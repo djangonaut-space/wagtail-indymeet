@@ -156,7 +156,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "copy_event",
         "send_calendar_invites",
         preview_email.calendar_invite_email_action,
-        "retry_event_sync",
+        "resync_event",
     ]
     ordering = ("-start_time",)
     list_display = [
@@ -306,38 +306,38 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         }
         return render(request, "admin/send_calendar_invites_confirmation.html", context)
 
-    @admin.action(description="Retry Zoom/Discord sync")
-    def retry_event_sync(self, request, queryset) -> None:
-        """Re-run the Zoom/Discord sync for events that aren't fully synced.
+    @admin.action(description="Resync to Zoom and Discord")
+    def resync_event(self, request, queryset) -> None:
+        """Force a Zoom/Discord resync, updating events even if already synced.
 
-        Uses the same dispatch as ``save_model``, so the sync task creates
-        whatever is missing: the Zoom meeting first, then the Discord event.
+        Uses the same dispatch as ``save_model``. Existing Zoom meetings and
+        Discord events are updated in place rather than skipped.
         """
         queued = 0
-        already_synced = 0
         not_configured = 0
+        already_invited = 0
         for event in queryset:
-            if event.zoom_link and event.discord_event_id:
-                already_synced += 1
-                continue
             decision = dispatch_event_sync(event)
             if decision.status is EventSyncStatus.QUEUED:
                 queued += 1
+                if event.calendar_invites_sent_at:
+                    already_invited += 1
             else:
                 not_configured += 1
 
         if queued:
             self.message_user(
                 request,
-                f"Zoom/Discord sync queued for {queued} event(s).",
+                f"Zoom/Discord resync queued for {queued} event(s).",
                 messages.SUCCESS,
             )
-        if already_synced:
+        if already_invited:
             self.message_user(
                 request,
-                f"Skipped {already_synced} event(s) already synced to Zoom "
-                "and Discord.",
-                messages.INFO,
+                f"{already_invited} event(s) already had calendar invites sent "
+                "- recipients' calendars won't reflect the updated Zoom/Discord "
+                "details.",
+                messages.WARNING,
             )
         if not_configured:
             self.message_user(
