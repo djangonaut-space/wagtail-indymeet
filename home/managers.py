@@ -402,20 +402,23 @@ class UserSurveyResponseQuerySet(QuerySet):
         if not slots:
             return self.none()
 
-        from home.availability import get_user_utc_slots
+        from accounts.models import UserAvailability
+        from home.availability import local_slot_to_utc_slot
 
         target_slots = {float(slot) for slot in slots}
+        candidate_user_ids = self.order_by().values("user_id").distinct()
+        availability_rows = (
+            UserAvailability.objects.filter(user_id__in=Subquery(candidate_user_ids))
+            .values_list("user_id", "slots", "slots_timezone")
+            .iterator(chunk_size=200)
+        )
+
         matching_user_ids = []
-        seen_user_ids = set()
-        for response in self.select_related("user").prefetch_related(
-            "user__availability"
-        ):
-            user = response.user
-            if user.id in seen_user_ids:
-                continue
-            seen_user_ids.add(user.id)
-            if target_slots.intersection(get_user_utc_slots(user)):
-                matching_user_ids.append(user.id)
+        for user_id, availability_slots, timezone_name in availability_rows:
+            for slot in availability_slots or []:
+                if local_slot_to_utc_slot(float(slot), timezone_name) in target_slots:
+                    matching_user_ids.append(user_id)
+                    break
 
         return self.filter(user_id__in=matching_user_ids)
 

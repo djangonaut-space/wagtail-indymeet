@@ -312,6 +312,18 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         self.assertIn(response1, qs)
         self.assertNotIn(response2, qs)
 
+    def test_with_availability_overlap_scans_availability_rows_only(self):
+        """Overlap filtering avoids loading full response and user objects."""
+        UserAvailabilityFactory(user=self.user1, slots=[24.0])
+        UserAvailabilityFactory(user=self.user2, slots=[48.0])
+        UserSurveyResponseFactory(user=self.user1, survey=self.survey)
+        UserSurveyResponseFactory(user=self.user2, survey=self.survey)
+
+        with self.assertNumQueries(1):
+            qs = UserSurveyResponse.objects.with_availability_overlap([24.0])
+
+        self.assertEqual(qs.count(), 1)
+
     def test_with_navigator_overlap(self):
         """Test filtering by navigator overlap."""
         # Create navigator with availability
