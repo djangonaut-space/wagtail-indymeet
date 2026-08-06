@@ -151,6 +151,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     actions = [
         "copy_event",
         "send_calendar_invites",
+        preview_email.calendar_invite_email_action,
         "retry_event_sync",
     ]
     list_display = [
