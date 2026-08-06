@@ -263,7 +263,7 @@ def get_filtered_applicants(
             if availability_slots:
                 has_availability = True
                 availability_by_day = format_availability_by_day(
-                    get_user_utc_slots(user), "UTC"
+                    get_user_utc_slots(user), constants.DEFAULT_AVAILABILITY_TIMEZONE
                 )
 
         # Round previous average score if it exists
