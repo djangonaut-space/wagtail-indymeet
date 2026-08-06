@@ -154,6 +154,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         preview_email.calendar_invite_email_action,
         "retry_event_sync",
     ]
+    ordering = ("-start_time",)
     list_display = [
         "title",
         "start_time",
