@@ -92,6 +92,7 @@ def email_organizers_for_announcement(announcement_id: int) -> None:
             "admin:home_announcement_change", args=[announcement.id]
         )
         email.send(
+            from_email=settings.SESSIONS_FROM_EMAIL,
             email_template="announcement_needs_approval",
             recipient_list=organizer_emails,
             context={

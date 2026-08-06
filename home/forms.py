@@ -3,6 +3,7 @@ import io
 from datetime import date
 
 from django import forms
+from django.conf import settings
 from django.core import validators
 from django.forms.renderers import DjangoTemplates
 from django.urls import reverse
@@ -1194,10 +1195,11 @@ class MembershipAcceptanceForm(forms.Form):
                 "membership": self.membership,
             }
             send(
+                from_email=settings.SESSIONS_FROM_EMAIL,
                 email_template="membership_declined",
                 recipient_list=[
-                    "contact@djangonaut.space",
-                    "session@djangonaut.space",
+                    settings.SESSIONS_FROM_EMAIL,
+                    settings.DEFAULT_FROM_EMAIL,
                 ],
                 context=context,
             )
