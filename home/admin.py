@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Count, Exists, F, Max, OuterRef, TextField
@@ -238,7 +239,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         return HttpResponseRedirect(f"{url}?copy_from={event.pk}")
 
     @admin.action(description="Send calendar invites to event members")
-    def send_calendar_invites(self, request, queryset) -> None:
+    def send_calendar_invites(self, request, queryset):
         """Queue calendar invite emails for each selected event.
 
         Recipients are determined by the event's session and visibility:
@@ -246,28 +247,50 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         - Public event (no session): all users opted in to event updates.
         - Private event (no session): no extra recipients; the task still sends
           to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
-        """
-        queued = 0
-        skipped = 0
-        for event in queryset:
-            if event.calendar_invites_sent_at:
-                skipped += 1
-                continue
-            tasks.send_event_calendar_invite.enqueue(event_id=event.pk)
-            queued += 1
 
-        if queued:
-            self.message_user(
-                request,
-                f"Calendar invites queued for {queued} event(s).",
-                messages.SUCCESS,
-            )
-        if skipped:
-            self.message_user(
-                request,
-                f"Skipped {skipped} event(s) that already had invites sent.",
-                messages.WARNING,
-            )
+        Renders an intermediate confirmation page listing the computed
+        recipients first; nothing is queued until the user confirms.
+        """
+        if request.POST.get("apply"):
+            queued = 0
+            skipped = 0
+            for event in queryset:
+                if event.calendar_invites_sent_at:
+                    skipped += 1
+                    continue
+                tasks.send_event_calendar_invite.enqueue(event_id=event.pk)
+                queued += 1
+
+            if queued:
+                self.message_user(
+                    request,
+                    f"Calendar invites queued for {queued} event(s).",
+                    messages.SUCCESS,
+                )
+            if skipped:
+                self.message_user(
+                    request,
+                    f"Skipped {skipped} event(s) that already had invites sent.",
+                    messages.WARNING,
+                )
+            return None
+
+        events = [
+            {
+                "event": event,
+                "recipients": event.get_calendar_invite_recipients(),
+                "already_sent": bool(event.calendar_invites_sent_at),
+            }
+            for event in queryset
+        ]
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Confirm sending calendar invites",
+            "events": events,
+            "opts": self.model._meta,
+            "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+        }
+        return render(request, "admin/send_calendar_invites_confirmation.html", context)
 
     @admin.action(description="Retry Zoom/Discord sync")
     def retry_event_sync(self, request, queryset) -> None:

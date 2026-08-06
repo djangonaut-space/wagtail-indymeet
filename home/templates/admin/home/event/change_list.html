@@ -16,7 +16,7 @@
                 <ul>
                     <li><strong>Copy selected event and open as new</strong> <code>[runs immediately]</code> &mdash; requires exactly one selected event; opens the add form pre-filled with that event's data so you can review, edit, and save it as a new event. Nothing is saved until you submit that form.</li>
                     <li>
-                        <strong>Send calendar invites to event members</strong> <code>[runs immediately]</code> &mdash; queues calendar invite emails for the selected events. Only sends once per event &mdash; skipped for events that already have invites sent. Recipients depend on the event:
+                        <strong>Send calendar invites to event members</strong> <code>[shows a confirmation page]</code> &mdash; shows the computed recipients and current session/Public/Published settings for the selected events; invites are only queued once you confirm. Only sends once per event &mdash; skipped for events that already have invites sent. Recipients depend on the event:
                         <ul>
                             <li>Session event &mdash; all members of that session who have an email address.</li>
                             <li>Public event (no session) &mdash; all users opted in to event updates.</li>
@@ -25,7 +25,7 @@
                     </li>
                     <li><strong>Retry Zoom/Discord sync</strong> <code>[runs immediately]</code> &mdash; re-attempts the Zoom/Discord sync for selected events that aren't fully synced yet.</li>
                 </ul>
-                None of these actions show a confirmation page first &mdash; choosing them from the dropdown and clicking "Go" runs them right away.
+                Only "Send calendar invites to event members" shows a confirmation page first &mdash; the other actions run right away when you choose them from the dropdown and click "Go".
             </dd>
 
             <dt>List columns</dt>
