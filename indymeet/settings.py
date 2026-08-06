@@ -248,6 +248,7 @@ LOGOUT_REDIRECT_URL = "/"
 
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
 SERVER_EMAIL = "contact@djangonaut.space"
+SESSIONS_FROM_EMAIL = "sessions@djangonaut.space"
 
 PUPUT_AS_PLUGIN = True
 PUPUT_BLOG_MODEL = "home.models.puput_abstracts.BlogAbstract"

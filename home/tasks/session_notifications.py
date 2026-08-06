@@ -40,6 +40,7 @@ def send_accepted_email(membership_id: int) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_accepted",
         recipient_list=[membership.user.email],
         context=context,
@@ -72,6 +73,7 @@ def send_waitlisted_email(
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_waitlisted",
         recipient_list=[waitlist_entry.user.email],
         context=context,
@@ -107,6 +109,7 @@ def send_rejected_email(
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_rejected",
         recipient_list=[response.user.email],
         context=context,
@@ -139,6 +142,7 @@ def send_acceptance_reminder_email(membership_id: int) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="acceptance_reminder",
         recipient_list=[membership.user.email],
         context=context,
@@ -185,6 +189,7 @@ def send_team_welcome_email(team_id: int) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="team_welcome",
         recipient_list=recipient_list,
         context=context,
@@ -220,6 +225,7 @@ def send_membership_acceptance_email(membership_id: int) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_accepted",
         recipient_list=[membership.user.email],
         context=context,
@@ -254,6 +260,7 @@ def reject_waitlisted_user(waitlist_id: int) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="waitlist_rejection",
         recipient_list=[waitlist_entry.user.email],
         context=context,

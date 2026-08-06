@@ -43,6 +43,7 @@ def acceptance_email(recipient_email: str, membership: SessionMembership) -> Non
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_accepted",
         recipient_list=[recipient_email],
         context=context,
@@ -71,6 +72,7 @@ def reminder_email(recipient_email: str, membership: SessionMembership) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="acceptance_reminder",
         recipient_list=[recipient_email],
         context=context,
@@ -113,6 +115,7 @@ def rejection_email(recipient_email: str, session: Session) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_rejected",
         recipient_list=[recipient_email],
         context=context,
@@ -152,6 +155,7 @@ def waitlist_email(recipient_email: str, session: Session) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_waitlisted",
         recipient_list=[recipient_email],
         context=context,
@@ -198,6 +202,7 @@ def team_welcome_email(recipient_email: str, session: Session) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="team_welcome",
         recipient_list=[recipient_email],
         context=context,
