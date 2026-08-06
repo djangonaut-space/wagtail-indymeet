@@ -10,7 +10,15 @@ from django.contrib import admin, messages
 from django.urls import reverse
 
 from . import email
-from .models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
+from .icalendar_utils import generate_icalendar
+from .models import (
+    Event,
+    Session,
+    SessionMembership,
+    Team,
+    UserSurveyResponse,
+    Waitlist,
+)
 
 
 def acceptance_email(recipient_email: str, membership: SessionMembership) -> None:
@@ -196,6 +204,28 @@ def team_welcome_email(recipient_email: str, session: Session) -> None:
     )
 
 
+def calendar_invite_email(recipient_email: str, event: Event) -> None:
+    """
+    Send a preview of the event calendar invite email.
+
+    Args:
+        recipient_email: Email address to send preview to
+        event: Event to use for preview data
+    """
+    ical_data = generate_icalendar(event)
+    context = {
+        "event": event,
+        "cta_link": event.get_full_url(),
+    }
+
+    email.send(
+        email_template="event_calendar_invite",
+        recipient_list=[recipient_email],
+        context=context,
+        attachments=[("event.ics", ical_data, "text/calendar")],
+    )
+
+
 # Admin actions for SessionMembershipAdmin
 
 
@@ -314,3 +344,27 @@ def team_welcome_email_action(modeladmin, request, queryset):
         )
     except ValueError as e:
         modeladmin.message_user(request, str(e), messages.ERROR)
+
+
+# Admin actions for EventAdmin
+
+
+@admin.action(description="Preview calendar invite email (send to me)")
+def calendar_invite_email_action(modeladmin, request, queryset):
+    """Send a preview of the event calendar invite email to the logged-in admin user."""
+    if queryset.count() != 1:
+        modeladmin.message_user(
+            request,
+            "Please select exactly one event.",
+            messages.ERROR,
+        )
+        return
+
+    event = queryset.first()
+    calendar_invite_email(request.user.email, event)
+
+    modeladmin.message_user(
+        request,
+        f"Preview of calendar invite email sent to {request.user.email}",
+        messages.SUCCESS,
+    )

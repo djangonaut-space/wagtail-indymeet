@@ -17,6 +17,7 @@ from home.admin import EventAdmin
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import Event
 from home.operations import EventSyncDecision, EventSyncStatus
+from home.preview_email import calendar_invite_email_action
 
 ZOOM_SETTINGS = dict(
     ZOOM_ACCOUNT_ID="acct",
@@ -333,6 +334,56 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertEqual(len(message_texts), 2)
         self.assertTrue(any("queued for 1" in t for t in message_texts))
         self.assertTrue(any("Skipped 1" in t for t in message_texts))
+
+
+class EventAdminCalendarInviteEmailActionTests(TestCase):
+    """Tests for the calendar_invite_email_action preview action."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.admin = EventAdmin(Event, AdminSite())
+        self.superuser = UserFactory.create(
+            email="admin@example.com", is_staff=True, is_superuser=True
+        )
+
+    def _get_request(self):
+        request = self.factory.post("/admin/home/event/")
+        request.user = self.superuser
+        middleware = SessionMiddleware(lambda req: None)
+        middleware.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        return request
+
+    @patch("home.preview_email.email.send")
+    def test_sends_preview_to_admin(self, mock_send):
+        event = EventFactory.create()
+        request = self._get_request()
+
+        calendar_invite_email_action(
+            self.admin, request, Event.objects.filter(pk=event.pk)
+        )
+
+        mock_send.assert_called_once()
+        self.assertEqual(
+            mock_send.call_args.kwargs["recipient_list"], [self.superuser.email]
+        )
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertIn(self.superuser.email, str(stored[0]))
+
+    @patch("home.preview_email.email.send")
+    def test_error_when_multiple_selected(self, mock_send):
+        events = EventFactory.create_batch(2)
+        request = self._get_request()
+
+        calendar_invite_email_action(
+            self.admin, request, Event.objects.filter(pk__in=[e.pk for e in events])
+        )
+
+        mock_send.assert_not_called()
+        stored = list(request._messages)
+        self.assertEqual(stored[0].level, messages.ERROR)
 
 
 class EventAdminRetryEventSyncActionTests(TestCase):
