@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="module">
+    <table>
+        <thead>
+            <tr>
+                <th>Event</th>
+                <th>Session</th>
+                <th>Public</th>
+                <th>Published</th>
+                <th>Recipients</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in events %}
+            <tr>
+                <td>{{ item.event.title }}</td>
+                <td>{{ item.event.session|default:"—" }}</td>
+                <td>{{ item.event.is_public|yesno:"Yes,No" }}</td>
+                <td>{{ item.event.is_published|yesno:"Yes,No" }}</td>
+                <td>
+                    {% if item.already_sent %}
+                        Already sent &mdash; will be skipped.
+                    {% elif item.recipients %}
+                        {{ item.recipients|length }}: {{ item.recipients|join:", " }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="send_calendar_invites">
+    {% for item in events %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ item.event.pk }}">
+    {% endfor %}
+    <p><strong>Are you sure you want to send these calendar invites?</strong></p>
+    <div class="submit-row">
+        <input type="submit" name="apply" value="Send invites" class="default" />
+        <a href="{% url 'admin:home_event_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+
+{% endblock %}

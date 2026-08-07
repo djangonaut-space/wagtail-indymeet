@@ -23,11 +23,14 @@ class ApplicationStatusMixin:
         """Check the survey's application status.
 
         Returns (status, start_date) where status is 'open', 'not_yet_open', or 'closed'.
+        Session organizers can preview an application before it opens.
         """
         session = getattr(survey, "application_session", None)
         if session is not None:
             now = timezone.now()
             if now < session.application_start_anywhere_on_earth():
+                if self.request.user.has_perm("home.form_team"):
+                    return "open", None
                 return "not_yet_open", session.application_start_date
             if now > session.application_end_anywhere_on_earth():
                 return "closed", None

@@ -16,24 +16,24 @@
                 <ul>
                     <li><strong>Copy selected event and open as new</strong> <code>[runs immediately]</code> &mdash; requires exactly one selected event; opens the add form pre-filled with that event's data so you can review, edit, and save it as a new event. Nothing is saved until you submit that form.</li>
                     <li>
-                        <strong>Send calendar invites to event members</strong> <code>[runs immediately]</code> &mdash; queues calendar invite emails for the selected events. Only sends once per event &mdash; skipped for events that already have invites sent. Recipients depend on the event:
+                        <strong>Send calendar invites to event members</strong> <code>[shows a confirmation page]</code> &mdash; shows the computed recipients and current session/Public/Published settings for the selected events; invites are only queued once you confirm. Only sends once per event &mdash; skipped for events that already have invites sent. Recipients depend on the event:
                         <ul>
                             <li>Session event &mdash; all members of that session who have an email address.</li>
                             <li>Public event (no session) &mdash; all users opted in to event updates.</li>
                             <li>Private event (no session) &mdash; no extra recipients; still sends to the event's configured extra emails (e.g. sessions@djangonaut.space).</li>
                         </ul>
                     </li>
-                    <li><strong>Retry Zoom/Discord sync</strong> <code>[runs immediately]</code> &mdash; re-attempts the Zoom/Discord sync for selected events that aren't fully synced yet.</li>
+                    <li><strong>Resync to Zoom and Discord</strong> <code>[runs immediately]</code> &mdash; force-resyncs the selected events, updating the existing Zoom meeting/Discord event even if already synced. If calendar invites were already sent, recipients' calendars won't reflect the updated details.</li>
                 </ul>
-                None of these actions show a confirmation page first &mdash; choosing them from the dropdown and clicking "Go" runs them right away.
+                Only "Send calendar invites to event members" shows a confirmation page first &mdash; the other actions run right away when you choose them from the dropdown and click "Go".
             </dd>
 
             <dt>List columns</dt>
             <dd>
                 <ul>
                     <li><strong>Calendar invites sent at</strong> &mdash; when calendar invites were emailed to members; blank means none have been sent yet.</li>
-                    <li><strong>Zoom synced at</strong> &mdash; when the Zoom meeting was last created/updated for this event; blank means it hasn't synced yet.</li>
-                    <li><strong>Discord synced at</strong> &mdash; when the Discord scheduled event was last created/updated for this event; blank means it hasn't synced yet.</li>
+                    <li><strong>Zoom synced</strong> &mdash; whether a Zoom meeting has been created/updated for this event.</li>
+                    <li><strong>Discord synced</strong> &mdash; whether a Discord scheduled event has been created/updated for this event.</li>
                 </ul>
             </dd>
         </dl>

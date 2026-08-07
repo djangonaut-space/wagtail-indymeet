@@ -11,12 +11,16 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import Http404, HttpResponseRedirect
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.formats import date_format
 
 from accounts.factories import UserFactory
-from home.admin import EventAdmin
+from home.admin import CalendarInvitesSentFilter, EventAdmin
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import Event
 from home.operations import EventSyncDecision, EventSyncStatus
+from home.preview_email import calendar_invite_email_action
+from home.templatetags.email_tags import time_is_link
 
 ZOOM_SETTINGS = dict(
     ZOOM_ACCOUNT_ID="acct",
@@ -200,8 +204,9 @@ class EventAdminSendCalendarInvitesTests(TestCase):
             is_superuser=True,
         )
 
-    def _get_request(self):
-        request = self.factory.post("/admin/home/event/")
+    def _get_request(self, apply=True):
+        data = {"apply": "1"} if apply else {}
+        request = self.factory.post("/admin/home/event/", data)
         request.user = self.superuser
         middleware = SessionMiddleware(lambda req: None)
         middleware.process_request(request)
@@ -215,6 +220,22 @@ class EventAdminSendCalendarInvitesTests(TestCase):
             end_time=datetime(2025, 9, 1, 20, 0, tzinfo=dt_timezone.utc),
             **kwargs,
         )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_shows_confirmation_page_without_apply(self, mock_send):
+        """Without the apply flag, the action renders a confirmation page and
+        queues nothing."""
+        event = self._make_event(is_public=False, title="Unconfirmed Event")
+
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Unconfirmed Event", response.content)
+        mock_send.assert_not_called()
+        event.refresh_from_db()
+        self.assertIsNone(event.calendar_invites_sent_at)
 
     @patch("home.tasks.event_notifications.email.send")
     def test_session_event_sends_to_session_members(self, mock_send):
@@ -335,8 +356,58 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertTrue(any("Skipped 1" in t for t in message_texts))
 
 
-class EventAdminRetryEventSyncActionTests(TestCase):
-    """Tests for the retry_event_sync admin action."""
+class EventAdminCalendarInviteEmailActionTests(TestCase):
+    """Tests for the calendar_invite_email_action preview action."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.admin = EventAdmin(Event, AdminSite())
+        self.superuser = UserFactory.create(
+            email="admin@example.com", is_staff=True, is_superuser=True
+        )
+
+    def _get_request(self):
+        request = self.factory.post("/admin/home/event/")
+        request.user = self.superuser
+        middleware = SessionMiddleware(lambda req: None)
+        middleware.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        return request
+
+    @patch("home.preview_email.email.send")
+    def test_sends_preview_to_admin(self, mock_send):
+        event = EventFactory.create()
+        request = self._get_request()
+
+        calendar_invite_email_action(
+            self.admin, request, Event.objects.filter(pk=event.pk)
+        )
+
+        mock_send.assert_called_once()
+        self.assertEqual(
+            mock_send.call_args.kwargs["recipient_list"], [self.superuser.email]
+        )
+        stored = list(request._messages)
+        self.assertEqual(len(stored), 1)
+        self.assertIn(self.superuser.email, str(stored[0]))
+
+    @patch("home.preview_email.email.send")
+    def test_error_when_multiple_selected(self, mock_send):
+        events = EventFactory.create_batch(2)
+        request = self._get_request()
+
+        calendar_invite_email_action(
+            self.admin, request, Event.objects.filter(pk__in=[e.pk for e in events])
+        )
+
+        mock_send.assert_not_called()
+        stored = list(request._messages)
+        self.assertEqual(stored[0].level, messages.ERROR)
+
+
+class EventAdminResyncEventActionTests(TestCase):
+    """Tests for the resync_event admin action."""
 
     def setUp(self):
         self.factory = RequestFactory()
@@ -358,26 +429,17 @@ class EventAdminRetryEventSyncActionTests(TestCase):
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.operations.sync_event")
-    def test_queues_events_that_are_not_fully_synced(self, mock_task):
-        """Action enqueues events missing a Zoom link or Discord event and
-        skips events that already have both."""
-        missing_zoom = EventFactory.create(zoom_link="", discord_event_id="")
-        missing_discord = EventFactory.create(
-            zoom_link="https://zoom.us/j/x", discord_event_id=""
-        )
+    def test_queues_already_synced_events(self, mock_task):
+        """Action force-resyncs events even if Zoom/Discord are already set."""
         fully_synced = EventFactory.create(
             zoom_link="https://zoom.us/j/y", discord_event_id="d1"
         )
-        queryset = Event.objects.filter(
-            pk__in=[missing_zoom.pk, missing_discord.pk, fully_synced.pk]
+
+        self.admin.resync_event(
+            self._get_request(), Event.objects.filter(pk=fully_synced.pk)
         )
 
-        self.admin.retry_event_sync(self._get_request(), queryset)
-
-        enqueued_ids = {
-            call.kwargs["event_id"] for call in mock_task.enqueue.call_args_list
-        }
-        self.assertEqual(enqueued_ids, {missing_zoom.pk, missing_discord.pk})
+        mock_task.enqueue.assert_called_once_with(event_id=fully_synced.pk)
 
     @override_settings(**ZOOM_SETTINGS)
     @patch("home.operations.sync_event")
@@ -385,25 +447,11 @@ class EventAdminRetryEventSyncActionTests(TestCase):
         event = EventFactory.create(zoom_link="", discord_event_id="")
         request = self._get_request()
 
-        self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
+        self.admin.resync_event(request, Event.objects.filter(pk=event.pk))
 
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
-        self.assertIn("queued for 1 event(s)", str(stored[0]))
-
-    @patch("home.operations.sync_event")
-    def test_shows_info_message_for_already_synced_events(self, mock_task):
-        event = EventFactory.create(
-            zoom_link="https://zoom.us/j/x", discord_event_id="d1"
-        )
-        request = self._get_request()
-
-        self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
-
-        stored = list(request._messages)
-        self.assertEqual(len(stored), 1)
-        self.assertIn("already synced", str(stored[0]))
-        mock_task.enqueue.assert_not_called()
+        self.assertIn("resync queued for 1 event(s)", str(stored[0]))
 
     @override_settings(**ZOOM_DISABLED)
     @patch("home.operations.sync_event")
@@ -412,12 +460,29 @@ class EventAdminRetryEventSyncActionTests(TestCase):
         request = self._get_request()
 
         with self.assertLogs("home.operations", level="WARNING"):
-            self.admin.retry_event_sync(request, Event.objects.filter(pk=event.pk))
+            self.admin.resync_event(request, Event.objects.filter(pk=event.pk))
 
         stored = list(request._messages)
         self.assertEqual(len(stored), 1)
         self.assertIn("Zoom isn't configured", str(stored[0]))
         mock_task.enqueue.assert_not_called()
+
+    @override_settings(**ZOOM_SETTINGS)
+    @patch("home.operations.sync_event")
+    def test_shows_warning_when_invites_already_sent(self, _mock_task):
+        """Resyncing an event that already emailed invites warns that those
+        recipients won't see the updated Zoom/Discord details."""
+        event = EventFactory.create(
+            zoom_link="https://zoom.us/j/y",
+            discord_event_id="d1",
+            calendar_invites_sent_at=datetime(2024, 1, 1, tzinfo=dt_timezone.utc),
+        )
+        request = self._get_request()
+
+        self.admin.resync_event(request, Event.objects.filter(pk=event.pk))
+
+        stored = [str(m) for m in request._messages]
+        self.assertTrue(any("won't reflect the updated" in m for m in stored))
 
 
 class EventAdminSaveModelTests(TestCase):
@@ -452,7 +517,6 @@ class EventAdminSaveModelTests(TestCase):
 
         mock_dispatch.assert_called_once_with(event)
         stored = list(request._messages)
-        self.assertEqual(len(stored), 1)
         self.assertEqual(stored[0].level, messages.INFO)
         self.assertEqual(str(stored[0]), "Syncing now.")
 
@@ -467,6 +531,103 @@ class EventAdminSaveModelTests(TestCase):
         self.admin.save_model(request, event, form=None, change=False)
 
         stored = list(request._messages)
-        self.assertEqual(len(stored), 1)
         self.assertEqual(stored[0].level, messages.WARNING)
         self.assertEqual(str(stored[0]), "No Zoom configured.")
+
+    @patch("home.admin.dispatch_event_sync")
+    def test_reminds_to_send_calendar_invites(self, mock_dispatch):
+        """Saving always shows a reminder to use the calendar invites action."""
+        mock_dispatch.return_value = EventSyncDecision(
+            EventSyncStatus.QUEUED, "Syncing now."
+        )
+        request = self._get_request()
+        event = EventFactory.build(zoom_link="https://zoom.us/j/x")
+
+        self.admin.save_model(request, event, form=None, change=False)
+
+        stored = [str(m) for m in request._messages]
+        self.assertTrue(any("Send calendar invites" in m for m in stored))
+
+
+class EventAdminSyncedDisplayTests(TestCase):
+    """Tests for the zoom_synced/discord_synced list_display methods."""
+
+    def setUp(self):
+        self.admin = EventAdmin(Event, AdminSite())
+
+    def test_reflects_synced_at_timestamps(self):
+        """Each method is True only when its *_synced_at timestamp is set."""
+        synced = EventFactory.build(
+            zoom_synced_at=datetime.now(dt_timezone.utc), discord_synced_at=None
+        )
+        unsynced = EventFactory.build(zoom_synced_at=None, discord_synced_at=None)
+
+        self.assertTrue(self.admin.zoom_synced(synced))
+        self.assertFalse(self.admin.discord_synced(synced))
+        self.assertFalse(self.admin.zoom_synced(unsynced))
+        self.assertFalse(self.admin.discord_synced(unsynced))
+
+
+class EventAdminStartTimeLinkTests(TestCase):
+    """Tests for the start_time_link list_display method."""
+
+    def test_links_to_time_is_comparison(self):
+        """The start time renders in DATETIME_FORMAT, followed by a
+        (time.is) link."""
+        event = EventFactory.build(
+            start_time=datetime(2025, 9, 1, 18, 0, tzinfo=dt_timezone.utc)
+        )
+
+        html = EventAdmin(Event, AdminSite()).start_time_link(event)
+
+        self.assertIn(time_is_link(event.start_time), html)
+        expected = date_format(
+            timezone.template_localtime(event.start_time), "DATETIME_FORMAT"
+        )
+        self.assertIn(expected, html)
+        self.assertIn("(time.is)", html)
+
+
+class CalendarInvitesSentFilterTests(TestCase):
+    """Tests for the CalendarInvitesSentFilter list filter."""
+
+    def _filtered(self, value, queryset):
+        request = RequestFactory().get(
+            "/admin/home/event/", {"calendar_invites_sent": value}
+        )
+        filter_instance = CalendarInvitesSentFilter(
+            request, request.GET.copy(), Event, EventAdmin
+        )
+        return set(filter_instance.queryset(request, queryset))
+
+    def test_splits_events_by_sent_status(self):
+        """The yes/no filter values partition events by invite-sent status."""
+        sent = EventFactory.create(
+            calendar_invites_sent_at=datetime.now(dt_timezone.utc)
+        )
+        unsent = EventFactory.create(calendar_invites_sent_at=None)
+        queryset = Event.objects.filter(pk__in=[sent.pk, unsent.pk])
+
+        self.assertEqual(self._filtered("yes", queryset), {sent})
+        self.assertEqual(self._filtered("no", queryset), {unsent})
+
+
+class EventAdminReadonlyFieldsTests(TestCase):
+    """Tests for EventAdmin's readonly_fields and fieldsets configuration."""
+
+    def test_sync_id_fields_are_readonly(self):
+        readonly = EventAdmin(Event, AdminSite()).readonly_fields
+        self.assertIn("zoom_meeting_id", readonly)
+        self.assertIn("discord_event_id", readonly)
+
+    def test_fieldsets_include_every_editable_field(self):
+        """Every field the form would otherwise render must be grouped
+        somewhere, or Django's admin checks fail."""
+        admin_instance = EventAdmin(Event, AdminSite())
+        request = RequestFactory().get("/admin/home/event/add/")
+        fielded = {
+            field for _, opts in admin_instance.fieldsets for field in opts["fields"]
+        }
+
+        form = admin_instance.get_form(request)
+        self.assertTrue(set(form.base_fields).issubset(fielded))

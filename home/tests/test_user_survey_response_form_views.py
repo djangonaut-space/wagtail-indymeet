@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from accounts.factories import UserFactory
 from home.factories import (
+    OrganizerFactory,
     QuestionFactory,
     SessionFactory,
     SurveyFactory,
@@ -41,6 +42,24 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "will be open on")
         self.assertNotContains(response, "Submit")
+
+    def test_organizer_can_view_future_survey(self):
+        """Session organizers can preview the survey before the application period starts."""
+        now = timezone.now().date()
+        SessionFactory.create(
+            application_survey=self.survey,
+            application_start_date=now + timedelta(days=5),
+            application_end_date=now + timedelta(days=15),
+        )
+        organizer_membership = OrganizerFactory.create()
+        organizer = organizer_membership.user
+        organizer.profile.email_confirmed = True
+        organizer.profile.save()
+        self.client.force_login(organizer)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "will be open on")
+        self.assertContains(response, "Submit")
 
     def test_cannot_access_survey_after_application_closes(self):
         """Users should not be able to access the survey form after the application period ends."""

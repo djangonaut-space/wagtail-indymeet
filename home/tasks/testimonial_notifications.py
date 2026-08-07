@@ -93,6 +93,7 @@ def send_testimonial_notification(
         context["changes"] = changes
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="testimonial_notification",
         recipient_list=superuser_emails,
         context=context,
