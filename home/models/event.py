@@ -81,7 +81,7 @@ class Event(ClusterableModel):
         help_text="Link to the recording (e.g. YouTube) after the event has taken place.",
     )
     is_public = models.BooleanField(
-        default=True,
+        default=False,
         help_text=(
             "Controls visibility, not whether the event is live: public events "
             "are visible to everyone, private events only to authenticated "
