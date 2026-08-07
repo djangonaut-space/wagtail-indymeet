@@ -13,7 +13,7 @@ def format_slots_as_list(slots, timezone_name="UTC"):
     Format availability slots as a list of time ranges.
 
     Args:
-        slots: List of UTC reference availability slot values
+        slots: List of Slot objects
         timezone_name: IANA timezone name for display conversion
 
     Returns:

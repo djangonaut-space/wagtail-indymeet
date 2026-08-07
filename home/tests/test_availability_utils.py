@@ -1,28 +1,27 @@
 """Tests for availability calculation utilities."""
 
-import datetime
-
 from django.test import TestCase
 from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from tests.timezones import (
     CENTRAL_EUROPEAN_TIMEZONE,
-    QUARTER_HOUR_TIMEZONE,
     US_EASTERN_TIMEZONE,
 )
+from home.slots import Slot
 from home.availability import (
     AvailabilityWindow,
     calculate_overlap,
     calculate_team_overlap,
     count_one_hour_blocks,
-    format_slot_as_time,
     format_slots_as_ranges,
-    get_reference_week_start,
-    get_user_utc_slots,
-    local_slot_to_utc_slot,
-    utc_slot_to_local_slot,
+    get_user_slots,
 )
+
+
+def utc_slots(*values: float) -> list[Slot]:
+    """Build UTC slots for the given weekly slot values."""
+    return [Slot("UTC", value) for value in values]
 
 
 class AvailabilityUtilsTestCase(TestCase):
@@ -52,118 +51,30 @@ class AvailabilityUtilsTestCase(TestCase):
     def test_count_one_hour_blocks(self):
         """Test counting 1-hour blocks from slots."""
         # Two consecutive slots = 1 hour block
-        slots = [10.0, 10.5]
-        self.assertEqual(count_one_hour_blocks(slots), 1)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0, 10.5)), 1)
 
         # Four consecutive slots = 2 hour blocks
-        slots = [10.0, 10.5, 11.0, 11.5]
-        self.assertEqual(count_one_hour_blocks(slots), 2)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0, 10.5, 11.0, 11.5)), 2)
 
         # Non-consecutive slots
-        slots = [10.0, 10.5, 12.0, 12.5]
-        self.assertEqual(count_one_hour_blocks(slots), 2)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0, 10.5, 12.0, 12.5)), 2)
 
         # Single slot
-        slots = [10.0]
-        self.assertEqual(count_one_hour_blocks(slots), 0)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0)), 0)
 
         # Empty slots
         self.assertEqual(count_one_hour_blocks([]), 0)
 
-    def test_reference_week_start_uses_current_week_sunday(self):
-        """get_reference_week_start returns the Sunday of the frozen date's week."""
-        with freeze_time("2024-06-19"):
-            self.assertEqual(get_reference_week_start(), datetime.date(2024, 6, 16))
-        with freeze_time("2024-06-16"):
-            self.assertEqual(get_reference_week_start(), datetime.date(2024, 6, 16))
-
     @freeze_time("2024-06-17")
-    def test_local_and_utc_slot_conversion_round_trips(self):
-        """Local slots convert through UTC slots and back."""
-        utc_slot = local_slot_to_utc_slot(33.0, US_EASTERN_TIMEZONE)
-        self.assertEqual(utc_slot, 37.0)
-        self.assertEqual(
-            utc_slot_to_local_slot(utc_slot, US_EASTERN_TIMEZONE),
-            33.0,
-        )
-
-    @freeze_time("2024-03-10")
-    def test_dst_spring_reference_week_uses_daylight_offset_after_transition(self):
-        """This week uses daylight offset after the spring transition."""
-        # Sunday, March 10 2024 is the US spring-forward transition.
-        # Monday 9:00 in New York is Monday 13:00 UTC after DST starts.
-        self.assertEqual(
-            local_slot_to_utc_slot(33.0, US_EASTERN_TIMEZONE),
-            37.0,
-        )
-        self.assertEqual(
-            utc_slot_to_local_slot(37.0, US_EASTERN_TIMEZONE),
-            33.0,
-        )
-
-    @freeze_time("2024-11-03")
-    def test_dst_fall_reference_week_uses_standard_offset_after_transition(self):
-        """This week uses standard offset after the fall transition."""
-        # Sunday, November 3 2024 is the US fall-back transition.
-        # Monday 9:00 in New York is Monday 14:00 UTC after DST ends.
-        self.assertEqual(
-            local_slot_to_utc_slot(33.0, US_EASTERN_TIMEZONE),
-            38.0,
-        )
-        self.assertEqual(
-            utc_slot_to_local_slot(38.0, US_EASTERN_TIMEZONE),
-            33.0,
-        )
-
-    @freeze_time("2024-11-03")
-    def test_fold_defaults_to_earlier_occurrence(self):
-        """Ambiguous fall-back times inherit zoneinfo's fold=0 default."""
-        # Sunday 1:30 occurs twice in New York. The default fold=0 occurrence is
-        # still daylight time (UTC-4), so it maps to Sunday 05:30 UTC.
-        self.assertEqual(
-            local_slot_to_utc_slot(1.5, US_EASTERN_TIMEZONE),
-            5.5,
-        )
-        self.assertEqual(
-            utc_slot_to_local_slot(5.5, US_EASTERN_TIMEZONE),
-            1.5,
-        )
-
-    @freeze_time("2024-03-10")
-    def test_gap_defaults_to_pre_transition_offset_without_blocking(self):
-        """Nonexistent spring-forward times inherit zoneinfo defaults."""
-        # Sunday 2:30 does not exist in New York on the spring-forward day. The
-        # first-pass policy does not reject it; zoneinfo applies the default
-        # pre-transition offset, mapping it to Sunday 07:30 UTC.
-        self.assertEqual(
-            local_slot_to_utc_slot(2.5, US_EASTERN_TIMEZONE),
-            7.5,
-        )
-        self.assertEqual(
-            utc_slot_to_local_slot(7.5, US_EASTERN_TIMEZONE),
-            3.5,
-        )
-
-    @freeze_time("2024-06-17")
-    def test_quarter_hour_timezone_slots_are_allowed_but_not_grid_aligned(self):
-        """Quarter-hour zones can produce non-30-minute UTC slots."""
-        # Kathmandu is UTC+05:45, so Monday 9:00 local maps to Sunday 27.25 UTC
-        # in weekly slot coordinates. This is intentionally allowed for now,
-        # even though other overlap/grid consumers still operate on 30-minute cells.
-        utc_slot = local_slot_to_utc_slot(33.0, QUARTER_HOUR_TIMEZONE)
-        self.assertEqual(utc_slot, 27.25)
-        self.assertEqual(
-            utc_slot_to_local_slot(utc_slot, QUARTER_HOUR_TIMEZONE),
-            33.0,
-        )
-
-    @freeze_time("2024-06-17")
-    def test_get_user_utc_slots_preserves_utc_default_users(self):
+    def test_get_user_slots_preserves_utc_default_users(self):
         """UTC-default availability remains directly comparable."""
-        self.assertEqual(get_user_utc_slots(self.user1), self.avail1.slots)
+        self.assertEqual(
+            [slot.slot_utc for slot in get_user_slots(self.user1)],
+            self.avail1.slots,
+        )
 
     @freeze_time("2024-06-17")
-    def test_get_user_utc_slots_converts_mixed_timezone_users(self):
+    def test_get_user_slots_converts_mixed_timezone_users(self):
         """Local wall-clock slots in user timezones derive matching UTC slots."""
         ny_user = UserFactory(username="ny_user", email="ny@example.com")
         berlin_user = UserFactory(username="berlin_user", email="berlin@example.com")
@@ -178,8 +89,12 @@ class AvailabilityUtilsTestCase(TestCase):
             slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
         )
 
-        self.assertEqual(get_user_utc_slots(ny_user), [37.0])
-        self.assertEqual(get_user_utc_slots(berlin_user), [37.0])
+        self.assertEqual([slot.slot_utc for slot in get_user_slots(ny_user)], [37.0])
+        self.assertEqual(
+            [slot.slot_utc for slot in get_user_slots(berlin_user)], [37.0]
+        )
+        # The two users' slots are the same instant, so they compare equal.
+        self.assertEqual(get_user_slots(ny_user), get_user_slots(berlin_user))
 
     def test_calculate_overlap(self):
         """Test overlap calculation for groups and pairs."""
@@ -222,7 +137,7 @@ class AvailabilityUtilsTestCase(TestCase):
         with freeze_time("2024-06-17"):
             slots, hours = calculate_overlap([ny_user, berlin_user])
 
-        self.assertEqual(slots, [37.0, 37.5])
+        self.assertEqual([slot.slot_utc for slot in slots], [37.0, 37.5])
         self.assertEqual(hours, 1)
 
     def test_calculate_team_overlap(self):
@@ -249,35 +164,15 @@ class AvailabilityUtilsTestCase(TestCase):
         self.assertEqual(len(result["captain_meetings"]), 1)
         # Captain 1-on-1 with user2
 
-    def test_format_slot_as_time(self):
-        """Test time formatting."""
-        # Sunday 00:00 (12:00 AM)
-        self.assertEqual(format_slot_as_time(0.0), "Sun 12:00 AM")
-
-        # Monday 14:30 (2:30 PM)
-        self.assertEqual(format_slot_as_time(38.5), "Mon 2:30 PM")
-
-        # Saturday 23:30 (11:30 PM)
-        self.assertEqual(format_slot_as_time(167.5), "Sat 11:30 PM")
-
-        # UTC slot displayed in a named timezone.
-        with freeze_time("2024-06-17"):
-            self.assertEqual(
-                format_slot_as_time(37.0, US_EASTERN_TIMEZONE),
-                "Mon 9:00 AM",
-            )
-
     def test_format_slots_as_ranges(self):
         """Test formatting slots as time ranges."""
         # Consecutive slots
-        slots = [10.0, 10.5, 11.0, 11.5]
-        ranges = format_slots_as_ranges(slots)
+        ranges = format_slots_as_ranges(utc_slots(10.0, 10.5, 11.0, 11.5))
         self.assertEqual(len(ranges), 1)
         self.assertIn("Sun", ranges[0])
 
         # Non-consecutive slots
-        slots = [10.0, 10.5, 12.0, 12.5]
-        ranges = format_slots_as_ranges(slots)
+        ranges = format_slots_as_ranges(utc_slots(10.0, 10.5, 12.0, 12.5))
         self.assertEqual(len(ranges), 2)
 
         # Empty slots
@@ -286,7 +181,7 @@ class AvailabilityUtilsTestCase(TestCase):
 
         # UTC slots displayed in a named timezone.
         with freeze_time("2024-06-17"):
-            ranges = format_slots_as_ranges([37.0, 37.5], US_EASTERN_TIMEZONE)
+            ranges = format_slots_as_ranges(utc_slots(37.0, 37.5), US_EASTERN_TIMEZONE)
         self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
 
 
@@ -299,7 +194,7 @@ class AvailabilityWindowTestCase(TestCase):
         user2 = UserFactory(username="user2", email="user2@example.com")
 
         window = AvailabilityWindow(
-            slot_range=(10.0, 10.5),
+            slot_range=(Slot("UTC", 10.0), Slot("UTC", 10.5)),
             formatted_time="Sun 10:00 AM - 11:00 AM",
             available_users=[],
             unavailable_users=[user1, user2],
@@ -313,7 +208,7 @@ class AvailabilityWindowTestCase(TestCase):
     def test_admin_unavailable_url_returns_none_when_no_unavailable_users(self):
         """Test that admin_unavailable_url returns None with no unavailable users."""
         window = AvailabilityWindow(
-            slot_range=(10.0, 10.5),
+            slot_range=(Slot("UTC", 10.0), Slot("UTC", 10.5)),
             formatted_time="Sun 10:00 AM - 11:00 AM",
             available_users=[],
             unavailable_users=[],

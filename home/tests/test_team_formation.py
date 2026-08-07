@@ -5,19 +5,11 @@ import json
 from django.contrib.admin.sites import site
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
-from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserAvailability
 from home import constants
 from home.admin import SessionAdmin
-from home.availability import (
-    calculate_overlap,
-    calculate_team_overlap,
-    count_one_hour_blocks,
-    format_slot_as_time,
-    format_slots_as_ranges,
-)
 from home.factories import (
     TeamFactory,
     ProjectFactory,
@@ -41,160 +33,6 @@ from home.models import (
 )
 
 from home.views.team_formation import get_teams_with_statistics
-
-
-class AvailabilityUtilsTestCase(TestCase):
-    """Test availability calculation utilities."""
-
-    def setUp(self):
-        """Create test users with availability."""
-        self.user1 = UserFactory(username="user1", email="user1@example.com")
-        self.user2 = UserFactory(username="user2", email="user2@example.com")
-        self.user3 = UserFactory(
-            username="user3", email="user3@example.com", password="test"
-        )
-
-        # User1: Monday 10:00-15:00 UTC (10 slots = 5 hours)
-        # Slots: 34.0, 34.5, 35.0, 35.5, 36.0, 36.5, 37.0, 37.5, 38.0, 38.5
-        self.avail1 = UserAvailabilityFactory(
-            user=self.user1, slots=[34.0 + (i * 0.5) for i in range(10)]
-        )
-
-        # User2: Monday 12:00-16:00 UTC (8 slots = 4 hours)
-        # Slots: 36.0, 36.5, 37.0, 37.5, 38.0, 38.5, 39.0, 39.5
-        self.avail2 = UserAvailabilityFactory(
-            user=self.user2, slots=[36.0 + (i * 0.5) for i in range(8)]
-        )
-
-        # User3: No availability
-        # (no UserAvailability object created)
-
-    def test_count_one_hour_blocks(self):
-        """Test counting 1-hour blocks from slots."""
-        # Two consecutive slots = 1 hour block
-        slots = [10.0, 10.5]
-        self.assertEqual(count_one_hour_blocks(slots), 1)
-
-        # Four consecutive slots = 2 hour blocks
-        slots = [10.0, 10.5, 11.0, 11.5]
-        self.assertEqual(count_one_hour_blocks(slots), 2)
-
-        # Non-consecutive slots
-        slots = [10.0, 10.5, 12.0, 12.5]
-        self.assertEqual(count_one_hour_blocks(slots), 2)
-
-        # Single slot
-        slots = [10.0]
-        self.assertEqual(count_one_hour_blocks(slots), 0)
-
-        # Empty slots
-        self.assertEqual(count_one_hour_blocks([]), 0)
-
-    def test_calculate_overlap(self):
-        """Test overlap calculation for groups and pairs."""
-        # User1 and User2 overlap on Monday 12:00-15:00 (6 slots = 3 hours)
-        # Expected overlap: 36.0, 36.5, 37.0, 37.5, 38.0, 38.5
-        slots, hours = calculate_overlap([self.user1, self.user2])
-        self.assertEqual(hours, 3)
-        self.assertEqual(len(slots), 6)
-
-        # Single user (returns their full availability)
-        slots, hours = calculate_overlap([self.user1])
-        self.assertEqual(hours, 5)
-
-        # User with no availability
-        slots, hours = calculate_overlap([self.user3])
-        self.assertEqual(hours, 0)
-        self.assertEqual(slots, [])
-
-        # Mixed: user with and without availability
-        slots, hours = calculate_overlap([self.user1, self.user3])
-        self.assertEqual(hours, 0)  # No overlap because user3 has no availability
-
-    def test_calculate_overlap_uses_user_timezones(self):
-        """Mixed-timezone users overlap by derived UTC reference slots."""
-        ny_user = UserFactory(username="ny_overlap")
-        berlin_user = UserFactory(username="berlin_overlap")
-        UserAvailabilityFactory(
-            user=ny_user,
-            slots=[33.0, 33.5],
-            slots_timezone=US_EASTERN_TIMEZONE,
-        )
-        UserAvailabilityFactory(
-            user=berlin_user,
-            slots=[39.0, 39.5],
-            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
-        )
-
-        with freeze_time("2024-06-17"):
-            slots, hours = calculate_overlap([ny_user, berlin_user])
-
-        self.assertEqual(slots, [37.0, 37.5])
-        self.assertEqual(hours, 1)
-
-    def test_calculate_team_overlap(self):
-        """Test team overlap calculation."""
-        # Create a captain with different availability
-        captain = UserFactory(
-            username="captain", email="captain@example.com", password="test"
-        )
-        # Captain: Monday 11:00-14:00 (6 slots = 3 hours)
-        UserAvailabilityFactory(
-            user=captain, slots=[35.0 + (i * 0.5) for i in range(6)]
-        )
-
-        result = calculate_team_overlap(
-            navigator_users=[self.user1],
-            captain_user=captain,
-            djangonaut_users=[self.user2],
-        )
-
-        # Navigator + djangonauts overlap (user1 + user2)
-        self.assertEqual(result["navigator_meeting_hours"], 3)
-        # user1 and user2 overlap is 3 hours, which is < 5 hours required
-        self.assertFalse(result["is_valid"])
-
-        # Check captain meetings
-        self.assertEqual(len(result["captain_meetings"]), 1)
-        # Captain 1-on-1 with user2
-
-    def test_format_slot_as_time(self):
-        """Test time formatting."""
-        # Sunday 00:00 (12:00 AM)
-        self.assertEqual(format_slot_as_time(0.0), "Sun 12:00 AM")
-
-        # Monday 14:30 (2:30 PM)
-        self.assertEqual(format_slot_as_time(38.5), "Mon 2:30 PM")
-
-        # Saturday 23:30 (11:30 PM)
-        self.assertEqual(format_slot_as_time(167.5), "Sat 11:30 PM")
-
-        with freeze_time("2024-06-17"):
-            self.assertEqual(
-                format_slot_as_time(37.0, US_EASTERN_TIMEZONE),
-                "Mon 9:00 AM",
-            )
-
-    def test_format_slots_as_ranges(self):
-        """Test formatting slots as time ranges."""
-        # Consecutive slots
-        slots = [10.0, 10.5, 11.0, 11.5]
-        ranges = format_slots_as_ranges(slots)
-        self.assertEqual(len(ranges), 1)
-        self.assertIn("Sun", ranges[0])
-
-        # Non-consecutive slots
-        slots = [10.0, 10.5, 12.0, 12.5]
-        ranges = format_slots_as_ranges(slots)
-        self.assertEqual(len(ranges), 2)
-
-        # Empty slots
-        ranges = format_slots_as_ranges([])
-        self.assertEqual(ranges, [])
-
-        with freeze_time("2024-06-17"):
-            ranges = format_slots_as_ranges([37.0, 37.5], US_EASTERN_TIMEZONE)
-        self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
 
 
 class ApplicantFilterFormTestCase(TestCase):

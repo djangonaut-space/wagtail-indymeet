@@ -49,8 +49,8 @@
                         {% for cell in row.cells %}
                         <td class="time-slot h-4 border border-gray-200 cursor-pointer"
                             :style="{
-                                ...getCellStyle('{{ cell.slot_key }}', '{{ cell.color|default:'' }}'),
-                                ...(fixedSlot === '{{ cell.slot_key }}' ? {
+                                ...getCellStyle('{{ cell.slot.key }}', '{{ cell.color|default:'' }}'),
+                                ...(fixedSlot === '{{ cell.slot.key }}' ? {
                                     outline: '3px solid #7c3aed',
                                     outlineOffset: '-1px',
                                     position: 'relative',
@@ -58,20 +58,20 @@
                                 } : {})
                             }"
                             title="{{ cell.available_count }}/{{ cell.total_count }} {% trans 'available' %}"
-                            data-display-time="{{ cell.display_time }}"
-                            data-time-is-url="{{ cell.utc_datetime|time_is_link }}"
-                            @mouseenter="hoveredSlot = '{{ cell.slot_key }}';
+                            data-display-time="{{ cell.slot.format_local }}"
+                            data-time-is-url="{{ cell.slot.utc|time_is_link }}"
+                            @mouseenter="hoveredSlot = '{{ cell.slot.key }}';
                                 if (!fixedSlot) {
                                     activeDisplayTime = $event.target.dataset.displayTime;
                                     activeTimeIsUrl = $event.target.dataset.timeIsUrl;
                                 }"
                             @click="
-                                if (fixedSlot === '{{ cell.slot_key }}') {
+                                if (fixedSlot === '{{ cell.slot.key }}') {
                                     fixedSlot = null;
                                     activeDisplayTime = '';
                                     activeTimeIsUrl = '';
                                 } else {
-                                    fixedSlot = '{{ cell.slot_key }}';
+                                    fixedSlot = '{{ cell.slot.key }}';
                                     activeDisplayTime = $event.target.dataset.displayTime;
                                     activeTimeIsUrl = $event.target.dataset.timeIsUrl;
                                 }">

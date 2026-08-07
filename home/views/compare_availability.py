@@ -1,7 +1,6 @@
 """Views for comparing availability across multiple users."""
 
 from dataclasses import asdict, dataclass
-from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django import forms
@@ -10,13 +9,9 @@ from django.shortcuts import render
 
 from accounts.models import CustomUser
 from home import constants
-from home.availability import (
-    format_slot_as_time,
-    get_user_utc_slots,
-    local_slot_to_utc_slot,
-    slot_to_datetime,
-)
+from home.availability import get_user_slots
 from home.models import Session, SessionMembership
+from home.slots import Slot
 from home.widgets import TomSelectMultipleWidget
 
 slotAvailabilities = dict[str, list[int]]
@@ -42,12 +37,10 @@ def get_user_compare_timezone(user: CustomUser) -> str:
 class GridCell:
     """Represents a single cell in the availability grid."""
 
-    slot_key: str
-    color: str
+    slot: Slot
+    color: str | None
     available_count: int
     total_count: int
-    display_time: str
-    utc_datetime: datetime
 
 
 @dataclass
@@ -88,15 +81,15 @@ def get_slot_color(available_count: int, total_count: int) -> str | None:
 
 def build_grid_data(
     selected_users: list[CustomUser],
-    user_slots: dict[int, set[float]],
+    user_slots: dict[int, set[Slot]],
     timezone_name: str = "UTC",
 ) -> tuple[list[GridRow], slotAvailabilities]:
     """
     Build grid rows and slot availability mapping.
 
-    ``user_slots`` contains per-user UTC reference slots. Grid cells are walked
-    in the viewer's timezone and converted back to UTC reference slots for
-    comparison.
+    Grid cells are walked in the viewer's timezone. Because slots compare by
+    the instant they refer to, a cell can be tested directly against each
+    user's slots regardless of the timezone those were saved in.
 
     Returns:
         Tuple of (grid_rows, slot_availabilities) where slot_availabilities
@@ -112,26 +105,22 @@ def build_grid_data(
             cells = []
 
             for day in range(7):
-                local_slot = (day * 24.0) + time_value
-                utc_slot = local_slot_to_utc_slot(local_slot, timezone_name)
+                slot = Slot(timezone_name, (day * 24.0) + time_value)
 
                 available_user_ids = [
                     user.id
                     for user in selected_users
-                    if utc_slot in user_slots.get(user.id, set())
+                    if slot in user_slots.get(user.id, set())
                 ]
 
-                slot_key = f"{day}-{hour}-{half}"
-                slot_availabilities[slot_key] = available_user_ids
+                slot_availabilities[slot.key] = available_user_ids
 
                 cells.append(
                     GridCell(
-                        slot_key=slot_key,
+                        slot=slot,
                         color=get_slot_color(len(available_user_ids), total_count),
                         available_count=len(available_user_ids),
                         total_count=total_count,
-                        display_time=format_slot_as_time(utc_slot, timezone_name),
-                        utc_datetime=slot_to_datetime(utc_slot),
                     )
                 )
 
@@ -289,10 +278,7 @@ def compare_availability_grid(request):
         selected_users = form.get_selected_users(selectable_users)
         timezone_name = form.get_timezone_name()
 
-        user_slots = {}
-        for user in selected_users:
-            slots = get_user_utc_slots(user)
-            user_slots[user.id] = set(slots)
+        user_slots = {user.id: set(get_user_slots(user)) for user in selected_users}
     else:
         selected_users = []
         timezone_name = form.default_timezone

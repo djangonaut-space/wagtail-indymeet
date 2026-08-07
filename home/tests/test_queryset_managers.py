@@ -1,6 +1,7 @@
 """Tests for custom QuerySet methods."""
 
 from home import constants
+from home.slots import Slot
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone as dt_timezone
@@ -285,7 +286,9 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         response2 = UserSurveyResponseFactory(user=self.user2, survey=self.survey)
 
         # Test overlap with Monday slots
-        qs = UserSurveyResponse.objects.with_availability_overlap([24.0, 24.5])
+        qs = UserSurveyResponse.objects.with_availability_overlap(
+            [Slot("UTC", 24.0), Slot("UTC", 24.5)]
+        )
 
         self.assertEqual(qs.count(), 1)
         self.assertIn(response1, qs)
@@ -314,7 +317,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         response1 = UserSurveyResponseFactory(user=self.user1, survey=self.survey)
         response2 = UserSurveyResponseFactory(user=self.user2, survey=self.survey)
 
-        qs = UserSurveyResponse.objects.with_availability_overlap([37.0])
+        qs = UserSurveyResponse.objects.with_availability_overlap([Slot("UTC", 37.0)])
 
         self.assertEqual(qs.count(), 1)
         self.assertIn(response1, qs)
@@ -328,7 +331,9 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         UserSurveyResponseFactory(user=self.user2, survey=self.survey)
 
         with self.assertNumQueries(1):
-            qs = UserSurveyResponse.objects.with_availability_overlap([24.0])
+            qs = UserSurveyResponse.objects.with_availability_overlap(
+                [Slot("UTC", 24.0)]
+            )
 
         self.assertEqual(qs.count(), 1)
 

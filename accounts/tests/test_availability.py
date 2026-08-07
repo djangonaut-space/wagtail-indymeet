@@ -10,7 +10,7 @@ from django.urls import reverse
 
 from accounts.forms import UserAvailabilityForm
 from accounts.models import UserAvailability
-from home.availability import utc_slot_to_local_slot
+from home.slots import Slot
 from tests.timezones import (
     CENTRAL_EUROPEAN_TIMEZONE,
     DEFAULT_TIMEZONE,
@@ -302,8 +302,8 @@ class TestAvailabilityForm(TestCase):
         form = UserAvailabilityForm(instance=availability)
 
         expected_slots = [
-            utc_slot_to_local_slot(33.0, US_EASTERN_TIMEZONE),
-            utc_slot_to_local_slot(36.0, US_EASTERN_TIMEZONE),
+            Slot("UTC", 33.0).slot_as_tz(US_EASTERN_TIMEZONE),
+            Slot("UTC", 36.0).slot_as_tz(US_EASTERN_TIMEZONE),
         ]
         assert form.instance.slots == expected_slots
         assert form.instance.slots_timezone == US_EASTERN_TIMEZONE

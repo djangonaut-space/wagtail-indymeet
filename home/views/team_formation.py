@@ -26,7 +26,7 @@ from home.models import Session, SessionMembership, Team, UserSurveyResponse, Wa
 from home.availability import (
     calculate_team_overlap,
     format_availability_by_day,
-    get_user_utc_slots,
+    get_user_slots,
 )
 
 
@@ -254,17 +254,14 @@ def get_filtered_applicants(
             current_role = membership.role
 
         # Get availability data
-        availability_slots = []
         availability_by_day = {}
         has_availability = response.annotated_has_availability
 
-        if hasattr(user, "availability") and user.availability:
-            availability_slots = user.availability.slots or []
-            if availability_slots:
-                has_availability = True
-                availability_by_day = format_availability_by_day(
-                    get_user_utc_slots(user), constants.DEFAULT_AVAILABILITY_TIMEZONE
-                )
+        if user_slots := get_user_slots(user):
+            has_availability = True
+            availability_by_day = format_availability_by_day(
+                user_slots, constants.DEFAULT_AVAILABILITY_TIMEZONE
+            )
 
         # Round previous average score if it exists
         prev_avg_score = response.annotated_previous_avg_score_value

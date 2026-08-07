@@ -1,6 +1,8 @@
 """Tests for the compare availability views."""
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
 import factory
 from django.http import QueryDict
 from django.test import Client, TestCase
@@ -16,7 +18,7 @@ from home.factories import (
     SessionMembershipFactory,
 )
 from home.models import SessionMembership, Team
-from home.availability import slot_to_datetime
+from home.slots import Slot
 from home.views.compare_availability import (
     CompareAvailabilityForm,
     build_grid_data,
@@ -79,18 +81,21 @@ class BuildGridDataTests(TestCase):
         UserAvailabilityFactory.create(user=user1, slots=[0.0, 0.5])
         UserAvailabilityFactory.create(user=user2, slots=[0.0])
 
-        user_slots = {user1.id: {0.0, 0.5}, user2.id: {0.0}}
+        user_slots = {
+            user1.id: {Slot(DEFAULT_TIMEZONE, 0.0), Slot(DEFAULT_TIMEZONE, 0.5)},
+            user2.id: {Slot(DEFAULT_TIMEZONE, 0.0)},
+        }
         _, slot_availabilities = build_grid_data(
             [user1, user2], user_slots, DEFAULT_TIMEZONE
         )
 
         # Slot 0-0-0 (Sunday 0:00) should have both users
-        self.assertIn(user1.id, slot_availabilities["0-0-0"])
-        self.assertIn(user2.id, slot_availabilities["0-0-0"])
+        self.assertIn(user1.id, slot_availabilities["0-0"])
+        self.assertIn(user2.id, slot_availabilities["0-0"])
 
         # Slot 0-0-1 (Sunday 0:30) should only have user1
-        self.assertIn(user1.id, slot_availabilities["0-0-1"])
-        self.assertNotIn(user2.id, slot_availabilities["0-0-1"])
+        self.assertIn(user1.id, slot_availabilities["0-0.5"])
+        self.assertNotIn(user2.id, slot_availabilities["0-0.5"])
 
     def test_time_labels_on_hour_rows(self) -> None:
         """Time labels appear on full hour rows."""
@@ -107,25 +112,25 @@ class BuildGridDataTests(TestCase):
     def test_cells_have_display_time(self) -> None:
         """Each cell has a formatted display time string."""
         rows, _ = build_grid_data([], {}, DEFAULT_TIMEZONE)
-        self.assertEqual(rows[0].cells[0].display_time, "Sun 12:00 AM")
-        self.assertEqual(rows[0].cells[1].display_time, "Mon 12:00 AM")
-        self.assertEqual(rows[1].cells[0].display_time, "Sun 12:30 AM")
+        self.assertEqual(rows[0].cells[0].slot.format_local, "Sun 12:00 AM")
+        self.assertEqual(rows[0].cells[1].slot.format_local, "Mon 12:00 AM")
+        self.assertEqual(rows[1].cells[0].slot.format_local, "Sun 12:30 AM")
 
     def test_cells_have_utc_datetime(self) -> None:
-        """Each cell has a utc_datetime matching slot_to_datetime."""
+        """Each cell exposes the UTC instant of its slot."""
         rows, _ = build_grid_data([], {}, DEFAULT_TIMEZONE)
         cell = rows[0].cells[0]
-        self.assertEqual(cell.utc_datetime, slot_to_datetime(0.0))
+        self.assertEqual(cell.slot.utc, Slot("UTC", 0.0).utc)
 
     @freeze_time("2024-06-17")
     def test_utc_datetime_accounts_for_viewer_timezone(self) -> None:
         """utc_datetime converts back to UTC for the viewer timezone."""
         rows_timezone, _ = build_grid_data([], {}, US_EASTERN_TIMEZONE)
         # New York is UTC-4 in June, so local Sun 00:00 maps to UTC Sun 04:00.
-        utc_dt = rows_timezone[0].cells[0].utc_datetime
-        self.assertEqual(utc_dt, slot_to_datetime(4.0))
+        utc_dt = rows_timezone[0].cells[0].slot.utc
+        self.assertEqual(utc_dt, Slot("UTC", 4.0).utc)
         # Display time should still show local time.
-        self.assertEqual(rows_timezone[0].cells[0].display_time, "Sun 12:00 AM")
+        self.assertEqual(rows_timezone[0].cells[0].slot.format_local, "Sun 12:00 AM")
 
     @freeze_time("2024-06-17")
     def test_grid_allows_quarter_hour_viewer_timezone_without_matching_cells(
@@ -134,22 +139,27 @@ class BuildGridDataTests(TestCase):
         """Quarter-hour viewer zones are accepted despite imperfect grid fit."""
         rows_timezone, _ = build_grid_data([], {}, QUARTER_HOUR_TIMEZONE)
 
-        # Local Sunday 00:00 in Kathmandu maps to Saturday 18:15 UTC. This is
-        # allowed, but exposes the first-pass limitation: the displayed grid is
-        # still built from 30-minute local cells while UTC reference slots may be
-        # quarter-hour aligned.
+        # Local Sunday 00:00 in Kathmandu is the *preceding* Saturday 18:15 UTC.
+        # This is allowed, but exposes the first-pass limitation: the displayed
+        # grid is still built from 30-minute local cells while UTC reference
+        # slots may be quarter-hour aligned.
+        cell = rows_timezone[0].cells[0]
         self.assertEqual(
-            rows_timezone[0].cells[0].utc_datetime,
-            slot_to_datetime(162.25),
+            cell.slot.utc,
+            datetime(2024, 6, 15, 18, 15, tzinfo=ZoneInfo("UTC")),
         )
-        self.assertEqual(rows_timezone[0].cells[0].display_time, "Sun 12:00 AM")
+        self.assertEqual(cell.slot.format_local, "Sun 12:00 AM")
 
     @freeze_time("2024-06-17")
     def test_mixed_timezone_users_overlap_in_viewer_grid(self) -> None:
-        """Users in different slot timezones overlap by derived UTC slots."""
+        """Users in different slot timezones overlap by the instant they share."""
         ny_user = UserFactory.create()
         berlin_user = UserFactory.create()
-        user_slots = {ny_user.id: {37.0}, berlin_user.id: {37.0}}
+        # Mon 09:00 in New York and Mon 15:00 in Berlin are both Mon 13:00 UTC.
+        user_slots = {
+            ny_user.id: {Slot(US_EASTERN_TIMEZONE, 33.0)},
+            berlin_user.id: {Slot(CENTRAL_EUROPEAN_TIMEZONE, 39.0)},
+        }
 
         _, slot_availabilities = build_grid_data(
             [ny_user, berlin_user],
@@ -159,7 +169,7 @@ class BuildGridDataTests(TestCase):
 
         # Monday 13:00 UTC should contain both users.
         self.assertEqual(
-            set(slot_availabilities["1-13-0"]),
+            set(slot_availabilities["1-13"]),
             {ny_user.id, berlin_user.id},
         )
 
@@ -408,11 +418,11 @@ class CompareAvailabilityGridTests(TestCase):
         slot_availabilities = response.context["slot_availabilities"]
 
         self.assertEqual(
-            set(slot_availabilities["1-13-0"]),
+            set(slot_availabilities["1-13"]),
             {self.ny_user.id, self.berlin_user.id},
         )
-        self.assertEqual(slot_availabilities["1-9-0"], [])
-        self.assertEqual(slot_availabilities["1-15-0"], [])
+        self.assertEqual(slot_availabilities["1-9"], [])
+        self.assertEqual(slot_availabilities["1-15"], [])
 
 
 @freeze_time("2024-06-15")

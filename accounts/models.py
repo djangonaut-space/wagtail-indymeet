@@ -16,6 +16,7 @@ from wagtail.models import Orderable
 
 from accounts.fields import DefaultOneToOneField
 from home import constants
+from home.slots import Slot
 
 if TYPE_CHECKING:
     from home.models import Session, SessionMembership
@@ -290,6 +291,16 @@ class UserAvailability(models.Model):
     def clear_slots(self) -> None:
         """Clear all availability slots."""
         self.slots = []
+
+    def get_slots(self) -> list[Slot]:
+        """
+        Get availability as :class:`~home.slots.Slot` objects.
+
+        Each returned slot carries this row's ``slots_timezone``, so callers can
+        render or compare it without separately tracking which timezone the raw
+        float came from.
+        """
+        return [Slot(self.slots_timezone, float(slot)) for slot in self.slots]
 
     def get_slots_for_day(self, day: int) -> list[float]:
         """

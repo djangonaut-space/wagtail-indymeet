@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy as _
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
 from home import constants
-from home.availability import utc_slot_to_local_slot
 
 from .models import CustomUser
 from .models import UserAvailability
@@ -248,8 +247,7 @@ class UserAvailabilityForm(forms.ModelForm):
                 and profile_timezone != constants.DEFAULT_AVAILABILITY_TIMEZONE
             ):
                 instance.slots = [
-                    utc_slot_to_local_slot(slot, profile_timezone)
-                    for slot in instance.slots
+                    slot.slot_as_tz(profile_timezone) for slot in instance.get_slots()
                 ]
                 instance.slots_timezone = profile_timezone
         super().__init__(*args, **kwargs)
