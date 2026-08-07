@@ -10,6 +10,7 @@ from accounts.factories import UserFactory
 from home import constants
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import SessionMembership
+from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE
 
 
 @freeze_time("2012-01-14")
@@ -41,7 +42,7 @@ class EventViewTests(TestCase):
         self.assertContains(response, "No past events.")
 
     def test_list_upcoming_events_no_past(self):
-        upcoming_event = self.create_upcoming_event()
+        upcoming_event = self.create_upcoming_event(is_public=True)
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed("home/event_list.html")
@@ -51,8 +52,8 @@ class EventViewTests(TestCase):
         self.assertContains(response, upcoming_event.get_absolute_url())
 
     def test_list_upcoming_events_and_past(self):
-        upcoming_event = self.create_upcoming_event()
-        past_event = self.create_past_event()
+        upcoming_event = self.create_upcoming_event(is_public=True)
+        past_event = self.create_past_event(is_public=True)
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed("home/event_list.html")
@@ -64,8 +65,8 @@ class EventViewTests(TestCase):
         self.assertContains(response, past_event.get_absolute_url())
 
     def test_event_detail(self):
-        upcoming_event = self.create_upcoming_event()
-        timezone.activate("Europe/Berlin")  # UTC + 1
+        upcoming_event = self.create_upcoming_event(is_public=True)
+        timezone.activate(CENTRAL_EUROPEAN_TIMEZONE)  # UTC + 1
         response = self.client.get(upcoming_event.get_absolute_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed("home/event_detail.html")

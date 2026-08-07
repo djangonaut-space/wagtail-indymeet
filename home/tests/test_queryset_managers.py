@@ -1,6 +1,7 @@
 """Tests for custom QuerySet methods."""
 
 from home import constants
+from home.slots import Slot
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone as dt_timezone
@@ -27,6 +28,7 @@ from home.models import (
     UserSurveyResponse,
     Waitlist,
 )
+from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE, US_EASTERN_TIMEZONE
 
 
 class EventQuerySetTestCase(TestCase):
@@ -284,7 +286,9 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         response2 = UserSurveyResponseFactory(user=self.user2, survey=self.survey)
 
         # Test overlap with Monday slots
-        qs = UserSurveyResponse.objects.with_availability_overlap([24.0, 24.5])
+        qs = UserSurveyResponse.objects.with_availability_overlap(
+            [Slot("UTC", 24.0), Slot("UTC", 24.5)]
+        )
 
         self.assertEqual(qs.count(), 1)
         self.assertIn(response1, qs)
@@ -297,6 +301,41 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         qs = UserSurveyResponse.objects.with_availability_overlap([])
 
         self.assertEqual(qs.count(), 0)
+
+    def test_with_availability_overlap_uses_user_timezones(self):
+        """Availability overlap filter compares derived UTC slots."""
+        UserAvailabilityFactory(
+            user=self.user1,
+            slots=[33.0],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=self.user2,
+            slots=[33.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        response1 = UserSurveyResponseFactory(user=self.user1, survey=self.survey)
+        response2 = UserSurveyResponseFactory(user=self.user2, survey=self.survey)
+
+        qs = UserSurveyResponse.objects.with_availability_overlap([Slot("UTC", 37.0)])
+
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(response1, qs)
+        self.assertNotIn(response2, qs)
+
+    def test_with_availability_overlap_scans_availability_rows_only(self):
+        """Overlap filtering avoids loading full response and user objects."""
+        UserAvailabilityFactory(user=self.user1, slots=[24.0])
+        UserAvailabilityFactory(user=self.user2, slots=[48.0])
+        UserSurveyResponseFactory(user=self.user1, survey=self.survey)
+        UserSurveyResponseFactory(user=self.user2, survey=self.survey)
+
+        with self.assertNumQueries(1):
+            qs = UserSurveyResponse.objects.with_availability_overlap(
+                [Slot("UTC", 24.0)]
+            )
+
+        self.assertEqual(qs.count(), 1)
 
     def test_with_navigator_overlap(self):
         """Test filtering by navigator overlap."""
@@ -333,6 +372,39 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
 
         self.assertEqual(qs.count(), 0)
 
+    def test_with_navigator_overlap_uses_user_timezones(self):
+        """Navigator overlap filter compares derived UTC slots."""
+        navigator = UserFactory()
+        SessionMembershipFactory(
+            user=navigator,
+            session=self.session,
+            team=self.team,
+            role=constants.NAVIGATOR,
+        )
+        UserAvailabilityFactory(
+            user=navigator,
+            slots=[33.0],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=self.user1,
+            slots=[39.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=self.user2,
+            slots=[33.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        response1 = UserSurveyResponseFactory(user=self.user1, survey=self.survey)
+        response2 = UserSurveyResponseFactory(user=self.user2, survey=self.survey)
+
+        qs = UserSurveyResponse.objects.with_navigator_overlap(self.team)
+
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(response1, qs)
+        self.assertNotIn(response2, qs)
+
     def test_with_captain_overlap(self):
         """Test filtering by captain overlap."""
         # Create captain with availability
@@ -367,6 +439,39 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
         qs = UserSurveyResponse.objects.with_captain_overlap(self.team)
 
         self.assertEqual(qs.count(), 0)
+
+    def test_with_captain_overlap_uses_user_timezones(self):
+        """Captain overlap filter compares derived UTC slots."""
+        captain = UserFactory()
+        SessionMembershipFactory(
+            user=captain,
+            session=self.session,
+            team=self.team,
+            role=constants.CAPTAIN,
+        )
+        UserAvailabilityFactory(
+            user=captain,
+            slots=[33.0],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=self.user1,
+            slots=[39.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=self.user2,
+            slots=[33.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        response1 = UserSurveyResponseFactory(user=self.user1, survey=self.survey)
+        response2 = UserSurveyResponseFactory(user=self.user2, survey=self.survey)
+
+        qs = UserSurveyResponse.objects.with_captain_overlap(self.team)
+
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(response1, qs)
+        self.assertNotIn(response2, qs)
 
     def test_with_full_team_formation_data(self):
         """Test combined annotation for team formation."""

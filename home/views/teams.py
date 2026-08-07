@@ -2,6 +2,7 @@
 
 import json
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -19,7 +20,6 @@ from home.availability import (
     calculate_overlap,
     calculate_user_overlap,
     format_availability_by_day,
-    get_user_slots,
 )
 
 
@@ -86,12 +86,10 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
             if membership.user != current_user:
                 overlap_slots = calculate_user_overlap(current_user, membership.user)
                 membership.overlap_slots = overlap_slots
-                membership.offset_hours = (
-                    0  # Default to UTC offset for initial page load
-                )
+                membership.timezone_name = "UTC"
             else:
                 membership.overlap_slots = []
-                membership.offset_hours = 0
+                membership.timezone_name = "UTC"
         # Calculate team availability (navigators + djangonauts)
         team_overlap_slots, _ = calculate_overlap(
             [m.user for m in navigators + djangonauts]
@@ -216,13 +214,11 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
     This view is called via HTMX to swap availability displays when toggling timezones.
     """
     team = get_object_or_404(Team, pk=pk)
-    timezone = request.GET.get("tz", "UTC")
-
-    # Get UTC offset in hours (positive or negative)
+    timezone_name = request.GET.get("tz") or "UTC"
     try:
-        offset_hours = float(request.GET.get("offset", 0))
-    except (ValueError, TypeError):
-        offset_hours = 0
+        ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        timezone_name = "UTC"
 
     # Check if requesting user has permissions to view the team
     user_session_membership = get_object_or_404(
@@ -255,7 +251,7 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
         [m.user for m in navigators + djangonauts]
     )
     team_availability_by_day = format_availability_by_day(
-        team_overlap_slots, offset_hours
+        team_overlap_slots, timezone_name
     )
 
     # Calculate individual overlaps with current user
@@ -264,10 +260,10 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
         if membership.user != current_user:
             overlap_slots = calculate_user_overlap(current_user, membership.user)
             membership.overlap_slots = overlap_slots
-            membership.offset_hours = offset_hours
+            membership.timezone_name = timezone_name
         else:
             membership.overlap_slots = []
-            membership.offset_hours = offset_hours
+            membership.timezone_name = timezone_name
 
     # Get organizers for the session
     organizers = (
@@ -280,8 +276,7 @@ def team_availability_fragment(request: HttpRequest, pk: int) -> HttpResponse:
     context = {
         "user": request.user,
         "team": team,
-        "timezone": timezone,
-        "offset_hours": offset_hours,
+        "timezone": timezone_name,
         "team_availability_by_day": team_availability_by_day,
         "captains": [m for m in team_members if m.role == constants.CAPTAIN],
         "navigators": navigators,

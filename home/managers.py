@@ -19,6 +19,7 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from home import constants
+from home.slots import Slot
 
 
 class UserQuestionResponseQuerySet(QuerySet):
@@ -392,16 +393,36 @@ class UserSurveyResponseQuerySet(QuerySet):
         )
         return self.filter(~Exists(has_team_assignment))
 
-    def with_availability_overlap(self, slots: list[float]):
+    def with_availability_overlap(self, slots: list[Slot]):
         """
-        Filter responses for users with availability overlap with given slots.
+        Filter responses for users whose availability overlaps ``slots``.
 
         Args:
-            slots: List of time slots to check overlap with
+            slots: Slots to check overlap with
         """
         if not slots:
             return self.none()
-        return self.filter(user__availability__slots__has_overlap=slots)
+
+        from accounts.models import UserAvailability
+
+        target_slots = set(slots)
+        candidate_user_ids = self.order_by().values("user_id").distinct()
+        availability_rows = (
+            UserAvailability.objects.filter(user_id__in=Subquery(candidate_user_ids))
+            .values_list("user_id", "slots", "slots_timezone")
+            .iterator(chunk_size=200)
+        )
+
+        # Scan rows rather than loading whole users: slots compare by instant,
+        # so membership handles the timezone conversion for us.
+        matching_user_ids = []
+        for user_id, availability_slots, timezone_name in availability_rows:
+            for slot in availability_slots or []:
+                if Slot(timezone_name, slot) in target_slots:
+                    matching_user_ids.append(user_id)
+                    break
+
+        return self.filter(user_id__in=matching_user_ids)
 
     def with_navigator_overlap(self, team):
         """
@@ -410,13 +431,23 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose navigators to check overlap with
         """
-        from home.availability import get_role_slots
+
+        from home.availability import get_user_slots
         from home.models import SessionMembership
 
-        navigator_slots = get_role_slots(team, role=constants.NAVIGATOR)
+        navigator_memberships = (
+            SessionMembership.objects.for_team(team)
+            .filter(role=constants.NAVIGATOR)
+            .select_related("user")
+            .prefetch_related("user__availability")
+        )
+        navigator_slots = set()
+        for membership in navigator_memberships:
+            navigator_slots.update(get_user_slots(membership.user))
+
         if not navigator_slots:
             return self.none()
-        return self.with_availability_overlap(navigator_slots)
+        return self.with_availability_overlap(list(navigator_slots))
 
     def with_captain_overlap(self, team):
         """
@@ -425,13 +456,23 @@ class UserSurveyResponseQuerySet(QuerySet):
         Args:
             team: Team instance whose captain to check overlap with
         """
-        from home.availability import get_role_slots
+
+        from home.availability import get_user_slots
         from home.models import SessionMembership
 
-        captain_slots = get_role_slots(team, role=constants.CAPTAIN)
+        captain_memberships = (
+            SessionMembership.objects.for_team(team)
+            .filter(role=constants.CAPTAIN)
+            .select_related("user")
+            .prefetch_related("user__availability")
+        )
+        captain_slots = set()
+        for membership in captain_memberships:
+            captain_slots.update(get_user_slots(membership.user))
+
         if not captain_slots:
             return self.none()
-        return self.with_availability_overlap(captain_slots)
+        return self.with_availability_overlap(list(captain_slots))
 
     def with_full_team_formation_data(self, session):
         """

@@ -1,16 +1,27 @@
 """Tests for availability calculation utilities."""
 
 from django.test import TestCase
+from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
+from tests.timezones import (
+    CENTRAL_EUROPEAN_TIMEZONE,
+    US_EASTERN_TIMEZONE,
+)
+from home.slots import Slot
 from home.availability import (
     AvailabilityWindow,
     calculate_overlap,
     calculate_team_overlap,
     count_one_hour_blocks,
-    format_slot_as_time,
     format_slots_as_ranges,
+    get_user_slots,
 )
+
+
+def utc_slots(*values: float) -> list[Slot]:
+    """Build UTC slots for the given weekly slot values."""
+    return [Slot("UTC", value) for value in values]
 
 
 class AvailabilityUtilsTestCase(TestCase):
@@ -40,23 +51,50 @@ class AvailabilityUtilsTestCase(TestCase):
     def test_count_one_hour_blocks(self):
         """Test counting 1-hour blocks from slots."""
         # Two consecutive slots = 1 hour block
-        slots = [10.0, 10.5]
-        self.assertEqual(count_one_hour_blocks(slots), 1)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0, 10.5)), 1)
 
         # Four consecutive slots = 2 hour blocks
-        slots = [10.0, 10.5, 11.0, 11.5]
-        self.assertEqual(count_one_hour_blocks(slots), 2)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0, 10.5, 11.0, 11.5)), 2)
 
         # Non-consecutive slots
-        slots = [10.0, 10.5, 12.0, 12.5]
-        self.assertEqual(count_one_hour_blocks(slots), 2)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0, 10.5, 12.0, 12.5)), 2)
 
         # Single slot
-        slots = [10.0]
-        self.assertEqual(count_one_hour_blocks(slots), 0)
+        self.assertEqual(count_one_hour_blocks(utc_slots(10.0)), 0)
 
         # Empty slots
         self.assertEqual(count_one_hour_blocks([]), 0)
+
+    @freeze_time("2024-06-17")
+    def test_get_user_slots_preserves_utc_default_users(self):
+        """UTC-default availability remains directly comparable."""
+        self.assertEqual(
+            [slot.slot_utc for slot in get_user_slots(self.user1)],
+            self.avail1.slots,
+        )
+
+    @freeze_time("2024-06-17")
+    def test_get_user_slots_converts_mixed_timezone_users(self):
+        """Local wall-clock slots in user timezones derive matching UTC slots."""
+        ny_user = UserFactory(username="ny_user", email="ny@example.com")
+        berlin_user = UserFactory(username="berlin_user", email="berlin@example.com")
+        UserAvailabilityFactory(
+            user=ny_user,
+            slots=[33.0],  # Monday 9:00 America/New_York -> Monday 13:00 UTC
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=berlin_user,
+            slots=[39.0],  # Monday 15:00 Europe/Berlin -> Monday 13:00 UTC
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+
+        self.assertEqual([slot.slot_utc for slot in get_user_slots(ny_user)], [37.0])
+        self.assertEqual(
+            [slot.slot_utc for slot in get_user_slots(berlin_user)], [37.0]
+        )
+        # The two users' slots are the same instant, so they compare equal.
+        self.assertEqual(get_user_slots(ny_user), get_user_slots(berlin_user))
 
     def test_calculate_overlap(self):
         """Test overlap calculation for groups and pairs."""
@@ -78,6 +116,29 @@ class AvailabilityUtilsTestCase(TestCase):
         # Mixed: user with and without availability
         slots, hours = calculate_overlap([self.user1, self.user3])
         self.assertEqual(hours, 0)  # No overlap because user3 has no availability
+
+    def test_calculate_overlap_uses_user_timezones(self):
+        """Mixed-timezone users overlap by derived UTC slots."""
+        ny_user = UserFactory(username="ny_overlap", email="ny-overlap@example.com")
+        berlin_user = UserFactory(
+            username="berlin_overlap", email="berlin-overlap@example.com"
+        )
+        UserAvailabilityFactory(
+            user=ny_user,
+            slots=[33.0, 33.5],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=berlin_user,
+            slots=[39.0, 39.5],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+
+        with freeze_time("2024-06-17"):
+            slots, hours = calculate_overlap([ny_user, berlin_user])
+
+        self.assertEqual([slot.slot_utc for slot in slots], [37.0, 37.5])
+        self.assertEqual(hours, 1)
 
     def test_calculate_team_overlap(self):
         """Test team overlap calculation."""
@@ -103,33 +164,25 @@ class AvailabilityUtilsTestCase(TestCase):
         self.assertEqual(len(result["captain_meetings"]), 1)
         # Captain 1-on-1 with user2
 
-    def test_format_slot_as_time(self):
-        """Test time formatting."""
-        # Sunday 00:00 (12:00 AM)
-        self.assertEqual(format_slot_as_time(0.0), "Sun 12:00 AM")
-
-        # Monday 14:30 (2:30 PM)
-        self.assertEqual(format_slot_as_time(38.5), "Mon 2:30 PM")
-
-        # Saturday 23:30 (11:30 PM)
-        self.assertEqual(format_slot_as_time(167.5), "Sat 11:30 PM")
-
     def test_format_slots_as_ranges(self):
         """Test formatting slots as time ranges."""
         # Consecutive slots
-        slots = [10.0, 10.5, 11.0, 11.5]
-        ranges = format_slots_as_ranges(slots)
+        ranges = format_slots_as_ranges(utc_slots(10.0, 10.5, 11.0, 11.5))
         self.assertEqual(len(ranges), 1)
         self.assertIn("Sun", ranges[0])
 
         # Non-consecutive slots
-        slots = [10.0, 10.5, 12.0, 12.5]
-        ranges = format_slots_as_ranges(slots)
+        ranges = format_slots_as_ranges(utc_slots(10.0, 10.5, 12.0, 12.5))
         self.assertEqual(len(ranges), 2)
 
         # Empty slots
         ranges = format_slots_as_ranges([])
         self.assertEqual(ranges, [])
+
+        # UTC slots displayed in a named timezone.
+        with freeze_time("2024-06-17"):
+            ranges = format_slots_as_ranges(utc_slots(37.0, 37.5), US_EASTERN_TIMEZONE)
+        self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
 
 
 class AvailabilityWindowTestCase(TestCase):
@@ -141,7 +194,7 @@ class AvailabilityWindowTestCase(TestCase):
         user2 = UserFactory(username="user2", email="user2@example.com")
 
         window = AvailabilityWindow(
-            slot_range=(10.0, 10.5),
+            slot_range=(Slot("UTC", 10.0), Slot("UTC", 10.5)),
             formatted_time="Sun 10:00 AM - 11:00 AM",
             available_users=[],
             unavailable_users=[user1, user2],
@@ -155,7 +208,7 @@ class AvailabilityWindowTestCase(TestCase):
     def test_admin_unavailable_url_returns_none_when_no_unavailable_users(self):
         """Test that admin_unavailable_url returns None with no unavailable users."""
         window = AvailabilityWindow(
-            slot_range=(10.0, 10.5),
+            slot_range=(Slot("UTC", 10.0), Slot("UTC", 10.5)),
             formatted_time="Sun 10:00 AM - 11:00 AM",
             available_users=[],
             unavailable_users=[],

@@ -35,7 +35,7 @@
 {% block content %}
 <main class="section my-3 mx-5">
     <div class="section-container max-w-7xl"
-         x-data="availabilityGrid()">
+         x-data="availabilityGrid('{{ timezone_name|escapejs }}')">
         <nav class="mb-4 text-sm" aria-label="breadcrumb">
             <ol class="flex items-center gap-2">
                 <li><a href="{% url 'user_sessions' %}">{% trans "My Sessions" %}</a></li>
@@ -69,7 +69,7 @@
             {% if session_id %}
             <input type="hidden" name="session" value="{{ session_id }}">
             {% endif %}
-            <input type="hidden" name="offset" x-bind:value="offsetHours">
+            <input type="hidden" name="timezone" x-bind:value="timezone">
 
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-grow">
@@ -88,16 +88,17 @@
         </form>
 
         {% comment %}
-            The grid is loaded via htmx so we can inject the browser's UTC offset
-            (not available server-side) into the request via hx-vals.
-            After htmx settles the response, we hydrate Alpine.js state from the
-            JSON script tags rendered by the grid partial and reset any pinned
-            slot since the grid contents have changed.
+            The grid is loaded via htmx so we can inject the viewer's browser
+            timezone into the request via hx-vals, falling back to the
+            server-selected timezone if browser detection is unavailable.
+            After htmx settles the response, we hydrate Alpine.js state from
+            the JSON script tags rendered by the grid partial and reset any
+            pinned slot since the grid contents have changed.
         {% endcomment %}
         <div id="availability-grid-container"
              hx-get="{% url 'compare_availability_grid' %}?{{ request.GET.urlencode }}"
              hx-trigger="load"
-             hx-vals='js:{"offset": -new Date().getTimezoneOffset() / 60}'
+             hx-vals='js:{"timezone": getBrowserTimezone() || "{{ timezone_name|escapejs }}"}'
              hx-swap="innerHTML"
              hx-disinherit="*"
              @htmx:after-settle="
@@ -117,7 +118,7 @@
 </main>
 {{ form.media.js }}
 <script>
-function availabilityGrid() {
+function availabilityGrid(initialTimezone) {
     return {
         slotAvailabilities: {},
         users: [],
@@ -126,8 +127,7 @@ function availabilityGrid() {
         hoveredUser: null,
         activeDisplayTime: '',
         activeTimeIsUrl: '',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        offsetHours: -new Date().getTimezoneOffset() / 60,
+        timezone: getBrowserTimezone() || initialTimezone,
 
         get activeSlot() {
             return this.fixedSlot || this.hoveredSlot;

@@ -60,6 +60,8 @@ class CreateUserSurveyResponseFormViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "will be open on")
         self.assertContains(response, "Submit")
+        # Session-specific fields should also render during the preview.
+        self.assertContains(response, "GitHub Username")
 
     def test_cannot_access_survey_after_application_closes(self):
         """Users should not be able to access the survey form after the application period ends."""
