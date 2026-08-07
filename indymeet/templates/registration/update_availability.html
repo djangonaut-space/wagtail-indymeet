@@ -50,15 +50,29 @@
             <p class="text-sm">
                 <strong>{% translate "Instructions:" %}</strong>
                 {% blocktranslate %}
-                    Click or tap to select individual time slots, or drag to select a range. Click or tap a selected slot to remove it. Times are shown in your local timezone<span id="local-timezone"></span>.
+                    Click or tap to select individual time slots, or drag to select a range. Click or tap a selected slot to remove it. Times are saved as weekly local times in the timezone selected below. <span id="local-timezone"></span>
                 {% endblocktranslate %}
             </p>
         </div>
 
         <form method="post" id="availability-form">
             {% csrf_token %}
+            {{ form.media }}
+            <div class="mb-4">
+                <label for="{{ form.slots_timezone.id_for_label }}" class="mb-1 block font-semibold">
+                    {{ form.slots_timezone.label }}
+                </label>
+                {{ form.slots_timezone }}
+                {% if form.slots_timezone.help_text %}
+                    <p class="mt-1 text-sm text-gray-600">{{ form.slots_timezone.help_text }}</p>
+                {% endif %}
+                {% for error in form.slots_timezone.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+
             <div class="mb-3 flex gap-4">
-                <button type="button" id="clear-all" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button type="button" class="clear-all px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                     {% translate "Clear All" %}
                 </button>
                 <button type="submit" class="action-button">
@@ -104,7 +118,7 @@
             {{ form.slots }}
 
             <div class="mt-3 flex gap-4">
-                <button type="button" id="clear-all" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button type="button" class="clear-all px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                     {% translate "Clear All" %}
                 </button>
                 <button type="submit" class="action-button">
@@ -116,76 +130,77 @@
 </main>
 
 <script>
-    document.getElementById("local-timezone").textContent = ` (${Intl.DateTimeFormat().resolvedOptions().timeZone})`
+    (() => {
+        function updateTimezoneHelpText() {
+            const timezoneDisplay = document.getElementById("local-timezone");
+            const timezoneSelect = document.getElementById("id_slots_timezone");
+            if (!timezoneDisplay) {
+                return;
+            }
+
+            const browserTimezone = getBrowserTimezone();
+            if (browserTimezone) {
+                timezoneDisplay.textContent = `Your browser timezone is ${browserTimezone}.`;
+                return;
+            }
+
+            const selectedTimezone = timezoneSelect && timezoneSelect.value
+                ? timezoneSelect.value
+                : "{{ default_availability_timezone }}";
+            timezoneDisplay.textContent = `Using selected timezone: ${selectedTimezone}.`;
+        }
+
+        const timezoneSelect = document.getElementById("id_slots_timezone");
+        if (timezoneSelect) {
+            timezoneSelect.addEventListener("change", updateTimezoneHelpText);
+        }
+        updateTimezoneHelpText();
+    })();
 </script>
 
 <script type="module">
     import SelectionArea from '{% static "js/viselect.js" %}';
 
-    // Availability data management
+    // By default Django gives form field id_slot_timezone.
+    const timezoneSelect = document.getElementById('id_slots_timezone');
+    const initialSlots = {{ object.slots|default:"[]"|safe }};
+
+    // Availability data management. Slots are stored as raw local wall-clock
+    // weekly coordinates in the selected timezone, not converted to UTC here.
     const availabilityData = {
-        slots: {{ object.slots|default:"[]"|safe }},
+        slots: initialSlots,
+        slotsTimezone: timezoneSelect.value,
 
-        toUTCSlot(localDay, localHour) {
-            // Convert local day/hour to UTC hours from start of week
-            //
-            // This function handles timezone conversion because:
-            // 1. The grid displays times in the USER'S LOCAL TIMEZONE
-            // 2. We store availability in UTC for consistency across timezones
-            // 3. The day can SHIFT during conversion (e.g., Mon 11 PM PST → Tue 7 AM UTC)
-            //
-            // Example: User in Los Angeles (PST, UTC-8) selects "Monday 2:00 PM"
-            //   - Input: localDay=1 (Monday), localHour=14.0
-            //   - Local time: Monday 2:00 PM PST
-            //   - UTC time: Monday 10:00 PM UTC (22:00)
-            //   - Output: (1 * 24) + 22 = 46.0 hours from start of week
-            //
-            // The "weird" implementation using a reference date is necessary because
-            // JavaScript doesn't provide a simple way to convert "day of week + hour"
-            // between timezones - we must go through actual Date objects.
-
-            // Use the closest date (today or later, within the next 6 days) that
-            // falls on localDay, so the reference date is always as close to "now"
-            // as possible and reflects whichever DST rules currently apply.
-            const localDate = new Date();
-            const currentDay = localDate.getDay();
-            const daysUntilLocalDay = (localDay - currentDay + 7) % 7;
-            localDate.setDate(localDate.getDate() + daysUntilLocalDay);
-
-            // Set the time within that day (in user's local timezone)
-            localDate.setHours(Math.floor(localHour));
-            localDate.setMinutes((localHour % 1) * 60);
-
-            // Extract what day/time this is in UTC
-            const utcDay = localDate.getUTCDay();
-            const utcHour = localDate.getUTCHours() + (localDate.getUTCMinutes() / 60);
-
-            // Convert to hours from start of week (Sunday 00:00 UTC = 0.0)
-            return (utcDay * 24.0) + utcHour;
+        slotValue(localDay, localHour) {
+            return (localDay * 24.0) + localHour;
         },
 
         hasSlot(localDay, localHour) {
-            const utcSlot = this.toUTCSlot(localDay, localHour);
-            return this.slots.some(s => Math.abs(s - utcSlot) < 0.0001);
+            const localSlot = this.slotValue(localDay, localHour);
+            return this.slots.some(s => Math.abs(s - localSlot) < 0.0001);
         },
 
         addSlot(localDay, localHour) {
-            const utcSlot = this.toUTCSlot(localDay, localHour);
+            const localSlot = this.slotValue(localDay, localHour);
             if (!this.hasSlot(localDay, localHour)) {
-                this.slots.push(utcSlot);
+                this.slots.push(localSlot);
                 this.slots.sort((a, b) => a - b);
             }
         },
 
         removeSlot(localDay, localHour) {
-            const utcSlot = this.toUTCSlot(localDay, localHour);
-            this.slots = this.slots.filter(s => Math.abs(s - utcSlot) >= 0.0001);
+            const localSlot = this.slotValue(localDay, localHour);
+            this.slots = this.slots.filter(s => Math.abs(s - localSlot) >= 0.0001);
         },
 
         clearAll() {
             this.slots = [];
         }
     };
+
+    timezoneSelect.addEventListener('change', () => {
+        availabilityData.slotsTimezone = timezoneSelect.value;
+    });
 
     // Get template elements
     const timeRowTemplate = document.getElementById('time-row-template');
@@ -294,21 +309,24 @@
         }
     });
 
-    // Clear all button
-    document.getElementById('clear-all').addEventListener('click', () => {
-        if (confirm('{% translate "Are you sure you want to clear all availability?" %}')) {
-            document.querySelectorAll('.time-slot').forEach(slot => {
-                slot.classList.remove('selecting', 'adding', 'selected');
-            });
-            availabilityData.clearAll();
-            selection.clearSelection(true, true);
-        }
+    // Clear all buttons
+    document.querySelectorAll('.clear-all').forEach(button => {
+        button.addEventListener('click', () => {
+            if (confirm('{% translate "Are you sure you want to clear all availability?" %}')) {
+                document.querySelectorAll('.time-slot').forEach(slot => {
+                    slot.classList.remove('selecting', 'adding', 'selected');
+                });
+                availabilityData.clearAll();
+                selection.clearSelection(true, true);
+            }
+        });
     });
 
     // Form submission
     document.getElementById('availability-form').addEventListener('submit', (e) => {
         const slotsField = document.getElementById('id_slots');
         slotsField.value = JSON.stringify(availabilityData.slots);
+        timezoneSelect.value = availabilityData.slotsTimezone;
     });
 </script>
 

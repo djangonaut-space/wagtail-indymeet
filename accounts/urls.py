@@ -10,6 +10,7 @@ from .views import ResendConfirmationEmailView
 from .views import SignUpView
 from .views import UpdateAvailabilityView
 from .views import UpdateEmailSubscriptionView
+from .views import UpdateTimezoneView
 from .views import UpdateUserView
 
 urlpatterns = [
@@ -46,6 +47,11 @@ urlpatterns = [
         "availability/",
         UpdateAvailabilityView.as_view(),
         name="availability",
+    ),
+    path(
+        "profile/timezone/",
+        UpdateTimezoneView.as_view(),
+        name="update_timezone",
     ),
     path(
         "delete/",

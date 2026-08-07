@@ -1,4 +1,5 @@
 import factory
+from django.conf import settings
 from django.db.models.signals import post_save
 
 from accounts.models import CustomUser, UserAvailability, UserProfile
@@ -31,3 +32,4 @@ class UserAvailabilityFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     slots = []
+    slots_timezone = factory.LazyFunction(lambda: settings.TIME_ZONE)

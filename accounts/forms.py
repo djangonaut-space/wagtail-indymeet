@@ -1,10 +1,13 @@
-from home import constants
+from zoneinfo import available_timezones
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
-from django.utils.translation import gettext_lazy as _
+from home import constants
+from home.availability import utc_slot_to_local_slot
 
 from .models import CustomUser
 from .models import UserAvailability
@@ -16,6 +19,8 @@ INTERESTED_IN_FIELDS = (
     ("interested_in_navigator", constants.NAVIGATOR),
     ("interested_in_organizer", constants.ORGANIZER),
 )
+
+TIMEZONE_CHOICES = tuple((tz, tz) for tz in sorted(available_timezones()))
 
 
 class BaseCustomUserForm(forms.ModelForm):
@@ -195,7 +200,12 @@ class UserAvailabilityForm(forms.ModelForm):
     Form for updating user availability.
 
     The actual slot selection happens via JavaScript on the frontend.
-    This form just handles the JSON data submission.
+    This form handles the JSON slot data and the timezone those local
+    wall-clock slots are defined in.
+
+    When no slots have been selected yet, `accounts/static/js/availability_timezone_autodetect.js`
+    (loaded via the Media class below) pre-selects the browser's detected
+    timezone in the slots_timezone field.
     """
 
     slots = forms.JSONField(
@@ -203,10 +213,46 @@ class UserAvailabilityForm(forms.ModelForm):
         widget=forms.HiddenInput(),
         help_text="Your weekly availability slots (managed via the calendar interface)",
     )
+    slots_timezone = forms.ChoiceField(
+        choices=TIMEZONE_CHOICES,
+        label="Timezone",
+        help_text="The timezone for the weekly times selected below.",
+        widget=forms.Select(
+            attrs={
+                "class": "w-full max-w-md rounded-lg border border-gray-300 px-3 py-2",
+            }
+        ),
+    )
 
     class Meta:
         model = UserAvailability
-        fields = ("slots",)
+        fields = ("slots", "slots_timezone")
+
+    class Media:
+        js = ("js/availability_timezone_autodetect.js",)
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get("instance")
+        if (
+            instance is not None
+            and instance.slots_timezone == constants.DEFAULT_AVAILABILITY_TIMEZONE
+        ):
+            # If slots_timezone is still the default availability timezone
+            # (never explicitly set) and the user's UserProfile.timezone is known
+            # and different, convert the slots to that timezone for display. This
+            # transformation is applied to the in-memory instance only and is not
+            # saved unless the user submits the form.
+            profile_timezone = instance.user.profile.timezone
+            if (
+                profile_timezone
+                and profile_timezone != constants.DEFAULT_AVAILABILITY_TIMEZONE
+            ):
+                instance.slots = [
+                    utc_slot_to_local_slot(slot, profile_timezone)
+                    for slot in instance.slots
+                ]
+                instance.slots_timezone = profile_timezone
+        super().__init__(*args, **kwargs)
 
 
 class DeleteAccountForm(forms.Form):

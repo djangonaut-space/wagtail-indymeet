@@ -1,4 +1,7 @@
 # Create your views here.
+from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfoNotFoundError
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
@@ -23,6 +26,7 @@ from django.views.generic.edit import CreateView
 from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
 
+from home import constants
 from home.email import send
 from home.models import Testimonial
 
@@ -254,6 +258,13 @@ class UpdateAvailabilityView(LoginRequiredMixin, UpdateView):
         )
         return availability
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["default_availability_timezone"] = (
+            constants.DEFAULT_AVAILABILITY_TIMEZONE
+        )
+        return context
+
     def get_success_url(self):
         messages.add_message(
             self.request,
@@ -261,6 +272,23 @@ class UpdateAvailabilityView(LoginRequiredMixin, UpdateView):
             "Your availability has been updated successfully.",
         )
         return reverse("profile")
+
+
+class UpdateTimezoneView(LoginRequiredMixin, View):
+    """Persist the browser-detected timezone for the logged-in user."""
+
+    def post(self, request):
+        timezone_name = request.POST.get("timezone", "")
+        try:
+            ZoneInfo(timezone_name)
+        except (ZoneInfoNotFoundError, ValueError):
+            return HttpResponse(status=400)
+
+        profile = request.user.profile
+        if profile.timezone != timezone_name:
+            profile.timezone = timezone_name
+            profile.save(update_fields=["timezone"])
+        return HttpResponse(status=204)
 
 
 class DeleteAccountView(LoginRequiredMixin, UserPassesTestMixin, FormView):

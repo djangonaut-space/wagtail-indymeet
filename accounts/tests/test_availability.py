@@ -4,9 +4,18 @@ import json
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
+from django.test import TestCase
 from django.urls import reverse
 
+from accounts.forms import UserAvailabilityForm
 from accounts.models import UserAvailability
+from home.availability import utc_slot_to_local_slot
+from tests.timezones import (
+    CENTRAL_EUROPEAN_TIMEZONE,
+    DEFAULT_TIMEZONE,
+    US_EASTERN_TIMEZONE,
+)
 
 User = get_user_model()
 
@@ -27,10 +36,11 @@ def user_with_availability(user):
     availability = UserAvailability.objects.create(
         user=user,
         slots=[
-            24.0,  # Monday 00:00 UTC (1*24 + 0)
-            36.0,  # Monday 12:00 UTC (1*24 + 12)
-            66.0,  # Tuesday 18:00 UTC (2*24 + 18)
+            24.0,  # Monday 00:00 local (1*24 + 0)
+            36.0,  # Monday 12:00 local (1*24 + 12)
+            66.0,  # Tuesday 18:00 local (2*24 + 18)
         ],
+        slots_timezone=US_EASTERN_TIMEZONE,
     )
     return user, availability
 
@@ -43,6 +53,7 @@ class TestUserAvailabilityModel:
         availability = UserAvailability.objects.create(user=user)
         assert availability.user == user
         assert availability.slots == []
+        assert availability.slots_timezone == DEFAULT_TIMEZONE
 
     def test_add_slot(self, user):
         """Test adding time slots."""
@@ -55,7 +66,8 @@ class TestUserAvailabilityModel:
     def test_remove_slot(self, user):
         """Test removing time slots."""
         availability = UserAvailability.objects.create(
-            user=user, slots=[36.0, 48.0]  # Monday 12:00, Tuesday 00:00
+            user=user,
+            slots=[36.0, 48.0],  # Monday 12:00, Tuesday 00:00
         )
         availability.remove_slot(1, 12.0)  # Should remove 36.0
         availability.save()
@@ -65,7 +77,8 @@ class TestUserAvailabilityModel:
     def test_clear_slots(self, user):
         """Test clearing all slots."""
         availability = UserAvailability.objects.create(
-            user=user, slots=[24.0, 48.0, 72.0]  # Monday, Tuesday, Wednesday at 00:00
+            user=user,
+            slots=[24.0, 48.0, 72.0],  # Monday, Tuesday, Wednesday at 00:00
         )
         availability.clear_slots()
         availability.save()
@@ -111,8 +124,11 @@ class TestAvailabilityView:
         url = reverse("availability")
         response = client.get(url)
 
+        content = response.content.decode()
         assert response.status_code == 200
-        assert "availability-grid" in response.content.decode()
+        assert "availability-grid" in content
+        assert "id_slots_timezone" in content
+        assert response.context["default_availability_timezone"] == DEFAULT_TIMEZONE
 
     def test_availability_view_creates_object(self, client, user):
         """Test that the view creates a UserAvailability object if none exists."""
@@ -133,21 +149,30 @@ class TestAvailabilityView:
 
         content = response.content.decode()
         assert str(availability.slots) in content
+        assert f'value="{US_EASTERN_TIMEZONE}" selected' in content
 
     def test_availability_update(self, client, user):
         """Test updating availability via POST."""
         client.force_login(user)
         url = reverse("availability")
 
-        # Create some test slots
-        test_slots = [24.0, 36.0, 48.0]  # Mon 00:00, Mon 12:00, Tue 00:00
-        response = client.post(url, {"slots": json.dumps(test_slots)})
+        # Create some test local slots
+        # Mon 09:00, Mon 12:00, Tue 00:00
+        test_slots = [33.0, 36.0, 48.0]
+        response = client.post(
+            url,
+            {
+                "slots": json.dumps(test_slots),
+                "slots_timezone": US_EASTERN_TIMEZONE,
+            },
+        )
 
         assert response.status_code == 302  # Redirect after success
 
-        # Check that the data was saved
+        # Check that the data was saved as local slots in the selected timezone
         availability = UserAvailability.objects.get(user=user)
         assert availability.slots == test_slots
+        assert availability.slots_timezone == US_EASTERN_TIMEZONE
 
     def test_availability_clear_all(self, client, user_with_availability):
         """Test clearing all availability."""
@@ -155,55 +180,152 @@ class TestAvailabilityView:
         client.force_login(user)
         url = reverse("availability")
 
-        response = client.post(url, {"slots": json.dumps([])})
+        response = client.post(
+            url,
+            {
+                "slots": json.dumps([]),
+                "slots_timezone": availability.slots_timezone,
+            },
+        )
 
         assert response.status_code == 302
 
         availability.refresh_from_db()
         assert availability.slots == []
+        assert availability.slots_timezone == US_EASTERN_TIMEZONE
 
 
-class TestAvailabilityForm:
+class TestAvailabilityForm(TestCase):
     """Test the UserAvailabilityForm."""
 
-    def test_form_valid_with_slots(self, user):
-        """Test form validation with valid slot data."""
-        from accounts.forms import UserAvailabilityForm
+    @classmethod
+    def setUpTestData(cls):
+        """Create a shared test user for all tests in this class."""
+        cls.user = User.objects.create_user(
+            username="testuser",
+            email="test@example.com",
+            password="testpass123",
+        )
 
-        availability = UserAvailability.objects.create(user=user)
+    def test_form_valid_with_slots(self):
+        """Test form validation with valid slot data."""
+        availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(
-            data={"slots": [24.0, 48.0, 72.0]},  # Mon, Tue, Wed at 00:00
+            data={
+                "slots": [24.0, 48.0, 72.0],  # Mon, Tue, Wed at 00:00
+                "slots_timezone": DEFAULT_TIMEZONE,
+            },
             instance=availability,
         )
 
         assert form.is_valid()
 
-    def test_form_valid_with_empty_slots(self, user):
+    def test_form_valid_with_empty_slots(self):
         """Test form validation with empty slots."""
-        from accounts.forms import UserAvailabilityForm
-
-        availability = UserAvailability.objects.create(user=user)
-        form = UserAvailabilityForm(data={"slots": []}, instance=availability)
+        availability = UserAvailability.objects.create(user=self.user)
+        form = UserAvailabilityForm(
+            data={"slots": [], "slots_timezone": DEFAULT_TIMEZONE},
+            instance=availability,
+        )
 
         assert form.is_valid()
 
-    def test_form_saves_slots(self, user):
+    def test_form_saves_slots(self):
         """Test that the form saves slot data correctly."""
-        from accounts.forms import UserAvailabilityForm
-
-        availability = UserAvailability.objects.create(user=user)
+        availability = UserAvailability.objects.create(user=self.user)
         test_slots = [
             24.0,
             36.0,
             48.0,
             60.0,
         ]  # Mon 00:00, Mon 12:00, Tue 00:00, Tue 12:00
-        form = UserAvailabilityForm(data={"slots": test_slots}, instance=availability)
+        form = UserAvailabilityForm(
+            data={"slots": test_slots, "slots_timezone": CENTRAL_EUROPEAN_TIMEZONE},
+            instance=availability,
+        )
 
         assert form.is_valid()
         saved_availability = form.save()
 
         assert saved_availability.slots == test_slots
+        assert saved_availability.slots_timezone == CENTRAL_EUROPEAN_TIMEZONE
+
+    def test_form_timezone_choices_include_iana_zones(self):
+        """Test that the timezone selector offers IANA timezone names."""
+        availability = UserAvailability.objects.create(user=self.user)
+        form = UserAvailabilityForm(instance=availability)
+        timezone_values = {
+            value for value, label in form.fields["slots_timezone"].choices
+        }
+
+        assert DEFAULT_TIMEZONE in timezone_values
+        assert US_EASTERN_TIMEZONE in timezone_values
+        assert CENTRAL_EUROPEAN_TIMEZONE in timezone_values
+
+    def test_form_rejects_invalid_timezone(self):
+        """Test that availability cannot be saved with an unknown timezone."""
+        availability = UserAvailability.objects.create(user=self.user)
+        form = UserAvailabilityForm(
+            data={"slots": [24.0], "slots_timezone": "Not/AZone"},
+            instance=availability,
+        )
+
+        assert not form.is_valid()
+        assert "slots_timezone" in form.errors
+
+    def test_form_requires_timezone(self):
+        """Test that omitting the timezone fails validation instead of silently
+        falling back to the previously saved value."""
+        availability = UserAvailability.objects.create(
+            user=self.user,
+            slots=[33.0],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        form = UserAvailabilityForm(data={"slots": [33.0, 33.5]}, instance=availability)
+
+        assert not form.is_valid()
+        assert "slots_timezone" in form.errors
+
+    def test_converts_utc_slots_to_profile_timezone(self):
+        """UserAvailabilityForm.__init__ should convert default-UTC slots
+        to the user's UserProfile.timezone (e.g. detected by the browser)
+        for display, so the grid and timezone field show the same
+        timezone the JS auto-detect would have picked."""
+        self.user.profile.timezone = US_EASTERN_TIMEZONE
+        self.user.profile.save()
+        availability = UserAvailability.objects.create(
+            user=self.user,
+            slots=[33.0, 36.0],  # Mon 09:00, Mon 12:00 UTC
+            slots_timezone=DEFAULT_TIMEZONE,
+        )
+
+        form = UserAvailabilityForm(instance=availability)
+
+        expected_slots = [
+            utc_slot_to_local_slot(33.0, US_EASTERN_TIMEZONE),
+            utc_slot_to_local_slot(36.0, US_EASTERN_TIMEZONE),
+        ]
+        assert form.instance.slots == expected_slots
+        assert form.instance.slots_timezone == US_EASTERN_TIMEZONE
+        # form.initial is derived from the instance, so the rendered
+        # select reflects the conversion too.
+        assert form.initial["slots_timezone"] == US_EASTERN_TIMEZONE
+
+    def test_skips_conversion_when_timezone_customized(self):
+        """Once a user has explicitly saved a non-UTC timezone, it must
+        never be silently overridden by their profile timezone."""
+        self.user.profile.timezone = US_EASTERN_TIMEZONE
+        self.user.profile.save()
+        availability = UserAvailability.objects.create(
+            user=self.user,
+            slots=[33.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+
+        form = UserAvailabilityForm(instance=availability)
+
+        assert form.instance.slots == [33.0]
+        assert form.instance.slots_timezone == CENTRAL_EUROPEAN_TIMEZONE
 
 
 @pytest.mark.django_db
@@ -311,12 +433,14 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_with_invalid_json(self, user):
         """Test form validation with mixed data types."""
-        from accounts.forms import UserAvailabilityForm
-
         availability = UserAvailability.objects.create(user=user)
         # JSONField should handle conversion, but let's test with proper list
         form = UserAvailabilityForm(
-            data={"slots": [24.0, "invalid", 48.0]}, instance=availability
+            data={
+                "slots": [24.0, "invalid", 48.0],
+                "slots_timezone": DEFAULT_TIMEZONE,
+            },
+            instance=availability,
         )
 
         # Form should still be valid as JSONField accepts lists
@@ -325,24 +449,25 @@ class TestUserAvailabilityFormEdgeCases:
 
     def test_form_with_none_slots(self, user):
         """Test form with None value for slots."""
-        from accounts.forms import UserAvailabilityForm
-
         availability = UserAvailability.objects.create(user=user)
-        form = UserAvailabilityForm(data={}, instance=availability)  # No slots provided
+        form = UserAvailabilityForm(
+            data={"slots_timezone": DEFAULT_TIMEZONE},  # No slots provided
+            instance=availability,
+        )
 
         # Should be valid - slots is not required
         assert form.is_valid()
 
     def test_form_clears_slots_on_empty_submit(self, user):
         """Test that submitting empty list clears slots."""
-        from accounts.forms import UserAvailabilityForm
-
         availability = UserAvailability.objects.create(
-            user=user, slots=[24.0, 48.0, 72.0]  # Mon, Tue, Wed at 00:00
+            user=user,
+            slots=[24.0, 48.0, 72.0],  # Mon, Tue, Wed at 00:00
         )
         # JSONField converts empty list to empty list (valid value)
         form = UserAvailabilityForm(
-            data={"slots": json.dumps([])}, instance=availability
+            data={"slots": json.dumps([]), "slots_timezone": DEFAULT_TIMEZONE},
+            instance=availability,
         )
 
         assert form.is_valid()
@@ -357,13 +482,15 @@ class TestUpdateAvailabilityViewEdgeCases:
     def test_multiple_updates_change_timestamp(self, client, user):
         """Test that multiple updates change the updated_at timestamp."""
         import time
-        from django.utils import timezone
 
         client.force_login(user)
         url = reverse("availability")
 
         # First update
-        response = client.post(url, {"slots": json.dumps([24.0, 48.0])})
+        response = client.post(
+            url,
+            {"slots": json.dumps([24.0, 48.0]), "slots_timezone": DEFAULT_TIMEZONE},
+        )
         assert response.status_code == 302
 
         availability = UserAvailability.objects.get(user=user)
@@ -373,7 +500,13 @@ class TestUpdateAvailabilityViewEdgeCases:
         time.sleep(0.1)
 
         # Second update
-        response = client.post(url, {"slots": json.dumps([24.0, 48.0, 72.0])})
+        response = client.post(
+            url,
+            {
+                "slots": json.dumps([24.0, 48.0, 72.0]),
+                "slots_timezone": DEFAULT_TIMEZONE,
+            },
+        )
         assert response.status_code == 302
 
         availability.refresh_from_db()
@@ -401,7 +534,11 @@ class TestUpdateAvailabilityViewEdgeCases:
         client.force_login(user)
         url = reverse("availability")
 
-        response = client.post(url, {"slots": json.dumps([24.0])}, follow=True)
+        response = client.post(
+            url,
+            {"slots": json.dumps([24.0]), "slots_timezone": DEFAULT_TIMEZONE},
+            follow=True,
+        )
 
         # Check for success message
         messages = list(response.context["messages"])
@@ -413,7 +550,10 @@ class TestUpdateAvailabilityViewEdgeCases:
         client.force_login(user)
         url = reverse("availability")
 
-        response = client.post(url, {"slots": json.dumps([24.0])})
+        response = client.post(
+            url,
+            {"slots": json.dumps([24.0]), "slots_timezone": DEFAULT_TIMEZONE},
+        )
 
         assert response.status_code == 302
         assert response.url == reverse("profile")
@@ -446,7 +586,8 @@ class TestUserAvailabilityModelEdgeCases:
     def test_remove_nonexistent_slot(self, user):
         """Test removing a slot that doesn't exist."""
         availability = UserAvailability.objects.create(
-            user=user, slots=[24.0, 48.0]  # Monday and Tuesday at midnight
+            user=user,
+            slots=[24.0, 48.0],  # Monday and Tuesday at midnight
         )
         availability.remove_slot(5, 10.0)  # Slot that doesn't exist (Fri 10:00 = 130.0)
         availability.save()
@@ -457,7 +598,8 @@ class TestUserAvailabilityModelEdgeCases:
     def test_get_slots_for_day_empty(self, user):
         """Test getting slots for a day with no availability."""
         availability = UserAvailability.objects.create(
-            user=user, slots=[24.0, 48.0]  # Monday and Tuesday at midnight
+            user=user,
+            slots=[24.0, 48.0],  # Monday and Tuesday at midnight
         )
         sunday_slots = availability.get_slots_for_day(0)
 
@@ -496,7 +638,6 @@ class TestUserAvailabilityModelEdgeCases:
 
     def test_one_to_one_relationship(self, user):
         """Test that a user can only have one availability record."""
-        from django.db import IntegrityError
 
         UserAvailability.objects.create(user=user)
 

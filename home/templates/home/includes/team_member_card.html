@@ -32,7 +32,7 @@
         <i class="fas fa-check-circle mr-1"></i>{% trans "Overlap with You" %} ({{ timezone }})
       </p>
       <ul class="member-overlap-times text-xs text-green-700 space-y-1">
-        {% format_slots_as_list membership.overlap_slots membership.offset_hours as ranges %}
+        {% format_slots_as_list membership.overlap_slots membership.timezone_name as ranges %}
         {% if ranges %}
           {% for range in ranges %}
           <li>{{ range }}</li>

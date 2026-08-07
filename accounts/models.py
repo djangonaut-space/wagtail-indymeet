@@ -4,17 +4,15 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
-from django.core.signing import BadSignature
-from django.core.signing import SignatureExpired
-from django.core.signing import TimestampSigner
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.db import models
 from django.db.models import Q, QuerySet
 from django.db.models.functions import Lower
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from wagtail.models import Orderable
 from django.utils.translation import gettext_lazy as _
+from wagtail.models import Orderable
 
 from accounts.fields import DefaultOneToOneField
 from home import constants
@@ -181,6 +179,12 @@ class UserProfile(models.Model):
         help_text="The roles you are interested in. Djangonaut is the mentee role, "
         "the rest are volunteer roles.",
     )
+    timezone = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text="IANA timezone name detected from the user's browser.",
+    )
 
     class Meta:
         constraints = [
@@ -227,27 +231,28 @@ class MemberList(models.Model):
 
 class UserAvailability(models.Model):
     """
-    Stores a user's general weekly availability in UTC.
+    Stores a user's general weekly availability as local wall-clock slots.
 
     Each availability slot is stored as a number representing hours from
-    the start of the week (Sunday 00:00 UTC):
+    the start of the week (Sunday 00:00) in ``slots_timezone``:
     - Range: 0.0 to 167.5 (7 days * 24 hours, in 0.5 hour increments)
     - Format: hours as float
 
     Examples:
-        - Sunday 00:00 UTC = 0.0
-        - Monday 00:00 UTC = 24.0
-        - Monday 14:30 UTC = 38.5 (24 + 14.5)
-        - Saturday 23:30 UTC = 167.5 (6*24 + 23.5)
+        - Sunday 00:00 local = 0.0
+        - Monday 00:00 local = 24.0
+        - Monday 14:30 local = 38.5 (24 + 14.5)
+        - Saturday 23:30 local = 167.5 (6*24 + 23.5)
 
-    The frontend handles timezone conversion from user's local time to UTC.
+    Existing rows default to UTC so previously stored UTC slots retain their
+    meaning until users explicitly save local-time availability.
     """
 
     user = models.OneToOneField(
         "CustomUser", on_delete=models.CASCADE, related_name="availability"
     )
-    # Store availability as an array of floats representing hours from start of week in UTC
     slots = models.JSONField(default=list, blank=True)
+    slots_timezone = models.CharField(max_length=64, default="UTC")
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -259,11 +264,11 @@ class UserAvailability(models.Model):
 
     def add_slot(self, day: int, hour: float) -> None:
         """
-        Add a time slot to availability.
+        Add a local wall-clock time slot to availability.
 
         Args:
             day: Day of week (0=Sunday, 6=Saturday)
-            hour: Hour in UTC (0.0-23.5 in 0.5 increments)
+            hour: Hour in slots_timezone (0.0-23.5 in 0.5 increments)
         """
         slot_value = (day * 24.0) + hour
         if slot_value not in self.slots:
@@ -272,11 +277,11 @@ class UserAvailability(models.Model):
 
     def remove_slot(self, day: int, hour: float) -> None:
         """
-        Remove a time slot from availability.
+        Remove a local wall-clock time slot from availability.
 
         Args:
             day: Day of week (0=Sunday, 6=Saturday)
-            hour: Hour in UTC (0.0-23.5 in 0.5 increments)
+            hour: Hour in slots_timezone (0.0-23.5 in 0.5 increments)
         """
         slot_value = (day * 24.0) + hour
         if slot_value in self.slots:

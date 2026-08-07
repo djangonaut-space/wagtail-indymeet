@@ -1,9 +1,11 @@
 """Tests for team formation functionality."""
 
 import json
+
 from django.contrib.admin.sites import site
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserAvailability
@@ -26,6 +28,7 @@ from home.factories import (
 )
 from home.filters import ApplicantFilterSet
 from home.forms import ApplicantFilterForm, OverlapAnalysisForm
+from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE, US_EASTERN_TIMEZONE
 from home.models import (
     ProjectPreference,
     Question,
@@ -108,6 +111,27 @@ class AvailabilityUtilsTestCase(TestCase):
         slots, hours = calculate_overlap([self.user1, self.user3])
         self.assertEqual(hours, 0)  # No overlap because user3 has no availability
 
+    def test_calculate_overlap_uses_user_timezones(self):
+        """Mixed-timezone users overlap by derived UTC reference slots."""
+        ny_user = UserFactory(username="ny_overlap")
+        berlin_user = UserFactory(username="berlin_overlap")
+        UserAvailabilityFactory(
+            user=ny_user,
+            slots=[33.0, 33.5],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=berlin_user,
+            slots=[39.0, 39.5],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+
+        with freeze_time("2024-06-17"):
+            slots, hours = calculate_overlap([ny_user, berlin_user])
+
+        self.assertEqual(slots, [37.0, 37.5])
+        self.assertEqual(hours, 1)
+
     def test_calculate_team_overlap(self):
         """Test team overlap calculation."""
         # Create a captain with different availability
@@ -145,6 +169,12 @@ class AvailabilityUtilsTestCase(TestCase):
         # Saturday 23:30 (11:30 PM)
         self.assertEqual(format_slot_as_time(167.5), "Sat 11:30 PM")
 
+        with freeze_time("2024-06-17"):
+            self.assertEqual(
+                format_slot_as_time(37.0, US_EASTERN_TIMEZONE),
+                "Mon 9:00 AM",
+            )
+
     def test_format_slots_as_ranges(self):
         """Test formatting slots as time ranges."""
         # Consecutive slots
@@ -161,6 +191,10 @@ class AvailabilityUtilsTestCase(TestCase):
         # Empty slots
         ranges = format_slots_as_ranges([])
         self.assertEqual(ranges, [])
+
+        with freeze_time("2024-06-17"):
+            ranges = format_slots_as_ranges([37.0, 37.5], US_EASTERN_TIMEZONE)
+        self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
 
 
 class ApplicantFilterFormTestCase(TestCase):
@@ -448,6 +482,47 @@ class TeamFormationViewTestCase(TestCase):
         self.assertIn(f'value="{applicant_with_overlap.id}"', content)
         self.assertNotIn(f'value="{applicant_no_overlap.id}"', content)
 
+    def test_filter_by_navigator_overlap_uses_user_timezones(self):
+        """Navigator overlap filter handles applicants in another timezone."""
+        team = TeamFactory(session=self.session, name="Timezone Team")
+        navigator = UserFactory(username="tz_navigator")
+        SessionMembership.objects.create(
+            user=navigator,
+            session=self.session,
+            team=team,
+            role=constants.NAVIGATOR,
+        )
+        UserAvailabilityFactory(
+            user=navigator,
+            slots=[33.0],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+
+        applicant_with_overlap = UserFactory(username="tz_applicant1")
+        applicant_no_overlap = UserFactory(username="tz_applicant2")
+        UserAvailabilityFactory(
+            user=applicant_with_overlap,
+            slots=[39.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=applicant_no_overlap,
+            slots=[33.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        UserSurveyResponse.objects.create(
+            user=applicant_with_overlap, survey=self.survey
+        )
+        UserSurveyResponse.objects.create(user=applicant_no_overlap, survey=self.survey)
+
+        url = reverse("admin:session_form_teams", args=[self.session.id])
+        response = self.client.get(url, {"overlap_with_navigators": team.id})
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn(f'value="{applicant_with_overlap.id}"', content)
+        self.assertNotIn(f'value="{applicant_no_overlap.id}"', content)
+
     def test_filter_by_captain_overlap(self):
         """Test filtering applicants by availability overlap with captain."""
 
@@ -501,6 +576,47 @@ class TeamFormationViewTestCase(TestCase):
 
         # Check that the rendered HTML shows only applicant with overlap
         # by looking for user IDs in checkbox values
+        content = response.content.decode("utf-8")
+        self.assertIn(f'value="{applicant_with_overlap.id}"', content)
+        self.assertNotIn(f'value="{applicant_no_overlap.id}"', content)
+
+    def test_filter_by_captain_overlap_uses_user_timezones(self):
+        """Captain overlap filter handles applicants in another timezone."""
+        team = TeamFactory(session=self.session, name="Timezone Captain Team")
+        captain = UserFactory(username="tz_captain")
+        SessionMembership.objects.create(
+            user=captain,
+            session=self.session,
+            team=team,
+            role=constants.CAPTAIN,
+        )
+        UserAvailabilityFactory(
+            user=captain,
+            slots=[33.0],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+
+        applicant_with_overlap = UserFactory(username="tz_captain_applicant1")
+        applicant_no_overlap = UserFactory(username="tz_captain_applicant2")
+        UserAvailabilityFactory(
+            user=applicant_with_overlap,
+            slots=[39.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        UserAvailabilityFactory(
+            user=applicant_no_overlap,
+            slots=[33.0],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        UserSurveyResponse.objects.create(
+            user=applicant_with_overlap, survey=self.survey
+        )
+        UserSurveyResponse.objects.create(user=applicant_no_overlap, survey=self.survey)
+
+        url = reverse("admin:session_form_teams", args=[self.session.id])
+        response = self.client.get(url, {"overlap_with_captain": team.id})
+
+        self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
         self.assertIn(f'value="{applicant_with_overlap.id}"', content)
         self.assertNotIn(f'value="{applicant_no_overlap.id}"', content)

@@ -1,9 +1,10 @@
 """Tests for team allocation algorithm."""
 
-from home import constants
 from django.test import TestCase
+from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
+from home import constants
 from home.factories import ProjectFactory, TeamFactory
 from home.models import (
     Project,
@@ -14,6 +15,7 @@ from home.models import (
     Team,
     UserSurveyResponse,
 )
+from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE, US_EASTERN_TIMEZONE
 from home.team_allocation import (
     AllocationCandidate,
     AllocationState,
@@ -176,6 +178,37 @@ class TeamSlotTestCase(TestCase):
 
         self.assertFalse(self.team_slot._has_sufficient_navigator_overlap(candidate2))
 
+    @freeze_time("2024-06-17")
+    def test_navigator_overlap_uses_user_timezones(self):
+        """Navigator overlap compares derived UTC slots across timezones."""
+        navigator = UserFactory(username="timezone_nav")
+        UserAvailabilityFactory(
+            user=navigator,
+            slots=[33.0 + (i * 0.5) for i in range(10)],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        team_slot = TeamSlot(
+            team=self.team,
+            navigators=[navigator],
+            captain=None,
+        )
+
+        user = UserFactory(username="timezone_candidate")
+        UserAvailabilityFactory(
+            user=user,
+            slots=[39.0 + (i * 0.5) for i in range(10)],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        candidate = AllocationCandidate(
+            user=user,
+            selection_rank=2,
+            score=10,
+            response=None,
+            project_preferences=[],
+        )
+
+        self.assertTrue(team_slot._has_sufficient_navigator_overlap(candidate))
+
     def test_navigator_overlap_with_existing_djangonauts(self):
         """Test that navigator overlap check includes existing djangonauts on the team."""
         # Add first djangonaut to team with Mon 00:00-05:00 availability
@@ -259,6 +292,37 @@ class TeamSlotTestCase(TestCase):
         )
 
         self.assertFalse(self.team_slot._has_sufficient_captain_overlap(candidate2))
+
+    @freeze_time("2024-06-17")
+    def test_captain_overlap_uses_user_timezones(self):
+        """Captain overlap compares derived UTC slots across timezones."""
+        captain = UserFactory(username="timezone_captain")
+        UserAvailabilityFactory(
+            user=captain,
+            slots=[33.0 + (i * 0.5) for i in range(6)],
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        team_slot = TeamSlot(
+            team=self.team,
+            navigators=[self.navigator],
+            captain=captain,
+        )
+
+        user = UserFactory(username="timezone_captain_candidate")
+        UserAvailabilityFactory(
+            user=user,
+            slots=[39.0 + (i * 0.5) for i in range(6)],
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        candidate = AllocationCandidate(
+            user=user,
+            selection_rank=2,
+            score=10,
+            response=None,
+            project_preferences=[],
+        )
+
+        self.assertTrue(team_slot._has_sufficient_captain_overlap(candidate))
 
     def test_can_add_djangonaut(self):
         """Test checking if a candidate can be added."""
