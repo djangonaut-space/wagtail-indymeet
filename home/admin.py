@@ -149,6 +149,30 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     )
 
 
+class CalendarInvitesSentFilter(admin.SimpleListFilter):
+    """Filter Events by whether calendar invites have been sent.
+
+    ``calendar_invites_sent_at`` is a datetime, not a boolean, so this maps
+    "sent"/"not sent" to a null/not-null check.
+    """
+
+    title = "calendar invites sent"
+    parameter_name = "calendar_invites_sent"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("yes", "Sent"),
+            ("no", "Not sent"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(calendar_invites_sent_at__isnull=False)
+        elif self.value() == "no":
+            return queryset.filter(calendar_invites_sent_at__isnull=True)
+        return queryset
+
+
 @admin.register(Event)
 class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
@@ -166,6 +190,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "zoom_synced",
         "discord_synced",
     ]
+    list_filter = ("session", CalendarInvitesSentFilter)
     readonly_fields = ("zoom_synced_at", "discord_synced_at")
 
     @admin.display(description="Zoom synced", boolean=True, ordering="zoom_synced_at")

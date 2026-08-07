@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.formats import date_format
 
 from accounts.factories import UserFactory
-from home.admin import EventAdmin
+from home.admin import CalendarInvitesSentFilter, EventAdmin
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import Event
 from home.operations import EventSyncDecision, EventSyncStatus
@@ -574,3 +574,27 @@ class EventAdminStartTimeLinkTests(TestCase):
         )
         self.assertIn(expected, html)
         self.assertIn("(time.is)", html)
+
+
+class CalendarInvitesSentFilterTests(TestCase):
+    """Tests for the CalendarInvitesSentFilter list filter."""
+
+    def _filtered(self, value, queryset):
+        request = RequestFactory().get(
+            "/admin/home/event/", {"calendar_invites_sent": value}
+        )
+        filter_instance = CalendarInvitesSentFilter(
+            request, request.GET.copy(), Event, EventAdmin
+        )
+        return set(filter_instance.queryset(request, queryset))
+
+    def test_splits_events_by_sent_status(self):
+        """The yes/no filter values partition events by invite-sent status."""
+        sent = EventFactory.create(
+            calendar_invites_sent_at=datetime.now(dt_timezone.utc)
+        )
+        unsent = EventFactory.create(calendar_invites_sent_at=None)
+        queryset = Event.objects.filter(pk__in=[sent.pk, unsent.pk])
+
+        self.assertEqual(self._filtered("yes", queryset), {sent})
+        self.assertEqual(self._filtered("no", queryset), {unsent})
