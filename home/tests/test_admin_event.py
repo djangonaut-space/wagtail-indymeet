@@ -604,4 +604,3 @@ class CalendarInvitesSentFilterTests(TestCase):
 
         self.assertEqual(self._filtered("yes", queryset), {sent})
         self.assertEqual(self._filtered("no", queryset), {unsent})
-
