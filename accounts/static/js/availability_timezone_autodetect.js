@@ -1,14 +1,3 @@
-function getBrowserTimezone() {
-    try {
-        if (typeof Intl === "undefined" || !Intl.DateTimeFormat) {
-            return "";
-        }
-        return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-    } catch {
-        return "";
-    }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
     const slotsField = document.getElementById("id_slots");
     const timezoneSelect = document.getElementById("id_slots_timezone");

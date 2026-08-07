@@ -88,16 +88,17 @@
         </form>
 
         {% comment %}
-            The grid is loaded via htmx so we can inject the server-selected
-            viewer timezone into the request via hx-vals. After htmx settles the
-            response, we hydrate Alpine.js state from the JSON script tags
-            rendered by the grid partial and reset any pinned slot since the grid
-            contents have changed.
+            The grid is loaded via htmx so we can inject the viewer's browser
+            timezone into the request via hx-vals, falling back to the
+            server-selected timezone if browser detection is unavailable.
+            After htmx settles the response, we hydrate Alpine.js state from
+            the JSON script tags rendered by the grid partial and reset any
+            pinned slot since the grid contents have changed.
         {% endcomment %}
         <div id="availability-grid-container"
              hx-get="{% url 'compare_availability_grid' %}?{{ request.GET.urlencode }}"
              hx-trigger="load"
-             hx-vals='js:{"timezone": "{{ timezone_name|escapejs }}"}'
+             hx-vals='js:{"timezone": getBrowserTimezone() || "{{ timezone_name|escapejs }}"}'
              hx-swap="innerHTML"
              hx-disinherit="*"
              @htmx:after-settle="
@@ -126,7 +127,7 @@ function availabilityGrid(initialTimezone) {
         hoveredUser: null,
         activeDisplayTime: '',
         activeTimeIsUrl: '',
-        timezone: initialTimezone,
+        timezone: getBrowserTimezone() || initialTimezone,
 
         get activeSlot() {
             return this.fixedSlot || this.hoveredSlot;

@@ -287,7 +287,9 @@ class CompareAvailabilityTests(TestCase):
 
         self.assertEqual(response.context["timezone_name"], US_EASTERN_TIMEZONE)
         self.assertContains(response, f"availabilityGrid('{US_EASTERN_TIMEZONE}')")
-        self.assertContains(response, f'"timezone": "{US_EASTERN_TIMEZONE}"')
+        self.assertContains(
+            response, f'"timezone": getBrowserTimezone() || "{US_EASTERN_TIMEZONE}"'
+        )
 
 
 @freeze_time("2024-06-15")

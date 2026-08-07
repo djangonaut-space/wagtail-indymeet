@@ -131,17 +131,6 @@
 
 <script>
     (() => {
-        function getBrowserTimezone() {
-            try {
-                if (typeof Intl === "undefined" || !Intl.DateTimeFormat) {
-                    return "";
-                }
-                return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-            } catch {
-                return "";
-            }
-        }
-
         function updateTimezoneHelpText() {
             const timezoneDisplay = document.getElementById("local-timezone");
             const timezoneSelect = document.getElementById("id_slots_timezone");

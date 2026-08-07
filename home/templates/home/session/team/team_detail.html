@@ -112,7 +112,7 @@
 // Minimal JavaScript for timezone detection and HTMX support
 (function() {
     const overrideTZ = new URLSearchParams(window.location.search).get('override-timezone');
-    const userTz = (overrideTZ || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').split(':')[0];
+    const userTz = (overrideTZ || getBrowserTimezone() || 'UTC').split(':')[0];
 
     // Track current state (starts with user's timezone)
     let currentTz = userTz;
