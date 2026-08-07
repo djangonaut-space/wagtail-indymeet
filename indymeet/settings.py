@@ -62,8 +62,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "django.forms",
     # other
+    "crontask",
     "django_extensions",
     "django_filters",
     "django_tasks",
@@ -246,6 +248,7 @@ LOGOUT_REDIRECT_URL = "/"
 
 DEFAULT_FROM_EMAIL = "contact@djangonaut.space"
 SERVER_EMAIL = "contact@djangonaut.space"
+SESSIONS_FROM_EMAIL = "sessions@djangonaut.space"
 
 PUPUT_AS_PLUGIN = True
 PUPUT_BLOG_MODEL = "home.models.puput_abstracts.BlogAbstract"
@@ -305,8 +308,9 @@ class FormRenderer(TemplatesSetting):
 
 FORM_RENDERER = "indymeet.settings.FormRenderer"
 
-# Should be removed in Django 6.0
-FORMS_URLFIELD_ASSUME_HTTPS = True
+# Transitional setting: opts into Django 7.0's default of urlize/urlizetrunc
+# linking bare domains as https:// instead of http://.
+URLIZE_ASSUME_HTTPS = True
 
 # Cloudflare settings
 CLOUDFLARE_BEARER_TOKEN = os.getenv("CLOUDFLARE_BEARER_TOKEN")

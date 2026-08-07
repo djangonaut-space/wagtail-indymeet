@@ -7,7 +7,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from home.managers import TestimonialQuerySet
-from home.models.survey import BaseModel
+from home.models.base import BaseModel
 
 
 class Testimonial(BaseModel):

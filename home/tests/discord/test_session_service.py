@@ -38,6 +38,7 @@ from home.integrations.discord.session_service import (
     MemberResolution,
     build_team_messages,
 )
+from home.models import DiscordRole
 from home.tests.discord.stubs import (
     BOT_ROLE_ID,
     STANDING_GUILD_ROLES,
@@ -212,6 +213,18 @@ class SetupRunTests(TestCase):
         )
         self.assertEqual(report.channels_created, [])
         self.assertEqual(len(report.channels_updated), 5)
+
+    @rsps.activate
+    def test_mirrors_guild_roles_for_announcement_mentions(self):
+        """The mirror runs last, so roles this run created are included."""
+        stub_discord_api(member_search=self.member_search)
+
+        report = DiscordSessionSetup(self.session).run()
+
+        mirrored = set(DiscordRole.objects.values_list("name", flat=True))
+        self.assertIn("Djangonauts", mirrored)
+        self.assertIn("Bee", mirrored)
+        self.assertEqual(report.roles_synced, len(mirrored))
 
     @rsps.activate
     def test_missing_standing_role_aborts_before_touching_discord(self):

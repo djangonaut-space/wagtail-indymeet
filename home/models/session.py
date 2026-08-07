@@ -14,6 +14,7 @@ from home.managers import (
     SessionQuerySet,
     TeamQuerySet,
 )
+from home.models.base import BaseModel
 from home.services.github_stats import Author, TeamScope
 
 
@@ -256,8 +257,23 @@ class Session(models.Model):
         now = timezone.now().date()
         if now > self.end_date:
             return None
-        days_elapsed = (now - self.start_date).days
-        return (days_elapsed // 7) + 1
+        return self.week_number_for(now)
+
+    def week_start_date(self, week_number: int) -> datetime.date:
+        """The Monday that opens the given session week."""
+        monday_of_start_week = self.start_date - datetime.timedelta(
+            days=self.start_date.weekday()
+        )
+        return monday_of_start_week + datetime.timedelta(weeks=week_number - 1)
+
+    @property
+    def week_one_start(self) -> datetime.date:
+        """The Monday of the session's official first week."""
+        return self.week_start_date(1)
+
+    def week_number_for(self, post_date: datetime.date) -> int:
+        """The session week a calendar date falls in. Inverse of week_start_date."""
+        return ((post_date - self.week_one_start).days // 7) + 1
 
     @property
     def status(self) -> str:

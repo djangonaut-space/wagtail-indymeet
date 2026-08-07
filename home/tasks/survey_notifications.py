@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from accounts.models import UserAvailability
 from home import email
 from home.models import UserSurveyResponse, Session
@@ -17,6 +19,7 @@ def _send_application_notification(
         "cta_link": survey_response.get_full_url(),
     }
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template=email_template,
         recipient_list=[survey_response.user.email],
         context=context,

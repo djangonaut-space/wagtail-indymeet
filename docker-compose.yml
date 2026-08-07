@@ -44,6 +44,18 @@ services:
     develop:
       <<: *default-watch
 
+  scheduler:
+    <<: *default-app
+    command: "uv run python manage.py crontask --no-heartbeat"
+    depends_on:
+      - db
+    env_file:
+      # Later files win, so .env overrides .env.docker for local overrides.
+      - ./.env.docker
+      - ./.env
+    develop:
+      <<: *default-watch
+
   tailwind:
     <<: *default-app
     command: "uv run python manage.py tailwind start"

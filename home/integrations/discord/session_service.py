@@ -54,6 +54,7 @@ from home.integrations.discord.client import (
     VOICE_CHANNEL_TYPE,
 )
 from home.integrations.discord.service import discord_client
+from home.services.discord_roles import sync_discord_roles
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +177,8 @@ class SetupReport:
     channels_updated: list[str] = field(default_factory=list)
     roles_created: list[str] = field(default_factory=list)
     roles_assigned: int = 0
+    roles_synced: int = 0
+    announcements_created: int = 0
     unresolved: list[MemberResolution] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
@@ -496,7 +499,17 @@ class DiscordSessionSetup(_DiscordSessionAction):
         self.setup_shared_channels()
         self.resolve_members()
         self.assign_member_roles()
+        self.sync_guild_roles()
         return self.report
+
+    def sync_guild_roles(self) -> None:
+        """Refresh the role mirror announcements resolve ``@mentions`` against.
+
+        Guild-wide, not session-scoped — setup is simply the moment the roles
+        are known to have changed. Runs last so the per-team roles this run
+        created are picked up along with everything else.
+        """
+        self.report.roles_synced = len(sync_discord_roles().synced)
 
     def report_missing_standing_roles(self) -> bool:
         """Report standing roles absent from the guild; truthy aborts the run."""

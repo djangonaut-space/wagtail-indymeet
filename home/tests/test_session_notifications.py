@@ -469,8 +469,8 @@ class MembershipAcceptanceViewTests(TestCase):
     @override_settings(
         ENVIRONMENT="test",
         ALLOWED_EMAILS_FOR_TESTING=[
+            "sessions@djangonaut.space",
             "contact@djangonaut.space",
-            "session@djangonaut.space",
         ],
     )
     def test_decline_sends_notification_email(self):
@@ -486,10 +486,11 @@ class MembershipAcceptanceViewTests(TestCase):
         # Should send one email to organizers
         self.assertEqual(len(mail.outbox), 1)
 
-        # Check email recipients
+        # Check email recipients and sender
         email_recipients = mail.outbox[0].recipients()
+        self.assertIn("sessions@djangonaut.space", email_recipients)
         self.assertIn("contact@djangonaut.space", email_recipients)
-        self.assertIn("session@djangonaut.space", email_recipients)
+        self.assertEqual(mail.outbox[0].from_email, "sessions@djangonaut.space")
 
         # Check email content
         self.assertIn("declined", mail.outbox[0].subject.lower())

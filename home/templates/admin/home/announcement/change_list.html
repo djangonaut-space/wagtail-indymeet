@@ -1,0 +1,43 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_help.css' %}">
+{% endblock %}
+
+{% block search %}
+<details class="help-block">
+    <summary>Help: actions &amp; columns on this page</summary>
+    <div class="help-block-content">
+        <dl>
+            <dt>What happens automatically</dt>
+            <dd>
+                <ul>
+                    <li>Announcements still needing approval are emailed to the session's organizers roughly six days before their post date, once, via a background job.</li>
+                    <li>Due, approved announcements (or ones that don't need approval) post to Discord on their own, via a background job.</li>
+                </ul>
+                Nothing below needs to be done for an announcement to go out on schedule &mdash; the action is only for getting ahead of that schedule.
+            </dd>
+
+            <dt>Bulk actions (the "Action:" dropdown below the list)</dt>
+            <dd>
+                <ul>
+                    <li><strong>Post selected announcements to Discord now</strong> <code>[runs immediately]</code> &mdash; posts the selected announcements without waiting for their post date. Announcements still awaiting approval, ones already posted, and ones whose session has no live Discord channel are skipped.</li>
+                </ul>
+            </dd>
+
+            <dt>List columns</dt>
+            <dd>
+                <ul>
+                    <li><strong>Needs approval</strong> &mdash; whether an organizer must approve this announcement before it can post.</li>
+                    <li><strong>Approved at</strong> &mdash; when an organizer approved the announcement; blank means it's still waiting (if it needs approval at all).</li>
+                    <li><strong>Posted at</strong> &mdash; when the announcement was posted to Discord; blank means it hasn't posted yet.</li>
+                    <li><strong>Emailed for approval at</strong> &mdash; when the approval-request email was sent to organizers; blank means it hasn't been sent yet.</li>
+                </ul>
+            </dd>
+        </dl>
+    </div>
+</details>
+{{ block.super }}
+{% endblock %}

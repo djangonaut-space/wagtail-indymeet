@@ -23,6 +23,7 @@ from home.integrations.discord.session_service import (
     TeardownReport,
 )
 from home.models import Session
+from home.services.session_announcements import generate_announcements
 
 logger = logging.getLogger(__name__)
 
@@ -60,10 +61,16 @@ def setup_session_discord(session_id: int, user_id: int) -> None:
                 "for details. Setup is idempotent, so it is safe to run again."
             ]
         )
+    if not report.errors:
+        # Only once the announcements channel exists, since that is where
+        # these get posted. Generation is additive, so a rerun leaves any
+        # announcements organizers have already edited or approved alone.
+        report.announcements_created = generate_announcements(session)
     team_messages_url = settings.BASE_URL + reverse(
         "admin:session_discord_team_messages", args=[session.pk]
     )
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="discord_setup_complete",
         recipient_list=[user.email],
         cc_list=_superuser_cc_list(report, user),
@@ -97,6 +104,7 @@ def teardown_session_discord(session_id: int, user_id: int) -> None:
         )
     changelist_url = settings.BASE_URL + reverse("admin:home_session_changelist")
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="discord_teardown_complete",
         recipient_list=[user.email],
         cc_list=_superuser_cc_list(report, user),

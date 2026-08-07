@@ -100,6 +100,7 @@ class SendEventCalendarInviteTaskTests(TestCase):
         call_kwargs = mock_send.call_args[1]
 
         self.assertEqual(call_kwargs["email_template"], "event_calendar_invite")
+        self.assertEqual(call_kwargs["from_email"], "sessions@djangonaut.space")
         self.assertEqual(call_kwargs["recipient_list"], ["sessions@djangonaut.space"])
         self.assertIn("participant@example.com", call_kwargs["bcc_list"])
         self.assertIn("contact@djangonaut.space", call_kwargs["bcc_list"])

@@ -1,5 +1,6 @@
 """Background tasks for sending event-related notification emails."""
 
+from django.conf import settings
 from django.utils import timezone
 from django_tasks import task
 
@@ -37,8 +38,9 @@ def send_event_calendar_invite(event_id: int) -> None:
     }
 
     email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="event_calendar_invite",
-        recipient_list=["sessions@djangonaut.space"],
+        recipient_list=[settings.SESSIONS_FROM_EMAIL],
         bcc_list=recipients,
         context=context,
         attachments=[("event.ics", ical_data, "text/calendar")],

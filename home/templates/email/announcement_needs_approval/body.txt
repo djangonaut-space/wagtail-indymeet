@@ -1,0 +1,16 @@
+Hello,
+
+The Week {{ announcement.week_number }} announcement for {{ session.title }} is scheduled to post on {{ announcement.post_date|date:"l, j F Y" }} and needs your approval before it goes out.
+
+{% if announcement.approval_note %}
+Note for reviewers:
+{{ announcement.approval_note }}
+{% endif %}
+Review and approve the announcement here:
+{{ cta_link }}
+
+Message:
+{{ announcement.discord_content }}
+
+Best regards,
+Djangonaut Space

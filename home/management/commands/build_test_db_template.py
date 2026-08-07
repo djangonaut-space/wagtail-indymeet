@@ -69,7 +69,6 @@ class Command(BaseCommand):
             connection.creation.create_test_db(
                 verbosity=options["verbosity"],
                 autoclobber=True,
-                serialize=False,
                 keepdb=False,
             )
         finally:

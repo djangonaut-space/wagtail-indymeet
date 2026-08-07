@@ -1,22 +1,28 @@
 from datetime import date, timedelta
 
+from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Exists, F, Max, OuterRef
+from django.db.models import Count, Exists, F, Max, OuterRef, TextField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import path, reverse
 from django.utils import timezone
+from django.utils.formats import date_format
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from github import GithubException
 from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 from home import constants
+from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
+from home.templatetags.email_tags import time_is_link
 from indymeet.admin import DescriptiveSearchMixin
 
 from . import preview_email, tasks
@@ -28,6 +34,8 @@ from .forms import (
     SurveyCSVImportForm,
 )
 from .models import (
+    Announcement,
+    DiscordRole,
     Event,
     Project,
     Question,
@@ -141,37 +149,100 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
     )
 
 
+class CalendarInvitesSentFilter(admin.SimpleListFilter):
+    """Filter Events by whether calendar invites have been sent.
+
+    ``calendar_invites_sent_at`` is a datetime, not a boolean, so this maps
+    "sent"/"not sent" to a null/not-null check.
+    """
+
+    title = "calendar invites sent"
+    parameter_name = "calendar_invites_sent"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("yes", "Sent"),
+            ("no", "Not sent"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(calendar_invites_sent_at__isnull=False)
+        elif self.value() == "no":
+            return queryset.filter(calendar_invites_sent_at__isnull=True)
+        return queryset
+
+
 @admin.register(Event)
 class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
     actions = [
         "copy_event",
         "send_calendar_invites",
-        "retry_event_sync",
+        preview_email.calendar_invite_email_action,
+        "resync_event",
     ]
+    ordering = ("-start_time",)
     list_display = [
         "title",
-        "start_time",
+        "start_time_link",
         "calendar_invites_sent_at",
-        "zoom_synced_at",
-        "discord_synced_at",
+        "zoom_synced",
+        "discord_synced",
     ]
-    readonly_fields = ("zoom_synced_at", "discord_synced_at")
-    field_help_text = {
-        "is_public": (
-            "Public events are visible to everyone; private events only appear "
-            "to authenticated members of the linked session."
+    list_filter = ("session", CalendarInvitesSentFilter)
+    readonly_fields = (
+        "zoom_meeting_id",
+        "zoom_synced_at",
+        "discord_event_id",
+        "discord_synced_at",
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "title",
+                    "slug",
+                    "start_time",
+                    "end_time",
+                    "description",
+                    "is_published",
+                    "is_public",
+                    "session",
+                    "extra_emails",
+                    "calendar_invites_sent_at",
+                )
+            },
         ),
-        "is_published": (
-            "Only published events show up on the public calendar and detail pages."
+        (
+            "Public-facing",
+            {"fields": ("cover_image", "cover_image_caption", "video_link")},
         ),
-    }
+        ("Zoom", {"fields": ("zoom_link", "zoom_meeting_id", "zoom_synced_at")}),
+        ("Discord", {"fields": ("discord_event_id", "discord_synced_at")}),
+    )
 
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if formfield and db_field.name in self.field_help_text:
-            formfield.help_text = self.field_help_text[db_field.name]
-        return formfield
+    @admin.display(description="Zoom synced", boolean=True, ordering="zoom_synced_at")
+    def zoom_synced(self, obj: Event) -> bool:
+        return obj.zoom_synced_at is not None
+
+    @admin.display(
+        description="Discord synced", boolean=True, ordering="discord_synced_at"
+    )
+    def discord_synced(self, obj: Event) -> bool:
+        return obj.discord_synced_at is not None
+
+    @admin.display(description="Start time", ordering="start_time")
+    def start_time_link(self, obj: Event) -> str:
+        formatted = date_format(
+            timezone.template_localtime(obj.start_time), "DATETIME_FORMAT"
+        )
+        return format_html(
+            '{} <a href="{}" target="_blank" rel="noopener">(time.is)</a>',
+            formatted,
+            time_is_link(obj.start_time),
+        )
 
     def save_model(self, request, obj, form, change) -> None:
         """Save the event, then dispatch the Zoom/Discord sync and report back.
@@ -187,6 +258,12 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             else messages.INFO
         )
         self.message_user(request, decision.message, level)
+        self.message_user(
+            request,
+            'Remember to use the "Send calendar invites to event members" '
+            "action to notify members about this event.",
+            messages.INFO,
+        )
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Pre-populate the add form with data from an existing event.
@@ -237,7 +314,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         return HttpResponseRedirect(f"{url}?copy_from={event.pk}")
 
     @admin.action(description="Send calendar invites to event members")
-    def send_calendar_invites(self, request, queryset) -> None:
+    def send_calendar_invites(self, request, queryset):
         """Queue calendar invite emails for each selected event.
 
         Recipients are determined by the event's session and visibility:
@@ -245,61 +322,83 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         - Public event (no session): all users opted in to event updates.
         - Private event (no session): no extra recipients; the task still sends
           to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
+
+        Renders an intermediate confirmation page listing the computed
+        recipients first; nothing is queued until the user confirms.
+        """
+        if request.POST.get("apply"):
+            queued = 0
+            skipped = 0
+            for event in queryset:
+                if event.calendar_invites_sent_at:
+                    skipped += 1
+                    continue
+                tasks.send_event_calendar_invite.enqueue(event_id=event.pk)
+                queued += 1
+
+            if queued:
+                self.message_user(
+                    request,
+                    f"Calendar invites queued for {queued} event(s).",
+                    messages.SUCCESS,
+                )
+            if skipped:
+                self.message_user(
+                    request,
+                    f"Skipped {skipped} event(s) that already had invites sent.",
+                    messages.WARNING,
+                )
+            return None
+
+        events = [
+            {
+                "event": event,
+                "recipients": event.get_calendar_invite_recipients(),
+                "already_sent": bool(event.calendar_invites_sent_at),
+            }
+            for event in queryset
+        ]
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Confirm sending calendar invites",
+            "events": events,
+            "opts": self.model._meta,
+            "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+        }
+        return render(request, "admin/send_calendar_invites_confirmation.html", context)
+
+    @admin.action(description="Resync to Zoom and Discord")
+    def resync_event(self, request, queryset) -> None:
+        """Force a Zoom/Discord resync, updating events even if already synced.
+
+        Uses the same dispatch as ``save_model``. Existing Zoom meetings and
+        Discord events are updated in place rather than skipped.
         """
         queued = 0
-        skipped = 0
-        for event in queryset:
-            if event.calendar_invites_sent_at:
-                skipped += 1
-                continue
-            tasks.send_event_calendar_invite.enqueue(event_id=event.pk)
-            queued += 1
-
-        if queued:
-            self.message_user(
-                request,
-                f"Calendar invites queued for {queued} event(s).",
-                messages.SUCCESS,
-            )
-        if skipped:
-            self.message_user(
-                request,
-                f"Skipped {skipped} event(s) that already had invites sent.",
-                messages.WARNING,
-            )
-
-    @admin.action(description="Retry Zoom/Discord sync")
-    def retry_event_sync(self, request, queryset) -> None:
-        """Re-run the Zoom/Discord sync for events that aren't fully synced.
-
-        Uses the same dispatch as ``save_model``, so the sync task creates
-        whatever is missing: the Zoom meeting first, then the Discord event.
-        """
-        queued = 0
-        already_synced = 0
         not_configured = 0
+        already_invited = 0
         for event in queryset:
-            if event.zoom_link and event.discord_event_id:
-                already_synced += 1
-                continue
             decision = dispatch_event_sync(event)
             if decision.status is EventSyncStatus.QUEUED:
                 queued += 1
+                if event.calendar_invites_sent_at:
+                    already_invited += 1
             else:
                 not_configured += 1
 
         if queued:
             self.message_user(
                 request,
-                f"Zoom/Discord sync queued for {queued} event(s).",
+                f"Zoom/Discord resync queued for {queued} event(s).",
                 messages.SUCCESS,
             )
-        if already_synced:
+        if already_invited:
             self.message_user(
                 request,
-                f"Skipped {already_synced} event(s) already synced to Zoom "
-                "and Discord.",
-                messages.INFO,
+                f"{already_invited} event(s) already had calendar invites sent "
+                "- recipients' calendars won't reflect the updated Zoom/Discord "
+                "details.",
+                messages.WARNING,
             )
         if not_configured:
             self.message_user(
@@ -831,6 +930,98 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         """Filter sessions to only those the user organizes."""
         return super().get_queryset(request).for_admin_site(request.user)
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+    list_display = (
+        "session",
+        "week_number",
+        "post_date",
+        "approved",
+        "posted_at",
+        "emailed_for_approval_at",
+        "approval_note",
+    )
+    list_filter = ("session", "needs_approval", "post_date")
+    search_fields = ("session__title", "message", "approval_note")
+    formfield_overrides = {
+        TextField: {"widget": forms.Textarea(attrs={"rows": 20, "cols": 100})},
+    }
+    readonly_fields = (
+        "approval_note",
+        "mentioned_roles",
+        "posted_at",
+        "emailed_for_approval_at",
+        "created_at",
+        "updated_at",
+    )
+    actions = ["post_announcements_action"]
+
+    def get_queryset(self, request):
+        """Filter announcements to only those for sessions the user organizes."""
+        return super().get_queryset(request).for_admin_site(request.user)
+
+    @admin.display(description="Roles this message will ping")
+    def mentioned_roles(self, obj) -> str:
+        """Which ``@names`` in the copy resolve to a real Discord role.
+
+        The message stores the names, not the ids, so nothing in the form
+        itself shows whether an ``@mention`` will actually notify anyone.
+        This is where an organizer catches a typo before approving.
+        """
+        _, roles = resolve_role_mentions(obj.message)
+        if not roles:
+            return "None"
+        return ", ".join(role.name for role in roles)
+
+    @admin.display(description="Approved", boolean=True, ordering="approved_at")
+    def approved(self, obj):
+        """Show approval as a real yes/no instead of raw ``needs_approval``."""
+        if not obj.needs_approval:
+            # If approval isn't needed, it's "approved", so show green.
+            return True
+        return bool(obj.approved_at)
+
+    @admin.action(description="Post selected announcements to Discord now")
+    def post_announcements_action(self, request, queryset):
+        """
+        Post the selected announcements without waiting for their post date.
+
+        Announcements still awaiting approval, ones already posted, and ones
+        whose session has no live Discord channel are skipped, so the count in
+        the message may be lower than the number selected.
+        """
+        postable = queryset.approved().not_posted().for_active_discord_sessions()
+        count = 0
+        for announcement_id in postable.values_list("id", flat=True):
+            tasks.post_announcement.enqueue(announcement_id=announcement_id)
+            count += 1
+        skipped = len(queryset) - count
+        message = f"Successfully queued {count} announcement(s) for posting."
+        if skipped:
+            message += (
+                f" Skipped {skipped} that were unapproved, already posted, "
+                "or belong to a session without an active Discord."
+            )
+        self.message_user(request, message, messages.SUCCESS)
+
+
+@admin.register(DiscordRole)
+class DiscordRoleAdmin(admin.ModelAdmin):
+    """Read-only view of the roles an announcement can ping.
+
+    The rows are a mirror of the Discord server, rewritten wholesale by the
+    Discord session setup action and the ``sync_discord_roles`` command, so
+    editing them here would only be undone on the next sync.
+    """
+
+    list_display = ("name", "discord_id", "updated_at")
+    search_fields = ("name",)
+    readonly_fields = ("name", "discord_id", "created_at", "updated_at")
+
+    def has_add_permission(self, request) -> bool:
+        return False
 
 
 @admin.register(Team)

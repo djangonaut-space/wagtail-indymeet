@@ -1,11 +1,11 @@
 [project]
 name = "djangonaut_space"
 version = "1.0.0"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 urls = {homepage = "https://github.com/djangonaut-space/wagtail-indymeet"}
 dependencies = [
-    "Django==5.2.*",
-    "wagtail",
+    "Django==6.0.*",
+    "wagtail>=7.2",
     "django-storages",
     "psycopg[binary]",
     "django-anymail",
@@ -28,13 +28,20 @@ dependencies = [
     "django-tasks",
     "django-tasks-db",
     "django-import-export",
-    "gdal",
+    "gdal<3.11",
     "wagtailgeowidget",
     "djangorestframework-gis",
     "icalendar",
-    "requests>=2.33.1",
+    "requests>=2.34.2",
     "pygithub>=2.9.1",
+    "django-crontask",
 ]
+
+[tool.uv.sources]
+# puput 2.2.0 pins wagtail<7.0 with no official release supporting Wagtail 7.x yet.
+# Use the community fork's wagtail-7-support branch (unmerged as of 2026-08) until
+# https://github.com/APSL/puput/pull/307 lands upstream.
+puput = { git = "https://github.com/hoheinzollern/puput", rev = "cd874e9a207d88cdae0ff8b86f3f9e599f1acbc7" }
 
 [dependency-groups]
 test = [
@@ -48,7 +55,7 @@ test = [
     "factory_boy",
     "unittest_parametrize",
     "faker",
-    "responses>=0.26.0",
+    "responses>=0.26.2",
     "pytest-xdist>=3.8.0",
 ]
 dev = [
@@ -61,12 +68,6 @@ DJANGO_SETTINGS_MODULE = "indymeet.settings"
 addopts = "--reuse-db -m 'not playwright'"
 markers = [
     "playwright: mark test that requires playwright",
-]
-filterwarnings = [
-    "ignore:The FORMS_URLFIELD_ASSUME_HTTPS transitional setting is deprecated:django.utils.deprecation.RemovedInDjango60Warning",
-    "ignore:The usage of `WidgetWithScript` hook is deprecated:wagtail.utils.deprecation.RemovedInWagtail70Warning",
-    "ignore:'locale.getdefaultlocale' is deprecated and slated for removal in Python 3.15:DeprecationWarning:l18n.translation",
-    "ignore:The usage of get_prefetch_queryset\\(\\):django.utils.deprecation.RemovedInDjango60Warning",
 ]
 
 [tool.coverage.run]
