@@ -177,7 +177,10 @@ class BaseSurveyForm(forms.Form):
         except ObjectDoesNotExist:
             pass
         else:
-            if app_session.is_accepting_applications():
+            is_organizer_preview = self.user is not None and self.user.has_perm(
+                "home.form_team"
+            )
+            if app_session.is_accepting_applications() or is_organizer_preview:
                 self.session = app_session
 
                 # Add project preference field if session has available projects
