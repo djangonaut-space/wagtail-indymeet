@@ -28,7 +28,7 @@ dependencies = [
     "django-tasks",
     "django-tasks-db",
     "django-import-export",
-    "gdal<3.11",
+    "gdal<3.14",
     "wagtailgeowidget",
     "djangorestframework-gis",
     "icalendar",
