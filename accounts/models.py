@@ -170,8 +170,17 @@ class UserProfile(models.Model):
         blank=True,
         null=False,
         default="",
-        help_text="Your Discord username, used to grant channel access "
-        "during sessions",
+        help_text="Legacy Discord username used only to backfill "
+        "discord_member links. Prefer discord_member.",
+    )
+    discord_member = models.OneToOneField(
+        "home.DiscordMember",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="profile",
+        help_text="Linked Discord guild member used to grant channel access "
+        "during sessions.",
     )
     interested_in = ArrayField(
         models.CharField(max_length=64, validators=[validate_interested_in_choice]),

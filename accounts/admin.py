@@ -21,6 +21,7 @@ from accounts.models import (
     UserProfile,
 )
 from home.models.session import SessionMembership
+from home.models import DiscordMember
 from indymeet.admin import DescriptiveSearchMixin
 
 
@@ -122,9 +123,10 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "email",
         "username",
         "profile__github_username",
-        "profile__discord_username",
+        "profile__discord_member__username",
+        "profile__discord_member__discord_id",
     )
-    list_select_related = ("profile",)
+    list_select_related = ("profile", "profile__discord_member")
     list_display = (
         "username",
         "email",
@@ -132,7 +134,7 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "last_name",
         "is_staff",
         "profile__github_username",
-        "profile__discord_username",
+        "profile__discord_member",
         "date_joined",
     )
     list_filter = (PastDjangonautFilter, PastSessionMemberFilter)
@@ -160,19 +162,26 @@ class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin)
     inlines = (LinksInline,)
     model = UserProfile
     actions = ["export_as_csv"]
-    list_display = ("user", "github_username", "discord_username")
-    # Editable in the list so Discord usernames can be entered in batches.
-    list_editable = ("discord_username",)
-    list_select_related = ("user",)
+    list_display = ("user", "github_username", "discord_member")
+    list_select_related = ("user", "discord_member")
+    autocomplete_fields = ("discord_member",)
     search_fields = (
         "user__username",
         "user__email",
         "user__first_name",
         "user__last_name",
         "github_username",
-        "discord_username",
+        "discord_member__username",
+        "discord_member__discord_id",
     )
     list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "discord_member":
+            kwargs["queryset"] = DiscordMember.objects.filter(
+                is_active=True, is_bot=False
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(ButtondownAccount)

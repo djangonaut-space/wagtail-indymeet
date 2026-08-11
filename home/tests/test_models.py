@@ -10,6 +10,7 @@ from accounts.factories import UserFactory
 from home.constants import SRID_WGS84
 from home.factories import (
     AnnouncementFactory,
+    DiscordMemberFactory,
     EventFactory,
     ProjectFactory,
     QuestionFactory,
@@ -596,16 +597,15 @@ class SessionMembershipTests(TestCase):
         self.assertEqual(annotated.pk, member.pk)
         self.assertEqual(annotated.annotated_github_username, "octocat")
 
-    def test_without_discord_username_keeps_only_blank_usernames(self):
-        """Only memberships whose user has no Discord username are returned."""
-        blank = SessionMembershipFactory.create(
-            user=UserFactory.create(profile__discord_username="")
-        )
-        SessionMembershipFactory.create(
-            user=UserFactory.create(profile__discord_username="someone")
-        )
+    def test_without_active_discord_member_keeps_unlinked_memberships(self):
+        """Only memberships without an active Discord member link are returned."""
+        blank = SessionMembershipFactory.create()
+        linked_user = UserFactory.create()
+        linked_user.profile.discord_member = DiscordMemberFactory.create()
+        linked_user.profile.save(update_fields=["discord_member"])
+        SessionMembershipFactory.create(user=linked_user)
 
-        memberships = SessionMembership.objects.without_discord_username()
+        memberships = SessionMembership.objects.without_active_discord_member()
 
         self.assertEqual({m.pk for m in memberships}, {blank.pk})
 

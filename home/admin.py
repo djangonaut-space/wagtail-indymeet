@@ -35,6 +35,7 @@ from .forms import (
 )
 from .models import (
     Announcement,
+    DiscordMember,
     DiscordRole,
     Event,
     Project,
@@ -469,7 +470,7 @@ class SessionMembershipInline(admin.TabularInline):
     form = SessionMembershipInlineForm
     fields = (
         "user",
-        "discord_username",
+        "discord_member",
         "team",
         "role",
         "accepted",
@@ -483,7 +484,7 @@ class SessionMembershipInline(admin.TabularInline):
         return (
             super()
             .get_queryset(request)
-            .select_related("user__profile")
+            .select_related("user__profile__discord_member")
             .for_admin_site(request.user)
         )
 
@@ -567,7 +568,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         "navigator",
         "captain",
         "github_username",
-        "discord_username",
+        "discord_member",
         "accepted",
         "acceptance_deadline",
     )
@@ -576,7 +577,8 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         "user__email",
         "user__first_name",
         "user__last_name",
-        "user__profile__discord_username",
+        "user__profile__discord_member__username",
+        "user__profile__discord_member__discord_id",
     )
     readonly_fields = ("accepted_at",)
     actions = [
@@ -623,18 +625,19 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
             return obj.user.profile.github_username
         return "-"
 
-    @admin.display(description="Discord", ordering="user__profile__discord_username")
-    def discord_username(self, obj: SessionMembership) -> str:
-        if hasattr(obj.user, "profile") and obj.user.profile.discord_username:
-            return obj.user.profile.discord_username
-        return "-"
+    @admin.display(
+        description="Discord", ordering="user__profile__discord_member__username"
+    )
+    def discord_member(self, obj: SessionMembership) -> str:
+        member = getattr(obj.user.profile, "discord_member", None)
+        return str(member) if member else "-"
 
     def get_queryset(self, request):
         """Optimize queryset and filter to organized sessions."""
         return (
             super()
             .get_queryset(request)
-            .select_related("user__profile", "session", "team")
+            .select_related("user__profile__discord_member", "session", "team")
             .prefetch_related("team__session_memberships__user")
             .for_admin_site(request.user)
         )
@@ -1019,6 +1022,38 @@ class DiscordRoleAdmin(admin.ModelAdmin):
     list_display = ("name", "discord_id", "updated_at")
     search_fields = ("name",)
     readonly_fields = ("name", "discord_id", "created_at", "updated_at")
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+
+@admin.register(DiscordMember)
+class DiscordMemberAdmin(admin.ModelAdmin):
+    """Read-mostly view of guild members mirrored from Discord."""
+
+    list_display = (
+        "username",
+        "nickname",
+        "global_name",
+        "discord_id",
+        "is_active",
+        "is_bot",
+        "last_seen_at",
+    )
+    list_filter = ("is_active", "is_bot")
+    search_fields = ("username", "nickname", "global_name", "discord_id")
+    readonly_fields = (
+        "discord_id",
+        "username",
+        "global_name",
+        "nickname",
+        "role_ids",
+        "is_bot",
+        "is_active",
+        "last_seen_at",
+        "created_at",
+        "updated_at",
+    )
 
     def has_add_permission(self, request) -> bool:
         return False

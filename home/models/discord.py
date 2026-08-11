@@ -1,17 +1,16 @@
-"""A local mirror of the Discord guild's roles, so announcements can ping them.
+"""Local mirrors of the Discord guild's roles and members.
 
-Discord only pings on ``<@&ROLE_ID>``. Organizers write and approve
-announcement copy in the admin, where a raw snowflake is neither known nor
-readable, so they write ``@Djangonauts`` and the id is substituted at post
-time (see ``home.integrations.discord.service``).
+Roles (``DiscordRole``) exist so announcements can write ``@Djangonauts`` and
+have the snowflake substituted at post time (see
+``home.integrations.discord.service``).
 
-The mirror is guild-wide rather than per-session — the roles outlive any one
-session — and is refreshed by ``home.services.discord_roles.sync_discord_roles``
-as the last step of the Discord session setup action, which is when the roles
-have most recently changed.
+Members (``DiscordMember``) exist so session setup/teardown can assign roles
+by stable Discord user id instead of searching by mutable username. Both
+mirrors are guild-wide and refreshed by their sync services.
 """
 
 from django.db import models
+from django.utils import timezone
 
 from home.models.base import BaseModel
 
@@ -42,3 +41,29 @@ class DiscordRole(BaseModel):
     def mention(self) -> str:
         """The message text Discord renders as a ping for this role."""
         return f"<@&{self.discord_id}>"
+
+
+class DiscordMember(BaseModel):
+    """One member of the Discord server, keyed by stable snowflake."""
+
+    discord_id = models.CharField(max_length=32, unique=True)
+    username = models.CharField(max_length=32)
+    global_name = models.CharField(max_length=64, blank=True, default="")
+    nickname = models.CharField(max_length=64, blank=True, default="")
+    role_ids = models.JSONField(default=list, blank=True)
+    is_bot = models.BooleanField(default=False)
+    is_active = models.BooleanField(
+        default=True,
+        help_text="False when the member left the server; kept so profile "
+        "links survive leave/rejoin.",
+    )
+    last_seen_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["username"]
+
+    def __str__(self) -> str:
+        label = self.nickname or self.global_name or self.username
+        if label != self.username:
+            return f"{label} (@{self.username})"
+        return f"@{self.username}"

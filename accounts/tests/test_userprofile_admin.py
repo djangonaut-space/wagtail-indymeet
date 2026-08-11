@@ -1,11 +1,12 @@
 """
-Tests for batch-editing Discord usernames on the UserProfile changelist.
+Tests for UserProfile admin Discord member linking.
 """
 
 from django.test import TestCase
 from django.urls import reverse
 
 from accounts.factories import UserFactory
+from home.factories import DiscordMemberFactory
 
 
 class UserProfileChangelistTests(TestCase):
@@ -16,32 +17,25 @@ class UserProfileChangelistTests(TestCase):
         )
         cls.user = UserFactory.create(username="djangonaut")
         cls.profile = cls.user.profile
+        cls.member = DiscordMemberFactory.create(discord_id="100", username="novauser1")
 
     def setUp(self):
         self.client.force_login(self.admin_user)
 
-    def test_changelist_renders_editable_discord_username(self):
+    def test_changelist_shows_discord_member(self):
+        self.profile.discord_member = self.member
+        self.profile.save(update_fields=["discord_member"])
         url = reverse("admin:accounts_userprofile_changelist")
 
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="form-0-discord_username"')
+        self.assertContains(response, "novauser1")
 
-    def test_list_editable_saves_discord_username(self):
-        url = reverse("admin:accounts_userprofile_changelist")
-        data = {
-            "form-TOTAL_FORMS": "1",
-            "form-INITIAL_FORMS": "1",
-            "form-MIN_NUM_FORMS": "0",
-            "form-MAX_NUM_FORMS": "1000",
-            "form-0-id": str(self.profile.pk),
-            "form-0-discord_username": "batch-entered",
-            "_save": "Save",
-        }
+    def test_change_form_includes_discord_member(self):
+        url = reverse("admin:accounts_userprofile_change", args=[self.profile.pk])
 
-        response = self.client.post(url, data)
+        response = self.client.get(url)
 
-        self.assertEqual(response.status_code, 302)
-        self.profile.refresh_from_db()
-        self.assertEqual(self.profile.discord_username, "batch-entered")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "discord_member")

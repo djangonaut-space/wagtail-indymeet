@@ -15,6 +15,7 @@ from django.test import TestCase
 from accounts.factories import UserFactory
 from home import constants
 from home.factories import (
+    DiscordMemberFactory,
     OrganizerFactory,
     SessionFactory,
     SessionMembershipFactory,
@@ -70,9 +71,15 @@ def resolution(member_id, role, username="", guild_role_ids=frozenset()):
     )
 
 
-def _set_discord_username(user, username):
-    user.profile.discord_username = username
-    user.profile.save(update_fields=["discord_username"])
+def _link_discord_member(user, member_id, username, roles=()):
+    member = DiscordMemberFactory.create(
+        discord_id=member_id,
+        username=username,
+        role_ids=list(roles),
+    )
+    user.profile.discord_member = member
+    user.profile.save(update_fields=["discord_member"])
+    return member
 
 
 class SetupRunTests(TestCase):
@@ -91,18 +98,18 @@ class SetupRunTests(TestCase):
         self.djangonaut = SessionMembershipFactory.create(
             session=self.session, team=self.team, role=constants.DJANGONAUT
         )
-        _set_discord_username(self.navigator.user, "novauser1")
-        _set_discord_username(self.djangonaut.user, "novauser2")
-        self.member_search = {
-            "novauser1": [member("100", "novauser1")],
-            "novauser2": [member("102", "novauser2")],
-        }
+        _link_discord_member(self.navigator.user, "100", "novauser1")
+        _link_discord_member(self.djangonaut.user, "102", "novauser2")
+        self.guild_members = [
+            member("100", "novauser1"),
+            member("102", "novauser2"),
+        ]
 
     @rsps.activate
     def test_creates_category_channels_and_persists_ids(self):
         stub_discord_api(
             roles=STANDING_GUILD_ROLES + [{"id": "r-bee", "name": "Bee"}],
-            member_search=self.member_search,
+            guild_members=self.guild_members,
         )
 
         report = DiscordSessionSetup(self.session).run()
@@ -201,7 +208,7 @@ class SetupRunTests(TestCase):
         self.team.save()
         stub_discord_api(
             roles=STANDING_GUILD_ROLES + [{"id": "r-bee", "name": "Bee"}],
-            member_search=self.member_search,
+            guild_members=self.guild_members,
         )
 
         report = DiscordSessionSetup(self.session).run()
@@ -217,7 +224,7 @@ class SetupRunTests(TestCase):
     @rsps.activate
     def test_mirrors_guild_roles_for_announcement_mentions(self):
         """The mirror runs last, so roles this run created are included."""
-        stub_discord_api(member_search=self.member_search)
+        stub_discord_api(guild_members=self.guild_members)
 
         report = DiscordSessionSetup(self.session).run()
 
@@ -231,7 +238,7 @@ class SetupRunTests(TestCase):
         roles = [
             role for role in STANDING_GUILD_ROLES if role["name"] not in ("Admins",)
         ] + [{"id": "r-bee", "name": "Bee"}]
-        stub_discord_api(roles=roles, member_search=self.member_search)
+        stub_discord_api(roles=roles, guild_members=self.guild_members)
 
         report = DiscordSessionSetup(self.session).run()
 
@@ -245,7 +252,7 @@ class SetupRunTests(TestCase):
     def test_team_named_like_reserved_role_aborts(self):
         self.team.name = "Admins"
         self.team.save(update_fields=["name"])
-        stub_discord_api(roles=STANDING_GUILD_ROLES, member_search=self.member_search)
+        stub_discord_api(roles=STANDING_GUILD_ROLES, guild_members=self.guild_members)
 
         report = DiscordSessionSetup(self.session).run()
 
@@ -261,7 +268,7 @@ class SetupRunTests(TestCase):
         # and the count reflects only the roles actually granted.
         stub_discord_api(
             roles=STANDING_GUILD_ROLES + [{"id": "r-bee", "name": "Bee"}],
-            member_search=self.member_search,
+            guild_members=self.guild_members,
             fail_update_members={"100"},
         )
 
@@ -423,12 +430,12 @@ class SetupMemberRoleStepTests(TestCase):
         self.djangonaut = SessionMembershipFactory.create(
             session=self.session, team=self.team, role=constants.DJANGONAUT
         )
-        _set_discord_username(self.navigator.user, "novauser1")
-        _set_discord_username(self.djangonaut.user, "novauser2")
-        self.member_search = {
-            "novauser1": [member("100", "novauser1")],
-            "novauser2": [member("102", "novauser2")],
-        }
+        _link_discord_member(self.navigator.user, "100", "novauser1")
+        _link_discord_member(self.djangonaut.user, "102", "novauser2")
+        self.guild_members = [
+            member("100", "novauser1"),
+            member("102", "novauser2"),
+        ]
 
     def build_setup(self):
         setup = DiscordSessionSetup(self.session)
@@ -438,7 +445,7 @@ class SetupMemberRoleStepTests(TestCase):
 
     @rsps.activate
     def test_assigns_team_and_membership_roles_to_resolved_members(self):
-        stub_discord_api(member_search=self.member_search)
+        stub_discord_api(guild_members=self.guild_members)
         setup = self.build_setup()
 
         setup.resolve_members()
@@ -458,10 +465,10 @@ class SetupMemberRoleStepTests(TestCase):
     def test_existing_roles_are_kept_and_not_counted(self):
         # The navigator already holds an unrelated role and their program
         # role; the PATCH must keep both and only count the team role.
-        self.member_search["novauser1"] = [
-            member("100", "novauser1", roles=["r-other", "r-nav"])
-        ]
-        stub_discord_api(member_search=self.member_search)
+        nav_member = self.navigator.user.profile.discord_member
+        nav_member.role_ids = ["r-other", "r-nav"]
+        nav_member.save(update_fields=["role_ids"])
+        stub_discord_api(guild_members=self.guild_members)
         setup = self.build_setup()
 
         setup.resolve_members()
@@ -475,11 +482,13 @@ class SetupMemberRoleStepTests(TestCase):
 
     @rsps.activate
     def test_members_holding_all_roles_are_skipped(self):
-        self.member_search = {
-            "novauser1": [member("100", "novauser1", roles=["r-bee", "r-nav"])],
-            "novauser2": [member("102", "novauser2", roles=["r-bee", "r-dj"])],
-        }
-        stub_discord_api(member_search=self.member_search)
+        nav_member = self.navigator.user.profile.discord_member
+        nav_member.role_ids = ["r-bee", "r-nav"]
+        nav_member.save(update_fields=["role_ids"])
+        dj_member = self.djangonaut.user.profile.discord_member
+        dj_member.role_ids = ["r-bee", "r-dj"]
+        dj_member.save(update_fields=["role_ids"])
+        stub_discord_api(guild_members=self.guild_members)
         setup = self.build_setup()
 
         setup.resolve_members()
@@ -493,21 +502,21 @@ class SetupMemberRoleStepTests(TestCase):
         SessionMembershipFactory.create(
             session=self.session, team=self.team, role=constants.CAPTAIN
         )
-        no_match = SessionMembershipFactory.create(
+        SessionMembershipFactory.create(
             session=self.session,
             team=self.team,
             role=constants.CAPTAIN,
             user=UserFactory.create(username="ghost"),
         )
-        _set_discord_username(no_match.user, "missing")
-        stub_discord_api(member_search=self.member_search)
+        # No DiscordMember links — stay unresolved.
+        stub_discord_api(guild_members=self.guild_members)
         setup = self.build_setup()
 
         setup.resolve_members()
         setup.assign_member_roles()
 
-        unresolved_usernames = {r.discord_username for r in setup.report.unresolved}
-        self.assertEqual(unresolved_usernames, {"", "missing"})
+        self.assertEqual(len(setup.report.unresolved), 2)
+        self.assertEqual({r.discord_username for r in setup.report.unresolved}, {""})
         self.assertEqual(set(member_role_updates()), {"100", "102"})
 
 
@@ -536,8 +545,8 @@ class BuildTeamMessagesTests(TestCase):
         djangonaut = SessionMembershipFactory.create(
             session=session, team=team, role=constants.DJANGONAUT
         )
-        _set_discord_username(navigator.user, "novauser1")
-        _set_discord_username(djangonaut.user, "novauser2")
+        _link_discord_member(navigator.user, "100", "novauser1")
+        _link_discord_member(djangonaut.user, "102", "novauser2")
 
         messages = build_team_messages(session)
 
@@ -648,21 +657,15 @@ class TeardownRunTests(TeardownFixtureMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        _set_discord_username(self.navigator.user, "novauser1")
-        _set_discord_username(self.djangonaut.user, "novauser2")
-        _set_discord_username(self.organizer.user, "orga")
-        self.member_search = {
-            "novauser1": [member("100", "novauser1")],
-            "novauser2": [member("102", "novauser2")],
-            "orga": [member("103", "orga")],
-        }
+        _link_discord_member(self.navigator.user, "100", "novauser1")
+        _link_discord_member(self.djangonaut.user, "102", "novauser2")
+        _link_discord_member(self.organizer.user, "103", "orga")
 
     def stub_api(self, **overrides):
         kwargs = dict(
             roles=self.roles,
             channels=self.channels,
             guild_members=self.guild_members,
-            member_search=self.member_search,
         )
         kwargs.update(overrides)
         stub_discord_api(**kwargs)

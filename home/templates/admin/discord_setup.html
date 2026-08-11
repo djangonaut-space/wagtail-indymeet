@@ -19,15 +19,15 @@
     <p>Setup runs in the background; a report with a link to the team welcome messages will be emailed to you when it completes.</p>
 </div>
 
-{% if members_without_username %}
+{% if members_without_discord %}
 <div class="module">
-    <h2>Members without a Discord username</h2>
+    <h2>Members without a linked Discord account</h2>
     <p>
-        These members have no Discord username on their profile, so they will not
+        These members have no active Discord member on their profile, so they will not
         receive roles automatically and will be listed for manual follow-up:
     </p>
     <ul>
-        {% for user in members_without_username %}
+        {% for user in members_without_discord %}
         <li>{{ user.get_full_name|default:user.username }}</li>
         {% endfor %}
     </ul>
