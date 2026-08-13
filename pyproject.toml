@@ -67,6 +67,21 @@ dev = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "indymeet.test_settings"
 addopts = "--reuse-db -m 'not playwright'"
+testpaths = [
+    "accounts",
+    "home",
+    "tests",
+]
+norecursedirs = [
+    ".*",
+    "build",
+    "dist",
+    "*.egg",
+    "node_modules",
+    "staticfiles",
+    "mediafiles",
+    "theme/static_src",
+]
 markers = [
     "playwright: mark test that requires playwright",
 ]
