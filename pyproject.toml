@@ -66,7 +66,7 @@ dev = [
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "indymeet.test_settings"
-addopts = "--reuse-db -m 'not playwright'"
+addopts = "--reuse-db -m 'not playwright' --strict-markers"
 testpaths = [
     "accounts",
     "home",
@@ -83,7 +83,7 @@ norecursedirs = [
     "theme/static_src",
 ]
 markers = [
-    "playwright: mark test that requires playwright",
+    "playwright: browser/system tests; excluded from default local runs and executed in the dedicated Playwright phase",
 ]
 
 [tool.coverage.run]
