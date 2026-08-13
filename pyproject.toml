@@ -57,6 +57,7 @@ test = [
     "faker",
     "responses>=0.26.2",
     "pytest-xdist>=3.8.0",
+    "time-machine>=3.4.0",
 ]
 dev = [
     "pre-commit",
