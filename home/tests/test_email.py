@@ -18,6 +18,7 @@ class EmailSendTests(TestCase):
     @override_settings(
         ENVIRONMENT="production",
         DEFAULT_FROM_EMAIL="noreply@djangonaut.space",
+        BASE_URL="https://djangonaut.space",
     )
     def test_send_email_in_production(self):
         """Test that emails are sent to all recipients in production"""
@@ -47,6 +48,17 @@ class EmailSendTests(TestCase):
             mail.outbox[0].from_email,
             "noreply@djangonaut.space",
         )
+
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn(
+            'src="https://djangonaut.space/static/img/bluesky.png"',
+            html,
+        )
+        self.assertIn(
+            'href="https://bsky.app/profile/djangonaut.space"',
+            html,
+        )
+        self.assertIn('alt="Bluesky"', html)
 
     @override_settings(ENVIRONMENT="production")
     def test_send_email_with_custom_from_email(self):

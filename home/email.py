@@ -3,6 +3,7 @@ from typing import Optional
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.urls import reverse
 
 
@@ -58,6 +59,9 @@ def send(
     email_context = context.copy() if context else {}
     email_context["unsubscribe_link"] = settings.BASE_URL + reverse(
         "email_subscriptions"
+    )
+    email_context["bluesky_logo_url"] = settings.BASE_URL.rstrip("/") + static(
+        "img/bluesky.png"
     )
     # Strip the newline character that our formatter is likely to add in.
     subject = render_to_string(
