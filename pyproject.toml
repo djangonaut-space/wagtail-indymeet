@@ -64,7 +64,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "indymeet.settings"
+DJANGO_SETTINGS_MODULE = "indymeet.test_settings"
 addopts = "--reuse-db -m 'not playwright'"
 markers = [
     "playwright: mark test that requires playwright",
