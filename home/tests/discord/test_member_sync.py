@@ -1,13 +1,12 @@
-"""Tests for DiscordMember sync and legacy username backfill."""
+"""Tests for the DiscordMember sync."""
 
 import responses as rsps
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
-from accounts.factories import UserFactory
 from home.factories import DiscordMemberFactory
 from home.models import DiscordMember
-from home.services.discord_members import apply_username_links, sync_discord_members
+from home.services.discord_members import sync_discord_members
 from home.tests.discord.stubs import GUILD_ID, member, stub_discord_api
 
 
@@ -49,26 +48,6 @@ class SyncDiscordMembersTests(TestCase):
             report = sync_discord_members()
 
         self.assertEqual(report.synced, 1)
-
-    @rsps.activate
-    def test_apply_links_only_unique_matches(self):
-        DiscordMemberFactory.create(discord_id="100", username="unique")
-        DiscordMemberFactory.create(discord_id="101", username="dupe")
-        DiscordMemberFactory.create(discord_id="102", username="dupe")
-        profile = UserFactory.create(profile__discord_username="unique").profile
-        conflict = UserFactory.create(profile__discord_username="dupe").profile
-        missing = UserFactory.create(profile__discord_username="absent").profile
-
-        report = apply_username_links()
-
-        profile.refresh_from_db()
-        conflict.refresh_from_db()
-        missing.refresh_from_db()
-        self.assertEqual(profile.discord_member.discord_id, "100")
-        self.assertIsNone(conflict.discord_member)
-        self.assertIsNone(missing.discord_member)
-        self.assertEqual(len(report.linked), 1)
-        self.assertEqual(len(report.skipped), 2)
 
     @rsps.activate
     def test_management_command_syncs(self):

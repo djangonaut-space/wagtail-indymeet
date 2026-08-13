@@ -4,30 +4,14 @@ import requests
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 
-from home.services.discord_members import apply_username_links, sync_discord_members
+from home.services.discord_members import sync_discord_members
 
 
 class Command(BaseCommand):
     help = (
-        "Refresh the local DiscordMember mirror from DISCORD_GUILD_ID. "
-        "Optionally backfill UserProfile.discord_member from legacy "
-        "discord_username values."
+        "Refresh the local DiscordMember mirror from DISCORD_GUILD_ID. Link "
+        "members to user profiles / session memberships in admin."
     )
-
-    def add_arguments(self, parser) -> None:
-        parser.add_argument(
-            "--apply-links",
-            action="store_true",
-            help=(
-                "After syncing, link profiles whose discord_username uniquely "
-                "matches one guild member."
-            ),
-        )
-        parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            help="With --apply-links, report matches without writing links.",
-        )
 
     def handle(self, *args, **options) -> None:
         if not getattr(settings, "DISCORD_BOT_TOKEN", "") or not getattr(
@@ -50,19 +34,4 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(f"Done: {report.synced} member(s) mirrored.")
-        )
-
-        if not options["apply_links"]:
-            return
-
-        links = apply_username_links(dry_run=options["dry_run"])
-        prefix = "Would link" if options["dry_run"] else "Linked"
-        for label in links.linked:
-            self.stdout.write(f"{prefix}: {label}")
-        for label in links.skipped:
-            self.stdout.write(f"Skipped (no unique match): {label}")
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"{prefix} {len(links.linked)}; skipped {len(links.skipped)}."
-            )
         )

@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 
 from django.conf import settings
 
-from accounts.models import UserProfile
 from home.integrations.discord.service import discord_client
 from home.models import DiscordMember
 
@@ -17,12 +16,6 @@ GUILD_MEMBER_PAGE_SIZE = 1000
 class MemberSyncReport:
     synced: int = 0
     members: list[dict] = field(default_factory=list)
-
-
-@dataclass
-class LinkReport:
-    linked: list[str] = field(default_factory=list)
-    skipped: list[str] = field(default_factory=list)
 
 
 def list_all_guild_members() -> list[dict]:
@@ -85,31 +78,3 @@ def sync_discord_members() -> MemberSyncReport:
         )
 
     return MemberSyncReport(synced=len(raw_members), members=raw_members)
-
-
-def apply_username_links(*, dry_run: bool = False) -> LinkReport:
-    """Link profiles whose legacy ``discord_username`` uniquely matches a member.
-
-    Only links when there is exactly one match and the profile is not already
-    linked. Ambiguous or missing matches are skipped.
-    """
-    report = LinkReport()
-    profiles = (
-        UserProfile.objects.filter(discord_member__isnull=True)
-        .exclude(discord_username="")
-        .select_related("user")
-    )
-    for profile in profiles:
-        username = profile.discord_username.strip()
-        matches = list(
-            DiscordMember.objects.filter(username__iexact=username).order_by("pk")
-        )
-        label = f"{profile.user}: {username}"
-        if len(matches) != 1:
-            report.skipped.append(label)
-            continue
-        if not dry_run:
-            profile.discord_member = matches[0]
-            profile.save(update_fields=["discord_member"])
-        report.linked.append(label)
-    return report

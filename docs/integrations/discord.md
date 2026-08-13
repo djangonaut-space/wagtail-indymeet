@@ -98,7 +98,7 @@ To get a working local setup:
 3. Run `bootstrap_discord_server` to create the standing/alumni roles.
 4. In Discord, drag the bot's role above every role it manages.
 5. Enable the **Server Members Intent** on the bot.
-6. Run `python manage.py sync_discord_members` (optionally with `--apply-links` to backfill from legacy `discord_username` values), then link Discord members on user profiles / session memberships in admin.
+6. Run `python manage.py sync_discord_members`, then link Discord members on user profiles / session memberships in admin.
 
 Then the Session admin's setup/teardown actions run against the test server.
 
