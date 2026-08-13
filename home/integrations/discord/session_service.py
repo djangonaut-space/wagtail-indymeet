@@ -218,19 +218,18 @@ def _ensure_role(name: str, role_map: dict[str, str], roles_created: list[str]) 
 def _resolve_members(memberships) -> dict[int, MemberResolution]:
     """Resolve memberships to guild members, keyed by membership pk.
 
-    Uses the profile's linked ``DiscordMember``. ``member_id=None`` means
-    there is no active non-bot link and needs manual follow-up.
+    Uses the profile's linked ``DiscordMember``. ``member_id=None`` means the
+    profile has no link and needs manual follow-up.
     """
     resolutions = {}
     for membership in memberships:
         member = membership.user.profile.discord_member
-        linked = member is not None and member.is_active and not member.is_bot
         resolutions[membership.pk] = MemberResolution(
             display_name=membership.user.get_full_name() or membership.user.username,
-            discord_username=member.username if linked else "",
-            member_id=member.discord_id if linked else None,
+            discord_username=member.username if member else "",
+            member_id=member.discord_id if member else None,
             role=membership.role,
-            guild_role_ids=frozenset(member.role_ids) if linked else frozenset(),
+            guild_role_ids=frozenset(member.role_ids) if member else frozenset(),
         )
     return resolutions
 
@@ -319,7 +318,7 @@ def team_voice_channel_name(team) -> str:
 def _membership_mention(membership) -> str:
     """Copy/paste text for one person: ``@username``, or their name without one."""
     member = membership.user.profile.discord_member
-    if member is not None and member.is_active and not member.is_bot:
+    if member is not None:
         return f"@{member.username}"
     return membership.user.get_full_name() or membership.user.username
 

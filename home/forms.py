@@ -1278,7 +1278,7 @@ class SessionMembershipInlineForm(forms.ModelForm):
     """
 
     discord_member = forms.ModelChoiceField(
-        queryset=DiscordMember.objects.filter(is_active=True, is_bot=False),
+        queryset=DiscordMember.objects.all(),
         required=False,
         label=_("Discord member"),
         help_text=_("Stored on the user's profile."),

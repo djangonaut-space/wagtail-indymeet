@@ -20,7 +20,7 @@ class Command(BaseCommand):
             action="store_true",
             help=(
                 "After syncing, link profiles whose discord_username uniquely "
-                "matches one active non-bot guild member."
+                "matches one guild member."
             ),
         )
         parser.add_argument(
@@ -49,10 +49,7 @@ class Command(BaseCommand):
             ) from exc
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Done: {report.synced} member(s) mirrored, "
-                f"{report.deactivated} deactivated."
-            )
+            self.style.SUCCESS(f"Done: {report.synced} member(s) mirrored.")
         )
 
         if not options["apply_links"]:

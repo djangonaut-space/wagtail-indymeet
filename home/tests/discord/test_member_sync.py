@@ -14,8 +14,8 @@ from home.tests.discord.stubs import GUILD_ID, member, stub_discord_api
 @override_settings(DISCORD_GUILD_ID=GUILD_ID, DISCORD_BOT_TOKEN="token")
 class SyncDiscordMembersTests(TestCase):
     @rsps.activate
-    def test_upserts_members_and_deactivates_missing(self):
-        DiscordMemberFactory.create(discord_id="gone", username="gone", is_active=True)
+    def test_upserts_members_and_leaves_absentees(self):
+        gone = DiscordMemberFactory.create(discord_id="gone", username="gone")
         stub_discord_api(
             guild_members=[
                 member("100", "novauser1", roles=["r-dj"]),
@@ -30,17 +30,28 @@ class SyncDiscordMembersTests(TestCase):
         report = sync_discord_members()
 
         self.assertEqual(report.synced, 2)
-        self.assertEqual(report.deactivated, 1)
         active = DiscordMember.objects.get(discord_id="100")
         self.assertEqual(active.username, "novauser1")
         self.assertEqual(active.role_ids, ["r-dj"])
-        self.assertTrue(active.is_active)
-        bot = DiscordMember.objects.get(discord_id="101")
-        self.assertTrue(bot.is_bot)
-        self.assertFalse(DiscordMember.objects.get(discord_id="gone").is_active)
+        self.assertTrue(DiscordMember.objects.filter(discord_id="101").exists())
+        # Members no longer in the guild are left untouched, not deleted.
+        gone.refresh_from_db()
+        self.assertEqual(gone.username, "gone")
 
     @rsps.activate
-    def test_apply_links_only_unique_active_matches(self):
+    def test_skips_members_with_no_changes(self):
+        DiscordMemberFactory.create(
+            discord_id="100", username="novauser1", nickname="", role_ids=["r-dj"]
+        )
+        stub_discord_api(guild_members=[member("100", "novauser1", roles=["r-dj"])])
+
+        with self.assertNumQueries(1):
+            report = sync_discord_members()
+
+        self.assertEqual(report.synced, 1)
+
+    @rsps.activate
+    def test_apply_links_only_unique_matches(self):
         DiscordMemberFactory.create(discord_id="100", username="unique")
         DiscordMemberFactory.create(discord_id="101", username="dupe")
         DiscordMemberFactory.create(discord_id="102", username="dupe")

@@ -1,5 +1,4 @@
 from django.db import migrations, models
-import django.utils.timezone
 
 
 class Migration(migrations.Migration):
@@ -25,28 +24,22 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("discord_id", models.CharField(max_length=32, unique=True)),
                 ("username", models.CharField(max_length=32)),
-                (
-                    "global_name",
-                    models.CharField(blank=True, default="", max_length=64),
-                ),
                 ("nickname", models.CharField(blank=True, default="", max_length=64)),
                 ("role_ids", models.JSONField(blank=True, default=list)),
-                ("is_bot", models.BooleanField(default=False)),
                 (
-                    "is_active",
-                    models.BooleanField(
-                        default=True,
-                        help_text="False when the member left the server; kept so "
-                        "profile links survive leave/rejoin.",
+                    "display_name",
+                    models.GeneratedField(
+                        db_persist=True,
+                        expression=models.Case(
+                            models.When(nickname="", then=models.F("username")),
+                            default=models.F("nickname"),
+                        ),
+                        output_field=models.CharField(max_length=64),
                     ),
-                ),
-                (
-                    "last_seen_at",
-                    models.DateTimeField(default=django.utils.timezone.now),
                 ),
             ],
             options={
-                "ordering": ["username"],
+                "ordering": ["display_name"],
             },
         ),
     ]

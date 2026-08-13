@@ -20,8 +20,4 @@ def sync_discord_members_hourly() -> None:
     except Exception:
         logger.exception("Hourly Discord member sync failed")
         return
-    logger.info(
-        "Synced %s Discord member(s); deactivated %s",
-        report.synced,
-        report.deactivated,
-    )
+    logger.info("Synced %s Discord member(s)", report.synced)

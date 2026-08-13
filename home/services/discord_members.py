@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from django.conf import settings
-from django.db import transaction
-from django.utils import timezone
 
 from accounts.models import UserProfile
 from home.integrations.discord.service import discord_client
@@ -18,7 +16,6 @@ GUILD_MEMBER_PAGE_SIZE = 1000
 @dataclass
 class MemberSyncReport:
     synced: int = 0
-    deactivated: int = 0
     members: list[dict] = field(default_factory=list)
 
 
@@ -45,50 +42,56 @@ def list_all_guild_members() -> list[dict]:
 
 
 def sync_discord_members() -> MemberSyncReport:
-    """Upsert every guild member and mark absentees inactive.
+    """Upsert guild members whose mirrored fields have changed.
 
-    Members are matched on ``discord_id``. Leaving the server sets
-    ``is_active=False`` rather than deleting the row, so a ``UserProfile``
-    link survives leave/rejoin. Returns the raw Discord payloads so callers
-    like teardown can reuse the fetch.
+    Members are matched on ``discord_id``. Rows whose username, nickname, and
+    roles already match the guild are skipped, so a routine hourly sync
+    doesn't rewrite every row when nothing changed. Returns the raw Discord
+    payloads so callers like teardown can reuse the fetch.
     """
     raw_members = list_all_guild_members()
-    now = timezone.now()
-    seen_ids: list[str] = []
-    with transaction.atomic():
-        for raw in raw_members:
-            user = raw["user"]
-            discord_id = str(user["id"])
-            seen_ids.append(discord_id)
-            DiscordMember.objects.update_or_create(
+    existing = {member.discord_id: member for member in DiscordMember.objects.all()}
+
+    changed = []
+    for raw in raw_members:
+        user = raw["user"]
+        discord_id = str(user["id"])
+        username = user["username"]
+        nickname = raw.get("nick") or ""
+        role_ids = list(raw.get("roles") or [])
+        current = existing.get(discord_id)
+        if (
+            current is not None
+            and current.username == username
+            and current.nickname == nickname
+            and current.role_ids == role_ids
+        ):
+            continue
+        changed.append(
+            DiscordMember(
                 discord_id=discord_id,
-                defaults={
-                    "username": user["username"],
-                    "global_name": user.get("global_name") or "",
-                    "nickname": raw.get("nick") or "",
-                    "role_ids": list(raw.get("roles") or []),
-                    "is_bot": bool(user.get("bot")),
-                    "is_active": True,
-                    "last_seen_at": now,
-                },
+                username=username,
+                nickname=nickname,
+                role_ids=role_ids,
             )
-        deactivated = DiscordMember.objects.exclude(discord_id__in=seen_ids).filter(
-            is_active=True
         )
-        deactivated_count = deactivated.count()
-        deactivated.update(is_active=False)
-    return MemberSyncReport(
-        synced=len(seen_ids),
-        deactivated=deactivated_count,
-        members=raw_members,
-    )
+
+    if changed:
+        DiscordMember.objects.bulk_create(
+            changed,
+            update_conflicts=True,
+            update_fields=["username", "nickname", "role_ids"],
+            unique_fields=["discord_id"],
+        )
+
+    return MemberSyncReport(synced=len(raw_members), members=raw_members)
 
 
 def apply_username_links(*, dry_run: bool = False) -> LinkReport:
     """Link profiles whose legacy ``discord_username`` uniquely matches a member.
 
-    Only links when there is exactly one active, non-bot match and the profile
-    is not already linked. Ambiguous or missing matches are skipped.
+    Only links when there is exactly one match and the profile is not already
+    linked. Ambiguous or missing matches are skipped.
     """
     report = LinkReport()
     profiles = (
@@ -99,11 +102,7 @@ def apply_username_links(*, dry_run: bool = False) -> LinkReport:
     for profile in profiles:
         username = profile.discord_username.strip()
         matches = list(
-            DiscordMember.objects.filter(
-                is_active=True,
-                is_bot=False,
-                username__iexact=username,
-            ).order_by("pk")
+            DiscordMember.objects.filter(username__iexact=username).order_by("pk")
         )
         label = f"{profile.user}: {username}"
         if len(matches) != 1:

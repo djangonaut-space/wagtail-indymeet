@@ -1029,28 +1029,19 @@ class DiscordRoleAdmin(admin.ModelAdmin):
 
 @admin.register(DiscordMember)
 class DiscordMemberAdmin(admin.ModelAdmin):
-    """Read-mostly view of guild members mirrored from Discord."""
+    """Read-only view of guild members mirrored from Discord."""
 
     list_display = (
-        "username",
         "nickname",
-        "global_name",
+        "username",
         "discord_id",
-        "is_active",
-        "is_bot",
-        "last_seen_at",
     )
-    list_filter = ("is_active", "is_bot")
-    search_fields = ("username", "nickname", "global_name", "discord_id")
+    search_fields = ("username", "nickname", "discord_id")
     readonly_fields = (
         "discord_id",
         "username",
-        "global_name",
         "nickname",
         "role_ids",
-        "is_bot",
-        "is_active",
-        "last_seen_at",
         "created_at",
         "updated_at",
     )

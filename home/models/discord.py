@@ -10,7 +10,7 @@ mirrors are guild-wide and refreshed by their sync services.
 """
 
 from django.db import models
-from django.utils import timezone
+from django.db.models import Case, F, When
 
 from home.models.base import BaseModel
 
@@ -48,22 +48,21 @@ class DiscordMember(BaseModel):
 
     discord_id = models.CharField(max_length=32, unique=True)
     username = models.CharField(max_length=32)
-    global_name = models.CharField(max_length=64, blank=True, default="")
     nickname = models.CharField(max_length=64, blank=True, default="")
     role_ids = models.JSONField(default=list, blank=True)
-    is_bot = models.BooleanField(default=False)
-    is_active = models.BooleanField(
-        default=True,
-        help_text="False when the member left the server; kept so profile "
-        "links survive leave/rejoin.",
+    display_name = models.GeneratedField(
+        expression=Case(
+            When(nickname="", then=F("username")),
+            default=F("nickname"),
+        ),
+        output_field=models.CharField(max_length=64),
+        db_persist=True,
     )
-    last_seen_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        ordering = ["username"]
+        ordering = ["display_name"]
 
     def __str__(self) -> str:
-        label = self.nickname or self.global_name or self.username
-        if label != self.username:
-            return f"{label} (@{self.username})"
+        if self.display_name != self.username:
+            return f"{self.display_name} (@{self.username})"
         return f"@{self.username}"

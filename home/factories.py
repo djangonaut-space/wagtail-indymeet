@@ -203,8 +203,6 @@ class DiscordMemberFactory(factory.django.DjangoModelFactory):
 
     discord_id = factory.Sequence(lambda n: "member-id-%d" % n)
     username = factory.Sequence(lambda n: "discorduser%d" % n)
-    is_bot = False
-    is_active = True
 
 
 class TestimonialFactory(factory.django.DjangoModelFactory):

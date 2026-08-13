@@ -178,9 +178,7 @@ class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "discord_member":
-            kwargs["queryset"] = DiscordMember.objects.filter(
-                is_active=True, is_bot=False
-            )
+            kwargs["queryset"] = DiscordMember.objects.all()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
