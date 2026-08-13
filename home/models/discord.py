@@ -66,3 +66,8 @@ class DiscordMember(BaseModel):
         if self.display_name != self.username:
             return f"{self.display_name} (@{self.username})"
         return f"@{self.username}"
+
+    @property
+    def mention(self) -> str:
+        """Copy/paste text for this member: ``@username``."""
+        return f"@{self.username}"

@@ -32,7 +32,7 @@
   </p>
   <ul style="font-family: Helvetica, sans-serif; font-size: 16px; margin: 0; margin-bottom: 16px;">
     {% for person in report.unresolved %}
-    <li>{{ person.display_name }} ({{ person.discord_username|default:"no username" }}, {{ person.role }})</li>
+    <li>{{ person.display_name }} ({{ person.role }})</li>
     {% endfor %}
   </ul>
   {% endif %}

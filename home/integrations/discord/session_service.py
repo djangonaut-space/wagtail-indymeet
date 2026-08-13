@@ -54,6 +54,7 @@ from home.integrations.discord.client import (
     VOICE_CHANNEL_TYPE,
 )
 from home.integrations.discord.service import discord_client
+from home.models import DiscordMember
 from home.services.discord_members import sync_discord_members
 from home.services.discord_roles import sync_discord_roles
 
@@ -156,10 +157,16 @@ class MemberResolution:
     """Maps a session membership to a Discord guild member."""
 
     display_name: str
-    discord_username: str
-    member_id: str | None
+    member: DiscordMember | None
     role: str
-    guild_role_ids: frozenset[str] = frozenset()
+
+    @property
+    def member_id(self) -> str | None:
+        return self.member.discord_id if self.member else None
+
+    @property
+    def guild_role_ids(self) -> frozenset[str]:
+        return frozenset(self.member.role_ids) if self.member else frozenset()
 
 
 @dataclass
@@ -221,17 +228,14 @@ def _resolve_members(memberships) -> dict[int, MemberResolution]:
     Uses the profile's linked ``DiscordMember``. ``member_id=None`` means the
     profile has no link and needs manual follow-up.
     """
-    resolutions = {}
-    for membership in memberships:
-        member = membership.user.profile.discord_member
-        resolutions[membership.pk] = MemberResolution(
+    return {
+        membership.pk: MemberResolution(
             display_name=membership.user.get_full_name() or membership.user.username,
-            discord_username=member.username if member else "",
-            member_id=member.discord_id if member else None,
+            member=membership.user.profile.discord_member,
             role=membership.role,
-            guild_role_ids=frozenset(member.role_ids) if member else frozenset(),
         )
-    return resolutions
+        for membership in memberships
+    }
 
 
 def _role_permission_overwrite(role_id: str, allow: int = VIEW_CHANNEL) -> dict:
@@ -319,7 +323,7 @@ def _membership_mention(membership) -> str:
     """Copy/paste text for one person: ``@username``, or their name without one."""
     member = membership.user.profile.discord_member
     if member is not None:
-        return f"@{member.username}"
+        return member.mention
     return membership.user.get_full_name() or membership.user.username
 
 

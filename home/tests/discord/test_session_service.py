@@ -39,7 +39,7 @@ from home.integrations.discord.session_service import (
     MemberResolution,
     build_team_messages,
 )
-from home.models import DiscordRole
+from home.models import DiscordMember, DiscordRole
 from home.tests.discord.stubs import (
     BOT_ROLE_ID,
     STANDING_GUILD_ROLES,
@@ -62,12 +62,15 @@ STAFF = str(SESSION_STAFF_PERMISSIONS)
 
 
 def resolution(member_id, role, username="", guild_role_ids=frozenset()):
+    member = None
+    if member_id is not None:
+        member = DiscordMember(
+            discord_id=member_id, username=username, role_ids=list(guild_role_ids)
+        )
     return MemberResolution(
         display_name=username or "someone",
-        discord_username=username,
-        member_id=member_id,
+        member=member,
         role=role,
-        guild_role_ids=guild_role_ids,
     )
 
 
@@ -516,7 +519,7 @@ class SetupMemberRoleStepTests(TestCase):
         setup.assign_member_roles()
 
         self.assertEqual(len(setup.report.unresolved), 2)
-        self.assertEqual({r.discord_username for r in setup.report.unresolved}, {""})
+        self.assertEqual({r.member_id for r in setup.report.unresolved}, {None})
         self.assertEqual(set(member_role_updates()), {"100", "102"})
 
 
