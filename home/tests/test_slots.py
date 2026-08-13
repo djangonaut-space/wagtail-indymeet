@@ -4,7 +4,7 @@ import dataclasses
 import datetime
 from zoneinfo import ZoneInfo
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from freezegun import freeze_time
 
 from accounts.factories import UserAvailabilityFactory
@@ -17,7 +17,7 @@ from tests.timezones import (
 
 
 @freeze_time("2024-06-17")
-class SlotTestCase(TestCase):
+class SlotTestCase(SimpleTestCase):
     """Test Slot conversions, formatting, and equality."""
 
     def test_accepts_timezone_name_or_zoneinfo(self) -> None:
@@ -188,7 +188,7 @@ class SlotTestCase(TestCase):
         )
 
 
-class SlotReferenceWeekTestCase(TestCase):
+class SlotReferenceWeekTestCase(SimpleTestCase):
     """Test which calendar week slots are anchored to."""
 
     def test_anchors_to_current_week_sunday(self) -> None:
@@ -206,7 +206,7 @@ class SlotReferenceWeekTestCase(TestCase):
             self.assertEqual(Slot("UTC", 0.0).utc.date(), datetime.date(2024, 6, 23))
 
 
-class SlotDaylightSavingTestCase(TestCase):
+class SlotDaylightSavingTestCase(SimpleTestCase):
     """Test Slot behavior across DST transition weeks."""
 
     @freeze_time("2024-03-10")
