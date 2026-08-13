@@ -123,7 +123,7 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "email",
         "username",
         "profile__github_username",
-        "profile__discord_member__username",
+        "profile__discord_member__nickname",
         "profile__discord_member__discord_id",
     )
     list_select_related = ("profile", "profile__discord_member")
@@ -171,7 +171,7 @@ class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin)
         "user__first_name",
         "user__last_name",
         "github_username",
-        "discord_member__username",
+        "discord_member__nickname",
         "discord_member__discord_id",
     )
     list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)

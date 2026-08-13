@@ -577,7 +577,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         "user__email",
         "user__first_name",
         "user__last_name",
-        "user__profile__discord_member__username",
+        "user__profile__discord_member__nickname",
         "user__profile__discord_member__discord_id",
     )
     readonly_fields = ("accepted_at",)
@@ -626,7 +626,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         return "-"
 
     @admin.display(
-        description="Discord", ordering="user__profile__discord_member__username"
+        description="Discord", ordering="user__profile__discord_member__nickname"
     )
     def discord_member(self, obj: SessionMembership) -> str:
         member = getattr(obj.user.profile, "discord_member", None)
