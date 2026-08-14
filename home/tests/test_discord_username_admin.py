@@ -86,6 +86,25 @@ class SessionMembershipInlineFormTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
 
+    def test_queryset_excludes_members_linked_to_other_users(self):
+        """A member already linked to another user shouldn't be selectable."""
+        other = UserFactory.create()
+        other.profile.discord_member = self.other_member
+        other.profile.save(update_fields=["discord_member"])
+
+        form = SessionMembershipInlineForm(instance=self.membership)
+
+        self.assertNotIn(self.other_member, form.fields["discord_member"].queryset)
+
+    def test_queryset_includes_own_linked_member(self):
+        """The member already linked to this instance's user stays selectable."""
+        self.profile.discord_member = self.member
+        self.profile.save(update_fields=["discord_member"])
+
+        form = SessionMembershipInlineForm(instance=self.membership)
+
+        self.assertIn(self.member, form.fields["discord_member"].queryset)
+
     def test_save_can_clear_member(self):
         self.profile.discord_member = self.member
         self.profile.save(update_fields=["discord_member"])

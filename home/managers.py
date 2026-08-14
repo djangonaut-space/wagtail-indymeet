@@ -622,3 +622,16 @@ class TestimonialQuerySet(QuerySet):
                 )
             )
         )
+
+
+class DiscordMemberQuerySet(QuerySet):
+    def unassigned(self):
+        """Fetch discord members that have no user."""
+        return self.filter(profile__isnull=True)
+
+    def unassigned_or_for_user(self, user):
+        """
+        Fetch discord members that have no user or are associated with
+        the given user.
+        """
+        return self.filter(Q(profile__isnull=True) | Q(profile__user=user))

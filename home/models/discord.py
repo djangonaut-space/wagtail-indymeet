@@ -12,6 +12,7 @@ mirrors are guild-wide and refreshed by their sync services.
 from django.db import models
 from django.db.models import Case, F, When
 
+from home.managers import DiscordMemberQuerySet
 from home.models.base import BaseModel
 
 
@@ -58,14 +59,15 @@ class DiscordMember(BaseModel):
         output_field=models.CharField(max_length=64),
         db_persist=True,
     )
+    objects = models.Manager.from_queryset(DiscordMemberQuerySet)()
 
     class Meta:
         ordering = ["display_name"]
 
     def __str__(self) -> str:
         if self.display_name != self.username:
-            return f"{self.display_name} (@{self.username})"
-        return f"@{self.username}"
+            return f"{self.display_name} ({self.username})"
+        return f"{self.username}"
 
     @property
     def mention(self) -> str:

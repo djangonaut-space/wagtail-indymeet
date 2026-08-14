@@ -1278,7 +1278,7 @@ class SessionMembershipInlineForm(forms.ModelForm):
     """
 
     discord_member = forms.ModelChoiceField(
-        queryset=DiscordMember.objects.all(),
+        queryset=DiscordMember.objects.unassigned(),
         required=False,
         label=_("Discord member"),
         help_text=_("Stored on the user's profile."),
@@ -1293,6 +1293,9 @@ class SessionMembershipInlineForm(forms.ModelForm):
         if self.instance.pk:
             self.fields["discord_member"].initial = (
                 self.instance.user.profile.discord_member
+            )
+            self.fields["discord_member"].queryset = (
+                DiscordMember.objects.unassigned_or_for_user(self.instance.user)
             )
 
     def clean_discord_member(self):
