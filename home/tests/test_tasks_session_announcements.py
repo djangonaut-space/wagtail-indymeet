@@ -14,11 +14,10 @@ from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
 
-from accounts.factories import UserFactory
+from accounts.factories import DiscordRoleFactory, UserFactory
 from home import constants
 from home.factories import (
     AnnouncementFactory,
-    DiscordRoleFactory,
     SessionFactory,
     SessionMembershipFactory,
 )

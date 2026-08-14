@@ -57,7 +57,7 @@ To avoid requiring Administrator, this module adds the bot's own role to every c
 
 ## Privileged Intents
 
-Enable the **Server Members Intent** (`GUILD_MEMBERS`) on the app's **Bot** page. The teardown action lists all guild members to find role holders; that endpoint requires the intent. (The member *search* used to resolve usernames does not.)
+Enable the **Server Members Intent** (`GUILD_MEMBERS`) on the app's **Bot** page. Session setup/teardown and the hourly `sync_discord_members` job list all guild members; that endpoint requires the intent.
 
 ## Guild Role Conventions
 
@@ -98,9 +98,13 @@ To get a working local setup:
 3. Run `bootstrap_discord_server` to create the standing/alumni roles.
 4. In Discord, drag the bot's role above every role it manages.
 5. Enable the **Server Members Intent** on the bot.
-6. Set Discord usernames on the profiles of any users you'll test with.
+6. Run `python manage.py sync_discord_members`, then link Discord members on user profiles / session memberships in admin.
 
 Then the Session admin's setup/teardown actions run against the test server.
+
+## Member mapping
+
+Guild members are mirrored in `DiscordMember` and linked from `UserProfile.discord_member` (stable Discord snowflake, not mutable username). The mirror is refreshed hourly and again during session setup/teardown. Mapping is admin-explicit — there is no signup auto-link.
 
 ## Admin Usage
 

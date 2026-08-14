@@ -172,13 +172,13 @@ class SessionMembershipQuerySet(QuerySet):
             annotated_github_username=F("user__profile__github_username")
         )
 
-    def without_discord_username(self) -> SessionMembershipQuerySet:
-        """Filter to memberships whose user has no Discord username configured.
+    def without_active_discord_member(self) -> SessionMembershipQuerySet:
+        """Filter to memberships with no linked Discord guild member.
 
         These are the members the Discord setup/teardown actions can't map to
         a guild member, so the confirmation views surface them for follow-up.
         """
-        return self.filter(user__profile__discord_username="")
+        return self.filter(user__profile__discord_member__isnull=True)
 
     def navigators(self):
         """Filter to only Navigators."""

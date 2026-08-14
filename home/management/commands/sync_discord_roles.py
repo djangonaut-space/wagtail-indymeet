@@ -1,7 +1,7 @@
 """
 Management command to refresh the local mirror of the Discord server's roles.
 
-The mirror (``home.models.DiscordRole``) is what lets an announcement say
+The mirror (``accounts.models.DiscordRole``) is what lets an announcement say
 ``@Djangonauts`` and have it ping — see ``home.integrations.discord.service``.
 The Discord session setup action refreshes it as its last step, which covers
 the normal case, but roles also get added or renamed between sessions. This

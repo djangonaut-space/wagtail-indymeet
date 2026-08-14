@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 from django.conf import settings
 from django.db import transaction
 
+from accounts.models import DiscordRole
 from home.integrations.discord.service import discord_client
-from home.models import DiscordRole
 
 # Discord's catch-all role, which every guild has and which shares the guild
 # id. Its literal name is "@everyone", so mirroring it would only ever match

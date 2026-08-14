@@ -14,7 +14,7 @@ Summary:
 - Weekly announcements created: {{ report.announcements_created }}
 {% if report.unresolved %}
 These members could not be matched to a Discord account, so no roles were assigned to them:
-{% for person in report.unresolved %}- {{ person.display_name }} ({{ person.discord_username|default:"no username" }}, {{ person.role }})
+{% for person in report.unresolved %}- {{ person.display_name }} ({{ person.role }})
 {% endfor %}{% endif %}
 Copy each team's welcome message into the matching team channel from:
 {{ team_messages_url }}

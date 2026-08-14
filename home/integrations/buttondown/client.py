@@ -63,17 +63,18 @@ class ButtondownClient:
             raise
         return response.json()
 
-    def create_subscriber(self, email: str, tags: list[str]) -> dict:
+    def create_subscriber(
+        self, email: str, tags: list[str], ip_address: str | None = None
+    ) -> dict:
         """
         Create a new subscriber.
 
         Returns the created subscriber dict (including 'id' UUID).
         """
-        response = self._request(
-            "POST",
-            "/subscribers",
-            json={"email_address": email, "tags": tags, "type": "regular"},
-        )
+        payload = {"email_address": email, "tags": tags, "type": "regular"}
+        if ip_address:
+            payload["ip_address"] = ip_address
+        response = self._request("POST", "/subscribers", json=payload)
         return response.json()
 
     def patch_subscriber(self, subscriber_id: str, payload: dict) -> dict:

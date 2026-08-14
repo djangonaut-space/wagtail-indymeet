@@ -19,16 +19,16 @@
     <p>Teardown runs in the background; a report will be emailed to you when it completes.</p>
 </div>
 
-{% if members_without_username %}
+{% if members_without_discord %}
 <div class="module">
-    <h2>Members without a Discord username</h2>
+    <h2>Members without a linked Discord account</h2>
     <p>
         These members cannot be matched to a Discord account. They will lose
         access to the archived channels and receive no alumni roles unless
         handled manually:
     </p>
     <ul>
-        {% for user in members_without_username %}
+        {% for user in members_without_discord %}
         <li>{{ user.get_full_name|default:user.username }}</li>
         {% endfor %}
     </ul>

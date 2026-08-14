@@ -6,7 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.db import models
-from django.db.models import Q, QuerySet
+from django.db.models import Case, F, Q, QuerySet, When
 from django.db.models.functions import Lower
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -148,6 +148,82 @@ def _default_interested_in():
     return [constants.DJANGONAUT]
 
 
+class DiscordRole(models.Model):
+    """One mentionable role on the Discord server.
+
+    Rows are owned by the sync, not by hand: a role renamed on Discord is
+    matched by ``discord_id`` and renamed here, and a role deleted there is
+    deleted here so a mention can never resolve to a dead id.
+    """
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    name = models.CharField(
+        # Discord caps role names at 100 characters.
+        max_length=100,
+        help_text="The role name as it appears on the Discord server. "
+        "Write '@' plus this name in an announcement to ping the role.",
+    )
+    discord_id = models.CharField(max_length=32, unique=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def mention(self) -> str:
+        """The message text Discord renders as a ping for this role."""
+        return f"<@&{self.discord_id}>"
+
+
+class DiscordMemberQuerySet(QuerySet):
+    def unassigned(self):
+        """Fetch discord members that have no user."""
+        return self.filter(profile__isnull=True)
+
+    def unassigned_or_for_user(self, user):
+        """
+        Fetch discord members that have no user or are associated with
+        the given user.
+        """
+        return self.filter(Q(profile__isnull=True) | Q(profile__user=user))
+
+
+class DiscordMember(models.Model):
+    """One member of the Discord server, keyed by stable snowflake."""
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    discord_id = models.CharField(max_length=32, unique=True)
+    username = models.CharField(max_length=32)
+    nickname = models.CharField(max_length=64, blank=True, default="")
+    role_ids = models.JSONField(default=list, blank=True)
+    display_name = models.GeneratedField(
+        expression=Case(
+            When(nickname="", then=F("username")),
+            default=F("nickname"),
+        ),
+        output_field=models.CharField(max_length=64),
+        db_persist=True,
+    )
+    objects = models.Manager.from_queryset(DiscordMemberQuerySet)()
+
+    class Meta:
+        ordering = ["display_name"]
+
+    def __str__(self) -> str:
+        if self.display_name != self.username:
+            return f"{self.display_name} ({self.username})"
+        return f"{self.username}"
+
+    @property
+    def mention(self) -> str:
+        """Copy/paste text for this member: ``@username``."""
+        return f"@{self.username}"
+
+
 class UserProfile(models.Model):
     user = DefaultOneToOneField(
         "CustomUser", create=True, on_delete=models.CASCADE, related_name="profile"
@@ -170,8 +246,17 @@ class UserProfile(models.Model):
         blank=True,
         null=False,
         default="",
-        help_text="Your Discord username, used to grant channel access "
-        "during sessions",
+        help_text="Legacy Discord username used only to backfill "
+        "discord_member links. Prefer discord_member.",
+    )
+    discord_member = models.OneToOneField(
+        "DiscordMember",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="profile",
+        help_text="Linked Discord guild member used to grant channel access "
+        "during sessions.",
     )
     interested_in = ArrayField(
         models.CharField(max_length=64, validators=[validate_interested_in_choice]),

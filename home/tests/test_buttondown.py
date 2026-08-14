@@ -121,6 +121,23 @@ class ButtondownClientTests(TestCase):
 
     @override_settings(**BD_SETTINGS)
     @rsps.activate
+    def test_create_subscriber_includes_ip_address_when_given(self):
+        rsps.add(
+            rsps.POST,
+            f"{_BASE_URL}/subscribers",
+            json={"id": "new-uuid", "email": "new@example.com"},
+            status=201,
+        )
+
+        self.bd_client.create_subscriber(
+            "new@example.com", ["website"], ip_address="203.0.113.5"
+        )
+
+        body = json.loads(rsps.calls[0].request.body)
+        self.assertEqual(body["ip_address"], "203.0.113.5")
+
+    @override_settings(**BD_SETTINGS)
+    @rsps.activate
     def test_patch_subscriber(self):
         payload = {"tags": ["Admin"], "type": "regular"}
         rsps.add(
@@ -375,6 +392,39 @@ class ButtondownServiceFirstSyncTests(TestCase):
 
         tags_arg = mock_create.call_args.args[1]
         self.assertIn("website", tags_arg)
+
+    @override_settings(**BD_SETTINGS)
+    def test_first_sync_forwards_ip_address_on_new_subscriber(self):
+        with (
+            patch.object(
+                buttondown_service.client,
+                "get_subscriber_by_email",
+                return_value=None,
+            ),
+            patch.object(
+                buttondown_service.client,
+                "create_subscriber",
+                return_value={"id": "bd-uuid-new"},
+            ) as mock_create,
+        ):
+            buttondown_service.sync_user(self.user, ip_address="203.0.113.5")
+
+        self.assertEqual(mock_create.call_args.kwargs["ip_address"], "203.0.113.5")
+
+    @override_settings(**BD_SETTINGS)
+    def test_first_sync_links_existing_does_not_forward_ip_address(self):
+        existing = {"id": "bd-uuid-existing"}
+        with (
+            patch.object(
+                buttondown_service.client,
+                "get_subscriber_by_email",
+                return_value=existing,
+            ),
+            patch.object(buttondown_service.client, "patch_subscriber") as mock_patch,
+        ):
+            buttondown_service.sync_user(self.user, ip_address="203.0.113.5")
+
+        self.assertNotIn("ip_address", mock_patch.call_args.args[1])
 
     @override_settings(**BD_SETTINGS)
     def test_first_sync_new_subscriber_does_not_set_receiving_newsletter(self):
@@ -633,3 +683,11 @@ class SyncUserToButtondownTaskTests(TestCase):
 
         mock_sync.assert_called_once()
         self.assertEqual(mock_sync.call_args.args[0].pk, user.pk)
+
+    @override_settings(**BD_SETTINGS)
+    def test_forwards_ip_address_to_service(self):
+        user = UserFactory.create()
+        with patch.object(buttondown_service, "sync_user") as mock_sync:
+            sync_user_to_buttondown.call(user_id=user.pk, ip_address="203.0.113.5")
+
+        self.assertEqual(mock_sync.call_args.kwargs["ip_address"], "203.0.113.5")

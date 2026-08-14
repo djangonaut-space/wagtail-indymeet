@@ -1,5 +1,3 @@
-import csv
-
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import (
@@ -10,12 +8,17 @@ from django.contrib.auth.models import Group
 from django.contrib import admin as django_admin
 from django.core.management import call_command
 from django.db.models import Exists, OuterRef, QuerySet
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse
+from import_export.admin import ExportMixin
+from import_export.fields import Field
+from import_export.resources import ModelResource
 
 from accounts.models import (
     ButtondownAccount,
     CustomUser,
+    DiscordMember,
+    DiscordRole,
     Link,
     UserAvailability,
     UserProfile,
@@ -79,32 +82,35 @@ class RelatedUserPastSessionMemberFilter(PastSessionMemberFilter):
     user_field = "user"
 
 
-class ExportCsvMixin:
-    @admin.action(description="Export Selected")
-    def export_as_csv(self, request, queryset):
-        """
-        Export all fields in a model via django admin
-        """
-        ignore_fields = ["password", "token", "bio_image"]
-        meta = self.model._meta
-        field_names = [
-            field.name for field in meta.fields if field.name not in ignore_fields
-        ]
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = f"attachment; filename={meta}.csv"
-        writer = csv.writer(response)
+class CustomUserResource(ModelResource):
+    """Export resource for CustomUser, including the profile fields shown in list_display."""
 
-        writer.writerow(field_names)
-        for obj in queryset:
-            exported = []
-            for field in field_names:
-                if hasattr(obj, field):
-                    val = getattr(obj, field)
-                else:
-                    val = ""
-                exported.append(val)
-            writer.writerow(exported)
-        return response
+    github_username = Field(
+        column_name="github_username", attribute="profile__github_username"
+    )
+    discord_username = Field(
+        column_name="discord_username", attribute="profile__discord_member__username"
+    )
+    discord_nickname = Field(
+        column_name="discord_nickname", attribute="profile__discord_member__nickname"
+    )
+
+    class Meta:
+        model = CustomUser
+        exclude = ("password",)
+
+
+class UserProfileResource(ModelResource):
+    discord_username = Field(
+        column_name="discord_username", attribute="discord_member__username"
+    )
+    discord_nickname = Field(
+        column_name="discord_nickname", attribute="discord_member__nickname"
+    )
+
+    class Meta:
+        model = UserProfile
+        exclude = ("bio_image",)
 
 
 class LinksInline(admin.StackedInline):
@@ -113,18 +119,20 @@ class LinksInline(admin.StackedInline):
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
+class CustomUserAdmin(ExportMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
-    actions = ["export_as_csv", "compare_availability_action"]
+    resource_class = CustomUserResource
+    actions = ["compare_availability_action"]
     search_fields = (
         "first_name",
         "last_name",
         "email",
         "username",
         "profile__github_username",
-        "profile__discord_username",
+        "profile__discord_member__nickname",
+        "profile__discord_member__discord_id",
     )
-    list_select_related = ("profile",)
+    list_select_related = ("profile", "profile__discord_member")
     list_display = (
         "username",
         "email",
@@ -132,7 +140,7 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
         "last_name",
         "is_staff",
         "profile__github_username",
-        "profile__discord_username",
+        "profile__discord_member",
         "date_joined",
     )
     list_filter = (PastDjangonautFilter, PastSessionMemberFilter)
@@ -156,23 +164,72 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin):
+class UserProfileAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdmin):
     inlines = (LinksInline,)
     model = UserProfile
+    resource_class = UserProfileResource
+    list_display = ("user", "github_username", "discord_member")
+    list_select_related = ("user", "discord_member")
+    autocomplete_fields = (
+        "discord_member",
+        "user",
+    )
     actions = ["export_as_csv"]
-    list_display = ("user", "github_username", "discord_username")
-    # Editable in the list so Discord usernames can be entered in batches.
-    list_editable = ("discord_username",)
-    list_select_related = ("user",)
     search_fields = (
         "user__username",
         "user__email",
         "user__first_name",
         "user__last_name",
         "github_username",
-        "discord_username",
+        "discord_member__nickname",
+        "discord_member__discord_id",
     )
     list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "discord_member":
+            kwargs["queryset"] = DiscordMember.objects.all()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(DiscordRole)
+class DiscordRoleAdmin(admin.ModelAdmin):
+    """Read-only view of the roles an announcement can ping.
+
+    The rows are a mirror of the Discord server, rewritten wholesale by the
+    Discord session setup action and the ``sync_discord_roles`` command, so
+    editing them here would only be undone on the next sync.
+    """
+
+    list_display = ("name", "discord_id", "updated_at")
+    search_fields = ("name",)
+    readonly_fields = ("name", "discord_id", "created_at", "updated_at")
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+
+@admin.register(DiscordMember)
+class DiscordMemberAdmin(admin.ModelAdmin):
+    """Read-only view of guild members mirrored from Discord."""
+
+    list_display = (
+        "username",
+        "nickname",
+        "discord_id",
+    )
+    search_fields = ("username", "nickname", "discord_id")
+    readonly_fields = (
+        "discord_id",
+        "username",
+        "nickname",
+        "role_ids",
+        "created_at",
+        "updated_at",
+    )
+
+    def has_add_permission(self, request) -> bool:
+        return False
 
 
 @admin.register(ButtondownAccount)

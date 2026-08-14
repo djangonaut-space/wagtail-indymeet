@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("home", "0063_discordrole"),
+        ("home", "0062_announcement"),
     ]
 
     operations = [

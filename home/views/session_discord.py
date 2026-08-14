@@ -2,7 +2,7 @@
 Admin views for the Discord session setup and teardown actions.
 
 Setup and teardown render a confirmation page on GET so organizers can
-review the scope (and chase missing Discord usernames) before anything hits
+review the scope (and chase missing Discord links) before anything hits
 the Discord API, then enqueue a background task on POST — the orchestration
 makes far too many API calls to run inside a request. The task emails the
 report to the requesting user; for setup it links to the team-messages view
@@ -22,12 +22,12 @@ from home.integrations.discord.session_service import build_team_messages
 from home.models import Session
 
 
-def _members_without_discord_username(session: Session) -> list:
+def _members_without_discord_member(session: Session) -> list:
     """Users the actions can't map to Discord, for pre-run warnings."""
     return [
         membership.user
         for membership in session.session_memberships.accepted()
-        .without_discord_username()
+        .without_active_discord_member()
         .select_related("user__profile")
     ]
 
@@ -95,7 +95,7 @@ def discord_setup_view(request: HttpRequest, session_id: int) -> HttpResponse:
         session,
         team_count=session.teams.count(),
         member_count=session.session_memberships.accepted().count(),
-        members_without_username=_members_without_discord_username(session),
+        members_without_discord=_members_without_discord_member(session),
     )
     return render(request, "admin/discord_setup.html", context)
 
@@ -152,7 +152,7 @@ def discord_teardown_view(request: HttpRequest, session_id: int) -> HttpResponse
         session,
         team_count=session.teams.count(),
         member_count=session.session_memberships.accepted().count(),
-        members_without_username=_members_without_discord_username(session),
+        members_without_discord=_members_without_discord_member(session),
         has_category=bool(session.discord_category_id),
     )
     return render(request, "admin/discord_teardown.html", context)
