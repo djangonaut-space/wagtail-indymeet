@@ -3,7 +3,7 @@ from datetime import datetime
 from django.test import Client
 from django.test import TestCase
 from django.urls import reverse
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserFactory
 from home.factories import SessionFactory
@@ -11,7 +11,7 @@ from home.factories import SurveyFactory
 from home.factories import UserSurveyResponseFactory
 
 
-@freeze_time("2023-11-16")
+@time_machine.travel("2023-11-16", tick=False)
 class SessionViewTests(TestCase):
     def setUp(self):
         super().setUp()

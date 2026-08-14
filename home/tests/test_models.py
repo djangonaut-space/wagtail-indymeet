@@ -4,7 +4,7 @@ from datetime import timezone as dt_timezone
 
 from django.core import mail
 from django.test import TestCase, override_settings
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import DiscordMemberFactory, UserFactory
 from home.constants import SRID_WGS84
@@ -41,24 +41,24 @@ class SessionTests(TestCase):
         # I created the object in memory
         self.session.refresh_from_db()
 
-        with freeze_time("2023-10-15"):
+        with time_machine.travel("2023-10-15", tick=False):
             self.assertFalse(self.session.is_accepting_applications())
 
-        with freeze_time("2023-10-15 12:00:00"):
+        with time_machine.travel("2023-10-15 12:00:00", tick=False):
             # In UTC, so this is the 16th somewhere in the world
             self.assertTrue(self.session.is_accepting_applications())
 
-        with freeze_time("2023-10-16"):
+        with time_machine.travel("2023-10-16", tick=False):
             self.assertTrue(self.session.is_accepting_applications())
 
-        with freeze_time("2023-11-15"):
+        with time_machine.travel("2023-11-15", tick=False):
             self.assertTrue(self.session.is_accepting_applications())
 
-        with freeze_time("2023-11-16"):
+        with time_machine.travel("2023-11-16", tick=False):
             # In UTC, so is the 15th still somewhere in the world
             self.assertTrue(self.session.is_accepting_applications())
 
-        with freeze_time("2023-11-16 12:00:00"):
+        with time_machine.travel("2023-11-16 12:00:00", tick=False):
             # No longer 15th AoE
             self.assertFalse(self.session.is_accepting_applications())
 
@@ -69,7 +69,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-05-31"):
+        with time_machine.travel("2024-05-31", tick=False):
             self.assertTrue(session.is_current_or_upcoming())
 
     def test_is_current_or_upcoming_during_session(self):
@@ -79,7 +79,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-09-15"):
+        with time_machine.travel("2024-09-15", tick=False):
             self.assertTrue(session.is_current_or_upcoming())
 
     def test_is_current_or_upcoming_on_end_date(self):
@@ -89,7 +89,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-12-31"):
+        with time_machine.travel("2024-12-31", tick=False):
             self.assertTrue(session.is_current_or_upcoming())
 
     def test_is_current_or_upcoming_after_end(self):
@@ -99,7 +99,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2025-01-01"):
+        with time_machine.travel("2025-01-01", tick=False):
             self.assertFalse(session.is_current_or_upcoming())
 
     def test_current_week_before_start(self):
@@ -109,10 +109,10 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-05-24"):  # Before week 1's Monday (2024-05-27)
+        with time_machine.travel("2024-05-24", tick=False):  # Before week 1's Monday (2024-05-27)
             self.assertEqual(session.current_week, 0)
 
-        with freeze_time("2024-05-31"):  # Within week 1, before the start date
+        with time_machine.travel("2024-05-31", tick=False):  # Within week 1, before the start date
             self.assertEqual(session.current_week, 1)
 
     def test_current_week_first_day(self):
@@ -122,7 +122,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-06-01"):
+        with time_machine.travel("2024-06-01", tick=False):
             self.assertEqual(session.current_week, 1)
 
     def test_current_week_first_week(self):
@@ -132,7 +132,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-06-02"):  # Sunday, last day of week 1
+        with time_machine.travel("2024-06-02", tick=False):  # Sunday, last day of week 1
             self.assertEqual(session.current_week, 1)
 
     def test_current_week_second_week(self):
@@ -142,7 +142,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-06-08"):  # 7 days later (week 2)
+        with time_machine.travel("2024-06-08", tick=False):  # 7 days later (week 2)
             self.assertEqual(session.current_week, 2)
 
     def test_current_week_mid_session(self):
@@ -153,7 +153,7 @@ class SessionTests(TestCase):
         )
 
         # 35 days later = 5 weeks + 0 days = week 6
-        with freeze_time("2024-07-06"):
+        with time_machine.travel("2024-07-06", tick=False):
             self.assertEqual(session.current_week, 6)
 
     def test_current_week_last_day(self):
@@ -164,7 +164,7 @@ class SessionTests(TestCase):
         )
 
         # 25 days after week 1's Monday (2024-05-27) = week 4
-        with freeze_time("2024-06-21"):
+        with time_machine.travel("2024-06-21", tick=False):
             self.assertEqual(session.current_week, 4)
 
     def test_current_week_after_end(self):
@@ -174,7 +174,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2025-01-01"):
+        with time_machine.travel("2025-01-01", tick=False):
             self.assertIsNone(session.current_week)
 
     def test_status_upcoming(self):
@@ -184,7 +184,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-05-31"):
+        with time_machine.travel("2024-05-31", tick=False):
             self.assertEqual(session.status, "upcoming")
 
     def test_status_current_on_start_date(self):
@@ -194,7 +194,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-06-01"):
+        with time_machine.travel("2024-06-01", tick=False):
             self.assertEqual(session.status, "current")
 
     def test_status_current_during_session(self):
@@ -204,7 +204,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-09-15"):
+        with time_machine.travel("2024-09-15", tick=False):
             self.assertEqual(session.status, "current")
 
     def test_status_current_on_end_date(self):
@@ -214,7 +214,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2024-12-31"):
+        with time_machine.travel("2024-12-31", tick=False):
             self.assertEqual(session.status, "current")
 
     def test_status_past(self):
@@ -224,7 +224,7 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with freeze_time("2025-01-01"):
+        with time_machine.travel("2025-01-01", tick=False):
             self.assertEqual(session.status, "past")
 
     def test_record_discord_category_persists_id(self):
@@ -427,7 +427,7 @@ class UserSurveyResponseTests(TestCase):
             application_end_date=datetime(2023, 11, 15).date(),
         )
         response = UserSurveyResponseFactory.create(survey=survey, user=self.user)
-        with freeze_time("2023-10-20"):
+        with time_machine.travel("2023-10-20", tick=False):
             self.assertTrue(response.is_editable())
 
     def test_is_not_editable_with_closed_session(self):
@@ -442,7 +442,7 @@ class UserSurveyResponseTests(TestCase):
         )
         response = UserSurveyResponseFactory.create(survey=survey, user=self.user)
         # After application window closes
-        with freeze_time("2023-11-16 12:00:00"):
+        with time_machine.travel("2023-11-16 12:00:00", tick=False):
             self.assertFalse(response.is_editable())
 
     def test_is_not_editable_no_application_session(self):

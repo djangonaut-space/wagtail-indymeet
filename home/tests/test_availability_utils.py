@@ -1,7 +1,7 @@
 """Tests for availability calculation utilities."""
 
 from django.test import TestCase
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from tests.timezones import (
@@ -65,7 +65,7 @@ class AvailabilityUtilsTestCase(TestCase):
         # Empty slots
         self.assertEqual(count_one_hour_blocks([]), 0)
 
-    @freeze_time("2024-06-17")
+    @time_machine.travel("2024-06-17", tick=False)
     def test_get_user_slots_preserves_utc_default_users(self):
         """UTC-default availability remains directly comparable."""
         self.assertEqual(
@@ -73,7 +73,7 @@ class AvailabilityUtilsTestCase(TestCase):
             self.avail1.slots,
         )
 
-    @freeze_time("2024-06-17")
+    @time_machine.travel("2024-06-17", tick=False)
     def test_get_user_slots_converts_mixed_timezone_users(self):
         """Local wall-clock slots in user timezones derive matching UTC slots."""
         ny_user = UserFactory(username="ny_user", email="ny@example.com")
@@ -134,7 +134,7 @@ class AvailabilityUtilsTestCase(TestCase):
             slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
         )
 
-        with freeze_time("2024-06-17"):
+        with time_machine.travel("2024-06-17", tick=False):
             slots, hours = calculate_overlap([ny_user, berlin_user])
 
         self.assertEqual([slot.slot_utc for slot in slots], [37.0, 37.5])
@@ -180,7 +180,7 @@ class AvailabilityUtilsTestCase(TestCase):
         self.assertEqual(ranges, [])
 
         # UTC slots displayed in a named timezone.
-        with freeze_time("2024-06-17"):
+        with time_machine.travel("2024-06-17", tick=False):
             ranges = format_slots_as_ranges(utc_slots(37.0, 37.5), US_EASTERN_TIMEZONE)
         self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
 

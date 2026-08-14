@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home import constants
@@ -26,7 +26,7 @@ from tests.timezones import (
 )
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class TeamDetailViewTests(TestCase):
     """Tests for TeamDetailView."""
 
@@ -317,7 +317,7 @@ class TeamDetailViewTests(TestCase):
         )
         self.assertContains(response, djangonaut2_url)
 
-    @freeze_time("2024-09-01")
+    @time_machine.travel("2024-09-01", tick=False)
     def test_survey_responses_hidden_after_session_ends(self) -> None:
         """Test that 'View Application' link is hidden after session ends."""
         self.client.force_login(self.captain)
@@ -468,7 +468,7 @@ class TeamDetailViewTests(TestCase):
         self.assertContains(response, djangonaut1_url)
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class UserSessionListViewTests(TestCase):
     """Tests for UserSessionListView."""
 
@@ -747,7 +747,7 @@ class UserSessionListViewTests(TestCase):
         self.assertContains(response, navigator_session.title)
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class DjangonautSurveyResponseViewTests(TestCase):
     """Tests for DjangonautSurveyResponseView."""
 
@@ -977,7 +977,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
         # get_object_or_404 returns 404 when user has no membership in session
         self.assertEqual(response.status_code, 404)
 
-    @freeze_time("2024-09-01")
+    @time_machine.travel("2024-09-01", tick=False)
     def test_cannot_view_after_session_ends(self) -> None:
         """Test that survey responses cannot be viewed after session ends."""
         self.client.force_login(self.captain)
