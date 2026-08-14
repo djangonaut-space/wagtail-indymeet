@@ -85,14 +85,14 @@ class RelatedUserPastSessionMemberFilter(PastSessionMemberFilter):
 class CustomUserResource(ModelResource):
     """Export resource for CustomUser, including the profile fields shown in list_display."""
 
-    profile__github_username = Field(
-        column_name="profile__github_username", attribute="profile__github_username"
+    github_username = Field(
+        column_name="github_username", attribute="profile__github_username"
     )
-    profile__discord__username = Field(
-        column_name="profile__discord__username", attribute="profile__discord__username"
+    discord_username = Field(
+        column_name="discord_username", attribute="profile__discord_member__username"
     )
-    profile__discord__nickname = Field(
-        column_name="profile__discord__nickname", attribute="profile__discord__nickname"
+    discord_nickname = Field(
+        column_name="discord_nickname", attribute="profile__discord_member__nickname"
     )
 
     class Meta:
@@ -101,11 +101,11 @@ class CustomUserResource(ModelResource):
 
 
 class UserProfileResource(ModelResource):
-    discord__username = Field(
-        column_name="discord__username", attribute="discord__username"
+    discord_username = Field(
+        column_name="discord_username", attribute="discord_member__username"
     )
-    discord__nickname = Field(
-        column_name="discord__nickname", attribute="discord__nickname"
+    discord_nickname = Field(
+        column_name="discord_nickname", attribute="discord_member__nickname"
     )
 
     class Meta:
@@ -214,8 +214,8 @@ class DiscordMemberAdmin(admin.ModelAdmin):
     """Read-only view of guild members mirrored from Discord."""
 
     list_display = (
-        "nickname",
         "username",
+        "nickname",
         "discord_id",
     )
     search_fields = ("username", "nickname", "discord_id")
