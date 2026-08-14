@@ -1,6 +1,5 @@
 from .announcement import *
 from .blog import *
-from .discord import *
 from .event import *
 from .resource import *
 from .session import *

@@ -9,7 +9,7 @@ unreadable id or pings the wrong people.
 
 from django.test import TestCase
 
-from home.factories import DiscordRoleFactory
+from accounts.factories import DiscordRoleFactory
 from home.integrations.discord.service import resolve_role_mentions
 
 

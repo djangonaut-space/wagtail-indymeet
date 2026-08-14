@@ -1,3 +1,4 @@
+from home.tasks.discord_members import sync_discord_members_hourly
 from home.tasks.discord_session import (
     setup_session_discord,
     teardown_session_discord,
@@ -36,6 +37,7 @@ __all__ = [
     "send_testimonial_notification",
     "send_waitlisted_email",
     "setup_session_discord",
+    "sync_discord_members_hourly",
     "sync_event",
     "teardown_session_discord",
 ]

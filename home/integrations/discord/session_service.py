@@ -29,6 +29,7 @@ import requests
 from django.conf import settings
 from django.utils.text import slugify
 
+from accounts.models import DiscordMember
 from home import constants
 from home.integrations.discord.client import (
     ADD_REACTIONS,
@@ -54,6 +55,7 @@ from home.integrations.discord.client import (
     VOICE_CHANNEL_TYPE,
 )
 from home.integrations.discord.service import discord_client
+from home.services.discord_members import sync_discord_members
 from home.services.discord_roles import sync_discord_roles
 
 logger = logging.getLogger(__name__)
@@ -149,18 +151,22 @@ RESERVED_ROLE_NAMES = frozenset(
     name.casefold() for name in (*STANDING_ROLES, *PAST_DISCORD_ROLES.values())
 )
 
-GUILD_MEMBER_PAGE_SIZE = 1000
-
 
 @dataclass
 class MemberResolution:
     """Maps a session membership to a Discord guild member."""
 
     display_name: str
-    discord_username: str
-    member_id: str | None
+    member: DiscordMember | None
     role: str
-    guild_role_ids: frozenset[str] = frozenset()
+
+    @property
+    def member_id(self) -> str | None:
+        return self.member.discord_id if self.member else None
+
+    @property
+    def guild_role_ids(self) -> frozenset[str]:
+        return frozenset(self.member.role_ids) if self.member else frozenset()
 
 
 @dataclass
@@ -219,42 +225,17 @@ def _ensure_role(name: str, role_map: dict[str, str], roles_created: list[str]) 
 def _resolve_members(memberships) -> dict[int, MemberResolution]:
     """Resolve memberships to guild members, keyed by membership pk.
 
-    One search per distinct configured username; a resolution with
-    ``member_id=None`` means the username was blank or had no exact
-    (case-insensitive) match in the guild, and needs manual follow-up.
+    Uses the profile's linked ``DiscordMember``. ``member_id=None`` means the
+    profile has no link and needs manual follow-up.
     """
-    memberships = list(memberships)
-    guild_members: dict[str, dict | None] = {}
-    for membership in memberships:
-        username = membership.user.profile.discord_username.strip()
-        if not username or username.casefold() in guild_members:
-            continue
-        matches = discord_client.search_guild_members(
-            guild_id=settings.DISCORD_GUILD_ID, query=username
-        )
-        guild_members[username.casefold()] = next(
-            (
-                match
-                for match in matches
-                if match["user"]["username"].casefold() == username.casefold()
-            ),
-            None,
-        )
-
-    resolutions = {}
-    for membership in memberships:
-        username = membership.user.profile.discord_username.strip()
-        guild_member = guild_members.get(username.casefold()) if username else None
-        resolutions[membership.pk] = MemberResolution(
+    return {
+        membership.pk: MemberResolution(
             display_name=membership.user.get_full_name() or membership.user.username,
-            discord_username=username,
-            member_id=guild_member["user"]["id"] if guild_member else None,
+            member=membership.user.profile.discord_member,
             role=membership.role,
-            guild_role_ids=(
-                frozenset(guild_member["roles"]) if guild_member else frozenset()
-            ),
         )
-    return resolutions
+        for membership in memberships
+    }
 
 
 def _role_permission_overwrite(role_id: str, allow: int = VIEW_CHANNEL) -> dict:
@@ -324,22 +305,6 @@ def _bot_role_permission_overwrite() -> dict:
     return _role_permission_overwrite(settings.DISCORD_BOT_ROLE_ID)
 
 
-def _list_all_guild_members() -> list[dict]:
-    """Fetch the full guild member list (paginated; needs GUILD_MEMBERS intent)."""
-    members: list[dict] = []
-    after = None
-    while True:
-        page = discord_client.list_guild_members(
-            guild_id=settings.DISCORD_GUILD_ID,
-            limit=GUILD_MEMBER_PAGE_SIZE,
-            after=after,
-        )
-        members.extend(page)
-        if len(page) < GUILD_MEMBER_PAGE_SIZE:
-            return members
-        after = page[-1]["user"]["id"]
-
-
 def team_channel_name(team) -> str:
     """Discord channel name for a team.
 
@@ -356,9 +321,9 @@ def team_voice_channel_name(team) -> str:
 
 def _membership_mention(membership) -> str:
     """Copy/paste text for one person: ``@username``, or their name without one."""
-    username = membership.user.profile.discord_username.strip()
-    if username:
-        return f"@{username}"
+    member = membership.user.profile.discord_member
+    if member is not None:
+        return member.mention
     return membership.user.get_full_name() or membership.user.username
 
 
@@ -374,7 +339,7 @@ def build_team_messages(session) -> list[TeamMessage]:
         lambda: defaultdict(list)
     )
     for membership in session.session_memberships.accepted().select_related(
-        "user__profile"
+        "user__profile__discord_member"
     ):
         if membership.team_id:
             mentions_by_team[membership.team_id][membership.role].append(
@@ -416,7 +381,7 @@ class _DiscordSessionAction:
         self.teams = list(session.teams.select_related("project"))
         self.memberships = list(
             session.session_memberships.accepted().select_related(
-                "user__profile", "team"
+                "user__profile__discord_member", "team"
             )
         )
         self.role_map: dict[str, str] = {}
@@ -497,6 +462,7 @@ class DiscordSessionSetup(_DiscordSessionAction):
         self.setup_category()
         self.setup_team_channels()
         self.setup_shared_channels()
+        sync_discord_members()
         self.resolve_members()
         self.assign_member_roles()
         self.sync_guild_roles()
@@ -804,8 +770,8 @@ class DiscordSessionTeardown(_DiscordSessionAction):
         self.load_role_map()
         if self.report_missing_bot_role():
             return self.report
+        self.guild_members = sync_discord_members().members
         self.resolve_members()
-        self.guild_members = _list_all_guild_members()
         self.archive_channels()
         self.update_member_roles()
         # Release the guild-wide Discord lock now that channels are archived
