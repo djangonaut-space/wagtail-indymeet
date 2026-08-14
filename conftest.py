@@ -1,5 +1,7 @@
 import pytest
 
+BD_SETTINGS = {"BUTTONDOWN_API_KEY": "test-api-key"}
+
 
 @pytest.fixture(autouse=True)
 def disable_zoom_credentials(settings):
