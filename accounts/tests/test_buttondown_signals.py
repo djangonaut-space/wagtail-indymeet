@@ -1,5 +1,7 @@
 """Tests for the Buttondown signal handler in accounts/receivers.py."""
 
+import json
+
 import responses as rsps
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -76,6 +78,26 @@ class ButtondownSignalTests(TestCase):
         user.profile.save()
 
         self.assertGreaterEqual(len(rsps.calls), 1)
+
+    @override_settings(**BD_SETTINGS)
+    @rsps.activate
+    def test_profile_save_forwards_ip_address_on_new_subscriber(self):
+        user = UserFactory.create()
+        rsps.add(rsps.GET, f"{_BASE_URL}/subscribers/{user.email}", status=404)
+        rsps.add(
+            rsps.POST,
+            f"{_BASE_URL}/subscribers",
+            json={"id": "new-uuid"},
+            status=201,
+        )
+
+        user.profile.email_confirmed = True
+        user.profile._buttondown_ip_address = "203.0.113.5"
+        user.profile.save()
+
+        create_call = next(call for call in rsps.calls if call.request.method == "POST")
+        body = json.loads(create_call.request.body)
+        self.assertEqual(body["ip_address"], "203.0.113.5")
 
     @override_settings(**BD_SETTINGS)
     @rsps.activate

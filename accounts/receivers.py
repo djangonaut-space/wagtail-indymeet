@@ -55,10 +55,15 @@ def sync_buttondown_on_profile_save(
 
     Fires on every save where email_confirmed is True, keeping tags and
     subscription status in sync with any profile changes.
+
+    If the view that triggered this save set `_buttondown_ip_address` on the
+    instance (e.g. account activation), it's forwarded to the sync task so a
+    newly-created Buttondown subscriber records the originating request's IP.
     """
     if not buttondown_enabled() or raw or not instance.email_confirmed:
         return
-    sync_user_to_buttondown.enqueue(instance.user_id)
+    ip_address = getattr(instance, "_buttondown_ip_address", None)
+    sync_user_to_buttondown.enqueue(instance.user_id, ip_address=ip_address)
 
 
 @receiver(
