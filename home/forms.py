@@ -1292,7 +1292,7 @@ class SessionMembershipInlineForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             self.fields["discord_member"].initial = (
-                self.instance.user.profile.discord_member_id
+                self.instance.user.profile.discord_member
             )
 
     def clean_discord_member(self):

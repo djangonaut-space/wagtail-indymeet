@@ -48,7 +48,7 @@ class SessionMembershipInlineFormTests(TestCase):
 
         form = SessionMembershipInlineForm(instance=self.membership)
 
-        self.assertEqual(form.fields["discord_member"].initial, self.member.pk)
+        self.assertEqual(form.fields["discord_member"].initial, self.member)
 
     def test_save_writes_through_to_profile(self):
         form = SessionMembershipInlineForm(
