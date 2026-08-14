@@ -11,11 +11,13 @@ User = get_user_model()
 
 
 @task()
-def sync_user_to_buttondown(user_id: int) -> None:
+def sync_user_to_buttondown(user_id: int, ip_address: str | None = None) -> None:
     """
     Sync a single user's newsletter subscription state to Buttondown.
 
     Safely handles missing credentials, deleted users, and API failures.
+    ip_address, if provided, is forwarded to Buttondown only if a new
+    subscriber ends up being created.
     """
     if not buttondown_enabled():
         logger.warning(
@@ -31,4 +33,4 @@ def sync_user_to_buttondown(user_id: int) -> None:
         logger.warning("User %s no longer exists; skipping Buttondown sync", user_id)
         return
 
-    buttondown_service.sync_user(user)
+    buttondown_service.sync_user(user, ip_address=ip_address)

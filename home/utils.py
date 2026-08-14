@@ -1,4 +1,18 @@
+from django.http import HttpRequest
 from django.utils.safestring import mark_safe
+
+
+def get_client_ip(request: HttpRequest) -> str | None:
+    """
+    Best-effort extraction of the client's IP address from a request.
+
+    Prefers the leftmost address in X-Forwarded-For, since the app runs
+    behind a reverse proxy in production, falling back to REMOTE_ADDR.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
 
 
 def create_star(active_star: int, num_stars: int = 5, id_element: str = "") -> str:

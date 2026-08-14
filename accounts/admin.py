@@ -1,5 +1,3 @@
-import csv
-
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import (
@@ -10,8 +8,11 @@ from django.contrib.auth.models import Group
 from django.contrib import admin as django_admin
 from django.core.management import call_command
 from django.db.models import Exists, OuterRef, QuerySet
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse
+from import_export.admin import ExportMixin
+from import_export.fields import Field
+from import_export.resources import ModelResource
 
 from accounts.models import (
     ButtondownAccount,
@@ -81,32 +82,35 @@ class RelatedUserPastSessionMemberFilter(PastSessionMemberFilter):
     user_field = "user"
 
 
-class ExportCsvMixin:
-    @admin.action(description="Export Selected")
-    def export_as_csv(self, request, queryset):
-        """
-        Export all fields in a model via django admin
-        """
-        ignore_fields = ["password", "token", "bio_image"]
-        meta = self.model._meta
-        field_names = [
-            field.name for field in meta.fields if field.name not in ignore_fields
-        ]
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = f"attachment; filename={meta}.csv"
-        writer = csv.writer(response)
+class CustomUserResource(ModelResource):
+    """Export resource for CustomUser, including the profile fields shown in list_display."""
 
-        writer.writerow(field_names)
-        for obj in queryset:
-            exported = []
-            for field in field_names:
-                if hasattr(obj, field):
-                    val = getattr(obj, field)
-                else:
-                    val = ""
-                exported.append(val)
-            writer.writerow(exported)
-        return response
+    profile__github_username = Field(
+        column_name="profile__github_username", attribute="profile__github_username"
+    )
+    profile__discord__username = Field(
+        column_name="profile__discord__username", attribute="profile__discord__username"
+    )
+    profile__discord__nickname = Field(
+        column_name="profile__discord__nickname", attribute="profile__discord__nickname"
+    )
+
+    class Meta:
+        model = CustomUser
+        exclude = ("password",)
+
+
+class UserProfileResource(ModelResource):
+    discord__username = Field(
+        column_name="discord__username", attribute="discord__username"
+    )
+    discord__nickname = Field(
+        column_name="discord__nickname", attribute="discord__nickname"
+    )
+
+    class Meta:
+        model = UserProfile
+        exclude = ("bio_image",)
 
 
 class LinksInline(admin.StackedInline):
@@ -115,9 +119,10 @@ class LinksInline(admin.StackedInline):
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
+class CustomUserAdmin(ExportMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
-    actions = ["export_as_csv", "compare_availability_action"]
+    resource_class = CustomUserResource
+    actions = ["compare_availability_action"]
     search_fields = (
         "first_name",
         "last_name",
@@ -159,13 +164,17 @@ class CustomUserAdmin(ExportCsvMixin, DescriptiveSearchMixin, BaseUserAdmin):
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(ExportCsvMixin, DescriptiveSearchMixin, admin.ModelAdmin):
+class UserProfileAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdmin):
     inlines = (LinksInline,)
     model = UserProfile
-    actions = ["export_as_csv"]
+    resource_class = UserProfileResource
     list_display = ("user", "github_username", "discord_member")
     list_select_related = ("user", "discord_member")
-    autocomplete_fields = ("discord_member",)
+    autocomplete_fields = (
+        "discord_member",
+        "user",
+    )
+    actions = ["export_as_csv"]
     search_fields = (
         "user__username",
         "user__email",

@@ -29,6 +29,7 @@ from django.views.generic.edit import UpdateView
 from home import constants
 from home.email import send
 from home.models import Testimonial
+from home.utils import get_client_ip
 
 from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
@@ -77,6 +78,7 @@ class ActivateAccountView(View):
             user = None
         if user is not None and account_activation_token.check_token(user, token):
             user.profile.email_confirmed = True
+            user.profile._buttondown_ip_address = get_client_ip(request)
             user.profile.save()
             login(request, user)
             return redirect("profile")

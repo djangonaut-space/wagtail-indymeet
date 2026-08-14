@@ -94,7 +94,7 @@ class ButtondownService:
     def __init__(self) -> None:
         self.client = ButtondownClient()
 
-    def sync_user(self, user) -> None:
+    def sync_user(self, user, ip_address: str | None = None) -> None:
         """
         Sync a single user to Buttondown.
 
@@ -102,6 +102,9 @@ class ButtondownService:
         known. If not (new user or account without an ID), it looks up the subscriber
         by email and links them, or creates a new one. If the ID is known, it updates
         tags or subscription status.
+
+        ip_address is only used if a new subscriber ends up being created, matching
+        Buttondown's use of the field for the originating subscription request.
         """
         try:
             bd_account = user.buttondown_account
@@ -132,14 +135,19 @@ class ButtondownService:
                         raise
 
             if not subscriber_id:
-                self._resolve_and_link(user, bd_account)
+                self._resolve_and_link(user, bd_account, ip_address=ip_address)
                 return
 
             bd_account.save()  # Touch last_updated via auto_now
         except Exception:
             logger.exception("Failed to sync user %s to Buttondown", user.pk)
 
-    def _resolve_and_link(self, user, bd_account: "ButtondownAccount | None") -> None:
+    def _resolve_and_link(
+        self,
+        user,
+        bd_account: "ButtondownAccount | None",
+        ip_address: str | None = None,
+    ) -> None:
         """
         Resolve a subscriber ID by looking up the user's email, then link or create.
 
@@ -162,7 +170,9 @@ class ButtondownService:
         else:
             tags = get_tags_for_user(user)
             tags.insert(0, "website")
-            data = self.client.create_subscriber(user.email, tags)
+            data = self.client.create_subscriber(
+                user.email, tags, ip_address=ip_address
+            )
             subscriber_id = data["id"]
             ButtondownAccount.objects.update_or_create(
                 user=user, defaults={"buttondown_identifier": subscriber_id}
