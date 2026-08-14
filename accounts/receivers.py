@@ -5,6 +5,7 @@ and for syncing users to the Buttondown newsletter.
 
 from home import constants
 from django.contrib.auth.models import Group
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
@@ -63,7 +64,9 @@ def sync_buttondown_on_profile_save(
     if not buttondown_enabled() or raw or not instance.email_confirmed:
         return
     ip_address = getattr(instance, "_buttondown_ip_address", None)
-    sync_user_to_buttondown.enqueue(instance.user_id, ip_address=ip_address)
+    transaction.on_commit(
+        lambda: sync_user_to_buttondown.enqueue(instance.user_id, ip_address=ip_address)
+    )
 
 
 @receiver(

@@ -60,6 +60,6 @@ Ongoing syncs are handled automatically on every user profile save.
 
 ## IP Address on Subscription
 
-Buttondown's subscriber-creation endpoint accepts an `ip_address` field, used for location detection and legitimacy validation. Since most syncs are triggered by `post_save` signals with no HTTP request in scope, the IP is only captured where a request is actually available: `ActivateAccountView` (`accounts/views.py`), the point at which most users first get synced to Buttondown.
+Buttondown's subscriber-creation endpoint accepts an `ip_address` field, used for location detection and legitimacy validation. When a user confirms their account (activates their account), the view stashes the IP address as a transient, non-persisted attribute (`_buttondown_ip_address`) on the `UserProfile` instance before saving. The `post_save` signal handle queues a task to sync the buttondown subscription.
 
 The flow: the view reads the client IP via `get_client_ip()` (`home/utils.py`) and stashes it as a transient, non-persisted attribute (`_buttondown_ip_address`) on the `UserProfile` instance before saving. The `post_save` signal handler (`accounts/receivers.py`) reads that attribute off the instance and forwards it through `sync_user_to_buttondown.enqueue()` -> `ButtondownService.sync_user()` -> `ButtondownClient.create_subscriber()`. It's only ever sent when a *new* Buttondown subscriber is being created — existing subscribers are updated via PATCH, which doesn't use this field. The IP is never persisted to our own database.

@@ -10,8 +10,8 @@ from django.utils.http import urlsafe_base64_encode
 
 from accounts.factories import UserFactory
 from accounts.tokens import account_activation_token
+from conftest import BD_SETTINGS
 
-BD_SETTINGS = {"BUTTONDOWN_API_KEY": "test-api-key"}
 _BASE_URL = "https://api.buttondown.email/v1"
 
 
@@ -82,7 +82,8 @@ class ActivateViewTests(TestCase):
             },
         )
 
-        self.client.get(activate_url, REMOTE_ADDR="203.0.113.5")
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.get(activate_url, REMOTE_ADDR="203.0.113.5")
 
         create_call = next(call for call in rsps.calls if call.request.method == "POST")
         body = json.loads(create_call.request.body)

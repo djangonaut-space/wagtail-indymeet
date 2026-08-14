@@ -38,7 +38,8 @@ class ButtondownSignalTests(TestCase):
 
         user.profile.email_confirmed = True
         user.profile.bio = "updated"
-        user.profile.save()
+        with self.captureOnCommitCallbacks(execute=True):
+            user.profile.save()
 
         self.assertEqual(len(rsps.calls), 1)
         self.assertEqual(rsps.calls[0].request.method, "PATCH")
@@ -57,7 +58,8 @@ class ButtondownSignalTests(TestCase):
 
         user.profile.email_confirmed = True
         user.profile.bio = "updated"
-        user.profile.save()
+        with self.captureOnCommitCallbacks(execute=True):
+            user.profile.save()
 
         self.assertGreaterEqual(len(rsps.calls), 1)
 
@@ -75,7 +77,8 @@ class ButtondownSignalTests(TestCase):
 
         user.profile.email_confirmed = True
         user.profile.receiving_newsletter = True
-        user.profile.save()
+        with self.captureOnCommitCallbacks(execute=True):
+            user.profile.save()
 
         self.assertGreaterEqual(len(rsps.calls), 1)
 
@@ -93,7 +96,8 @@ class ButtondownSignalTests(TestCase):
 
         user.profile.email_confirmed = True
         user.profile._buttondown_ip_address = "203.0.113.5"
-        user.profile.save()
+        with self.captureOnCommitCallbacks(execute=True):
+            user.profile.save()
 
         create_call = next(call for call in rsps.calls if call.request.method == "POST")
         body = json.loads(create_call.request.body)
