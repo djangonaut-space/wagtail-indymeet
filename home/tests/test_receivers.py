@@ -1,11 +1,13 @@
-from home import constants
+from datetime import timedelta
+from io import StringIO
+
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
-from datetime import timedelta
 
 from accounts.factories import UserFactory
+from home import constants
 from home.factories import SessionFactory, SessionMembershipFactory
 from home.models.session import SessionMembership
 
@@ -14,7 +16,7 @@ class OrganizerReceiversHandlersTestCase(TestCase):
     """Tests for receivers that manage organizer group membership."""
 
     def setUp(self):
-        call_command("setup_session_organizers_group")
+        call_command("setup_session_organizers_group", stdout=StringIO())
         self.group = Group.objects.get(name="Session Organizers")
         self.today = timezone.now().date()
         self.start_date = self.today - timedelta(days=10)
