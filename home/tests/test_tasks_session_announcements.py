@@ -12,7 +12,7 @@ from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import DiscordRoleFactory, UserFactory
 from home import constants
@@ -318,7 +318,7 @@ class WeeklyCadenceTests(TestCase):
         )
 
         # Tuesday 2026-01-20, six days before Monday 2026-01-26.
-        with freeze_time("2026-01-20 15:00:00"):
+        with time_machine.travel("2026-01-20 15:00:00", tick=False):
             schedule_approval_emails.call()
 
         self.assertEqual(len(mail.outbox), 1)
@@ -336,11 +336,11 @@ class WeeklyCadenceTests(TestCase):
         )
 
         # The Sunday before: nothing is due yet.
-        with freeze_time("2026-01-25 15:00:00"):
+        with time_machine.travel("2026-01-25 15:00:00", tick=False):
             schedule_pending_announcements.call()
         self.assertEqual(len(rsps.calls), 0)
 
-        with freeze_time("2026-01-26 15:00:00"):
+        with time_machine.travel("2026-01-26 15:00:00", tick=False):
             schedule_pending_announcements.call()
 
         self.assertEqual(len(rsps.calls), 1)

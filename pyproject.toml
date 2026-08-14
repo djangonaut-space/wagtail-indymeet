@@ -45,7 +45,6 @@ puput = { git = "https://github.com/hoheinzollern/puput", rev = "cd874e9a207d88c
 
 [dependency-groups]
 test = [
-    "freezegun",
     "playwright",
     "pytest",
     "pytest-cov",

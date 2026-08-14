@@ -4,7 +4,7 @@ from datetime import timezone as dt_timezone
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserFactory
 from home import constants
@@ -13,7 +13,7 @@ from home.models import SessionMembership
 from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE
 
 
-@freeze_time("2012-01-14")
+@time_machine.travel("2012-01-14", tick=False)
 class EventViewTests(TestCase):
     def setUp(self):
         self.client = Client()
