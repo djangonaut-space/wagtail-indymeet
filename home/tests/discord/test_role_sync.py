@@ -3,6 +3,8 @@ Tests for the guild role mirror (home.services.discord_roles) against the
 stubbed Discord API in ``home.tests.discord.stubs``.
 """
 
+from io import StringIO
+
 import responses as rsps
 from django.core.management import CommandError, call_command
 from django.test import TestCase
@@ -110,7 +112,7 @@ class SyncDiscordRolesCommandTests(TestCase):
     def test_syncs(self):
         stub_discord_api(roles=[{"id": "r-dj", "name": "Djangonauts"}])
 
-        call_command("sync_discord_roles")
+        call_command("sync_discord_roles", stdout=StringIO())
 
         self.assertEqual(DiscordRole.objects.count(), 1)
 

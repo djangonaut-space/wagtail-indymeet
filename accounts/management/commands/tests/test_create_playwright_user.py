@@ -1,4 +1,5 @@
 import os
+from io import StringIO
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -11,7 +12,7 @@ User = get_user_model()
 def test_user_created():
     os.environ["PLAYWRIGHT_TEST_USERNAME"] = "test123"
     os.environ["PLAYWRIGHT_TEST_PASSWORD"] = "test123"
-    management.call_command("create_playwright_user")
+    management.call_command("create_playwright_user", stdout=StringIO())
     user = User.objects.get(username="test123")
     assert user.check_password("test123")
     assert list(user.groups.values_list("name", flat=True)) == ["Editors"]
