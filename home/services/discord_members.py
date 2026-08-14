@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 
 from django.conf import settings
 
+from accounts.models import DiscordMember
 from home.integrations.discord.service import discord_client
-from home.models import DiscordMember
 
 GUILD_MEMBER_PAGE_SIZE = 1000
 

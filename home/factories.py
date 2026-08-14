@@ -11,8 +11,6 @@ from accounts.factories import UserFactory
 from home import constants
 from home.models import (
     Announcement,
-    DiscordMember,
-    DiscordRole,
     Event,
     Project,
     ProjectPreference,
@@ -187,22 +185,6 @@ class AnnouncementFactory(factory.django.DjangoModelFactory):
     week_number = None
     message = factory.Sequence(lambda n: "Announcement message %d" % n)
     approval_note = ""
-
-
-class DiscordRoleFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = DiscordRole
-
-    name = factory.Sequence(lambda n: "Role %d" % n)
-    discord_id = factory.Sequence(lambda n: "role-id-%d" % n)
-
-
-class DiscordMemberFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = DiscordMember
-
-    discord_id = factory.Sequence(lambda n: "member-id-%d" % n)
-    username = factory.Sequence(lambda n: "discorduser%d" % n)
 
 
 class TestimonialFactory(factory.django.DjangoModelFactory):

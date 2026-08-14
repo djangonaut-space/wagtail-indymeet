@@ -13,7 +13,6 @@ from django.utils import timezone
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home.factories import (
     AnnouncementFactory,
-    DiscordMemberFactory,
     EventFactory,
     SessionFactory,
     SessionMembershipFactory,
@@ -29,7 +28,6 @@ from home.models import (
     UserSurveyResponse,
     Waitlist,
 )
-from home.models.discord import DiscordMember
 from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE, US_EASTERN_TIMEZONE
 
 
@@ -1235,32 +1233,4 @@ class AnnouncementQuerySetTestCase(TestCase):
 
         self.assertCountEqual(
             Announcement.objects.awaiting_approval(), [within_window, past_post_date]
-        )
-
-
-class DiscordMemberQuerySetTestCase(TestCase):
-    """Test DiscordMemberQuerySet methods."""
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.unlinked = DiscordMemberFactory.create()
-        cls.linked = DiscordMemberFactory.create()
-        cls.user = UserFactory.create()
-        cls.user.profile.discord_member = cls.linked
-        cls.user.profile.save(update_fields=["discord_member"])
-
-    def test_unassigned_excludes_linked_members(self):
-        self.assertCountEqual(DiscordMember.objects.unassigned(), [self.unlinked])
-
-    def test_unassigned_or_for_user_includes_own_member(self):
-        self.assertCountEqual(
-            DiscordMember.objects.unassigned_or_for_user(self.user),
-            [self.unlinked, self.linked],
-        )
-
-    def test_unassigned_or_for_user_excludes_other_users_member(self):
-        other_user = UserFactory.create()
-
-        self.assertCountEqual(
-            DiscordMember.objects.unassigned_or_for_user(other_user), [self.unlinked]
         )

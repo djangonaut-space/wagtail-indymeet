@@ -19,10 +19,10 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import CustomUser
+from accounts.models import DiscordMember
 from accounts.models import UserProfile
 from home import constants
 from home.models import (
-    DiscordMember,
     Question,
     Team,
     SessionMembership,

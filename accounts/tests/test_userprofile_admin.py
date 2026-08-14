@@ -5,8 +5,7 @@ Tests for UserProfile admin Discord member linking.
 from django.test import TestCase
 from django.urls import reverse
 
-from accounts.factories import UserFactory
-from home.factories import DiscordMemberFactory
+from accounts.factories import DiscordMemberFactory, UserFactory
 
 
 class UserProfileChangelistTests(TestCase):

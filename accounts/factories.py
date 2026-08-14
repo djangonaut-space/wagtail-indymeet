@@ -2,7 +2,13 @@ import factory
 from django.conf import settings
 from django.db.models.signals import post_save
 
-from accounts.models import CustomUser, UserAvailability, UserProfile
+from accounts.models import (
+    CustomUser,
+    DiscordMember,
+    DiscordRole,
+    UserAvailability,
+    UserProfile,
+)
 
 
 @factory.django.mute_signals(post_save)
@@ -33,3 +39,19 @@ class UserAvailabilityFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     slots = []
     slots_timezone = factory.LazyFunction(lambda: settings.TIME_ZONE)
+
+
+class DiscordRoleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = DiscordRole
+
+    name = factory.Sequence(lambda n: "Role %d" % n)
+    discord_id = factory.Sequence(lambda n: "role-id-%d" % n)
+
+
+class DiscordMemberFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = DiscordMember
+
+    discord_id = factory.Sequence(lambda n: "member-id-%d" % n)
+    username = factory.Sequence(lambda n: "discorduser%d" % n)

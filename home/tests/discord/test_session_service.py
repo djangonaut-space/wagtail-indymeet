@@ -12,10 +12,10 @@ step reads and call the step directly.
 import responses as rsps
 from django.test import TestCase
 
-from accounts.factories import UserFactory
+from accounts.factories import DiscordMemberFactory, UserFactory
+from accounts.models import DiscordMember, DiscordRole
 from home import constants
 from home.factories import (
-    DiscordMemberFactory,
     OrganizerFactory,
     SessionFactory,
     SessionMembershipFactory,
@@ -39,7 +39,6 @@ from home.integrations.discord.session_service import (
     MemberResolution,
     build_team_messages,
 )
-from home.models import DiscordMember, DiscordRole
 from home.tests.discord.stubs import (
     BOT_ROLE_ID,
     STANDING_GUILD_ROLES,

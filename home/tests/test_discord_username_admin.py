@@ -5,10 +5,9 @@ form on the Session admin page (write-through to UserProfile).
 
 from django.test import TestCase
 
-from accounts.factories import UserFactory
+from accounts.factories import DiscordMemberFactory, UserFactory
 from home import constants
 from home.factories import (
-    DiscordMemberFactory,
     SessionFactory,
     SessionMembershipFactory,
     TeamFactory,

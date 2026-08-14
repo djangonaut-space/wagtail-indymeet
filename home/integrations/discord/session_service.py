@@ -29,6 +29,7 @@ import requests
 from django.conf import settings
 from django.utils.text import slugify
 
+from accounts.models import DiscordMember
 from home import constants
 from home.integrations.discord.client import (
     ADD_REACTIONS,
@@ -54,7 +55,6 @@ from home.integrations.discord.client import (
     VOICE_CHANNEL_TYPE,
 )
 from home.integrations.discord.service import discord_client
-from home.models import DiscordMember
 from home.services.discord_members import sync_discord_members
 from home.services.discord_roles import sync_discord_roles
 

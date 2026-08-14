@@ -7,8 +7,8 @@ import responses as rsps
 from django.core.management import CommandError, call_command
 from django.test import TestCase
 
-from home.factories import DiscordRoleFactory
-from home.models import DiscordRole
+from accounts.factories import DiscordRoleFactory
+from accounts.models import DiscordRole
 from home.services.discord_roles import sync_discord_roles
 from home.tests.discord.stubs import stub_discord_api
 

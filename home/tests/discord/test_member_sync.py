@@ -4,8 +4,8 @@ import responses as rsps
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
-from home.factories import DiscordMemberFactory
-from home.models import DiscordMember
+from accounts.factories import DiscordMemberFactory
+from accounts.models import DiscordMember
 from home.services.discord_members import sync_discord_members
 from home.tests.discord.stubs import GUILD_ID, member, stub_discord_api
 

@@ -6,11 +6,10 @@ from django.core import mail
 from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
-from accounts.factories import UserFactory
+from accounts.factories import DiscordMemberFactory, UserFactory
 from home.constants import SRID_WGS84
 from home.factories import (
     AnnouncementFactory,
-    DiscordMemberFactory,
     EventFactory,
     ProjectFactory,
     QuestionFactory,

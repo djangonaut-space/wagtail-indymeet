@@ -35,8 +35,6 @@ from .forms import (
 )
 from .models import (
     Announcement,
-    DiscordMember,
-    DiscordRole,
     Event,
     Project,
     Question,
@@ -1008,46 +1006,6 @@ class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "or belong to a session without an active Discord."
             )
         self.message_user(request, message, messages.SUCCESS)
-
-
-@admin.register(DiscordRole)
-class DiscordRoleAdmin(admin.ModelAdmin):
-    """Read-only view of the roles an announcement can ping.
-
-    The rows are a mirror of the Discord server, rewritten wholesale by the
-    Discord session setup action and the ``sync_discord_roles`` command, so
-    editing them here would only be undone on the next sync.
-    """
-
-    list_display = ("name", "discord_id", "updated_at")
-    search_fields = ("name",)
-    readonly_fields = ("name", "discord_id", "created_at", "updated_at")
-
-    def has_add_permission(self, request) -> bool:
-        return False
-
-
-@admin.register(DiscordMember)
-class DiscordMemberAdmin(admin.ModelAdmin):
-    """Read-only view of guild members mirrored from Discord."""
-
-    list_display = (
-        "nickname",
-        "username",
-        "discord_id",
-    )
-    search_fields = ("username", "nickname", "discord_id")
-    readonly_fields = (
-        "discord_id",
-        "username",
-        "nickname",
-        "role_ids",
-        "created_at",
-        "updated_at",
-    )
-
-    def has_add_permission(self, request) -> bool:
-        return False
 
 
 @admin.register(Team)
