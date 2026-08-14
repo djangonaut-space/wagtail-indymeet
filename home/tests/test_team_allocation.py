@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home import constants
@@ -184,7 +184,7 @@ class TeamSlotTestCase(TestCase):
 
         self.assertFalse(self.team_slot._has_sufficient_navigator_overlap(candidate2))
 
-    @freeze_time("2024-06-17")
+    @time_machine.travel("2024-06-17", tick=False)
     def test_navigator_overlap_uses_user_timezones(self):
         """Navigator overlap compares derived UTC slots across timezones."""
         navigator = UserFactory(username="timezone_nav")
@@ -299,7 +299,7 @@ class TeamSlotTestCase(TestCase):
 
         self.assertFalse(self.team_slot._has_sufficient_captain_overlap(candidate2))
 
-    @freeze_time("2024-06-17")
+    @time_machine.travel("2024-06-17", tick=False)
     def test_captain_overlap_uses_user_timezones(self):
         """Captain overlap compares derived UTC slots across timezones."""
         captain = UserFactory(username="timezone_captain")

@@ -7,7 +7,7 @@ import factory
 from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home import constants
@@ -122,7 +122,7 @@ class BuildGridDataTests(TestCase):
         cell = rows[0].cells[0]
         self.assertEqual(cell.slot.utc, Slot("UTC", 0.0).utc)
 
-    @freeze_time("2024-06-17")
+    @time_machine.travel("2024-06-17", tick=False)
     def test_utc_datetime_accounts_for_viewer_timezone(self) -> None:
         """utc_datetime converts back to UTC for the viewer timezone."""
         rows_timezone, _ = build_grid_data([], {}, US_EASTERN_TIMEZONE)
@@ -132,7 +132,7 @@ class BuildGridDataTests(TestCase):
         # Display time should still show local time.
         self.assertEqual(rows_timezone[0].cells[0].slot.format_local, "Sun 12:00 AM")
 
-    @freeze_time("2024-06-17")
+    @time_machine.travel("2024-06-17", tick=False)
     def test_grid_allows_quarter_hour_viewer_timezone_without_matching_cells(
         self,
     ) -> None:
@@ -150,7 +150,7 @@ class BuildGridDataTests(TestCase):
         )
         self.assertEqual(cell.slot.format_local, "Sun 12:00 AM")
 
-    @freeze_time("2024-06-17")
+    @time_machine.travel("2024-06-17", tick=False)
     def test_mixed_timezone_users_overlap_in_viewer_grid(self) -> None:
         """Users in different slot timezones overlap by the instant they share."""
         ny_user = UserFactory.create()
@@ -174,7 +174,7 @@ class BuildGridDataTests(TestCase):
         )
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class CompareAvailabilityTests(TestCase):
     """Tests for compare_availability."""
 
@@ -302,7 +302,7 @@ class CompareAvailabilityTests(TestCase):
         )
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class CompareAvailabilityGridTests(TestCase):
     """Tests for the compare_availability_grid view."""
 
@@ -425,7 +425,7 @@ class CompareAvailabilityGridTests(TestCase):
         self.assertEqual(slot_availabilities["1-15"], [])
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class CompareAvailabilityFormTests(TestCase):
     """Tests for CompareAvailabilityForm new logic."""
 
