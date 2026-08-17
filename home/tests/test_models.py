@@ -109,10 +109,14 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with time_machine.travel("2024-05-24", tick=False):  # Before week 1's Monday (2024-05-27)
+        with time_machine.travel(
+            "2024-05-24", tick=False
+        ):  # Before week 1's Monday (2024-05-27)
             self.assertEqual(session.current_week, 0)
 
-        with time_machine.travel("2024-05-31", tick=False):  # Within week 1, before the start date
+        with time_machine.travel(
+            "2024-05-31", tick=False
+        ):  # Within week 1, before the start date
             self.assertEqual(session.current_week, 1)
 
     def test_current_week_first_day(self):
@@ -132,7 +136,9 @@ class SessionTests(TestCase):
             end_date=datetime(2024, 12, 31).date(),
         )
 
-        with time_machine.travel("2024-06-02", tick=False):  # Sunday, last day of week 1
+        with time_machine.travel(
+            "2024-06-02", tick=False
+        ):  # Sunday, last day of week 1
             self.assertEqual(session.current_week, 1)
 
     def test_current_week_second_week(self):
