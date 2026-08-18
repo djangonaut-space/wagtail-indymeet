@@ -74,12 +74,14 @@ jobs:
       - name: Build test database template
         env:
           TEST_DB_TEMPLATE: template_wagtail_indymeet_test
-        run: uv run python manage.py build_test_db_template
+        run: |
+          uv run coverage run manage.py build_test_db_template
+          uv run coverage combine
 
       - name: Run tests
         env:
           TEST_DB_TEMPLATE: template_wagtail_indymeet_test
-        run: uv run pytest -n auto --dist loadscope --cov --cov-branch --cov-report=xml --cov-report=term
+        run: uv run pytest -n auto --dist loadscope --cov --cov-append --cov-branch --cov-report=xml --cov-report=term
 
       - name: Run playwright tests
         env:
