@@ -10,11 +10,14 @@ from django.urls import reverse
 
 from accounts.forms import UserAvailabilityForm
 from accounts.models import UserAvailability
+from accounts.timezones import utc_offset_label
 from home.slots import Slot
 from tests.timezones import (
     CENTRAL_EUROPEAN_TIMEZONE,
     DEFAULT_TIMEZONE,
     US_EASTERN_TIMEZONE,
+    UTC_MINUS_FIVE,
+    UTC_PLUS_ZERO,
 )
 
 User = get_user_model()
@@ -128,6 +131,9 @@ class TestAvailabilityView:
         assert response.status_code == 200
         assert "availability-grid" in content
         assert "id_slots_timezone" in content
+        assert "UTC+" in content or "UTC-" in content
+        assert "America/New_York" not in content
+        assert "US/Eastern" not in content
         assert response.context["default_availability_timezone"] == DEFAULT_TIMEZONE
 
     def test_availability_view_creates_object(self, client, user):
@@ -149,7 +155,7 @@ class TestAvailabilityView:
 
         content = response.content.decode()
         assert str(availability.slots) in content
-        assert f'value="{US_EASTERN_TIMEZONE}" selected' in content
+        assert f'value="{utc_offset_label(US_EASTERN_TIMEZONE)}" selected' in content
 
     def test_availability_update(self, client, user):
         """Test updating availability via POST."""
@@ -163,7 +169,7 @@ class TestAvailabilityView:
             url,
             {
                 "slots": json.dumps(test_slots),
-                "slots_timezone": US_EASTERN_TIMEZONE,
+                "slots_timezone": UTC_MINUS_FIVE,
             },
         )
 
@@ -172,7 +178,7 @@ class TestAvailabilityView:
         # Check that the data was saved as local slots in the selected timezone
         availability = UserAvailability.objects.get(user=user)
         assert availability.slots == test_slots
-        assert availability.slots_timezone == US_EASTERN_TIMEZONE
+        assert availability.slots_timezone == UTC_MINUS_FIVE
 
     def test_availability_clear_all(self, client, user_with_availability):
         """Test clearing all availability."""
@@ -184,7 +190,7 @@ class TestAvailabilityView:
             url,
             {
                 "slots": json.dumps([]),
-                "slots_timezone": availability.slots_timezone,
+                "slots_timezone": utc_offset_label(availability.slots_timezone),
             },
         )
 
@@ -192,7 +198,7 @@ class TestAvailabilityView:
 
         availability.refresh_from_db()
         assert availability.slots == []
-        assert availability.slots_timezone == US_EASTERN_TIMEZONE
+        assert availability.slots_timezone == utc_offset_label(US_EASTERN_TIMEZONE)
 
 
 class TestAvailabilityForm(TestCase):
@@ -213,7 +219,7 @@ class TestAvailabilityForm(TestCase):
         form = UserAvailabilityForm(
             data={
                 "slots": [24.0, 48.0, 72.0],  # Mon, Tue, Wed at 00:00
-                "slots_timezone": DEFAULT_TIMEZONE,
+                "slots_timezone": UTC_PLUS_ZERO,
             },
             instance=availability,
         )
@@ -224,7 +230,7 @@ class TestAvailabilityForm(TestCase):
         """Test form validation with empty slots."""
         availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(
-            data={"slots": [], "slots_timezone": DEFAULT_TIMEZONE},
+            data={"slots": [], "slots_timezone": UTC_PLUS_ZERO},
             instance=availability,
         )
 
@@ -240,7 +246,7 @@ class TestAvailabilityForm(TestCase):
             60.0,
         ]  # Mon 00:00, Mon 12:00, Tue 00:00, Tue 12:00
         form = UserAvailabilityForm(
-            data={"slots": test_slots, "slots_timezone": CENTRAL_EUROPEAN_TIMEZONE},
+            data={"slots": test_slots, "slots_timezone": UTC_MINUS_FIVE},
             instance=availability,
         )
 
@@ -248,25 +254,38 @@ class TestAvailabilityForm(TestCase):
         saved_availability = form.save()
 
         assert saved_availability.slots == test_slots
-        assert saved_availability.slots_timezone == CENTRAL_EUROPEAN_TIMEZONE
+        assert saved_availability.slots_timezone == UTC_MINUS_FIVE
 
-    def test_form_timezone_choices_include_iana_zones(self):
-        """Test that the timezone selector offers IANA timezone names."""
+    def test_form_timezone_choices_are_utc_offsets(self):
+        """The timezone selector offers UTC offsets, not city names."""
         availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(instance=availability)
         timezone_values = {
-            value for value, label in form.fields["slots_timezone"].choices
+            value for value, _label in form.fields["slots_timezone"].choices
         }
 
-        assert DEFAULT_TIMEZONE in timezone_values
-        assert US_EASTERN_TIMEZONE in timezone_values
-        assert CENTRAL_EUROPEAN_TIMEZONE in timezone_values
+        assert UTC_PLUS_ZERO in timezone_values
+        assert UTC_MINUS_FIVE in timezone_values
+        assert US_EASTERN_TIMEZONE not in timezone_values
+        assert CENTRAL_EUROPEAN_TIMEZONE not in timezone_values
+        assert "US/Eastern" not in timezone_values
 
     def test_form_rejects_invalid_timezone(self):
         """Test that availability cannot be saved with an unknown timezone."""
         availability = UserAvailability.objects.create(user=self.user)
         form = UserAvailabilityForm(
             data={"slots": [24.0], "slots_timezone": "Not/AZone"},
+            instance=availability,
+        )
+
+        assert not form.is_valid()
+        assert "slots_timezone" in form.errors
+
+    def test_form_rejects_legacy_us_timezone(self):
+        """Legacy US/* aliases are not offered and must not validate."""
+        availability = UserAvailability.objects.create(user=self.user)
+        form = UserAvailabilityForm(
+            data={"slots": [24.0], "slots_timezone": "US/Eastern"},
             instance=availability,
         )
 
@@ -306,10 +325,10 @@ class TestAvailabilityForm(TestCase):
             Slot("UTC", 36.0).slot_as_tz(US_EASTERN_TIMEZONE),
         ]
         assert form.instance.slots == expected_slots
-        assert form.instance.slots_timezone == US_EASTERN_TIMEZONE
+        assert form.instance.slots_timezone == utc_offset_label(US_EASTERN_TIMEZONE)
         # form.initial is derived from the instance, so the rendered
         # select reflects the conversion too.
-        assert form.initial["slots_timezone"] == US_EASTERN_TIMEZONE
+        assert form.initial["slots_timezone"] == utc_offset_label(US_EASTERN_TIMEZONE)
 
     def test_skips_conversion_when_timezone_customized(self):
         """Once a user has explicitly saved a non-UTC timezone, it must
@@ -325,7 +344,9 @@ class TestAvailabilityForm(TestCase):
         form = UserAvailabilityForm(instance=availability)
 
         assert form.instance.slots == [33.0]
-        assert form.instance.slots_timezone == CENTRAL_EUROPEAN_TIMEZONE
+        assert form.instance.slots_timezone == utc_offset_label(
+            CENTRAL_EUROPEAN_TIMEZONE
+        )
 
 
 @pytest.mark.django_db
@@ -438,7 +459,7 @@ class TestUserAvailabilityFormEdgeCases:
         form = UserAvailabilityForm(
             data={
                 "slots": [24.0, "invalid", 48.0],
-                "slots_timezone": DEFAULT_TIMEZONE,
+                "slots_timezone": UTC_PLUS_ZERO,
             },
             instance=availability,
         )
@@ -451,7 +472,7 @@ class TestUserAvailabilityFormEdgeCases:
         """Test form with None value for slots."""
         availability = UserAvailability.objects.create(user=user)
         form = UserAvailabilityForm(
-            data={"slots_timezone": DEFAULT_TIMEZONE},  # No slots provided
+            data={"slots_timezone": UTC_PLUS_ZERO},  # No slots provided
             instance=availability,
         )
 
@@ -466,7 +487,7 @@ class TestUserAvailabilityFormEdgeCases:
         )
         # JSONField converts empty list to empty list (valid value)
         form = UserAvailabilityForm(
-            data={"slots": json.dumps([]), "slots_timezone": DEFAULT_TIMEZONE},
+            data={"slots": json.dumps([]), "slots_timezone": UTC_PLUS_ZERO},
             instance=availability,
         )
 
@@ -489,7 +510,7 @@ class TestUpdateAvailabilityViewEdgeCases:
         # First update
         response = client.post(
             url,
-            {"slots": json.dumps([24.0, 48.0]), "slots_timezone": DEFAULT_TIMEZONE},
+            {"slots": json.dumps([24.0, 48.0]), "slots_timezone": UTC_PLUS_ZERO},
         )
         assert response.status_code == 302
 
@@ -504,7 +525,7 @@ class TestUpdateAvailabilityViewEdgeCases:
             url,
             {
                 "slots": json.dumps([24.0, 48.0, 72.0]),
-                "slots_timezone": DEFAULT_TIMEZONE,
+                "slots_timezone": UTC_PLUS_ZERO,
             },
         )
         assert response.status_code == 302
@@ -536,7 +557,7 @@ class TestUpdateAvailabilityViewEdgeCases:
 
         response = client.post(
             url,
-            {"slots": json.dumps([24.0]), "slots_timezone": DEFAULT_TIMEZONE},
+            {"slots": json.dumps([24.0]), "slots_timezone": UTC_PLUS_ZERO},
             follow=True,
         )
 
@@ -552,7 +573,7 @@ class TestUpdateAvailabilityViewEdgeCases:
 
         response = client.post(
             url,
-            {"slots": json.dumps([24.0]), "slots_timezone": DEFAULT_TIMEZONE},
+            {"slots": json.dumps([24.0]), "slots_timezone": UTC_PLUS_ZERO},
         )
 
         assert response.status_code == 302

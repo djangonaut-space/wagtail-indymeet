@@ -1,5 +1,3 @@
-from zoneinfo import available_timezones
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -11,6 +9,8 @@ from home import constants
 from .models import CustomUser
 from .models import UserAvailability
 from .models import UserProfile
+from .timezones import get_timezone_choices
+from .timezones import utc_offset_label
 
 INTERESTED_IN_FIELDS = (
     ("interested_in_djangonaut", constants.DJANGONAUT),
@@ -18,8 +18,6 @@ INTERESTED_IN_FIELDS = (
     ("interested_in_navigator", constants.NAVIGATOR),
     ("interested_in_organizer", constants.ORGANIZER),
 )
-
-TIMEZONE_CHOICES = tuple((tz, tz) for tz in sorted(available_timezones()))
 
 
 class BaseCustomUserForm(forms.ModelForm):
@@ -213,9 +211,9 @@ class UserAvailabilityForm(forms.ModelForm):
         help_text="Your weekly availability slots (managed via the calendar interface)",
     )
     slots_timezone = forms.ChoiceField(
-        choices=TIMEZONE_CHOICES,
+        choices=get_timezone_choices,
         label="Timezone",
-        help_text="The timezone for the weekly times selected below.",
+        help_text="The UTC offset for the weekly times selected below.",
         widget=forms.Select(
             attrs={
                 "class": "w-full max-w-md rounded-lg border border-gray-300 px-3 py-2",
@@ -249,7 +247,11 @@ class UserAvailabilityForm(forms.ModelForm):
                 instance.slots = [
                     slot.slot_as_tz(profile_timezone) for slot in instance.get_slots()
                 ]
-                instance.slots_timezone = profile_timezone
+                instance.slots_timezone = utc_offset_label(profile_timezone)
+            else:
+                instance.slots_timezone = utc_offset_label(instance.slots_timezone)
+        elif instance is not None:
+            instance.slots_timezone = utc_offset_label(instance.slots_timezone)
         super().__init__(*args, **kwargs)
 
 

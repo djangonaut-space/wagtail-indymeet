@@ -23,6 +23,7 @@ from playwright.sync_api import Page
 
 from accounts.factories import UserFactory, UserAvailabilityFactory
 from accounts.models import CustomUser
+from accounts.timezones import utc_offset_label
 from home import constants
 from home.factories import (
     ProjectFactory,
@@ -39,7 +40,7 @@ from home.models.talk import Talk, TalkSpeaker
 from tests.timezones import (
     DEFAULT_TIMEZONE,
     PACIFIC_AUCKLAND_TIMEZONE,
-    US_EASTERN_TIMEZONE,
+    UTC_MINUS_FIVE,
 )
 
 logger = getLogger(__name__)
@@ -456,7 +457,9 @@ class TestAvailabilityPage:
 
         # No slots exist yet, so the timezone should be auto-detected from
         # the browser (spoofed to Pacific/Auckland by the `context` fixture)
-        expect(timezone_select).to_have_value(PACIFIC_AUCKLAND_TIMEZONE)
+        expect(timezone_select).to_have_value(
+            utc_offset_label(PACIFIC_AUCKLAND_TIMEZONE)
+        )
 
         # Select a block of time slots (Monday 9:00 AM - 10:30 AM)
         # The grid is organized as: columns = days (0-6), rows = times
@@ -497,13 +500,15 @@ class TestAvailabilityPage:
         page.wait_for_load_state("networkidle")
         page.locator("#availability-grid tbody tr").first.wait_for(state="visible")
 
-        expect(timezone_select).to_have_value(PACIFIC_AUCKLAND_TIMEZONE)
+        expect(timezone_select).to_have_value(
+            utc_offset_label(PACIFIC_AUCKLAND_TIMEZONE)
+        )
         expect(monday_9am).to_have_class(re.compile(r".*\bselected\b.*"))
 
         # Step 2: Switch to an explicit timezone and save; confirm it is
         # preserved on reload rather than clobbered by auto-detection now
         # that slots exist
-        timezone_select.select_option(US_EASTERN_TIMEZONE)
+        timezone_select.select_option(UTC_MINUS_FIVE)
         page.get_by_role("button", name="Save Availability").first.click()
         page.wait_for_load_state("networkidle")
 
@@ -515,7 +520,7 @@ class TestAvailabilityPage:
 
         # The saved timezone should be preserved, not overwritten by
         # browser auto-detection, since slots now exist.
-        expect(timezone_select).to_have_value(US_EASTERN_TIMEZONE)
+        expect(timezone_select).to_have_value(UTC_MINUS_FIVE)
         expect(monday_9am).to_have_class(re.compile(r".*\bselected\b.*"))
 
         # Verify the same local wall-clock slots are selected
@@ -553,7 +558,9 @@ class TestAvailabilityPage:
 
         # Slots are empty again, so the timezone should auto-detect back to
         # the browser's timezone
-        expect(timezone_select).to_have_value(PACIFIC_AUCKLAND_TIMEZONE)
+        expect(timezone_select).to_have_value(
+            utc_offset_label(PACIFIC_AUCKLAND_TIMEZONE)
+        )
 
         # Step 5: Select a different block of time slots to verify selection works
         # Select: Tuesday 2:00 PM to Tuesday 3:00 PM (3 slots)

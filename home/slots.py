@@ -12,8 +12,10 @@ imports :class:`Slot`, and ``home.availability`` imports ``accounts.models``,
 so any Django model import here would create an import cycle.
 """
 
+import re
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, tzinfo
+from datetime import timezone as dt_timezone
 from functools import cached_property, lru_cache
 from zoneinfo import ZoneInfo
 
@@ -25,11 +27,22 @@ HOURS_PER_WEEK = 168  # Total hours in a week (7 days * 24 hours)
 DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 UTC = ZoneInfo("UTC")
+Tz = str | tzinfo
+UTC_OFFSET_RE = re.compile(r"^UTC([+-])(\d{2}):(\d{2})$")
 
 
-def _as_zoneinfo(value: "str | ZoneInfo") -> ZoneInfo:
-    """Normalize an IANA timezone name or ``ZoneInfo`` into a ``ZoneInfo``."""
-    return value if isinstance(value, ZoneInfo) else ZoneInfo(value)
+def _as_tzinfo(value: Tz) -> tzinfo:
+    """Normalize an IANA name, ``UTC±HH:MM`` offset, or ``tzinfo`` into a ``tzinfo``."""
+    if isinstance(value, tzinfo):
+        return value
+    match = UTC_OFFSET_RE.fullmatch(value)
+    if match:
+        sign, hours, minutes = match.groups()
+        total = int(hours) * 60 + int(minutes)
+        if sign == "-":
+            total = -total
+        return dt_timezone(timedelta(minutes=total), name=value)
+    return ZoneInfo(value)
 
 
 @lru_cache(maxsize=1)
@@ -81,7 +94,7 @@ def _datetime_to_slot(value: datetime, week_start: date) -> float:
 
 def _slot_to_datetime(
     slot: float,
-    timezone_name: "str | ZoneInfo" = "UTC",
+    timezone_name: Tz = "UTC",
     week_start: "date | None" = None,
 ) -> datetime:
     """
@@ -102,7 +115,7 @@ def _slot_to_datetime(
     return datetime.combine(
         target_date,
         time(hour=hours, minute=minutes),
-        tzinfo=_as_zoneinfo(timezone_name),
+        tzinfo=_as_tzinfo(timezone_name),
     )
 
 
@@ -178,12 +191,13 @@ class Slot:
     #: Weekday abbreviations indexed by :attr:`day_index` (0=Sunday).
     DAY_NAMES = DAYS
 
-    timezone: ZoneInfo
+    timezone: tzinfo
     value: float
 
     def __post_init__(self) -> None:
-        # Accept plain IANA names so callers can pass ``slots_timezone`` directly.
-        object.__setattr__(self, "timezone", _as_zoneinfo(self.timezone))
+        # Accept plain IANA names or UTC±HH:MM offsets so callers can pass
+        # ``slots_timezone`` directly.
+        object.__setattr__(self, "timezone", _as_tzinfo(self.timezone))
         object.__setattr__(self, "value", float(self.value))
 
     def __repr__(self) -> str:
@@ -246,11 +260,11 @@ class Slot:
         """Display string without the weekday, e.g. ``"9:00 AM"``."""
         return self.format_local.split(" ", 1)[1]
 
-    def as_tz(self, tz: "str | ZoneInfo") -> datetime:
+    def as_tz(self, tz: Tz) -> datetime:
         """Return this slot as an aware datetime in ``tz``."""
-        return self.utc.astimezone(_as_zoneinfo(tz))
+        return self.utc.astimezone(_as_tzinfo(tz))
 
-    def slot_as_tz(self, tz: "str | ZoneInfo") -> float:
+    def slot_as_tz(self, tz: Tz) -> float:
         """
         Return the wall-clock weekly slot value as seen from ``tz``.
 
@@ -259,11 +273,11 @@ class Slot:
         """
         return _datetime_to_slot(self.as_tz(tz), self._week_start)
 
-    def format_as_tz(self, tz: "str | ZoneInfo") -> str:
+    def format_as_tz(self, tz: Tz) -> str:
         """Return the display string as seen from ``tz``."""
         return _format_local_slot_as_time(self.slot_as_tz(tz))
 
-    def in_tz(self, tz: "str | ZoneInfo") -> "Slot":
+    def in_tz(self, tz: Tz) -> "Slot":
         """
         Return an equal slot re-expressed in ``tz``.
 

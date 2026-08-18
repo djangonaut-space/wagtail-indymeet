@@ -246,6 +246,12 @@ class SlotDaylightSavingTestCase(TestCase):
 class UserAvailabilityGetSlotsTestCase(TestCase):
     """Test UserAvailability.get_slots()."""
 
+    def test_accepts_utc_offset_label(self) -> None:
+        """Fixed UTC±HH:MM offsets are stored without DST rules."""
+        slot = Slot("UTC-05:00", 33.0)
+        self.assertEqual(str(slot.timezone), "UTC-05:00")
+        self.assertEqual(slot.slot_utc, 38.0)
+
     def test_returns_slots_tagged_with_row_timezone(self) -> None:
         """Each slot carries the availability row's timezone."""
         availability = UserAvailabilityFactory(

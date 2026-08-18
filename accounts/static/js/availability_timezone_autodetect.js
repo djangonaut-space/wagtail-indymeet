@@ -11,20 +11,29 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const browserTimezone = getBrowserTimezone();
-    if (!browserTimezone) {
+    const browserOffset = getBrowserUtcOffsetLabel();
+    if (!browserOffset) {
         return;
     }
 
     const hasMatchingOption = Array.from(timezoneSelect.options).some(
-        (option) => option.value === browserTimezone
+        (option) => option.value === browserOffset
     );
 
     if (hasMatchingOption) {
-        timezoneSelect.value = browserTimezone;
+        timezoneSelect.value = browserOffset;
         // Notify listeners (e.g. the availability grid's own script) that
         // the timezone changed, since a programmatic `.value` assignment
         // does not fire a native "change" event.
         timezoneSelect.dispatchEvent(new Event("change", { bubbles: true }));
     }
 });
+
+function getBrowserUtcOffsetLabel() {
+    const offsetMinutes = -new Date().getTimezoneOffset();
+    const sign = offsetMinutes >= 0 ? "+" : "-";
+    const abs = Math.abs(offsetMinutes);
+    const hours = String(Math.floor(abs / 60)).padStart(2, "0");
+    const minutes = String(abs % 60).padStart(2, "0");
+    return `UTC${sign}${hours}:${minutes}`;
+}
