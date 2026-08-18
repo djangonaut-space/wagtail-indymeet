@@ -20,20 +20,24 @@ def format_utc_offset(total_minutes: int) -> str:
     return f"UTC{sign}{hours:02d}:{minutes:02d}"
 
 
+def _offset_minutes(tz_name: str, at: datetime) -> int | None:
+    """Return the UTC offset in minutes, or ``None`` if ``tz_name`` is unusable."""
+    try:
+        offset = at.astimezone(ZoneInfo(tz_name)).utcoffset()
+    except (ZoneInfoNotFoundError, ValueError, OSError):
+        return None
+    assert offset is not None
+    return int(offset.total_seconds() // 60)
+
+
 def utc_offset_label(tz_name: str, at: datetime | None = None) -> str:
     """Return the ``UTC±HH:MM`` label for an IANA name or offset string."""
     if not tz_name:
         return format_utc_offset(0)
     if UTC_OFFSET_RE.fullmatch(tz_name):
         return tz_name
-    at = at or datetime.now(tz=UTC)
-    try:
-        offset = at.astimezone(ZoneInfo(tz_name)).utcoffset()
-    except (ZoneInfoNotFoundError, ValueError, OSError):
-        return format_utc_offset(0)
-    if offset is None:
-        return format_utc_offset(0)
-    return format_utc_offset(int(offset.total_seconds() // 60))
+    minutes = _offset_minutes(tz_name, at or datetime.now(tz=UTC))
+    return format_utc_offset(0 if minutes is None else minutes)
 
 
 def get_timezone_choices() -> TimezoneChoices:
@@ -41,12 +45,9 @@ def get_timezone_choices() -> TimezoneChoices:
     at = datetime.now(tz=UTC)
     offsets: set[int] = set()
     for name in available_timezones():
-        try:
-            offset = at.astimezone(ZoneInfo(name)).utcoffset()
-        except (ZoneInfoNotFoundError, ValueError, OSError):
+        minutes = _offset_minutes(name, at)
+        if minutes is None:
             continue
-        if offset is None:
-            continue
-        offsets.add(int(offset.total_seconds() // 60))
+        offsets.add(minutes)
 
     return [(format_utc_offset(m), format_utc_offset(m)) for m in sorted(offsets)]

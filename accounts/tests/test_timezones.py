@@ -1,5 +1,8 @@
 """Tests for availability timezone picker choices."""
 
+from datetime import UTC, datetime
+from unittest.mock import patch
+
 from django.test import TestCase
 from freezegun import freeze_time
 
@@ -47,6 +50,28 @@ class TimezoneChoicesTests(TestCase):
         self.assertEqual(utc_offset_label(PACIFIC_AUCKLAND_TIMEZONE), "UTC+13:00")
         self.assertEqual(utc_offset_label(DEFAULT_TIMEZONE), UTC_PLUS_ZERO)
         self.assertEqual(utc_offset_label(UTC_MINUS_FIVE), UTC_MINUS_FIVE)
+
+    def test_utc_offset_label_falls_back_for_blank_or_unknown(self) -> None:
+        self.assertEqual(utc_offset_label(""), UTC_PLUS_ZERO)
+        self.assertEqual(utc_offset_label("Not/AZone"), UTC_PLUS_ZERO)
+
+    def test_utc_offset_label_uses_provided_datetime(self) -> None:
+        winter = datetime(2024, 1, 15, 12, tzinfo=UTC)
+        summer = datetime(2024, 7, 15, 12, tzinfo=UTC)
+
+        self.assertEqual(
+            utc_offset_label(US_EASTERN_TIMEZONE, at=winter), UTC_MINUS_FIVE
+        )
+        self.assertEqual(utc_offset_label(US_EASTERN_TIMEZONE, at=summer), "UTC-04:00")
+
+    @patch(
+        "accounts.timezones.available_timezones",
+        return_value=["UTC", US_EASTERN_TIMEZONE, "Not/AZone"],
+    )
+    def test_get_timezone_choices_skips_unusable_zones(self, _mock) -> None:
+        values = {value for value, _label in get_timezone_choices()}
+
+        self.assertEqual(values, {UTC_PLUS_ZERO, UTC_MINUS_FIVE})
 
 
 @freeze_time("2024-07-15 12:00:00")
