@@ -10,9 +10,10 @@ from django.core.management import call_command
 from django.db.models import Exists, OuterRef, QuerySet
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from import_export.admin import ExportMixin
+from import_export.admin import ExportMixin, ImportExportModelAdmin
 from import_export.fields import Field
 from import_export.resources import ModelResource
+from import_export.widgets import ForeignKeyWidget
 
 from accounts.models import (
     ButtondownAccount,
@@ -101,16 +102,25 @@ class CustomUserResource(ModelResource):
 
 
 class UserProfileResource(ModelResource):
+    """Import/export resource for linking a UserProfile to a Discord member by username."""
+
     discord_username = Field(
-        column_name="discord_username", attribute="discord_member__username"
-    )
-    discord_nickname = Field(
-        column_name="discord_nickname", attribute="discord_member__nickname"
+        column_name="discord_username",
+        attribute="discord_member",
+        widget=ForeignKeyWidget(DiscordMember, field="username"),
     )
 
     class Meta:
         model = UserProfile
-        exclude = ("bio_image",)
+        fields = ("id", "user", "discord_username")
+        export_order = fields
+
+
+class DiscordMemberResource(ModelResource):
+    """Export resource for DiscordMember, limited to the model's own fields."""
+
+    class Meta:
+        model = DiscordMember
 
 
 class LinksInline(admin.StackedInline):
@@ -164,7 +174,9 @@ class CustomUserAdmin(ExportMixin, DescriptiveSearchMixin, BaseUserAdmin):
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdmin):
+class UserProfileAdmin(
+    ImportExportModelAdmin, DescriptiveSearchMixin, admin.ModelAdmin
+):
     inlines = (LinksInline,)
     model = UserProfile
     resource_class = UserProfileResource
@@ -174,7 +186,6 @@ class UserProfileAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdmin):
         "discord_member",
         "user",
     )
-    actions = ["export_as_csv"]
     search_fields = (
         "user__username",
         "user__email",
@@ -210,9 +221,10 @@ class DiscordRoleAdmin(admin.ModelAdmin):
 
 
 @admin.register(DiscordMember)
-class DiscordMemberAdmin(admin.ModelAdmin):
+class DiscordMemberAdmin(ExportMixin, admin.ModelAdmin):
     """Read-only view of guild members mirrored from Discord."""
 
+    resource_class = DiscordMemberResource
     list_display = (
         "username",
         "nickname",
