@@ -101,19 +101,27 @@ class CustomUserResource(ModelResource):
         exclude = ("password",)
 
 
-class UserProfileResource(ModelResource):
-    """Import/export resource for linking a UserProfile to a Discord member by username."""
-
-    discord_username = Field(
-        column_name="discord_username",
-        attribute="discord_member",
-        widget=ForeignKeyWidget(DiscordMember, field="username"),
-    )
+class UserProfileExportResource(ModelResource):
+    """Export resource for linking a UserProfile to a Discord member by username."""
 
     class Meta:
         model = UserProfile
-        fields = ("id", "user", "discord_username")
-        export_order = fields
+        fields = (
+            "id",
+            "user",
+            "discord_member__username",
+            "user__username",
+            "user__first_name",
+            "user__last_name",
+        )
+
+
+class UserProfileImportResource(ModelResource):
+    """Import resource for linking a UserProfile to a Discord member by username."""
+
+    class Meta:
+        model = UserProfile
+        fields = ("id", "user", "discord_member__username")
 
 
 class DiscordMemberResource(ModelResource):
@@ -131,7 +139,7 @@ class LinksInline(admin.StackedInline):
 @admin.register(CustomUser)
 class CustomUserAdmin(ExportMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
-    resource_class = CustomUserResource
+    resource_classes = [CustomUserResource]
     actions = ["compare_availability_action"]
     search_fields = (
         "first_name",
@@ -179,7 +187,7 @@ class UserProfileAdmin(
 ):
     inlines = (LinksInline,)
     model = UserProfile
-    resource_class = UserProfileResource
+    resource_classes = [UserProfileExportResource, UserProfileImportResource]
     list_display = ("user", "github_username", "discord_member")
     list_select_related = ("user", "discord_member")
     autocomplete_fields = (
@@ -201,6 +209,12 @@ class UserProfileAdmin(
         if db_field.name == "discord_member":
             kwargs["queryset"] = DiscordMember.objects.all()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def get_import_resource_classes(self, request):
+        return [UserProfileImportResource]
+
+    def get_export_resource_classes(self, request):
+        return [UserProfileExportResource]
 
 
 @admin.register(DiscordRole)
@@ -224,7 +238,7 @@ class DiscordRoleAdmin(admin.ModelAdmin):
 class DiscordMemberAdmin(ExportMixin, admin.ModelAdmin):
     """Read-only view of guild members mirrored from Discord."""
 
-    resource_class = DiscordMemberResource
+    resource_classes = [DiscordMemberResource]
     list_display = (
         "username",
         "nickname",

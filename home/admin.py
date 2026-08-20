@@ -555,7 +555,7 @@ class SessionMembershipResource(resources.ModelResource):
 
 @admin.register(SessionMembership)
 class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdmin):
-    resource_class = SessionMembershipResource
+    resource_classes = [SessionMembershipResource]
 
     list_display = (
         "user",
