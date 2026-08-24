@@ -31,7 +31,7 @@ repos:
   - id: pyupgrade
     args: [--py313-plus]
 - repo: https://github.com/adamchainz/django-upgrade
-  rev: 1.31.1
+  rev: 1.32.0
   hooks:
   - id: django-upgrade
     args: [--target-version, '6.0']
