@@ -135,6 +135,7 @@
                                 data-sort="selection_rank">
                                 {% trans "Rank" %}
                             </th>
+                            <th>{% trans "Tutorial Result" %}</th>
                             <th>{% trans "Team" %}</th>
                             <th>{% trans "Project Preferences" %}</th>
                             <th class="sortable {% if sort_by == 'previous_application_count' %}sorted-{{ sort_order }}{% endif %}"
@@ -164,6 +165,7 @@
                             </td>
                             <td>{{ applicant.score|default:"—" }}</td>
                             <td>{{ applicant.selection_rank|default:"—" }}</td>
+                            <td>{{ applicant.tutorial_result|default:"—" }}</td>
                             <td>
                                 {% if applicant.current_team %}
                                     {{ applicant.current_team.name }}

@@ -22,6 +22,7 @@ from home import constants
 from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
+from home.tasks.tutorial_evaluations import evaluate_tutorial_submission_now
 from home.templatetags.email_tags import time_is_link
 from indymeet.admin import DescriptiveSearchMixin
 
@@ -44,6 +45,7 @@ from .models import (
     Survey,
     Team,
     Testimonial,
+    TutorialEvaluation,
     UserQuestionResponse,
     Waitlist,
 )
@@ -1456,6 +1458,82 @@ class UserQuestionResponseInline(admin.StackedInline):
     can_delete = False
 
 
+class TutorialEvaluationInline(admin.StackedInline):
+    model = TutorialEvaluation
+    readonly_fields = [
+        "link",
+        "result",
+        "reasons",
+        "notes",
+        "evaluated_at",
+        "pending",
+        "reminder_sent_at",
+    ]
+    extra = 0
+    can_delete = False
+
+
+class TutorialEvaluationSessionFilter(admin.SimpleListFilter):
+    """Filter TutorialEvaluations by the Session of their survey response."""
+
+    title = "session"
+    parameter_name = "session"
+
+    def lookups(self, request, model_admin):
+        sessions = (
+            Session.objects.filter(application_survey__isnull=False)
+            .order_by("-application_start_date")
+            .values("id", "title")
+        )
+        return list(sessions)
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(
+                user_survey_response__survey__application_session__id=self.value()
+            )
+        return queryset
+
+
+@admin.register(TutorialEvaluation)
+class TutorialEvaluationAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+    model = TutorialEvaluation
+    list_display = [
+        "user_email",
+        "session_name",
+        "result",
+        "evaluated_at",
+    ]
+    list_filter = [
+        TutorialEvaluationSessionFilter,
+        "result",
+    ]
+    raw_id_fields = ["user_survey_response"]
+    search_fields = [
+        "user_survey_response__user__email",
+        "user_survey_response__user__first_name",
+        "user_survey_response__user__last_name",
+    ]
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                annotated_user_email=F("user_survey_response__user__email"),
+                annotated_session_name=F(
+                    "user_survey_response__survey__application_session__title"
+                ),
+            )
+        )
+
+    def user_email(self, obj):
+        return obj.annotated_user_email
+
+    def session_name(self, obj):
+        return obj.annotated_session_name
+
+
 class WaitlistStatusFilter(admin.SimpleListFilter):
     """Filter UserSurveyResponses by waitlist status."""
 
@@ -1558,7 +1636,8 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "user__first_name",
         "user__last_name",
     ]
-    inlines = [UserQuestionResponseInline]
+    inlines = [TutorialEvaluationInline, UserQuestionResponseInline]
+    actions = ["evaluate_tutorial_submission_action"]
 
     def get_queryset(self, request):
         return (
@@ -1576,3 +1655,20 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
     def user_email(self, obj):
         return obj.annotated_user_email
+
+    @admin.action(description="Re-evaluate tutorial submission")
+    def evaluate_tutorial_submission_action(self, request, queryset):
+        """Queue an immediate GitHub tutorial evaluation for the selected responses."""
+        queued_count = 0
+        for response_id in queryset.values_list("id", flat=True):
+            evaluate_tutorial_submission_now.enqueue(
+                user_survey_response_id=response_id
+            )
+            queued_count += 1
+
+        self.message_user(
+            request,
+            f"Queued {queued_count} tutorial evaluation(s). Results will appear on "
+            "each response shortly.",
+            messages.SUCCESS,
+        )
