@@ -1,0 +1,12 @@
+Hi {{ name }} 👋
+We are reaching out to remind you to complete the Django contribution tutorial. We noticed yours doesn't match what is expected to be the result.
+
+Please complete the Django contribution tutorial (https://docs.djangoproject.com/en/dev/internals/contributing/) and make sure the link to it on your application, {{ response.get_full_url }}, is correct. Do not create a PR against Django though.
+
+Unfortunately, we have to make our judgment based on what is pushed to your Django fork. The process takes about 20 minutes in total and exposes you to the Git and GitHub workflows you'll be expected to be familiar with in order to succeed in the program. 🚀
+
+If you need help with the tutorial, please ask questions on the Django discord's contributing-getting-started channel. People are more than happy to help! 💜
+
+Thank you,
+
+Djangonaut Space

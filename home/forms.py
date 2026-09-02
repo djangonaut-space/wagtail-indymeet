@@ -422,7 +422,7 @@ class SurveyCSVExportForm(forms.Form):
         # Get all responses for this survey with related data
         responses = (
             UserSurveyResponse.objects.filter(survey=survey)
-            .select_related("user")
+            .select_related("user", "tutorial_evaluation")
             .prefetch_related("userquestionresponse_set__question")
             .order_by("id")
         )
@@ -444,6 +444,8 @@ class SurveyCSVExportForm(forms.Form):
         header = ["Response ID", "Submitter Name"]
         # Add question labels as columns
         header.extend([q.label for q in questions])
+        # Add Tutorial Result column
+        header.append("Tutorial Result")
         # Add scorer columns
         header.extend([f"{name} score" for name in scorer_names])
         # Add Score and Selection Rank columns
@@ -468,6 +470,14 @@ class SurveyCSVExportForm(forms.Form):
             # Add question responses in order
             for question in questions:
                 row.append(question_responses.get(question.id, ""))
+
+            # Add Tutorial Result column
+            evaluation = getattr(response_obj, "tutorial_evaluation", None)
+            row.append(
+                evaluation.get_result_display()
+                if evaluation and evaluation.result is not None
+                else ""
+            )
 
             # Add empty scorer columns
             row.extend([""] * len(scorer_names))

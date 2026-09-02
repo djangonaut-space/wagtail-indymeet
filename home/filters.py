@@ -9,7 +9,7 @@ from django import forms
 from django.db.models import QuerySet, Exists, OuterRef
 
 from accounts.models import CustomUser
-from home.models import Project, Team, UserSurveyResponse, Waitlist
+from home.models import Project, Result, Team, UserSurveyResponse, Waitlist
 
 
 class BooleanFilter(django_filters.BooleanFilter):
@@ -79,6 +79,12 @@ class ApplicantFilterSet(django_filters.FilterSet):
         queryset=Team.objects.none(),
         label="Has overlap with captain",
         method="filter_captain_overlap",
+    )
+
+    tutorial_result = django_filters.MultipleChoiceFilter(
+        field_name="tutorial_evaluation__result",
+        choices=Result.choices,
+        label="Tutorial Result",
     )
 
     class Meta:

@@ -268,6 +268,14 @@ def get_filtered_applicants(
         if prev_avg_score is not None:
             prev_avg_score = round(prev_avg_score, 1)
 
+        # Get the tutorial evaluation result, if the submission has been evaluated
+        evaluation = getattr(response, "tutorial_evaluation", None)
+        tutorial_result = (
+            evaluation.get_result_display()
+            if evaluation and evaluation.result is not None
+            else None
+        )
+
         # Get project preferences for this user/session
         project_preferences = [
             pref.project for pref in getattr(user, "prefetched_project_preferences", [])
@@ -285,6 +293,7 @@ def get_filtered_applicants(
                 previously_waitlisted=response.annotated_previously_waitlisted,
                 previous_application_count=response.annotated_previous_application_count,
                 previous_avg_score=prev_avg_score,
+                tutorial_result=tutorial_result,
                 has_availability=has_availability,
                 availability_by_day=availability_by_day,
                 project_preferences=project_preferences,

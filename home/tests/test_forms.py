@@ -16,7 +16,9 @@ from home.forms import CreateUserSurveyResponseForm
 from home.forms import EditUserSurveyResponseForm
 from home.forms import SurveyCSVExportForm, SurveyCSVImportForm
 from home.models import Question
+from home.models import Result
 from home.models import Survey
+from home.models import TutorialEvaluation
 from home.models import TypeField
 from home.models import UserQuestionResponse
 from home.models import UserSurveyResponse
@@ -405,6 +407,7 @@ class SurveyCSVExportFormTests(TestCase):
             "What is your email?",
             "Rate your experience",
             "Tell us about yourself",
+            "Tutorial Result",
             "Score",
             "Selection Rank",
         ]
@@ -414,8 +417,9 @@ class SurveyCSVExportFormTests(TestCase):
         self.assertEqual(len(rows), 3)  # Header + 2 responses
         self.assertEqual(rows[1][0], str(self.response1.id))
         self.assertEqual(rows[1][1], "John Doe")
-        self.assertEqual(rows[1][5], "")  # Empty Score
-        self.assertEqual(rows[1][6], "")  # Empty Selection Rank
+        self.assertEqual(rows[1][5], "")  # No tutorial evaluation
+        self.assertEqual(rows[1][6], "")  # Empty Score
+        self.assertEqual(rows[1][7], "")  # Empty Selection Rank
 
     def test_generate_full_csv_with_scorers(self):
         """Test full CSV generation with scorer names."""
@@ -436,16 +440,37 @@ class SurveyCSVExportFormTests(TestCase):
             "What is your email?",
             "Rate your experience",
             "Tell us about yourself",
+            "Tutorial Result",
             "Alice score",
             "Bob score",
             "Score",
             "Selection Rank",
         ]
         self.assertEqual(rows[0], expected_header)
-        self.assertEqual(rows[1][5], "")  # Alice score
-        self.assertEqual(rows[1][6], "")  # Bob score
-        self.assertEqual(rows[1][7], "")  # Score
-        self.assertEqual(rows[1][8], "")  # Selection Rank
+        self.assertEqual(rows[1][5], "")  # No tutorial evaluation
+        self.assertEqual(rows[1][6], "")  # Alice score
+        self.assertEqual(rows[1][7], "")  # Bob score
+        self.assertEqual(rows[1][8], "")  # Score
+        self.assertEqual(rows[1][9], "")  # Selection Rank
+
+    def test_generate_full_csv_includes_tutorial_result(self):
+        """Test the Tutorial Result column reflects an evaluated submission."""
+        TutorialEvaluation.objects.create(
+            user_survey_response=self.response1, result=Result.CORRECT
+        )
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+
+        response = form.generate_full_csv(self.survey)
+
+        content = response.content.decode("utf-8-sig")
+        csv_reader = csv.reader(io.StringIO(content))
+        rows = list(csv_reader)
+
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
+        self.assertEqual(response1_row[5], "Correct")
+        self.assertEqual(response2_row[5], "")  # No tutorial evaluation
 
     def test_generate_single_scorer_csv(self):
         """Test single scorer CSV only includes TEXT_AREA questions."""
