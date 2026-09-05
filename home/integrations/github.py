@@ -21,10 +21,12 @@ from urllib3.util.retry import Retry
 FUNCTION_NAME = "make_toast"
 EXPECTED_RETURN_VALUE = "toast"
 SHORTCUTS_PATH = "django/shortcuts.py"
-# The tutorial only calls for touching django/shortcuts.py, a test file, and
-# (optionally) a docs file — anything beyond that suggests unrelated changes
-# got swept into the diff.
-MAX_EXPECTED_FILES = 3
+TOPIC_DOC_PATH = "docs/topics/http/shortcuts.txt"
+_RELEASE_NOTES_RE = re.compile(r"^docs/releases/.+\.txt$")
+# The tutorial calls for touching django/shortcuts.py, a test file, the
+# topic doc, and a release note — anything beyond that suggests unrelated
+# changes got swept into the diff.
+MAX_EXPECTED_FILES = 4
 
 UPSTREAM_REPO = "django/django"
 UPSTREAM_BRANCH = "main"
@@ -199,11 +201,33 @@ def _has_matching_test(files: dict[str, File]) -> bool:
     return False
 
 
-def _has_docs(files: dict[str, File]) -> bool:
+def _has_topic_doc(files: dict[str, File]) -> bool:
+    file = files.get(TOPIC_DOC_PATH)
+    return file is not None and FUNCTION_NAME in _added_lines(file.patch)
+
+
+def _has_release_notes(files: dict[str, File]) -> bool:
     return any(
-        filename.startswith("docs/") and FUNCTION_NAME in _added_lines(file.patch)
+        _RELEASE_NOTES_RE.match(filename) and FUNCTION_NAME in _added_lines(file.patch)
         for filename, file in files.items()
     )
+
+
+def _missing_docs_message(files: dict[str, File]) -> str | None:
+    """Describe which of the two required doc files (topic doc, release note) is missing.
+
+    The tutorial calls for both: a topic doc entry under ``docs/topics/http/``
+    and a release note under ``docs/releases/``, each mentioning the new
+    function.
+    """
+    missing = []
+    if not _has_topic_doc(files):
+        missing.append(f"a topic doc entry in {TOPIC_DOC_PATH}")
+    if not _has_release_notes(files):
+        missing.append("a release note under docs/releases/")
+    if not missing:
+        return None
+    return f"Missing {' and '.join(missing)} mentioning {FUNCTION_NAME}()."
 
 
 def _result_for(reasons: frozenset[Reason]) -> int:
@@ -284,16 +308,15 @@ def _evaluate_files(link: str, files: dict[str, File]) -> SubmissionResult:
             f"No test asserting {FUNCTION_NAME}() returns {EXPECTED_RETURN_VALUE!r} was found."
         )
 
-    if not _has_docs(files):
-        messages[Reason.MISSING_DOCS] = (
-            "No documentation changes (release note / topic doc) were found."
-        )
+    docs_message = _missing_docs_message(files)
+    if docs_message:
+        messages[Reason.MISSING_DOCS] = docs_message
 
     if len(files) > MAX_EXPECTED_FILES:
         messages[Reason.EXTRA_FILES_MODIFIED] = (
             f"{len(files)} files were changed, but only {SHORTCUTS_PATH}, a test "
-            "file, and a docs file are expected; unrelated changes may have been "
-            "included."
+            "file, the topic doc, and a release note are expected; unrelated "
+            "changes may have been included."
         )
 
     return _build_evaluation(link, messages)
