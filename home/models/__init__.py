@@ -6,3 +6,4 @@ from .session import *
 from .survey import *
 from .talk import *
 from .testimonial import *
+from .tutorial_evaluation import *

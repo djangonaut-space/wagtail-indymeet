@@ -14,6 +14,7 @@ from django.views.generic.edit import FormMixin, ModelFormMixin
 
 from home.forms import CreateUserSurveyResponseForm, EditUserSurveyResponseForm
 from home.models import Survey, UserQuestionResponse, UserSurveyResponse
+from home.tasks.tutorial_evaluations import schedule_evaluation_if_needed
 
 
 class ApplicationStatusMixin:
@@ -111,6 +112,7 @@ class CreateUserSurveyResponseFormView(
         if form.is_valid():
             user_survey_response = form.save()
             user_survey_response.send_created_notification()
+            schedule_evaluation_if_needed(user_survey_response)
             messages.success(self.request, gettext("Survey successfully saved!"))
             return self.form_valid(form)
         else:
@@ -190,6 +192,7 @@ class EditUserSurveyResponseView(
         if form.is_valid():
             user_survey_response = form.save()
             user_survey_response.send_updated_notification()
+            schedule_evaluation_if_needed(user_survey_response)
             messages.success(self.request, gettext("Survey successfully updated!"))
             return redirect(self.get_success_url())
         else:

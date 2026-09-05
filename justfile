@@ -22,7 +22,7 @@ logs:
 
 # Open a Django shell
 shell:
-    {{django}} uv run python manage.py shell
+    {{django}} uv run python manage.py shell_plus
 
 # Create a superuser
 superuser:

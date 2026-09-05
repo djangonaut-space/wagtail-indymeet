@@ -28,6 +28,7 @@ class ApplicantData:
     previously_waitlisted: bool
     previous_application_count: int
     previous_avg_score: float | None
+    tutorial_result: str | None
     has_availability: bool
     availability_by_day: dict[str, list[str]]  # Day name -> time ranges
     project_preferences: list[Project]  # List of preferred projects

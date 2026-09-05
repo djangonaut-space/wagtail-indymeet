@@ -509,7 +509,7 @@ class UserSurveyResponseQuerySet(QuerySet):
 
         return (
             self.for_survey(session.application_survey)
-            .select_related("user")
+            .select_related("user", "tutorial_evaluation")
             .with_previous_application_stats(session.application_survey)
             .with_availability_check()
             .with_session_memberships(session)

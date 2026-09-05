@@ -24,15 +24,17 @@ from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE, US_EASTERN_TIMEZONE
 from home.models import (
     ProjectPreference,
     Question,
+    Result,
     Session,
     SessionMembership,
     Survey,
     Team,
+    TutorialEvaluation,
     TypeField,
     UserSurveyResponse,
 )
 
-from home.views.team_formation import get_teams_with_statistics
+from home.views.team_formation import get_filtered_applicants, get_teams_with_statistics
 
 
 class ApplicantFilterFormTestCase(TestCase):
@@ -106,6 +108,64 @@ class ApplicantFilterFormTestCase(TestCase):
         self.assertEqual(filterset.qs.count(), 1)
         self.assertEqual(filterset.qs.first().user, applicant2)
 
+    def test_tutorial_result_filter(self):
+        """Test filtering applicants by a single tutorial evaluation result."""
+        applicant1 = UserFactory(username="app1")
+        response1 = UserSurveyResponseFactory(user=applicant1, survey=self.survey)
+        TutorialEvaluation.objects.create(
+            user_survey_response=response1, result=Result.CORRECT
+        )
+
+        applicant2 = UserFactory(username="app2")
+        response2 = UserSurveyResponseFactory(user=applicant2, survey=self.survey)
+        TutorialEvaluation.objects.create(
+            user_survey_response=response2, result=Result.INCORRECT
+        )
+
+        qs = UserSurveyResponse.objects.filter(survey=self.survey)
+
+        filterset = ApplicantFilterSet(
+            data={"tutorial_result": [Result.CORRECT]},
+            queryset=qs,
+            session=self.session,
+        )
+        self.assertTrue(filterset.is_valid())
+        self.assertEqual(filterset.qs.count(), 1)
+        self.assertEqual(filterset.qs.first().user, applicant1)
+
+    def test_tutorial_result_filter_multiple_values(self):
+        """Selecting more than one result ORs them together instead of narrowing."""
+        applicant1 = UserFactory(username="app1")
+        response1 = UserSurveyResponseFactory(user=applicant1, survey=self.survey)
+        TutorialEvaluation.objects.create(
+            user_survey_response=response1, result=Result.CORRECT
+        )
+
+        applicant2 = UserFactory(username="app2")
+        response2 = UserSurveyResponseFactory(user=applicant2, survey=self.survey)
+        TutorialEvaluation.objects.create(
+            user_survey_response=response2, result=Result.PARTIAL
+        )
+
+        applicant3 = UserFactory(username="app3")
+        response3 = UserSurveyResponseFactory(user=applicant3, survey=self.survey)
+        TutorialEvaluation.objects.create(
+            user_survey_response=response3, result=Result.INCORRECT
+        )
+
+        qs = UserSurveyResponse.objects.filter(survey=self.survey)
+
+        filterset = ApplicantFilterSet(
+            data={"tutorial_result": [Result.CORRECT, Result.PARTIAL]},
+            queryset=qs,
+            session=self.session,
+        )
+        self.assertTrue(filterset.is_valid())
+        self.assertEqual(
+            set(filterset.qs.values_list("user", flat=True)),
+            {applicant1.id, applicant2.id},
+        )
+
 
 class TeamFormationViewTestCase(TestCase):
     """Test team formation views."""
@@ -163,6 +223,27 @@ class TeamFormationViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Form Teams:")
         self.assertContains(response, self.session.title)
+
+    def test_get_filtered_applicants_includes_tutorial_result(self):
+        """Test applicant data includes the tutorial evaluation result."""
+        evaluated_user = UserFactory(username="evaluated")
+        evaluated_response = UserSurveyResponseFactory(
+            user=evaluated_user, survey=self.survey
+        )
+        TutorialEvaluation.objects.create(
+            user_survey_response=evaluated_response, result=Result.CORRECT
+        )
+
+        unevaluated_user = UserFactory(username="unevaluated")
+        UserSurveyResponseFactory(user=unevaluated_user, survey=self.survey)
+
+        applicants, _ = get_filtered_applicants(self.session, {})
+        applicants_by_user = {a.user.id: a for a in applicants}
+
+        self.assertEqual(
+            applicants_by_user[evaluated_user.id].tutorial_result, "Correct"
+        )
+        self.assertIsNone(applicants_by_user[unevaluated_user.id].tutorial_result)
 
     def test_calculate_overlap_ajax_requires_users(self):
         """Test AJAX overlap calculation requires user selection."""
