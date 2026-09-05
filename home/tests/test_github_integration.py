@@ -60,6 +60,13 @@ DOCS_PATCH = """@@ -294,3 +294,9 @@
 +Returns ``'toast'``.
 """
 
+RELEASE_NOTES_PATCH = """@@ -34,6 +34,10 @@ What's new in Django 6.2
++:mod:`django.shortcuts`
++~~~~~~~~~~~~~~~~~~~~~~~
++
++* The new :func:`django.shortcuts.make_toast` function returns ``'toast'``.
+"""
+
 
 def _file(filename: str, patch: str | None) -> Mock:
     return Mock(filename=filename, patch=patch)
@@ -204,7 +211,8 @@ class EvaluateSubmissionTests(SimpleTestCase):
         )
         self.assertIn("does not return the string", result.notes)
         self.assertIn("No test asserting", result.notes)
-        self.assertIn("No documentation changes", result.notes)
+        self.assertIn("Missing a topic doc entry", result.notes)
+        self.assertIn("a release note", result.notes)
 
     @patch("home.integrations.github.Github")
     def test_correct_function_without_test_or_docs_reports_both(
@@ -240,7 +248,7 @@ class EvaluateSubmissionTests(SimpleTestCase):
 
         self.assertEqual(result.result, PARTIAL)
         self.assertEqual(result.reasons, (Reason.MISSING_DOCS,))
-        self.assertIn("No documentation changes", result.notes)
+        self.assertIn("Missing a topic doc entry", result.notes)
 
     @patch("home.integrations.github.Github")
     def test_fully_correct_submission(self, mock_github_class):
@@ -250,6 +258,35 @@ class EvaluateSubmissionTests(SimpleTestCase):
                 _file("django/shortcuts.py", FUNCTION_PATCH),
                 _file("tests/shortcuts/test_make_toast.py", TEST_PATCH),
                 _file("docs/topics/http/shortcuts.txt", DOCS_PATCH),
+                _file("docs/releases/6.2.txt", RELEASE_NOTES_PATCH),
+            ]
+        )
+
+        result = evaluate_submission(
+            "https://github.com/alice/django/tree/ticket_99999", github_token="t"
+        )
+
+        self.assertEqual(result.result, CORRECT)
+        self.assertEqual(result.reasons, ())
+
+    @patch("home.integrations.github.Github")
+    def test_release_notes_filename_is_not_tied_to_a_version_scheme(
+        self, mock_github_class
+    ):
+        """The release notes filename check must survive Django's next versioning scheme.
+
+        Django names release note files after its version (e.g. ``6.2.txt``
+        today), and that scheme is expected to change (e.g. to calendar
+        versioning like ``2028.txt`` or ``2028.0.txt``) — the check must not
+        assume any particular filename shape beyond living in docs/releases/.
+        """
+        upstream = self._mock_upstream(mock_github_class)
+        upstream.compare.return_value = Mock(
+            files=[
+                _file("django/shortcuts.py", FUNCTION_PATCH),
+                _file("tests/shortcuts/test_make_toast.py", TEST_PATCH),
+                _file("docs/topics/http/shortcuts.txt", DOCS_PATCH),
+                _file("docs/releases/2028.0.txt", RELEASE_NOTES_PATCH),
             ]
         )
 
@@ -269,6 +306,7 @@ class EvaluateSubmissionTests(SimpleTestCase):
                 _file("django/shortcuts.py", FUNCTION_PATCH),
                 _file("tests/shortcuts/test_make_toast.py", TEST_PATCH),
                 _file("docs/topics/http/shortcuts.txt", DOCS_PATCH),
+                _file("docs/releases/6.2.txt", RELEASE_NOTES_PATCH),
                 _file("django/utils/text.py", NO_FUNCTION_PATCH),
             ]
         )
@@ -279,7 +317,7 @@ class EvaluateSubmissionTests(SimpleTestCase):
 
         self.assertEqual(result.result, PARTIAL)
         self.assertEqual(result.reasons, (Reason.EXTRA_FILES_MODIFIED,))
-        self.assertIn("4 files were changed", result.notes)
+        self.assertIn("5 files were changed", result.notes)
 
     @patch("home.integrations.github.Github")
     def test_too_many_reasons_incorrect(self, mock_github_class):
@@ -291,6 +329,7 @@ class EvaluateSubmissionTests(SimpleTestCase):
                 _file("django/utils/text.py", NO_FUNCTION_PATCH),
                 _file("some/other/file.py", NO_FUNCTION_PATCH),
                 _file("yet/another/file.py", NO_FUNCTION_PATCH),
+                _file("still/another/file.py", NO_FUNCTION_PATCH),
             ]
         )
 
@@ -360,6 +399,7 @@ class EvaluateSubmissionTests(SimpleTestCase):
                 _file("django/shortcuts.py", FUNCTION_PATCH),
                 _file("tests/shortcuts/test_make_toast.py", TEST_PATCH),
                 _file("docs/topics/http/shortcuts.txt", DOCS_PATCH),
+                _file("docs/releases/6.2.txt", RELEASE_NOTES_PATCH),
             ]
         )
 
