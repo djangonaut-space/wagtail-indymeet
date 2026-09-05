@@ -24,6 +24,7 @@ from home.tasks.tutorial_evaluations import (
     reevaluate_tutorial_submission,
     schedule_evaluation_if_needed,
     send_due_tutorial_reminders,
+    send_tutorial_reminder_now,
 )
 
 EMAIL_SETTINGS = dict(
@@ -395,3 +396,46 @@ class SendDueTutorialRemindersTests(TestCase):
         send_due_tutorial_reminders.call()
 
         self.assertEqual(len(mail.outbox), 1)
+
+
+@override_settings(**EMAIL_SETTINGS)
+class SendTutorialReminderNowTests(TestCase):
+    def test_sends_reminder_and_marks_sent(self):
+        """The reminder email goes out immediately and reminder_sent_at is stamped."""
+        session = _active_session(short_name="Session 9")
+        user = UserFactory(email="applicant@example.com", first_name="Alex")
+        response = _response_for(session)
+        response.user = user
+        response.save()
+        evaluation = TutorialEvaluation.objects.create(
+            user_survey_response=response,
+            result=-1,
+            evaluated_at=timezone.now(),
+        )
+
+        send_tutorial_reminder_now.call(evaluation_id=evaluation.pk)
+
+        evaluation.refresh_from_db()
+        self.assertIsNotNone(evaluation.reminder_sent_at)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["applicant@example.com"])
+
+    def test_ignores_already_reminded(self):
+        """A manual re-send goes out even if a reminder was already sent."""
+        response = _response_for(_active_session())
+        evaluation = TutorialEvaluation.objects.create(
+            user_survey_response=response,
+            result=-1,
+            evaluated_at=timezone.now(),
+            reminder_sent_at=timezone.now(),
+        )
+
+        send_tutorial_reminder_now.call(evaluation_id=evaluation.pk)
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_missing_evaluation(self):
+        """An evaluation id that no longer exists is a no-op."""
+        send_tutorial_reminder_now.call(evaluation_id=999999)
+
+        self.assertEqual(len(mail.outbox), 0)
