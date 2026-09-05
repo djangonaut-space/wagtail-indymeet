@@ -79,6 +79,32 @@ def reminder_email(recipient_email: str, membership: SessionMembership) -> None:
     )
 
 
+def tutorial_reminder_email(
+    recipient_email: str, user_survey_response: UserSurveyResponse
+) -> None:
+    """
+    Send a preview of the tutorial reminder email.
+
+    Args:
+        recipient_email: Email address to send preview to
+        user_survey_response: UserSurveyResponse to use for preview data
+    """
+    context = {
+        "user": user_survey_response.user,
+        "name": user_survey_response.user.first_name or user_survey_response.user.email,
+        "session": user_survey_response.survey.session,
+        "response": user_survey_response,
+        "cta_link": user_survey_response.get_full_url(),
+    }
+
+    email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
+        email_template="tutorial_reminder",
+        recipient_list=[recipient_email],
+        context=context,
+    )
+
+
 def rejection_email(recipient_email: str, session: Session) -> None:
     """
     Send a preview of the rejection email.
@@ -268,6 +294,32 @@ def reminder_email_action(modeladmin, request, queryset):
         return
 
     reminder_email(request.user.email, membership)
+
+    modeladmin.message_user(
+        request,
+        f"Preview of reminder email sent to {request.user.email}",
+        messages.SUCCESS,
+    )
+
+
+# Admin actions for TutorialEvaluationAdmin
+
+
+@admin.action(description="Preview reminder email (send to me)")
+def tutorial_reminder_email_action(modeladmin, request, queryset):
+    """Send a preview of the tutorial reminder email to the logged-in admin user."""
+    evaluation = queryset.select_related(
+        "user_survey_response__user", "user_survey_response__survey"
+    ).first()
+    if not evaluation:
+        modeladmin.message_user(
+            request,
+            "No tutorial evaluation found in selection",
+            messages.ERROR,
+        )
+        return
+
+    tutorial_reminder_email(request.user.email, evaluation.user_survey_response)
 
     modeladmin.message_user(
         request,

@@ -22,7 +22,10 @@ from home import constants
 from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
-from home.tasks.tutorial_evaluations import evaluate_tutorial_submission_now
+from home.tasks.tutorial_evaluations import (
+    evaluate_tutorial_submission_now,
+    send_tutorial_reminder_now,
+)
 from home.templatetags.email_tags import time_is_link
 from indymeet.admin import DescriptiveSearchMixin
 
@@ -1501,6 +1504,7 @@ class TutorialEvaluationAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = [
         "user_email",
         "session_name",
+        "tutorial_link",
         "result",
         "evaluated_at",
     ]
@@ -1513,6 +1517,10 @@ class TutorialEvaluationAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "user_survey_response__user__email",
         "user_survey_response__user__first_name",
         "user_survey_response__user__last_name",
+    ]
+    actions = [
+        "send_tutorial_reminder_action",
+        preview_email.tutorial_reminder_email_action,
     ]
 
     def get_queryset(self, request):
@@ -1532,6 +1540,30 @@ class TutorialEvaluationAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
     def session_name(self, obj):
         return obj.annotated_session_name
+
+    @admin.display(description="Tutorial Link")
+    def tutorial_link(self, obj):
+        if not obj.link:
+            return ""
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>',
+            obj.link,
+            obj.link,
+        )
+
+    @admin.action(description="Send reminder email to selected applicants")
+    def send_tutorial_reminder_action(self, request, queryset):
+        """Send the tutorial reminder email now for the selected evaluations."""
+        queued_count = 0
+        for evaluation_id in queryset.values_list("id", flat=True):
+            send_tutorial_reminder_now.enqueue(evaluation_id=evaluation_id)
+            queued_count += 1
+
+        self.message_user(
+            request,
+            f"Queued reminder email for {queued_count} evaluation(s).",
+            messages.SUCCESS,
+        )
 
 
 class WaitlistStatusFilter(admin.SimpleListFilter):

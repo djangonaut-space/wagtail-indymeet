@@ -191,6 +191,31 @@ def send_due_tutorial_reminders() -> None:
             evaluation.save(update_fields=["reminder_sent_at", "updated_at"])
 
 
+@task()
+def send_tutorial_reminder_now(evaluation_id: int) -> None:
+    """Send the tutorial reminder email for one evaluation immediately.
+
+    Bypasses the eligibility checks in ``send_due_tutorial_reminders``
+    (already reminded, deadline cutoff): triggered manually via the "Send
+    reminder email" admin action on ``TutorialEvaluationAdmin``.
+    """
+    with transaction.atomic():
+        evaluation = (
+            TutorialEvaluation.objects.select_for_update()
+            .select_related(
+                "user_survey_response__user", "user_survey_response__survey"
+            )
+            .filter(pk=evaluation_id)
+            .first()
+        )
+        if evaluation is None:
+            return
+
+        _send_reminder(evaluation.user_survey_response)
+        evaluation.reminder_sent_at = timezone.now()
+        evaluation.save(update_fields=["reminder_sent_at", "updated_at"])
+
+
 def _send_reminder(survey_response: UserSurveyResponse) -> None:
     session = survey_response.survey.session
     email.send(
