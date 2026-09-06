@@ -28,12 +28,12 @@ dependencies = [
     "django-tasks",
     "django-tasks-db",
     "django-import-export",
-    "gdal<3.11",
+    "gdal<3.14",
     "wagtailgeowidget",
     "djangorestframework-gis",
     "icalendar",
     "requests>=2.34.2",
-    "pygithub>=2.9.1",
+    "pygithub>=2.10.0",
     "django-crontask",
 ]
 
@@ -55,7 +55,7 @@ test = [
     "factory_boy",
     "unittest_parametrize",
     "faker",
-    "responses>=0.26.2",
+    "responses>=0.26.3",
     "pytest-xdist>=3.8.0",
 ]
 dev = [
