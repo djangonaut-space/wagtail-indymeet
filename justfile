@@ -56,7 +56,11 @@ build-test-db-template *args:
 
 # Run all tests (excluding Playwright)
 test *args:
-    {{django}} uv run pytest -n auto {{args}}
+    {{django}} uv run pytest -n auto --dist loadscope {{args}}
+
+# Report the slowest tests (excluding Playwright) before optimizing the suite.
+test-profile *args:
+    {{django}} uv run pytest -n auto --dist loadscope --durations=50 --durations-min=0 {{args}}
 
 # Install Playwright browsers and run Playwright tests
 test-playwright *args:

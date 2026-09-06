@@ -45,7 +45,6 @@ puput = { git = "https://github.com/hoheinzollern/puput", rev = "cd874e9a207d88c
 
 [dependency-groups]
 test = [
-    "freezegun",
     "playwright",
     "pytest",
     "pytest-cov",
@@ -57,6 +56,7 @@ test = [
     "faker",
     "responses>=0.26.2",
     "pytest-xdist>=3.8.0",
+    "time-machine>=3.4.0",
 ]
 dev = [
     "pre-commit",
@@ -64,10 +64,25 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "indymeet.settings"
-addopts = "--reuse-db -m 'not playwright'"
+DJANGO_SETTINGS_MODULE = "indymeet.test_settings"
+addopts = "--reuse-db -m 'not playwright' --strict-markers"
+testpaths = [
+    "accounts",
+    "home",
+    "tests",
+]
+norecursedirs = [
+    ".*",
+    "build",
+    "dist",
+    "*.egg",
+    "node_modules",
+    "staticfiles",
+    "mediafiles",
+    "theme/static_src",
+]
 markers = [
-    "playwright: mark test that requires playwright",
+    "playwright: browser/system tests; excluded from default local runs and executed in the dedicated Playwright phase",
 ]
 
 [tool.coverage.run]

@@ -100,9 +100,10 @@ class EventQuerySetTestCase(TestCase):
 class UserSurveyResponseQuerySetTestCase(TestCase):
     """Test UserSurveyResponseQuerySet methods."""
 
-    def setUp(self):
-        """Create test data using factories."""
-        self.session = SessionFactory(
+    @classmethod
+    def setUpTestData(cls):
+        """Create shared test data once for the class."""
+        cls.session = SessionFactory(
             start_date="2025-06-01",
             end_date="2025-12-31",
             invitation_date="2025-01-01",
@@ -110,20 +111,17 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             application_end_date="2025-02-15",
         )
 
-        self.survey = SurveyFactory(session=self.session)
-        self.session.application_survey = self.survey
-        self.session.save()
+        cls.survey = SurveyFactory(session=cls.session)
+        cls.session.application_survey = cls.survey
+        cls.session.save()
 
-        # Create previous survey
-        self.previous_survey = SurveyFactory(session=self.session)
+        cls.previous_survey = SurveyFactory(session=cls.session)
 
-        # Create users
-        self.user1 = UserFactory()
-        self.user2 = UserFactory()
-        self.user3 = UserFactory()
+        cls.user1 = UserFactory()
+        cls.user2 = UserFactory()
+        cls.user3 = UserFactory()
 
-        # Create team
-        self.team = TeamFactory(session=self.session)
+        cls.team = TeamFactory(session=cls.session)
 
     def test_for_survey(self):
         """Test filtering responses by survey."""

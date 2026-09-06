@@ -1,11 +1,9 @@
+from io import StringIO
+
 import pytest
 from django.core import mail, management
-from django.contrib.auth import get_user_model
-from django.test import override_settings
 
 from accounts.factories import UserFactory
-
-User = get_user_model()
 
 
 @pytest.mark.django_db
@@ -16,55 +14,26 @@ class TestNotifyUnusablePasswordUsersCommand:
         settings.ENVIRONMENT = "production"
         return settings
 
-    def test_sends_email_to_unusable_password_user(self):
+    def test_sends_expected_email_to_unusable_password_user(self):
         user = UserFactory.create(is_active=True)
         user.set_unusable_password()
         user.save()
 
-        management.call_command("notify_unusable_password_users")
+        management.call_command("notify_unusable_password_users", stdout=StringIO())
 
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].to == [user.email]
-
-    def test_email_subject(self):
-        user = UserFactory.create(is_active=True)
-        user.set_unusable_password()
-        user.save()
-
-        management.call_command("notify_unusable_password_users")
-
-        assert len(mail.outbox) == 1
-        assert (
-            mail.outbox[0].subject
-            == "A Djangonaut Space account has been created for you"
-        )
-
-    def test_email_contains_password_reset_link(self):
-        user = UserFactory.create(is_active=True)
-        user.set_unusable_password()
-        user.save()
-
-        management.call_command("notify_unusable_password_users")
-
-        assert len(mail.outbox) == 1
-        assert "/accounts/reset/" in mail.outbox[0].body
-
-    def test_email_contains_delete_account_url(self):
-        user = UserFactory.create(is_active=True)
-        user.set_unusable_password()
-        user.save()
-
-        management.call_command("notify_unusable_password_users")
-
-        assert len(mail.outbox) == 1
-        assert "delete" in mail.outbox[0].body
+        email = mail.outbox[0]
+        assert email.to == [user.email]
+        assert email.subject == "A Djangonaut Space account has been created for you"
+        assert "/accounts/reset/" in email.body
+        assert "delete" in email.body
 
     def test_skips_users_with_usable_passwords(self):
         user = UserFactory.create(is_active=True)
         user.set_password("strongpassword123")
         user.save()
 
-        management.call_command("notify_unusable_password_users")
+        management.call_command("notify_unusable_password_users", stdout=StringIO())
 
         assert len(mail.outbox) == 0
 
@@ -73,7 +42,7 @@ class TestNotifyUnusablePasswordUsersCommand:
         user.set_unusable_password()
         user.save()
 
-        management.call_command("notify_unusable_password_users")
+        management.call_command("notify_unusable_password_users", stdout=StringIO())
 
         assert len(mail.outbox) == 0
 
@@ -83,7 +52,7 @@ class TestNotifyUnusablePasswordUsersCommand:
             user.set_unusable_password()
             user.save()
 
-        management.call_command("notify_unusable_password_users")
+        management.call_command("notify_unusable_password_users", stdout=StringIO())
 
         assert len(mail.outbox) == 3
 
