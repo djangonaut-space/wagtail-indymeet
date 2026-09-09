@@ -415,6 +415,54 @@ class SurveyCSVExportForm(forms.Form):
         else:
             return self.generate_full_csv(survey)
 
+    def _get_project_preferences_by_user(
+        self, survey: Survey
+    ) -> tuple[list[tuple[int, str]], dict[int, set[int]]]:
+        """
+        Get each user's project preferences for the session tied to this survey.
+
+        Returns:
+            A tuple of:
+            - the session's available projects, as (project id, project name)
+              pairs ordered by project name
+            - a mapping of user id to the set of project ids they're interested in
+        """
+        session = getattr(survey, "application_session", None)
+        if not session:
+            return [], {}
+
+        ordered_projects = list(
+            session.available_projects.order_by("name").values_list("id", "name")
+        )
+
+        project_ids_by_user: dict[int, set[int]] = {}
+        for preference in ProjectPreference.objects.for_session(session):
+            project_ids_by_user.setdefault(preference.user_id, set()).add(
+                preference.project_id
+            )
+        return ordered_projects, project_ids_by_user
+
+    def _project_preference_row_values(
+        self,
+        user_id: int,
+        ordered_projects: list[tuple[int, str]],
+        project_ids_by_user: dict[int, set[int]],
+    ) -> list[str]:
+        """
+        Build one "Yes"/"" cell per project for a user's preference row.
+
+        A user with no ProjectPreference rows for the session hasn't opted out
+        of every project - per ProjectPreference's model docs, they're okay
+        with any project - so every column is marked "Yes" in that case.
+        """
+        user_project_ids = project_ids_by_user.get(user_id)
+        if user_project_ids is None:
+            return ["Yes"] * len(ordered_projects)
+        return [
+            "Yes" if project_id in user_project_ids else ""
+            for project_id, _ in ordered_projects
+        ]
+
     def generate_full_csv(self, survey: Survey) -> HttpResponse:
         """Generate CSV file with survey responses and scorer columns"""
         scorer_names = self.cleaned_data.get("scorer_names", [])
@@ -430,6 +478,11 @@ class SurveyCSVExportForm(forms.Form):
         # Get all questions for this survey
         questions = survey.questions.all().order_by("ordering")
 
+        # Get project preferences by user for this survey's session, if any
+        ordered_projects, project_ids_by_user = self._get_project_preferences_by_user(
+            survey
+        )
+
         # Create the HTTP response with CSV headers (UTF-8 encoded)
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = (
@@ -444,6 +497,8 @@ class SurveyCSVExportForm(forms.Form):
         header = ["Response ID", "Submitter Name"]
         # Add question labels as columns
         header.extend([q.label for q in questions])
+        # Add one column per preferred project, marking each user's interest in it
+        header.extend(project_name for _, project_name in ordered_projects)
         # Add Tutorial Result column
         header.append("Tutorial Result")
         # Add scorer columns
@@ -470,6 +525,13 @@ class SurveyCSVExportForm(forms.Form):
             # Add question responses in order
             for question in questions:
                 row.append(question_responses.get(question.id, ""))
+
+            # Mark interest in each preferred project
+            row.extend(
+                self._project_preference_row_values(
+                    response_obj.user_id, ordered_projects, project_ids_by_user
+                )
+            )
 
             # Add Tutorial Result column
             evaluation = getattr(response_obj, "tutorial_evaluation", None)
@@ -508,6 +570,11 @@ class SurveyCSVExportForm(forms.Form):
             "ordering"
         )
 
+        # Get project preferences by user for this survey's session, if any
+        ordered_projects, project_ids_by_user = self._get_project_preferences_by_user(
+            survey
+        )
+
         # Create the HTTP response with CSV headers (UTF-8 encoded)
         response = HttpResponse(content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = (
@@ -520,6 +587,8 @@ class SurveyCSVExportForm(forms.Form):
         header = ["Response ID"]
         for question in questions:
             header.extend([question.label, f"{question.label} Score"])
+        # Add one column per preferred project, marking each user's interest in it
+        header.extend(project_name for _, project_name in ordered_projects)
         writer.writerow(header)
 
         # Write data rows
@@ -532,6 +601,14 @@ class SurveyCSVExportForm(forms.Form):
             for question in questions:
                 # Add the response and an empty cell for the score.
                 row.extend([response_map.get(question.id, ""), ""])
+
+            # Mark interest in each preferred project
+            row.extend(
+                self._project_preference_row_values(
+                    response_obj.user_id, ordered_projects, project_ids_by_user
+                )
+            )
+
             writer.writerow(row)
 
         return response

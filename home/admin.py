@@ -5,7 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Exists, F, Max, OuterRef, TextField
+from django.db.models import Count, Exists, F, Max, OuterRef, Prefetch, TextField
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -41,6 +41,7 @@ from .models import (
     Announcement,
     Event,
     Project,
+    ProjectPreference,
     Question,
     ResourceLink,
     Session,
@@ -1655,6 +1656,7 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = [
         "survey_name",
         "user_email",
+        "project_preferences",
         "created_at",
     ]
     list_filter = [
@@ -1679,6 +1681,14 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 annotated_survey_name=F("survey__name"),
                 annotated_user_email=F("user__email"),
             )
+            .select_related("survey__application_session")
+            .prefetch_related(
+                Prefetch(
+                    "user__project_preferences",
+                    queryset=ProjectPreference.objects.select_related("project"),
+                    to_attr="prefetched_project_preferences",
+                )
+            )
             .for_admin_site(request.user)
         )
 
@@ -1687,6 +1697,19 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
     def user_email(self, obj):
         return obj.annotated_user_email
+
+    @admin.display(description="Project Preferences")
+    def project_preferences(self, obj):
+        session = getattr(obj.survey, "application_session", None)
+        if not session:
+            return ""
+        preferences = [
+            preference.project.name
+            for preference in obj.user.prefetched_project_preferences
+            if preference.session_id == session.id
+        ]
+        # No ProjectPreference rows means the user is okay with any project.
+        return ", ".join(preferences) if preferences else "Any project"
 
     @admin.action(description="Re-evaluate tutorial submission")
     def evaluate_tutorial_submission_action(self, request, queryset):
