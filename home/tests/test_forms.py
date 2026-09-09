@@ -2,6 +2,7 @@ import csv
 import io
 from datetime import date, timedelta
 
+import factory
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
@@ -474,112 +475,6 @@ class SurveyCSVExportFormTests(TestCase):
         self.assertEqual(response1_row[5], "Correct")
         self.assertEqual(response2_row[5], "")  # No tutorial evaluation
 
-    def test_generate_full_csv_includes_project_preferences(self):
-        """Test project columns are named for the project and mark interest."""
-        session = SessionFactory.create(application_survey=self.survey)
-        project_a = ProjectFactory.create(name="Project A")
-        project_b = ProjectFactory.create(name="Project B")
-        project_c = ProjectFactory.create(name="Project C")
-        session.available_projects.add(project_a, project_b, project_c)
-
-        ProjectPreferenceFactory.create(
-            user=self.respondent1, session=session, project=project_a
-        )
-        ProjectPreferenceFactory.create(
-            user=self.respondent1, session=session, project=project_b
-        )
-        ProjectPreferenceFactory.create(
-            user=self.respondent2, session=session, project=project_c
-        )
-
-        form = SurveyCSVExportForm(data={"scorer_names": ""})
-        self.assertTrue(form.is_valid())
-
-        response = form.generate_full_csv(self.survey)
-
-        content = response.content.decode("utf-8-sig")
-        csv_reader = csv.reader(io.StringIO(content))
-        rows = list(csv_reader)
-
-        expected_header = [
-            "Response ID",
-            "Submitter Name",
-            "What is your email?",
-            "Rate your experience",
-            "Tell us about yourself",
-            "Project A",
-            "Project B",
-            "Project C",
-            "Tutorial Result",
-            "Score",
-            "Selection Rank",
-        ]
-        self.assertEqual(rows[0], expected_header)
-
-        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
-        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
-        self.assertEqual(response1_row[5], "Yes")  # Project A: interested
-        self.assertEqual(response1_row[6], "Yes")  # Project B: interested
-        self.assertEqual(response1_row[7], "")  # Project C: not interested
-        self.assertEqual(response2_row[5], "")  # Project A: not interested
-        self.assertEqual(response2_row[6], "")  # Project B: not interested
-        self.assertEqual(response2_row[7], "Yes")  # Project C: interested
-
-    def test_generate_full_csv_project_preferences_default_to_any_when_none_selected(
-        self,
-    ):
-        """A respondent with no ProjectPreference rows is okay with any project."""
-        session = SessionFactory.create(application_survey=self.survey)
-        project_a = ProjectFactory.create(name="Project A")
-        project_b = ProjectFactory.create(name="Project B")
-        session.available_projects.add(project_a, project_b)
-
-        # respondent1 selects both projects; respondent2 selects none, meaning
-        # they're okay with any project (see ProjectPreference model docs).
-        ProjectPreferenceFactory.create(
-            user=self.respondent1, session=session, project=project_a
-        )
-        ProjectPreferenceFactory.create(
-            user=self.respondent1, session=session, project=project_b
-        )
-
-        form = SurveyCSVExportForm(data={"scorer_names": ""})
-        self.assertTrue(form.is_valid())
-
-        response = form.generate_full_csv(self.survey)
-
-        content = response.content.decode("utf-8-sig")
-        csv_reader = csv.reader(io.StringIO(content))
-        rows = list(csv_reader)
-
-        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
-        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
-        self.assertEqual(response1_row[5], "Yes")  # Project A: interested
-        self.assertEqual(response1_row[6], "Yes")  # Project B: interested
-        self.assertEqual(response2_row[5], "Yes")  # No preferences: okay with any
-        self.assertEqual(response2_row[6], "Yes")  # No preferences: okay with any
-
-    def test_generate_full_csv_project_columns_show_even_without_any_preferences(self):
-        """Project columns come from the session's available projects, not just
-        from ones someone happened to prefer - so they still appear even when
-        nobody has submitted a ProjectPreference yet."""
-        session = SessionFactory.create(application_survey=self.survey)
-        project_a = ProjectFactory.create(name="Project A")
-        session.available_projects.add(project_a)
-
-        form = SurveyCSVExportForm(data={"scorer_names": ""})
-        self.assertTrue(form.is_valid())
-
-        response = form.generate_full_csv(self.survey)
-
-        content = response.content.decode("utf-8-sig")
-        csv_reader = csv.reader(io.StringIO(content))
-        rows = list(csv_reader)
-
-        self.assertIn("Project A", rows[0])
-        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
-        self.assertEqual(response1_row[rows[0].index("Project A")], "Yes")
-
     def test_generate_single_scorer_csv(self):
         """Test single scorer CSV only includes TEXT_AREA questions."""
         form = SurveyCSVExportForm(data={"scorer_names": ""})
@@ -607,46 +502,6 @@ class SurveyCSVExportFormTests(TestCase):
             rows[1][1], "I am a Django developer with 5 years of experience."
         )
         self.assertEqual(rows[1][2], "")
-
-    def test_generate_single_scorer_csv_includes_project_preferences(self):
-        """Test single scorer CSV columns are named for the project and mark interest."""
-        session = SessionFactory.create(application_survey=self.survey)
-        project_a = ProjectFactory.create(name="Project A")
-        project_b = ProjectFactory.create(name="Project B")
-        session.available_projects.add(project_a, project_b)
-
-        ProjectPreferenceFactory.create(
-            user=self.respondent1, session=session, project=project_a
-        )
-        ProjectPreferenceFactory.create(
-            user=self.respondent1, session=session, project=project_b
-        )
-
-        form = SurveyCSVExportForm(data={"scorer_names": ""})
-        self.assertTrue(form.is_valid())
-
-        response = form.generate_single_scorer_csv(self.survey)
-
-        content = response.content.decode("utf-8-sig")
-        csv_reader = csv.reader(io.StringIO(content))
-        rows = list(csv_reader)
-
-        expected_header = [
-            "Response ID",
-            "Tell us about yourself",
-            "Tell us about yourself Score",
-            "Project A",
-            "Project B",
-        ]
-        self.assertEqual(rows[0], expected_header)
-
-        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
-        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
-        self.assertEqual(response1_row[3], "Yes")
-        self.assertEqual(response1_row[4], "Yes")
-        # respondent2 has no ProjectPreference rows, so they're okay with any project.
-        self.assertEqual(response2_row[3], "Yes")
-        self.assertEqual(response2_row[4], "Yes")
 
     def test_generate_csv_routes_to_full(self):
         """Test generate_csv method routes to full CSV by default."""
@@ -681,6 +536,146 @@ class SurveyCSVExportFormTests(TestCase):
 
         # Check BOM is present
         self.assertTrue(response.content.startswith(b"\xef\xbb\xbf"))
+
+
+class SurveyCSVExportProjectPreferencesTests(TestCase):
+    """Test project preference columns in SurveyCSVExportForm CSV generation."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.respondent1 = User.objects.create_user(
+            username="pref-user1",
+            email="pref-user1@example.com",
+            first_name="John",
+            last_name="Doe",
+        )
+        cls.respondent2 = User.objects.create_user(
+            username="pref-user2",
+            email="pref-user2@example.com",
+            first_name="Jane",
+            last_name="Smith",
+        )
+        cls.survey = SurveyFactory.create(name="Preferences Survey")
+        cls.response1 = UserSurveyResponse.objects.create(
+            survey=cls.survey, user=cls.respondent1
+        )
+        cls.response2 = UserSurveyResponse.objects.create(
+            survey=cls.survey, user=cls.respondent2
+        )
+
+        cls.session = SessionFactory.create(application_survey=cls.survey)
+        cls.project_a, cls.project_b, cls.project_c = ProjectFactory.create_batch(
+            3, name=factory.Iterator(["Project A", "Project B", "Project C"])
+        )
+        cls.session.available_projects.add(cls.project_a, cls.project_b, cls.project_c)
+
+    @staticmethod
+    def _rows(response):
+        content = response.content.decode("utf-8-sig")
+        return list(csv.reader(io.StringIO(content)))
+
+    def test_marks_interest_in_selected_projects(self):
+        """Each project gets its own column, marked "Yes" only when preferred."""
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_a
+        )
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_b
+        )
+        ProjectPreferenceFactory.create(
+            user=self.respondent2, session=self.session, project=self.project_c
+        )
+
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
+        self.assertEqual(response1_row[header.index("Project B")], "Yes")
+        self.assertEqual(response1_row[header.index("Project C")], "")
+        self.assertEqual(response2_row[header.index("Project A")], "")
+        self.assertEqual(response2_row[header.index("Project B")], "")
+        self.assertEqual(response2_row[header.index("Project C")], "Yes")
+
+    def test_defaults_to_any_project_when_none_selected(self):
+        """A respondent with no ProjectPreference rows is okay with any project."""
+        # respondent1 selects a project; respondent2 selects none, meaning
+        # they're okay with any project (see ProjectPreference model docs).
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_a
+        )
+
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
+        self.assertEqual(response2_row[header.index("Project A")], "Yes")
+        self.assertEqual(response2_row[header.index("Project B")], "Yes")
+        self.assertEqual(response2_row[header.index("Project C")], "Yes")
+
+    def test_columns_show_even_without_any_preferences_submitted(self):
+        """Columns come from the session's available projects, not just ones
+        someone happened to prefer - so they appear before anyone responds."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        self.assertIn("Project A", header)
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
+
+    def test_full_csv_places_project_columns_before_scoring(self):
+        """Project columns land after any question columns and before scoring."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        self.assertEqual(header[:2], ["Response ID", "Submitter Name"])
+        self.assertEqual(header[-3:], ["Tutorial Result", "Score", "Selection Rank"])
+        self.assertLess(header.index("Project A"), header.index("Tutorial Result"))
+
+    def test_single_scorer_csv_marks_interest_in_selected_projects(self):
+        """The single scorer CSV gets the same project columns as the full one."""
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_a
+        )
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_b
+        )
+
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_single_scorer_csv(self.survey))
+        header = rows[0]
+
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
+        self.assertEqual(response1_row[header.index("Project B")], "Yes")
+        # respondent2 has no ProjectPreference rows, so they're okay with any project.
+        self.assertEqual(response2_row[header.index("Project A")], "Yes")
+        self.assertEqual(response2_row[header.index("Project B")], "Yes")
+
+    def test_single_scorer_csv_columns_show_even_without_any_preferences_submitted(
+        self,
+    ):
+        """Single scorer CSV columns also come from available projects, not
+        just from selected preferences."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_single_scorer_csv(self.survey))
+        header = rows[0]
+
+        self.assertIn("Project A", header)
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
 
 
 class SurveyCSVImportFormTests(TestCase):
