@@ -86,7 +86,7 @@ This is the web application for the Djangonaut Space mentoring program. The plat
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/dawnwages/wagtail-indymeet.git
+   git clone https://github.com/djangonaut-space/wagtail-indymeet.git
    ```
 
 2. Have docker running and then run:

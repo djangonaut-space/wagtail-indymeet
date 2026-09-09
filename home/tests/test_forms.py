@@ -2,12 +2,15 @@ import csv
 import io
 from datetime import date, timedelta
 
+import factory
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from accounts.factories import UserFactory
+from home.factories import ProjectFactory
+from home.factories import ProjectPreferenceFactory
 from home.factories import QuestionFactory, SessionFactory
 from home.factories import SurveyFactory
 from home.factories import UserSurveyResponseFactory
@@ -533,6 +536,146 @@ class SurveyCSVExportFormTests(TestCase):
 
         # Check BOM is present
         self.assertTrue(response.content.startswith(b"\xef\xbb\xbf"))
+
+
+class SurveyCSVExportProjectPreferencesTests(TestCase):
+    """Test project preference columns in SurveyCSVExportForm CSV generation."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.respondent1 = User.objects.create_user(
+            username="pref-user1",
+            email="pref-user1@example.com",
+            first_name="John",
+            last_name="Doe",
+        )
+        cls.respondent2 = User.objects.create_user(
+            username="pref-user2",
+            email="pref-user2@example.com",
+            first_name="Jane",
+            last_name="Smith",
+        )
+        cls.survey = SurveyFactory.create(name="Preferences Survey")
+        cls.response1 = UserSurveyResponse.objects.create(
+            survey=cls.survey, user=cls.respondent1
+        )
+        cls.response2 = UserSurveyResponse.objects.create(
+            survey=cls.survey, user=cls.respondent2
+        )
+
+        cls.session = SessionFactory.create(application_survey=cls.survey)
+        cls.project_a, cls.project_b, cls.project_c = ProjectFactory.create_batch(
+            3, name=factory.Iterator(["Project A", "Project B", "Project C"])
+        )
+        cls.session.available_projects.add(cls.project_a, cls.project_b, cls.project_c)
+
+    @staticmethod
+    def _rows(response):
+        content = response.content.decode("utf-8-sig")
+        return list(csv.reader(io.StringIO(content)))
+
+    def test_marks_interest_in_selected_projects(self):
+        """Each project gets its own column, marked "Yes" only when preferred."""
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_a
+        )
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_b
+        )
+        ProjectPreferenceFactory.create(
+            user=self.respondent2, session=self.session, project=self.project_c
+        )
+
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
+        self.assertEqual(response1_row[header.index("Project B")], "Yes")
+        self.assertEqual(response1_row[header.index("Project C")], "")
+        self.assertEqual(response2_row[header.index("Project A")], "")
+        self.assertEqual(response2_row[header.index("Project B")], "")
+        self.assertEqual(response2_row[header.index("Project C")], "Yes")
+
+    def test_defaults_to_any_project_when_none_selected(self):
+        """A respondent with no ProjectPreference rows is okay with any project."""
+        # respondent1 selects a project; respondent2 selects none, meaning
+        # they're okay with any project (see ProjectPreference model docs).
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_a
+        )
+
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
+        self.assertEqual(response2_row[header.index("Project A")], "Yes")
+        self.assertEqual(response2_row[header.index("Project B")], "Yes")
+        self.assertEqual(response2_row[header.index("Project C")], "Yes")
+
+    def test_columns_show_even_without_any_preferences_submitted(self):
+        """Columns come from the session's available projects, not just ones
+        someone happened to prefer - so they appear before anyone responds."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        self.assertIn("Project A", header)
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
+
+    def test_full_csv_places_project_columns_before_scoring(self):
+        """Project columns land after any question columns and before scoring."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_full_csv(self.survey))
+        header = rows[0]
+
+        self.assertEqual(header[:2], ["Response ID", "Submitter Name"])
+        self.assertEqual(header[-3:], ["Tutorial Result", "Score", "Selection Rank"])
+        self.assertLess(header.index("Project A"), header.index("Tutorial Result"))
+
+    def test_single_scorer_csv_marks_interest_in_selected_projects(self):
+        """The single scorer CSV gets the same project columns as the full one."""
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_a
+        )
+        ProjectPreferenceFactory.create(
+            user=self.respondent1, session=self.session, project=self.project_b
+        )
+
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_single_scorer_csv(self.survey))
+        header = rows[0]
+
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        response2_row = next(row for row in rows if row[0] == str(self.response2.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
+        self.assertEqual(response1_row[header.index("Project B")], "Yes")
+        # respondent2 has no ProjectPreference rows, so they're okay with any project.
+        self.assertEqual(response2_row[header.index("Project A")], "Yes")
+        self.assertEqual(response2_row[header.index("Project B")], "Yes")
+
+    def test_single_scorer_csv_columns_show_even_without_any_preferences_submitted(
+        self,
+    ):
+        """Single scorer CSV columns also come from available projects, not
+        just from selected preferences."""
+        form = SurveyCSVExportForm(data={"scorer_names": ""})
+        self.assertTrue(form.is_valid())
+        rows = self._rows(form.generate_single_scorer_csv(self.survey))
+        header = rows[0]
+
+        self.assertIn("Project A", header)
+        response1_row = next(row for row in rows if row[0] == str(self.response1.id))
+        self.assertEqual(response1_row[header.index("Project A")], "Yes")
 
 
 class SurveyCSVImportFormTests(TestCase):
