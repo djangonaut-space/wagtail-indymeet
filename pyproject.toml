@@ -67,9 +67,6 @@ dev = [
 DJANGO_SETTINGS_MODULE = "indymeet.test_settings"
 # Fail fast on misspelled markers so tests do not run in the wrong suite.
 addopts = "--reuse-db -m 'not playwright' --strict-markers"
-testpaths = [
-    ".",
-]
 norecursedirs = [
     ".*",
     "build",
