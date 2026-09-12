@@ -42,58 +42,61 @@ from home.models import (
 class SessionOrganizerPermissionsTestMixin:
     """Mixin providing common test fixtures for organizer permission tests."""
 
-    def setUp(self):
-        """Set up test data for permission tests."""
-        self.factory = RequestFactory()
-        self.admin_site = AdminSite()
-
+    @classmethod
+    def setUpTestData(cls):
+        """Set up stable persisted data for permission tests."""
         # Create the Session Organizers group
-        self.organizers_group = Group.objects.create(name="Session Organizers")
+        cls.organizers_group = Group.objects.create(name="Session Organizers")
 
         # Create a superuser
-        self.superuser = UserFactory.create(
+        cls.superuser = UserFactory.create(
             email="super@example.com",
             is_superuser=True,
             is_staff=True,
         )
 
         # Create a regular staff user (not in Session Organizers group)
-        self.staff_user = UserFactory.create(
+        cls.staff_user = UserFactory.create(
             email="staff@example.com",
             is_staff=True,
         )
 
         # Create a session organizer user
-        self.organizer_user = UserFactory.create(
+        cls.organizer_user = UserFactory.create(
             email="organizer@example.com",
             is_staff=True,
         )
-        self.organizer_user.groups.add(self.organizers_group)
+        cls.organizer_user.groups.add(cls.organizers_group)
 
         # Create two sessions
-        self.organized_session = SessionFactory.create(
+        cls.organized_session = SessionFactory.create(
             title="Organized Session",
             slug="organized-session",
         )
-        self.other_session = SessionFactory.create(
+        cls.other_session = SessionFactory.create(
             title="Other Session",
             slug="other-session",
         )
 
         # Create a SessionMembership making organizer_user an ORGANIZER of organized_session
-        self.organizer_membership = SessionMembershipFactory.create(
-            user=self.organizer_user,
-            session=self.organized_session,
+        cls.organizer_membership = SessionMembershipFactory.create(
+            user=cls.organizer_user,
+            session=cls.organized_session,
             role=constants.ORGANIZER,
         )
 
         # Create a SessionMembership for other_session (different organizer)
-        self.other_organizer = UserFactory.create(email="other@example.com")
-        self.other_organizer_membership = SessionMembershipFactory.create(
-            user=self.other_organizer,
-            session=self.other_session,
+        cls.other_organizer = UserFactory.create(email="other@example.com")
+        cls.other_organizer_membership = SessionMembershipFactory.create(
+            user=cls.other_organizer,
+            session=cls.other_session,
             role=constants.ORGANIZER,
         )
+
+    def setUp(self):
+        """Set up transient helpers for permission tests."""
+        self.factory = RequestFactory()
+        self.admin_site = AdminSite()
 
     def _create_mock_request(self, user):
         """Helper to create a mock request with a user."""

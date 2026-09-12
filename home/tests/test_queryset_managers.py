@@ -579,16 +579,17 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
 class SessionMembershipQuerySetTestCase(TestCase):
     """Test SessionMembershipQuerySet methods."""
 
-    def setUp(self):
-        """Create test data using factories."""
-        self.session = SessionFactory()
-        self.team = TeamFactory(session=self.session)
+    @classmethod
+    def setUpTestData(cls):
+        """Create shared test data once for the class."""
+        cls.session = SessionFactory()
+        cls.team = TeamFactory(session=cls.session)
 
         # Create users with different roles
-        self.djangonaut_user = UserFactory()
-        self.captain_user = UserFactory()
-        self.navigator_user = UserFactory()
-        self.organizer_user = UserFactory()
+        cls.djangonaut_user = UserFactory()
+        cls.captain_user = UserFactory()
+        cls.navigator_user = UserFactory()
+        cls.organizer_user = UserFactory()
 
     def test_accepted_filters_djangonauts_with_accepted_true(self):
         """Test that accepted() only includes Djangonauts with accepted=True."""
@@ -912,20 +913,21 @@ class SessionMembershipQuerySetTestCase(TestCase):
 class EnforceDjangonautAccessControlTestCase(TestCase):
     """Test SessionMembershipQuerySet.enforce_djangonaut_access_control()."""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         today = timezone.now().date()
-        self.upcoming_session = SessionFactory(
+        cls.upcoming_session = SessionFactory(
             start_date=today + timedelta(days=30),
             end_date=today + timedelta(days=90),
             djangonauts_have_access=False,
         )
-        self.active_session = SessionFactory(
+        cls.active_session = SessionFactory(
             start_date=today - timedelta(days=10),
             end_date=today + timedelta(days=60),
             djangonauts_have_access=False,
         )
-        self.upcoming_team = TeamFactory(session=self.upcoming_session)
-        self.active_team = TeamFactory(session=self.active_session)
+        cls.upcoming_team = TeamFactory(session=cls.upcoming_session)
+        cls.active_team = TeamFactory(session=cls.active_session)
 
     def test_excludes_djangonaut_before_start_without_access(self):
         """Djangonaut on upcoming session without access flag is excluded."""
