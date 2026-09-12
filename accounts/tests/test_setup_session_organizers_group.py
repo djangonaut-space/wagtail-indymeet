@@ -1,3 +1,5 @@
+from io import StringIO
+
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
@@ -8,7 +10,7 @@ class SetupSessionOrganizersGroupCommandTestCase(TestCase):
 
     def test_creates_group_with_permissions(self):
         """Test that management command creates group with correct permissions."""
-        call_command("setup_session_organizers_group")
+        call_command("setup_session_organizers_group", stdout=StringIO())
 
         group = Group.objects.get(name="Session Organizers")
         permissions = group.permissions.all()
@@ -29,11 +31,11 @@ class SetupSessionOrganizersGroupCommandTestCase(TestCase):
 
     def test_command_is_idempotent(self):
         """Test that running command multiple times works correctly."""
-        call_command("setup_session_organizers_group")
+        call_command("setup_session_organizers_group", stdout=StringIO())
         first_group = Group.objects.get(name="Session Organizers")
         first_perm_count = first_group.permissions.count()
 
-        call_command("setup_session_organizers_group")
+        call_command("setup_session_organizers_group", stdout=StringIO())
         second_group = Group.objects.get(name="Session Organizers")
         second_perm_count = second_group.permissions.count()
 

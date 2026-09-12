@@ -6,7 +6,7 @@ from unittest.mock import patch
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.utils import timezone
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserFactory
 from home.factories import (
@@ -355,7 +355,7 @@ class SendDueTutorialRemindersTests(TestCase):
 
     def test_deadline_too_close(self):
         """Less than 12 hours left before the deadline: too late for a reminder to help."""
-        with freeze_time("2026-01-02 06:00:00"):
+        with time_machine.travel("2026-01-02 06:00:00", tick=False):
             session = _active_session(application_end_date=datetime.date(2026, 1, 1))
             response = _response_for(session)
             TutorialEvaluation.objects.create(
@@ -370,7 +370,7 @@ class SendDueTutorialRemindersTests(TestCase):
 
     def test_deadline_not_too_close(self):
         """More than 12 hours left before the deadline: still worth reminding."""
-        with freeze_time("2026-01-01 11:00:00"):
+        with time_machine.travel("2026-01-01 11:00:00", tick=False):
             session = _active_session(application_end_date=datetime.date(2026, 1, 1))
             response = _response_for(session)
             TutorialEvaluation.objects.create(
