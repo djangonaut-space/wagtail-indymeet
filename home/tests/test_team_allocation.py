@@ -30,9 +30,10 @@ from home.team_allocation import (
 class TeamSlotTestCase(TestCase):
     """Test TeamSlot dataclass functionality."""
 
-    def setUp(self):
-        """Create test data."""
-        self.session = Session.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        """Create stable persisted test data."""
+        cls.session = Session.objects.create(
             title="Test Session",
             slug="test-session",
             start_date="2025-06-01",
@@ -41,35 +42,37 @@ class TeamSlotTestCase(TestCase):
             application_start_date="2025-01-15",
             application_end_date="2025-02-15",
         )
-        self.project = ProjectFactory(name="Test Project")
-        self.team = TeamFactory(session=self.session, project=self.project)
+        cls.project = ProjectFactory(name="Test Project")
+        cls.team = TeamFactory(session=cls.session, project=cls.project)
 
         # Create navigator with availability
-        self.navigator = UserFactory(username="nav1", email="nav1@test.com")
+        cls.navigator = UserFactory(username="nav1", email="nav1@test.com")
         UserAvailabilityFactory(
-            user=self.navigator,
+            user=cls.navigator,
             slots=[24.0 + (i * 0.5) for i in range(12)],  # Mon 00:00-06:00 (6 hours)
         )
         SessionMembership.objects.create(
-            user=self.navigator,
-            session=self.session,
-            team=self.team,
+            user=cls.navigator,
+            session=cls.session,
+            team=cls.team,
             role=constants.NAVIGATOR,
         )
 
         # Create captain with availability
-        self.captain = UserFactory(username="captain1", email="captain1@test.com")
+        cls.captain = UserFactory(username="captain1", email="captain1@test.com")
         UserAvailabilityFactory(
-            user=self.captain,
+            user=cls.captain,
             slots=[24.0 + (i * 0.5) for i in range(10)],  # Mon 00:00-05:00 (5 hours)
         )
         SessionMembership.objects.create(
-            user=self.captain,
-            session=self.session,
-            team=self.team,
+            user=cls.captain,
+            session=cls.session,
+            team=cls.team,
             role=constants.CAPTAIN,
         )
 
+    def setUp(self):
+        """Create mutable test data."""
         self.team_slot = TeamSlot(
             team=self.team,
             navigators=[self.navigator],
