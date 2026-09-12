@@ -589,29 +589,32 @@ class BuildTeamMessagesTests(TestCase):
 class TeardownFixtureMixin:
     """Session/team/member fixtures shared by the teardown test classes."""
 
-    def setUp(self):
-        self.session = SessionFactory.create(
+    @classmethod
+    def setUpTestData(cls):
+        cls.session = SessionFactory.create(
             title="Session 4",
             short_name="Session 4",
             discord_category_id="cat-1",
             discord_capnav_channel_id="chan-capnav",
             discord_announcements_channel_id="chan-announce",
         )
-        self.team = TeamFactory.create(
-            session=self.session,
+        cls.team = TeamFactory.create(
+            session=cls.session,
             name="Bee",
             discord_channel_id="chan-bee",
             discord_voice_channel_id="chan-bee-voice",
         )
-        self.navigator = SessionMembershipFactory.create(
-            session=self.session, team=self.team, role=constants.NAVIGATOR
+        cls.navigator = SessionMembershipFactory.create(
+            session=cls.session, team=cls.team, role=constants.NAVIGATOR
         )
-        self.djangonaut = SessionMembershipFactory.create(
-            session=self.session, team=self.team, role=constants.DJANGONAUT
+        cls.djangonaut = SessionMembershipFactory.create(
+            session=cls.session, team=cls.team, role=constants.DJANGONAUT
         )
-        self.organizer = OrganizerFactory.create(
-            session=self.session, with_permissions=False
+        cls.organizer = OrganizerFactory.create(
+            session=cls.session, with_permissions=False
         )
+
+    def setUp(self):
         self.guild_members = [
             member("100", "novauser1", roles=["r-nav", "r-bee"]),
             member("102", "novauser2", roles=["r-dj", "r-bee"]),

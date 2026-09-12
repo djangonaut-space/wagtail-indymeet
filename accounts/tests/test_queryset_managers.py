@@ -23,37 +23,38 @@ from home.models import ProjectPreference, SessionMembership, Team
 class CustomUserQuerySetTestCase(TestCase):
     """Test CustomUser queryset methods."""
 
-    def setUp(self):
-        """Create test data."""
-        self.session = SessionFactory()
-        self.project1 = ProjectFactory(name="Django")
-        self.project2 = ProjectFactory(name="Wagtail")
+    @classmethod
+    def setUpTestData(cls):
+        """Create test data once for all tests in this class."""
+        cls.session = SessionFactory()
+        cls.project1 = ProjectFactory(name="Django")
+        cls.project2 = ProjectFactory(name="Wagtail")
 
         # Add projects to session
-        self.session.available_projects.add(self.project1, self.project2)
+        cls.session.available_projects.add(cls.project1, cls.project2)
 
         # Create users
-        self.user1 = UserFactory(username="user1")
-        self.user2 = UserFactory(username="user2")
-        self.user3 = UserFactory(username="user3")
-        self.user4 = UserFactory(username="user4")
+        cls.user1 = UserFactory(username="user1")
+        cls.user2 = UserFactory(username="user2")
+        cls.user3 = UserFactory(username="user3")
+        cls.user4 = UserFactory(username="user4")
 
         # user1: prefers project1
         ProjectPreference.objects.create(
-            user=self.user1, session=self.session, project=self.project1
+            user=cls.user1, session=cls.session, project=cls.project1
         )
 
         # user2: prefers project2
         ProjectPreference.objects.create(
-            user=self.user2, session=self.session, project=self.project2
+            user=cls.user2, session=cls.session, project=cls.project2
         )
 
         # user3: prefers both projects
         ProjectPreference.objects.create(
-            user=self.user3, session=self.session, project=self.project1
+            user=cls.user3, session=cls.session, project=cls.project1
         )
         ProjectPreference.objects.create(
-            user=self.user3, session=self.session, project=self.project2
+            user=cls.user3, session=cls.session, project=cls.project2
         )
 
         # user4: no preferences
