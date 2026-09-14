@@ -163,8 +163,8 @@
                                     {% trans "View Application" %} →
                                 </a>
                             </td>
-                            <td>{{ applicant.score|default:"—" }}</td>
-                            <td>{{ applicant.selection_rank|default:"—" }}</td>
+                            <td>{{ applicant.score|default_if_none:"—" }}</td>
+                            <td>{{ applicant.selection_rank|default_if_none:"—" }}</td>
                             <td>{{ applicant.tutorial_result|default:"—" }}</td>
                             <td>
                                 {% if applicant.current_team %}
@@ -297,8 +297,8 @@
                                 {% for djangonaut in team_data.djangonaut_details %}
                                 <tr>
                                     <td>{{ djangonaut.user.get_full_name }}</td>
-                                    <td>{{ djangonaut.score|default:"—" }}</td>
-                                    <td>{{ djangonaut.selection_rank|default:"—" }}</td>
+                                    <td>{{ djangonaut.score|default_if_none:"—" }}</td>
+                                    <td>{{ djangonaut.selection_rank|default_if_none:"—" }}</td>
                                     <td>
                                         {% if djangonaut.captain_hours is not None %}
                                             {{ djangonaut.captain_hours }}
