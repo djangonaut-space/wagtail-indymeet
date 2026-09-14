@@ -887,7 +887,8 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         Automatically allocate Djangonauts to teams using the allocation algorithm.
 
         This action:
-        - Analyzes all eligible applicants (selection_rank <= 2, where lower is better)
+        - Analyzes eligible applicants one selection_rank tier at a time, best
+          tier first, while teams have space (see SELECTION_RANK_TIERS)
         - Finds optimal team assignments based on availability and preferences
         - Creates SessionMembership records for allocated Djangonauts
         """
@@ -902,12 +903,17 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         session = queryset.first()
         allocation = allocate_teams_bounded_search(session)
         stats = apply_allocation(allocation, session)
-        self.message_user(
-            request,
+        message = (
             f"Successfully allocated {stats['created']} Djangonauts to teams. "
-            f"{stats['complete_teams']} of {stats['total_teams']} teams are filled.",
-            messages.SUCCESS,
+            f"{stats['complete_teams']} of {stats['total_teams']} teams are filled."
         )
+        rank_summary = ", ".join(
+            f"rank {rank}: {placement.placed} of {placement.considered}"
+            for rank, placement in allocation.placements_by_rank.items()
+        )
+        if rank_summary:
+            message += f" Placed by selection rank: {rank_summary}."
+        self.message_user(request, message, messages.SUCCESS)
 
     def save_related(self, request, form, formsets, change) -> None:
         """Show reminder for superuser organizers to review group permissions."""

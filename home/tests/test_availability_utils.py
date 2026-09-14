@@ -13,8 +13,10 @@ from home.availability import (
     AvailabilityWindow,
     calculate_overlap,
     calculate_team_overlap,
+    count_one_hour_block_values,
     count_one_hour_blocks,
     format_slots_as_ranges,
+    get_user_slot_values,
     get_user_slots,
 )
 
@@ -64,6 +66,42 @@ class AvailabilityUtilsTestCase(TestCase):
 
         # Empty slots
         self.assertEqual(count_one_hour_blocks([]), 0)
+
+    def test_count_one_hour_block_values(self):
+        """Blocks are counted from unordered values without overlapping."""
+        self.assertEqual(count_one_hour_block_values([11.0, 10.0, 10.5]), 1)
+        self.assertEqual(count_one_hour_block_values(frozenset()), 0)
+
+    @freeze_time("2024-06-17")
+    def test_slot_values_match_overlap(self):
+        """
+        Intersected slot values agree with calculate_overlap across timezones.
+
+        Team allocation uses the float values for speed, so its overlap checks
+        must match the Slot-based overlap organizers see on availability pages.
+        """
+        eastern = UserFactory(username="eastern")
+        UserAvailabilityFactory(
+            user=eastern,
+            slots=[33.0 + (i * 0.5) for i in range(12)],  # Mon 13:00-19:00 UTC
+            slots_timezone=US_EASTERN_TIMEZONE,
+        )
+        berlin = UserFactory(username="berlin")
+        UserAvailabilityFactory(
+            user=berlin,
+            slots=[38.0 + (i * 0.5) for i in range(12)],  # Mon 12:00-18:00 UTC
+            slots_timezone=CENTRAL_EUROPEAN_TIMEZONE,
+        )
+        users = [self.user1, eastern, berlin]
+
+        overlap, hours = calculate_overlap(users)
+        slot_values = frozenset.intersection(
+            *(get_user_slot_values(user) for user in users)
+        )
+
+        self.assertEqual(hours, 2)
+        self.assertEqual(slot_values, {slot.slot_utc for slot in overlap})
+        self.assertEqual(count_one_hour_block_values(slot_values), hours)
 
     @freeze_time("2024-06-17")
     def test_get_user_slots_preserves_utc_default_users(self):
