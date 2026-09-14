@@ -1,6 +1,7 @@
 """Tests for team formation functionality."""
 
 import json
+import re
 
 from django.contrib.admin.sites import site
 from django.test import RequestFactory, TestCase
@@ -14,6 +15,7 @@ from home.factories import (
     TeamFactory,
     ProjectFactory,
     SurveyFactory,
+    SessionFactory,
     SessionMembershipFactory,
     ProjectPreferenceFactory,
     UserSurveyResponseFactory,
@@ -107,6 +109,64 @@ class ApplicantFilterFormTestCase(TestCase):
         )
         self.assertEqual(filterset.qs.count(), 1)
         self.assertEqual(filterset.qs.first().user, applicant2)
+
+    def test_project_preference_filter_other_session(self):
+        """Preferences made for a different session's application are ignored."""
+        project1 = ProjectFactory()
+        project2 = ProjectFactory()
+        self.session.available_projects.add(project1, project2)
+        other_session = SessionFactory()
+
+        applicant = UserFactory()
+        UserSurveyResponseFactory(user=applicant, survey=self.survey)
+        ProjectPreferenceFactory(user=applicant, session=self.session, project=project2)
+        ProjectPreferenceFactory(
+            user=applicant, session=other_session, project=project1
+        )
+
+        filterset = ApplicantFilterSet(
+            data={"project_preferences": project1.id},
+            queryset=UserSurveyResponse.objects.filter(survey=self.survey),
+            session=self.session,
+        )
+        self.assertTrue(filterset.is_valid())
+        self.assertFalse(filterset.qs.exists())
+
+    def test_project_preference_filter_any(self):
+        """
+        Applicants without preferences for this session are okay with any project,
+        so they match every project, even if they have preferences elsewhere.
+        """
+        project1 = ProjectFactory()
+        project2 = ProjectFactory()
+        self.session.available_projects.add(project1, project2)
+        other_session = SessionFactory()
+
+        no_preferences = UserFactory()
+        UserSurveyResponseFactory(user=no_preferences, survey=self.survey)
+
+        other_session_preferences = UserFactory()
+        UserSurveyResponseFactory(user=other_session_preferences, survey=self.survey)
+        ProjectPreferenceFactory(
+            user=other_session_preferences, session=other_session, project=project2
+        )
+
+        prefers_project2 = UserFactory()
+        UserSurveyResponseFactory(user=prefers_project2, survey=self.survey)
+        ProjectPreferenceFactory(
+            user=prefers_project2, session=self.session, project=project2
+        )
+
+        filterset = ApplicantFilterSet(
+            data={"project_preferences": project1.id},
+            queryset=UserSurveyResponse.objects.filter(survey=self.survey),
+            session=self.session,
+        )
+        self.assertTrue(filterset.is_valid())
+        self.assertCountEqual(
+            filterset.qs.values_list("user", flat=True),
+            [no_preferences.id, other_session_preferences.id],
+        )
 
     def test_tutorial_result_filter(self):
         """Test filtering applicants by a single tutorial evaluation result."""
@@ -782,6 +842,93 @@ class TeamFormationViewTestCase(TestCase):
         self.assertIn(reverse("compare_availability"), url)
         self.assertIn(str(navigator.id), url)
         self.assertIn(str(applicant.id), url)
+
+    def _create_team_and_applicant(
+        self,
+    ) -> tuple[Team, CustomUser, CustomUser, CustomUser]:
+        """Create a team with a navigator and captain, plus an unassigned applicant."""
+        team = TeamFactory(session=self.session, name="Test Team")
+        navigator = UserFactory(username="navigator")
+        SessionMembershipFactory(
+            user=navigator, session=self.session, team=team, role=constants.NAVIGATOR
+        )
+        UserAvailabilityFactory(user=navigator, slots=[24.0, 24.5])
+        captain = UserFactory(username="captain")
+        SessionMembershipFactory(
+            user=captain, session=self.session, team=team, role=constants.CAPTAIN
+        )
+        UserAvailabilityFactory(user=captain, slots=[24.0, 24.5])
+        applicant = UserFactory(username="applicant")
+        UserSurveyResponseFactory(user=applicant, survey=self.survey)
+        UserAvailabilityFactory(user=applicant, slots=[24.0, 24.5])
+        return team, navigator, captain, applicant
+
+    def test_navigator_compare_url_selects_applicant(self):
+        """
+        The navigator overlap's compare link includes applicants who aren't
+        session members yet, and they must be valid choices on that page.
+        """
+        team, navigator, _, applicant = self._create_team_and_applicant()
+        form = OverlapAnalysisForm(
+            data={
+                "overlap-team": team.id,
+                "overlap-analysis_type": "overlap-navigator",
+                "overlap-user_ids": str(applicant.id),
+            },
+            session=self.session,
+        )
+        self.assertTrue(form.is_valid())
+        url = form.calculate_navigator_overlap_context()["compare_availability_url"]
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.context["form"].errors, {})
+        self.assertEqual(
+            response.context["selected_user_ids"], {navigator.id, applicant.id}
+        )
+
+    def test_captain_compare_url_selects_applicant(self):
+        """The captain overlap's compare link accepts the unassigned applicant."""
+        team, _, captain, applicant = self._create_team_and_applicant()
+        form = OverlapAnalysisForm(
+            data={
+                "overlap-team": team.id,
+                "overlap-analysis_type": "overlap-captain",
+                "overlap-user_ids": str(applicant.id),
+            },
+            session=self.session,
+        )
+        self.assertTrue(form.is_valid())
+        context = form.calculate_captain_overlap_context()
+        url = context["results"][0]["compare_availability_url"]
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.context["form"].errors, {})
+        self.assertEqual(
+            response.context["selected_user_ids"], {captain.id, applicant.id}
+        )
+
+    def test_zero_rank_displayed(self):
+        """
+        A selection rank of 0 renders as 0 rather than the empty placeholder,
+        in both the applicant table and the team's djangonaut table.
+        """
+        team = TeamFactory(session=self.session, name="Test Team")
+        djangonaut = UserFactory()
+        UserSurveyResponseFactory(
+            user=djangonaut, survey=self.survey, score=7, selection_rank=0
+        )
+        SessionMembershipFactory(
+            user=djangonaut, session=self.session, team=team, role=constants.DJANGONAUT
+        )
+
+        response = self.client.get(
+            reverse("admin:session_form_teams", args=[self.session.id])
+        )
+
+        content = response.content.decode()
+        self.assertEqual(len(re.findall(r"<td>7</td>\s*<td>0</td>", content)), 2)
 
     def test_team_statistics_has_compare_url(self):
         """Test that team statistics includes compare availability URL."""

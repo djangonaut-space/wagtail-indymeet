@@ -9,7 +9,14 @@ from django import forms
 from django.db.models import QuerySet, Exists, OuterRef
 
 from accounts.models import CustomUser
-from home.models import Project, Result, Team, UserSurveyResponse, Waitlist
+from home.models import (
+    Project,
+    ProjectPreference,
+    Result,
+    Team,
+    UserSurveyResponse,
+    Waitlist,
+)
 
 
 class BooleanFilter(django_filters.BooleanFilter):
@@ -34,9 +41,9 @@ class ApplicantFilterSet(django_filters.FilterSet):
     )
 
     project_preferences = django_filters.ModelChoiceFilter(
-        field_name="user__project_preferences__project",
         queryset=Project.objects.none(),
         label="Project Preference",
+        method="filter_project_preference",
     )
 
     team = django_filters.ModelChoiceFilter(
@@ -105,6 +112,24 @@ class ApplicantFilterSet(django_filters.FilterSet):
             self.filters["project_preferences"].queryset = (
                 session.available_projects.all().order_by("name")
             )
+
+    def filter_project_preference(
+        self, queryset: QuerySet, name: str, value: Project | None
+    ) -> QuerySet:
+        """
+        Filter applicants who would accept working on the given project.
+
+        Only preferences for this session count. Applicants with no preferences
+        for this session selected "Any", so they match every project.
+        """
+        if not value:
+            return queryset
+        preferences = ProjectPreference.objects.for_session(self.session).filter(
+            user=OuterRef("user")
+        )
+        return queryset.filter(
+            Exists(preferences.filter(project=value)) | ~Exists(preferences)
+        )
 
     def filter_by_team(
         self, queryset: QuerySet, name: str, value: Team | None

@@ -105,7 +105,14 @@ class CustomUserQuerySet(QuerySet):
         q_filter = Q(availability__isnull=False)
 
         if session:
-            q_filter &= Q(session_memberships__session=session)
+            session_filter = Q(session_memberships__session=session)
+            if session.application_survey_id:
+                # Applicants have no membership until they're placed on a team,
+                # but organizers compare their availability while forming teams.
+                session_filter |= Q(
+                    usersurveyresponse__survey_id=session.application_survey_id
+                )
+            q_filter &= session_filter
 
         if session_membership and session_membership.role != constants.ORGANIZER:
             q_filter &= Q(session_memberships__team=session_membership.team)
