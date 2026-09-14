@@ -6,6 +6,7 @@ that navigators can meet with all team members simultaneously, and captains
 can meet with each djangonaut individually.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -14,7 +15,7 @@ from django.urls import reverse
 
 from accounts.models import UserAvailability
 from home.models import Session, SessionMembership, Team
-from home.slots import HOURS_PER_WEEK, SLOT_INCREMENT, Slot
+from home.slots import FLOAT_COMPARISON_THRESHOLD, HOURS_PER_WEEK, SLOT_INCREMENT, Slot
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
@@ -27,12 +28,14 @@ __all__ = [
     "calculate_overlap",
     "calculate_team_overlap",
     "calculate_user_overlap",
+    "count_one_hour_block_values",
     "count_one_hour_blocks",
     "find_best_one_hour_windows",
     "find_best_one_hour_windows_with_roles",
     "format_availability_by_day",
     "format_slots_as_ranges",
     "get_role_slots",
+    "get_user_slot_values",
     "get_user_slots",
 ]
 
@@ -147,6 +150,24 @@ def get_user_slots(user: "CustomUser") -> list[Slot]:
     return availability.get_slots()
 
 
+def get_user_slot_values(user: "CustomUser") -> frozenset[float]:
+    """
+    Get a user's availability as comparable UTC weekly slot values.
+
+    ``Slot`` equality and hashing go through Python-level methods, which is
+    slow when availability is intersected many times, as team allocation does.
+    ``slot_utc`` is exactly what ``Slot`` compares on, so sets of these floats
+    intersect the same way sets of slots do.
+
+    Args:
+        user: A CustomUser instance
+
+    Returns:
+        The user's UTC slot values. Empty if the user has no availability set.
+    """
+    return frozenset(slot.slot_utc for slot in get_user_slots(user))
+
+
 def get_role_slots(team: Team, role) -> list[Slot]:
     """
     Get all unique availability slots from users with a given role on a team.
@@ -171,6 +192,36 @@ def get_role_slots(team: Team, role) -> list[Slot]:
     return sorted(all_slots)
 
 
+def count_one_hour_block_values(slot_values: Iterable[float]) -> int:
+    """
+    Count the number of 1-hour blocks in a collection of UTC slot values.
+
+    A 1-hour block consists of two consecutive 30-minute slots. Blocks don't
+    overlap, so three consecutive slots make a single block.
+
+    Args:
+        slot_values: UTC weekly slot values, in any order
+
+    Returns:
+        Number of complete 1-hour blocks
+    """
+    ordered = sorted(slot_values)
+    hour_blocks = 0
+    i = 0
+
+    while i < len(ordered) - 1:
+        # Compare with a tolerance because non-hour-aligned timezones produce
+        # quarter-hour float remainders.
+        delta = ordered[i + 1] - ordered[i]
+        if abs(delta - SLOT_INCREMENT) < FLOAT_COMPARISON_THRESHOLD:
+            hour_blocks += 1
+            i += 2  # Skip both slots that form this hour block
+        else:
+            i += 1  # Move to next slot
+
+    return hour_blocks
+
+
 def count_one_hour_blocks(slots: list[Slot]) -> int:
     """
     Count the number of 1-hour blocks from a list of 30-minute slots.
@@ -178,23 +229,12 @@ def count_one_hour_blocks(slots: list[Slot]) -> int:
     A 1-hour block consists of two consecutive 30-minute slots.
 
     Args:
-        slots: Chronologically sorted slots
+        slots: Slots to count, in any order
 
     Returns:
         Number of complete 1-hour blocks
     """
-    hour_blocks = 0
-    i = 0
-
-    while i < len(slots) - 1:
-        # Check if current slot and next slot are consecutive
-        if slots[i].is_adjacent_to(slots[i + 1]):
-            hour_blocks += 1
-            i += 2  # Skip both slots that form this hour block
-        else:
-            i += 1  # Move to next slot
-
-    return hour_blocks
+    return count_one_hour_block_values(slot.slot_utc for slot in slots)
 
 
 def calculate_overlap(
