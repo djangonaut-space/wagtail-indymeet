@@ -262,6 +262,26 @@ class TeamSlot:
         return team_slot
 
 
+class AllocationScore(NamedTuple):
+    """
+    How good an allocation is. Higher is better.
+
+    Scores compare field by field in order, so a later field only matters when
+    every earlier field is tied. ``negative_rank_sum`` is the sum of selection
+    ranks negated, because lower ranks are better and must compare higher.
+
+    Example:
+        >>> AllocationScore(allocated=7, complete_teams=2, negative_rank_sum=-4) > (
+        ...     AllocationScore(allocated=7, complete_teams=2, negative_rank_sum=-5)
+        ... )
+        True
+    """
+
+    allocated: int
+    complete_teams: int
+    negative_rank_sum: int
+
+
 class RankPlacement(NamedTuple):
     """How many candidates of one selection rank were placed out of those considered."""
 
@@ -334,25 +354,21 @@ class AllocationState:
             candidates=self.candidates,
         )
 
-    def get_score(self) -> tuple[int, int, int]:
+    def get_score(self) -> AllocationScore:
         """
         Calculate a score for this allocation state.
 
-        Returns tuple of (num_allocated, num_complete_teams, sum_of_ranks).
-        Higher is better for comparisons. We use negative sum_of_ranks because
-        lower selection_rank values are better.
-
         Returns:
-            Tuple of (number allocated, number of complete teams, negative sum of ranks)
+            The allocation's score, where higher is better
         """
-        num_allocated = len(self.allocated_candidates)
-        num_complete_teams = sum(1 for team in self.teams if team.is_full)
-
         sum_of_ranks = sum(
             candidate.selection_rank for candidate, _ in self.allocated_candidates
         )
-
-        return (num_allocated, num_complete_teams, -sum_of_ranks)
+        return AllocationScore(
+            allocated=len(self.allocated_candidates),
+            complete_teams=sum(1 for team in self.teams if team.is_full),
+            negative_rank_sum=-sum_of_ranks,
+        )
 
 
 def get_allocation_candidates(
@@ -587,14 +603,34 @@ class _TeamAllocationSearcher:
         self, candidate_index: int, rank_sum: int, open_slots: list[int]
     ) -> bool:
         """
-        Whether the subtree below the working state could beat the best score.
+        Whether any allocation below the working state could beat the best score.
 
-        Scores compare as (allocated, complete teams, -rank sum). At most
-        ``placeable`` more candidates can be allocated. If that total differs
-        from the best allocation count, it alone decides. On a tie, only
-        branches that place all ``placeable`` candidates can compete, so their
-        complete teams are bounded by filling the teams needing the fewest
-        Djangonauts first, and their rank sum by the best remaining ranks.
+        Example:
+            Three teams take up to 3 Djangonauts each. Team A is full, team B
+            has one Djangonaut and team C is empty, so ``open_slots`` is
+            ``[2, 3]``. Four candidates are allocated with a rank sum of 2, and
+            the candidates still to consider have ranks 0, 1 and 1.
+
+            ``_best_possible_score`` assumes the best case for each field:
+
+            - allocated: 4 + min(3 remaining, 5 open slots) = 7
+            - complete_teams: A, plus B using 2 of the 3 placements = 2
+              (C would need 3 more, but only 1 placement is left)
+            - negative_rank_sum: -(2 + (0 + 1 + 1)) = -4
+
+            That best possible score is compared with ``best_score``:
+
+            - best allocated=6, complete_teams=2, negative_rank_sum=-1:
+              keep searching, since 7 > 6 allocated. Placing one more
+              Djangonaut wins even with worse ranks.
+            - best allocated=8, complete_teams=2, negative_rank_sum=-6:
+              skip, since 7 < 8 allocated. Nothing below here places 8.
+            - best allocated=7, complete_teams=2, negative_rank_sum=-5:
+              keep searching. Allocated and complete_teams tie, and
+              -4 > -5, so a lower rank sum is still possible.
+            - best allocated=7, complete_teams=2, negative_rank_sum=-4:
+              skip. At most this ties, and a tie never replaces the best
+              allocation.
 
         Args:
             candidate_index: Index of next candidate to consider
@@ -602,28 +638,66 @@ class _TeamAllocationSearcher:
             open_slots: Available slots of each team that isn't full
 
         Returns:
-            False if no allocation in this subtree can score higher than best
+            False if the subtree can be skipped
         """
-        best_allocated, best_complete, best_negative_rank_sum = self.best_score
-        placeable = min(len(self.candidates) - candidate_index, sum(open_slots))
-        max_allocated = len(self.state.allocated_candidates) + placeable
-        if max_allocated != best_allocated:
-            return max_allocated > best_allocated
-
-        fillable_teams = 0
-        unplaced = placeable
-        for needed in sorted(open_slots):
-            if needed > unplaced:
-                break
-            unplaced -= needed
-            fillable_teams += 1
-        max_complete = len(self.state.teams) - len(open_slots) + fillable_teams
-        max_negative_rank_sum = -(
-            rank_sum + self.min_rank_sums[candidate_index][placeable]
+        best_possible_score = self._best_possible_score(
+            candidate_index, rank_sum, open_slots
         )
-        return (max_complete, max_negative_rank_sum) > (
-            best_complete,
-            best_negative_rank_sum,
+        return best_possible_score > self.best_score
+
+    def _best_possible_score(
+        self, candidate_index: int, rank_sum: int, open_slots: list[int]
+    ) -> AllocationScore:
+        """
+        A score no allocation below the working state can exceed.
+
+        Shaped like ``AllocationState.get_score`` and built by assuming the
+        most optimistic outcome for each field:
+
+        - allocated: every remaining candidate is placed, up to the open slots
+        - complete teams: those placements finish the teams closest to full
+        - rank sum: those placements are the best-ranked remaining candidates
+
+        Scores compare field by field, so an allocation placing fewer
+        candidates already loses on the first field. The other two fields only
+        need to be optimistic for allocations that place the maximum.
+
+        Args:
+            candidate_index: Index of next candidate to consider
+            rank_sum: Sum of selection ranks of the allocated candidates
+            open_slots: Available slots of each team that isn't full
+
+        Returns:
+            The optimistic score for the subtree
+        """
+        # Placements are capped by whichever runs out first: candidates left to
+        # consider or open slots. This ignores availability and preferences,
+        # which is what keeps the estimate optimistic.
+        remaining_candidates = len(self.candidates) - candidate_index
+        placeable = min(remaining_candidates, sum(open_slots))
+
+        # Spend the placements on the teams needing the fewest Djangonauts
+        # first. Finishing the cheapest teams first completes the most teams
+        # a fixed number of placements can complete.
+        completable_teams = 0
+        candidates_left = placeable
+        for slots_needed in sorted(open_slots):
+            if slots_needed > candidates_left:
+                break
+            candidates_left -= slots_needed
+            completable_teams += 1
+        already_complete_teams = len(self.state.teams) - len(open_slots)
+
+        # The lowest rank sum comes from placing the best-ranked remaining
+        # candidates, whichever of them the search would actually reach.
+        # min_rank_sums precomputes that total for every starting index and
+        # placement count.
+        best_rank_sum = rank_sum + self.min_rank_sums[candidate_index][placeable]
+
+        return AllocationScore(
+            allocated=len(self.state.allocated_candidates) + placeable,
+            complete_teams=already_complete_teams + completable_teams,
+            negative_rank_sum=-best_rank_sum,
         )
 
 

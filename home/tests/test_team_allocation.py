@@ -23,6 +23,7 @@ from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE, US_EASTERN_TIMEZONE
 from home.slots import Slot
 from home.team_allocation import (
     AllocationCandidate,
+    AllocationScore,
     AllocationState,
     TeamSlot,
     _TeamAllocationSearcher,
@@ -764,9 +765,10 @@ class AllocationStateTestCase(TestCase):
             candidates=[candidate1, candidate2],
         )
 
-        score = state.get_score()
-        # (num_allocated=2, num_complete=0, -sum_of_ranks=-(2+3)=-5)
-        self.assertEqual(score, (2, 0, -5))
+        self.assertEqual(
+            state.get_score(),
+            AllocationScore(allocated=2, complete_teams=0, negative_rank_sum=-(2 + 3)),
+        )
 
         # Add third candidate to make team complete
         user3 = UserFactory(username="user3")
@@ -776,9 +778,12 @@ class AllocationStateTestCase(TestCase):
         team_slot.add_djangonaut(candidate3)
         state.allocated_candidates.append((candidate3, team_slot))
 
-        score = state.get_score()
-        # (num_allocated=3, num_complete=1, -sum_of_ranks=-(2+3+4)=-9)
-        self.assertEqual(score, (3, 1, -9))
+        self.assertEqual(
+            state.get_score(),
+            AllocationScore(
+                allocated=3, complete_teams=1, negative_rank_sum=-(2 + 3 + 4)
+            ),
+        )
 
     def test_copy_repoints_teams(self):
         """Allocated candidates in a copy reference the copied TeamSlots."""
