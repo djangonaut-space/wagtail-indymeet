@@ -36,4 +36,4 @@ jobs:
       - name: Submit the payload
         env:
           DJANGO_PROBE_TOKEN: ${{ secrets.DJANGO_PROBE_TOKEN }}
-        run: uv run django-probe submit .
+        run: uv run --with django-probe django-probe submit .
