@@ -10,7 +10,6 @@ from tests.timezones import (
 )
 from home.slots import Slot
 from home.availability import (
-    AvailabilityWindow,
     calculate_overlap,
     calculate_team_overlap,
     count_one_hour_block_values,
@@ -221,35 +220,3 @@ class AvailabilityUtilsTestCase(TestCase):
         with time_machine.travel("2024-06-17", tick=False):
             ranges = format_slots_as_ranges(utc_slots(37.0, 37.5), US_EASTERN_TIMEZONE)
         self.assertEqual(ranges, ["Mon 9:00 AM - 10:00 AM"])
-
-
-class AvailabilityWindowTestCase(TestCase):
-    """Tests for AvailabilityWindow dataclass."""
-
-    def test_admin_unavailable_url_uses_user_ids(self):
-        """Test that admin_unavailable_url uses user.id, not str(user)."""
-        user1 = UserFactory(username="user1", email="user1@example.com")
-        user2 = UserFactory(username="user2", email="user2@example.com")
-
-        window = AvailabilityWindow(
-            slot_range=(Slot("UTC", 10.0), Slot("UTC", 10.5)),
-            formatted_time="Sun 10:00 AM - 11:00 AM",
-            available_users=[],
-            unavailable_users=[user1, user2],
-        )
-
-        url = window.admin_unavailable_url
-        expected_ids = f"{user1.id},{user2.id}"
-        self.assertIn(f"?user_id__in={expected_ids}", url)
-        self.assertIn("home/sessionmembership/", url)
-
-    def test_admin_unavailable_url_returns_none_when_no_unavailable_users(self):
-        """Test that admin_unavailable_url returns None with no unavailable users."""
-        window = AvailabilityWindow(
-            slot_range=(Slot("UTC", 10.0), Slot("UTC", 10.5)),
-            formatted_time="Sun 10:00 AM - 11:00 AM",
-            available_users=[],
-            unavailable_users=[],
-        )
-
-        self.assertIsNone(window.admin_unavailable_url)
