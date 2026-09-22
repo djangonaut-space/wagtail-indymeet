@@ -719,9 +719,14 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
                 messages.WARNING,
             )
             return
+
         message = render_to_string(
             "admin/availability_overlap_message.html",
-            {"results": results, "total_members": len(user_roles)},
+            {
+                "results": results,
+                "total_members": len(user_roles),
+                "request": request,
+            },
         )
         self.message_user(request, mark_safe(message))
 
