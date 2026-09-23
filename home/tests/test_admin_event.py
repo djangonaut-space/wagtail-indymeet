@@ -406,6 +406,42 @@ class EventAdminCalendarInviteEmailActionTests(TestCase):
         self.assertEqual(stored[0].level, messages.ERROR)
 
 
+class EventAdminResetCalendarInvitesSentTests(TestCase):
+    """Tests for the reset_calendar_invites_sent admin action."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = UserFactory.create(
+            email="admin@example.com", is_staff=True, is_superuser=True
+        )
+
+    def _get_request(self):
+        request = RequestFactory().post("/admin/home/event/")
+        request.user = self.superuser
+        middleware = SessionMiddleware(lambda req: None)
+        middleware.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        return request
+
+    def test_clears_sent_at(self):
+        """Only events that had invites sent are counted as reset."""
+        sent = EventFactory.create(calendar_invites_sent_at=timezone.now())
+        unsent = EventFactory.create()
+        request = self._get_request()
+
+        EventAdmin(Event, AdminSite()).reset_calendar_invites_sent(
+            request, Event.objects.filter(pk__in=[sent.pk, unsent.pk])
+        )
+
+        sent.refresh_from_db()
+        self.assertIsNone(sent.calendar_invites_sent_at)
+        self.assertEqual(
+            [str(m) for m in request._messages],
+            ["Reset calendar invites sent for 1 event(s)."],
+        )
+
+
 class EventAdminResyncEventActionTests(TestCase):
     """Tests for the resync_event admin action."""
 
@@ -619,6 +655,12 @@ class EventAdminReadonlyFieldsTests(TestCase):
         readonly = EventAdmin(Event, AdminSite()).readonly_fields
         self.assertIn("zoom_meeting_id", readonly)
         self.assertIn("discord_event_id", readonly)
+
+    def test_calendar_invites_sent_at_is_readonly(self):
+        """The send action relies on this to skip events, so it's only
+        cleared through the reset action."""
+        readonly = EventAdmin(Event, AdminSite()).readonly_fields
+        self.assertIn("calendar_invites_sent_at", readonly)
 
     def test_fieldsets_include_every_editable_field(self):
         """Every field the form would otherwise render must be grouped
