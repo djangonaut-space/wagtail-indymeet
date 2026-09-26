@@ -4,8 +4,8 @@ import dataclasses
 import datetime
 from zoneinfo import ZoneInfo
 
-from django.test import TestCase
-from freezegun import freeze_time
+from django.test import SimpleTestCase, TestCase
+import time_machine
 
 from accounts.factories import UserAvailabilityFactory
 from home.slots import Slot
@@ -16,8 +16,8 @@ from tests.timezones import (
 )
 
 
-@freeze_time("2024-06-17")
-class SlotTestCase(TestCase):
+@time_machine.travel("2024-06-17", tick=False)
+class SlotTestCase(SimpleTestCase):
     """Test Slot conversions, formatting, and equality."""
 
     def test_accepts_timezone_name_or_zoneinfo(self) -> None:
@@ -188,28 +188,28 @@ class SlotTestCase(TestCase):
         )
 
 
-class SlotReferenceWeekTestCase(TestCase):
+class SlotReferenceWeekTestCase(SimpleTestCase):
     """Test which calendar week slots are anchored to."""
 
     def test_anchors_to_current_week_sunday(self) -> None:
         """Slot 0.0 anchors to the Sunday of the frozen date's week."""
-        with freeze_time("2024-06-19"):
+        with time_machine.travel("2024-06-19", tick=False):
             self.assertEqual(Slot("UTC", 0.0).utc.date(), datetime.date(2024, 6, 16))
-        with freeze_time("2024-06-16"):
+        with time_machine.travel("2024-06-16", tick=False):
             self.assertEqual(Slot("UTC", 0.0).utc.date(), datetime.date(2024, 6, 16))
 
     def test_anchor_follows_the_calendar_across_midnight(self) -> None:
         """The memoized week start must not pin slots to a stale week."""
-        with freeze_time("2024-06-22 23:59"):  # Saturday
+        with time_machine.travel("2024-06-22 23:59", tick=False):  # Saturday
             self.assertEqual(Slot("UTC", 0.0).utc.date(), datetime.date(2024, 6, 16))
-        with freeze_time("2024-06-23 00:01"):  # Sunday, a new week
+        with time_machine.travel("2024-06-23 00:01", tick=False):  # Sunday, a new week
             self.assertEqual(Slot("UTC", 0.0).utc.date(), datetime.date(2024, 6, 23))
 
 
-class SlotDaylightSavingTestCase(TestCase):
+class SlotDaylightSavingTestCase(SimpleTestCase):
     """Test Slot behavior across DST transition weeks."""
 
-    @freeze_time("2024-03-10")
+    @time_machine.travel("2024-03-10", tick=False)
     def test_uses_daylight_offset_after_spring_transition(self) -> None:
         """Sunday March 10 2024 is the US spring-forward date."""
         slot = Slot(US_EASTERN_TIMEZONE, 33.0)
@@ -217,14 +217,14 @@ class SlotDaylightSavingTestCase(TestCase):
         self.assertEqual(slot.format_utc, "Mon 1:00 PM")
         self.assertEqual(Slot("UTC", 37.0).slot_as_tz(US_EASTERN_TIMEZONE), 33.0)
 
-    @freeze_time("2024-11-03")
+    @time_machine.travel("2024-11-03", tick=False)
     def test_uses_standard_offset_after_fall_transition(self) -> None:
         """Sunday November 3 2024 is the US fall-back date."""
         # Monday 9:00 in New York is Monday 14:00 UTC after DST ends.
         self.assertEqual(Slot(US_EASTERN_TIMEZONE, 33.0).slot_utc, 38.0)
         self.assertEqual(Slot("UTC", 38.0).slot_as_tz(US_EASTERN_TIMEZONE), 33.0)
 
-    @freeze_time("2024-11-03")
+    @time_machine.travel("2024-11-03", tick=False)
     def test_fold_defaults_to_earlier_occurrence(self) -> None:
         """Ambiguous fall-back times inherit zoneinfo's fold=0 default."""
         # Sunday 1:30 occurs twice in New York. The default fold=0 occurrence is
@@ -232,7 +232,7 @@ class SlotDaylightSavingTestCase(TestCase):
         self.assertEqual(Slot(US_EASTERN_TIMEZONE, 1.5).slot_utc, 5.5)
         self.assertEqual(Slot("UTC", 5.5).slot_as_tz(US_EASTERN_TIMEZONE), 1.5)
 
-    @freeze_time("2024-03-10")
+    @time_machine.travel("2024-03-10", tick=False)
     def test_gap_defaults_to_pre_transition_offset_without_blocking(self) -> None:
         """Nonexistent spring-forward times inherit zoneinfo defaults."""
         # Sunday 2:30 does not exist in New York on the spring-forward day. The
@@ -242,7 +242,7 @@ class SlotDaylightSavingTestCase(TestCase):
         self.assertEqual(Slot("UTC", 7.5).slot_as_tz(US_EASTERN_TIMEZONE), 3.5)
 
 
-@freeze_time("2024-06-17")
+@time_machine.travel("2024-06-17", tick=False)
 class UserAvailabilityGetSlotsTestCase(TestCase):
     """Test UserAvailability.get_slots()."""
 

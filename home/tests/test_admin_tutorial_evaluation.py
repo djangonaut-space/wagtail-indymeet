@@ -100,6 +100,18 @@ class TestTutorialEvaluationAdmin:
     def test_list_filter_includes_result(self, model_admin):
         assert "result" in model_admin.list_filter
 
+    def test_readonly_fields(self, model_admin, mock_request):
+        """Timestamps and pending are set by the evaluation tasks. The result
+        stays editable so organizers can override it."""
+        form = model_admin.get_form(mock_request)
+
+        assert set(model_admin.readonly_fields) == {
+            "evaluated_at",
+            "pending",
+            "reminder_sent_at",
+        }
+        assert "result" in form.base_fields
+
     def test_search_by_user_email(self, model_admin, mock_request):
         response = UserSurveyResponseFactory(survey=SurveyFactory(session=None))
         evaluation = TutorialEvaluation.objects.create(user_survey_response=response)

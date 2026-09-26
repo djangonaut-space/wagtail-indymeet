@@ -258,7 +258,7 @@ MIGRATION_MODULES = {"puput": "home.puput_migrations"}
 
 TAILWIND_APP_NAME = "theme"
 
-_sentry_dsn = os.environ.get("SENTRY_DNS")
+_sentry_dsn = os.environ.get("SENTRY_DSN")
 if not DEBUG and _sentry_dsn:
     sentry_sdk.init(
         dsn=_sentry_dsn,

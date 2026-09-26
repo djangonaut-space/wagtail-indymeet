@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from freezegun import freeze_time
+import time_machine
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from home import constants
@@ -26,17 +26,15 @@ from tests.timezones import (
 )
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class TeamDetailViewTests(TestCase):
     """Tests for TeamDetailView."""
 
-    def setUp(self) -> None:
-        """Set up test data."""
-        super().setUp()
-        self.client = Client()
-
+    @classmethod
+    def setUpTestData(cls) -> None:
+        """Set up class test data."""
         # Create a current session (active now)
-        self.current_session = SessionFactory.create(
+        cls.current_session = SessionFactory.create(
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 8, 30).date(),
             application_start_date=datetime(2024, 5, 1).date(),
@@ -44,102 +42,107 @@ class TeamDetailViewTests(TestCase):
         )
 
         # Create application survey
-        self.survey = SurveyFactory.create(name="Application Survey")
-        self.current_session.application_survey = self.survey
-        self.current_session.save()
+        cls.survey = SurveyFactory.create(name="Application Survey")
+        cls.current_session.application_survey = cls.survey
+        cls.current_session.save()
 
         # Create questions
-        self.question1 = QuestionFactory.create(
-            survey=self.survey, label="Why do you want to join?"
+        cls.question1 = QuestionFactory.create(
+            survey=cls.survey, label="Why do you want to join?"
         )
-        self.question2 = QuestionFactory.create(
-            survey=self.survey, label="What is your experience level?"
+        cls.question2 = QuestionFactory.create(
+            survey=cls.survey, label="What is your experience level?"
         )
 
         # Create project and team
-        self.project = ProjectFactory.create(name="Django")
-        self.team = Team.objects.create(
-            session=self.current_session,
-            project=self.project,
+        cls.project = ProjectFactory.create(name="Django")
+        cls.team = Team.objects.create(
+            session=cls.current_session,
+            project=cls.project,
             name="Team Alpha",
             google_drive_folder="https://drive.google.com/folder/123",
         )
 
         # Create users
-        self.captain = UserFactory.create(
+        cls.captain = UserFactory.create(
             first_name="Captain", last_name="Marvel", email="captain@test.com"
         )
-        self.navigator = UserFactory.create(
+        cls.navigator = UserFactory.create(
             first_name="Navigator", last_name="Smith", email="navigator@test.com"
         )
-        self.djangonaut1 = UserFactory.create(
+        cls.djangonaut1 = UserFactory.create(
             first_name="Django", last_name="Learner", email="djangonaut1@test.com"
         )
-        self.djangonaut2 = UserFactory.create(
+        cls.djangonaut2 = UserFactory.create(
             first_name="Python", last_name="Student", email="djangonaut2@test.com"
         )
-        self.other_user = UserFactory.create(
+        cls.other_user = UserFactory.create(
             first_name="Other", last_name="User", email="other@test.com"
         )
 
         # Create memberships
-        self.captain_membership = SessionMembershipFactory.create(
-            user=self.captain,
-            session=self.current_session,
-            team=self.team,
+        cls.captain_membership = SessionMembershipFactory.create(
+            user=cls.captain,
+            session=cls.current_session,
+            team=cls.team,
             role=constants.CAPTAIN,
             accepted=True,
         )
-        self.navigator_membership = SessionMembershipFactory.create(
-            user=self.navigator,
-            session=self.current_session,
-            team=self.team,
+        cls.navigator_membership = SessionMembershipFactory.create(
+            user=cls.navigator,
+            session=cls.current_session,
+            team=cls.team,
             role=constants.NAVIGATOR,
             accepted=True,
         )
-        self.djangonaut1_membership = SessionMembershipFactory.create(
-            user=self.djangonaut1,
-            session=self.current_session,
-            team=self.team,
+        cls.djangonaut1_membership = SessionMembershipFactory.create(
+            user=cls.djangonaut1,
+            session=cls.current_session,
+            team=cls.team,
             role=constants.DJANGONAUT,
             accepted=True,
         )
-        self.djangonaut2_membership = SessionMembershipFactory.create(
-            user=self.djangonaut2,
-            session=self.current_session,
-            team=self.team,
+        cls.djangonaut2_membership = SessionMembershipFactory.create(
+            user=cls.djangonaut2,
+            session=cls.current_session,
+            team=cls.team,
             role=constants.DJANGONAUT,
             accepted=True,
         )
 
         # Create survey responses for Djangonauts
-        self.response1 = UserSurveyResponseFactory.create(
-            user=self.djangonaut1, survey=self.survey
+        cls.response1 = UserSurveyResponseFactory.create(
+            user=cls.djangonaut1, survey=cls.survey
         )
         UserQuestionResponseFactory.create(
-            user_survey_response=self.response1,
-            question=self.question1,
+            user_survey_response=cls.response1,
+            question=cls.question1,
             value="I want to contribute to Django",
         )
         UserQuestionResponseFactory.create(
-            user_survey_response=self.response1,
-            question=self.question2,
+            user_survey_response=cls.response1,
+            question=cls.question2,
             value="Intermediate",
         )
 
-        self.response2 = UserSurveyResponseFactory.create(
-            user=self.djangonaut2, survey=self.survey
+        cls.response2 = UserSurveyResponseFactory.create(
+            user=cls.djangonaut2, survey=cls.survey
         )
         UserQuestionResponseFactory.create(
-            user_survey_response=self.response2,
-            question=self.question1,
+            user_survey_response=cls.response2,
+            question=cls.question1,
             value="I love Python and Django",
         )
         UserQuestionResponseFactory.create(
-            user_survey_response=self.response2,
-            question=self.question2,
+            user_survey_response=cls.response2,
+            question=cls.question2,
             value="Beginner",
         )
+
+    def setUp(self) -> None:
+        """Set up test data."""
+        super().setUp()
+        self.client = Client()
 
         self.url = reverse(
             "team_detail",
@@ -317,7 +320,7 @@ class TeamDetailViewTests(TestCase):
         )
         self.assertContains(response, djangonaut2_url)
 
-    @freeze_time("2024-09-01")
+    @time_machine.travel("2024-09-01", tick=False)
     def test_survey_responses_hidden_after_session_ends(self) -> None:
         """Test that 'View Application' link is hidden after session ends."""
         self.client.force_login(self.captain)
@@ -468,73 +471,77 @@ class TeamDetailViewTests(TestCase):
         self.assertContains(response, djangonaut1_url)
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class UserSessionListViewTests(TestCase):
     """Tests for UserSessionListView."""
 
-    def setUp(self) -> None:
-        """Set up test data."""
-        super().setUp()
-        self.client = Client()
-        self.user = UserFactory.create()
+    @classmethod
+    def setUpTestData(cls) -> None:
+        """Set up class test data."""
+        cls.user = UserFactory.create()
 
         # Create past session (ended)
-        self.past_session = SessionFactory.create(
+        cls.past_session = SessionFactory.create(
             title="Past Session",
             start_date=datetime(2023, 1, 1).date(),
             end_date=datetime(2023, 3, 31).date(),
         )
-        self.past_project = ProjectFactory.create(name="Wagtail")
-        self.past_team = Team.objects.create(
-            session=self.past_session, project=self.past_project, name="Past Team"
+        cls.past_project = ProjectFactory.create(name="Wagtail")
+        cls.past_team = Team.objects.create(
+            session=cls.past_session, project=cls.past_project, name="Past Team"
         )
-        self.past_membership = SessionMembershipFactory.create(
-            user=self.user,
-            session=self.past_session,
-            team=self.past_team,
+        cls.past_membership = SessionMembershipFactory.create(
+            user=cls.user,
+            session=cls.past_session,
+            team=cls.past_team,
             role=constants.DJANGONAUT,
             accepted=True,
         )
 
         # Create current session (ongoing)
-        self.current_session = SessionFactory.create(
+        cls.current_session = SessionFactory.create(
             title="Current Session",
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 8, 30).date(),
         )
-        self.current_project = ProjectFactory.create(name="Django")
-        self.current_team = Team.objects.create(
-            session=self.current_session,
-            project=self.current_project,
+        cls.current_project = ProjectFactory.create(name="Django")
+        cls.current_team = Team.objects.create(
+            session=cls.current_session,
+            project=cls.current_project,
             name="Current Team",
         )
-        self.current_membership = SessionMembershipFactory.create(
-            user=self.user,
-            session=self.current_session,
-            team=self.current_team,
+        cls.current_membership = SessionMembershipFactory.create(
+            user=cls.user,
+            session=cls.current_session,
+            team=cls.current_team,
             role=constants.NAVIGATOR,
             accepted=True,
         )
 
         # Create upcoming session (not yet started, ends after current)
-        self.upcoming_session = SessionFactory.create(
+        cls.upcoming_session = SessionFactory.create(
             title="Upcoming Session",
             start_date=datetime(2025, 1, 1).date(),
             end_date=datetime(2025, 3, 31).date(),  # Ends after current
         )
-        self.upcoming_project = ProjectFactory.create(name="Celery")
-        self.upcoming_team = Team.objects.create(
-            session=self.upcoming_session,
-            project=self.upcoming_project,
+        cls.upcoming_project = ProjectFactory.create(name="Celery")
+        cls.upcoming_team = Team.objects.create(
+            session=cls.upcoming_session,
+            project=cls.upcoming_project,
             name="Upcoming Team",
         )
-        self.upcoming_membership = SessionMembershipFactory.create(
-            user=self.user,
-            session=self.upcoming_session,
-            team=self.upcoming_team,
+        cls.upcoming_membership = SessionMembershipFactory.create(
+            user=cls.user,
+            session=cls.upcoming_session,
+            team=cls.upcoming_team,
             role=constants.CAPTAIN,
             accepted=True,
         )
+
+    def setUp(self) -> None:
+        """Set up test data."""
+        super().setUp()
+        self.client = Client()
 
         self.url = reverse("user_sessions")
 
@@ -747,17 +754,15 @@ class UserSessionListViewTests(TestCase):
         self.assertContains(response, navigator_session.title)
 
 
-@freeze_time("2024-06-15")
+@time_machine.travel("2024-06-15", tick=False)
 class DjangonautSurveyResponseViewTests(TestCase):
     """Tests for DjangonautSurveyResponseView."""
 
-    def setUp(self) -> None:
-        """Set up test data."""
-        super().setUp()
-        self.client = Client()
-
+    @classmethod
+    def setUpTestData(cls) -> None:
+        """Set up class test data."""
         # Create a current session (active now)
-        self.current_session = SessionFactory.create(
+        cls.current_session = SessionFactory.create(
             start_date=datetime(2024, 6, 1).date(),
             end_date=datetime(2024, 8, 30).date(),
             application_start_date=datetime(2024, 5, 1).date(),
@@ -765,94 +770,99 @@ class DjangonautSurveyResponseViewTests(TestCase):
         )
 
         # Create application survey
-        self.survey = SurveyFactory.create(name="Application Survey")
-        self.current_session.application_survey = self.survey
-        self.current_session.save()
+        cls.survey = SurveyFactory.create(name="Application Survey")
+        cls.current_session.application_survey = cls.survey
+        cls.current_session.save()
 
         # Create questions
-        self.question1 = QuestionFactory.create(
-            survey=self.survey, label="Why do you want to join?", ordering=1
+        cls.question1 = QuestionFactory.create(
+            survey=cls.survey, label="Why do you want to join?", ordering=1
         )
-        self.question2 = QuestionFactory.create(
-            survey=self.survey, label="What is your experience level?", ordering=2
+        cls.question2 = QuestionFactory.create(
+            survey=cls.survey, label="What is your experience level?", ordering=2
         )
 
         # Create project and team
-        self.project = ProjectFactory.create(name="Django")
-        self.team = Team.objects.create(
-            session=self.current_session,
-            project=self.project,
+        cls.project = ProjectFactory.create(name="Django")
+        cls.team = Team.objects.create(
+            session=cls.current_session,
+            project=cls.project,
             name="Team Alpha",
         )
 
         # Create users
-        self.captain = UserFactory.create(
+        cls.captain = UserFactory.create(
             first_name="Captain", last_name="Marvel", email="captain@test.com"
         )
-        self.navigator = UserFactory.create(
+        cls.navigator = UserFactory.create(
             first_name="Navigator", last_name="Smith", email="navigator@test.com"
         )
-        self.djangonaut = UserFactory.create(
+        cls.djangonaut = UserFactory.create(
             first_name="Django", last_name="Learner", email="djangonaut@test.com"
         )
-        self.other_djangonaut = UserFactory.create(
+        cls.other_djangonaut = UserFactory.create(
             first_name="Other", last_name="Learner", email="other@test.com"
         )
-        self.other_user = UserFactory.create(
+        cls.other_user = UserFactory.create(
             first_name="Outside", last_name="User", email="outside@test.com"
         )
 
         # Create memberships
         SessionMembershipFactory.create(
-            user=self.captain,
-            session=self.current_session,
-            team=self.team,
+            user=cls.captain,
+            session=cls.current_session,
+            team=cls.team,
             role=constants.CAPTAIN,
             accepted=True,
         )
         SessionMembershipFactory.create(
-            user=self.navigator,
-            session=self.current_session,
-            team=self.team,
+            user=cls.navigator,
+            session=cls.current_session,
+            team=cls.team,
             role=constants.NAVIGATOR,
             accepted=True,
         )
         SessionMembershipFactory.create(
-            user=self.djangonaut,
-            session=self.current_session,
-            team=self.team,
+            user=cls.djangonaut,
+            session=cls.current_session,
+            team=cls.team,
             role=constants.DJANGONAUT,
             accepted=True,
         )
 
         # Create other team with other Djangonaut
-        self.other_team = Team.objects.create(
-            session=self.current_session,
-            project=self.project,
+        cls.other_team = Team.objects.create(
+            session=cls.current_session,
+            project=cls.project,
             name="Team Beta",
         )
         SessionMembershipFactory.create(
-            user=self.other_djangonaut,
-            session=self.current_session,
-            team=self.other_team,
+            user=cls.other_djangonaut,
+            session=cls.current_session,
+            team=cls.other_team,
             role=constants.DJANGONAUT,
             accepted=True,
         )
 
         # Create survey response for Djangonaut
-        self.response = UserSurveyResponseFactory.create(
-            user=self.djangonaut, survey=self.survey
+        cls.response = UserSurveyResponseFactory.create(
+            user=cls.djangonaut, survey=cls.survey
         )
         UserQuestionResponseFactory.create(
-            user_survey_response=self.response,
-            question=self.question1,
+            user_survey_response=cls.response,
+            question=cls.question1,
             value="I want to contribute to Django",
         )
         UserQuestionResponseFactory.create(
-            user_survey_response=self.response,
-            question=self.question2,
+            user_survey_response=cls.response,
+            question=cls.question2,
             value="Intermediate",
         )
+
+    def setUp(self) -> None:
+        """Set up test data."""
+        super().setUp()
+        self.client = Client()
 
         self.url = reverse(
             "djangonaut_survey_response",
@@ -977,7 +987,7 @@ class DjangonautSurveyResponseViewTests(TestCase):
         # get_object_or_404 returns 404 when user has no membership in session
         self.assertEqual(response.status_code, 404)
 
-    @freeze_time("2024-09-01")
+    @time_machine.travel("2024-09-01", tick=False)
     def test_cannot_view_after_session_ends(self) -> None:
         """Test that survey responses cannot be viewed after session ends."""
         self.client.force_login(self.captain)

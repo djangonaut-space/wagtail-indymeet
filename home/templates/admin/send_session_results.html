@@ -1,15 +1,21 @@
 {% extends "admin/base_site.html" %}
-{% load i18n %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_help.css' %}">
+{% endblock %}
 
 {% block content %}
 <h1>Send Session Result Notifications - {{ session.title }}</h1>
 
 {% if already_sent %}
-<div class="messagelist">
-    <div class="warning">
-        Results notifications were already sent on {{ sent_at|date:"F d, Y \a\t g:i A" }}.
-        Sending again will result in duplicate emails.
-    </div>
+<div class="admin-warning" role="alert">
+    <strong class="admin-warning-title">Results notifications were already sent</strong>
+    <p>
+        They went out on {{ sent_at|date:"DATETIME_FORMAT" }}.
+        Sending again will email every applicant a second time.
+    </p>
 </div>
 {% endif %}
 

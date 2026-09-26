@@ -64,3 +64,50 @@
 .save-notice li {
     margin-bottom: 0.25rem;
 }
+
+/* ============================================
+   Warning Notice
+   For actions that are hard to undo or that repeat something already done.
+   ============================================ */
+.admin-warning {
+    --warning-bg: #fff4d6;
+    --warning-border: #d97706;
+    --warning-color: #5c3d00;
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    border-left-width: 6px;
+    color: var(--warning-color);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 1rem;
+}
+
+.admin-warning-title {
+    display: block;
+    font-size: 1.125rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.admin-warning-title::before {
+    content: "\26A0\FE0E\00a0";
+}
+
+.admin-warning p {
+    margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) .admin-warning {
+        --warning-bg: #3d2e00;
+        --warning-border: #f59e0b;
+        --warning-color: #ffe4a3;
+    }
+}
+
+html[data-theme="dark"] .admin-warning {
+    --warning-bg: #3d2e00;
+    --warning-border: #f59e0b;
+    --warning-color: #ffe4a3;
+}

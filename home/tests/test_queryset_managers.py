@@ -100,9 +100,10 @@ class EventQuerySetTestCase(TestCase):
 class UserSurveyResponseQuerySetTestCase(TestCase):
     """Test UserSurveyResponseQuerySet methods."""
 
-    def setUp(self):
-        """Create test data using factories."""
-        self.session = SessionFactory(
+    @classmethod
+    def setUpTestData(cls):
+        """Create shared test data once for the class."""
+        cls.session = SessionFactory(
             start_date="2025-06-01",
             end_date="2025-12-31",
             invitation_date="2025-01-01",
@@ -110,20 +111,17 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
             application_end_date="2025-02-15",
         )
 
-        self.survey = SurveyFactory(session=self.session)
-        self.session.application_survey = self.survey
-        self.session.save()
+        cls.survey = SurveyFactory(session=cls.session)
+        cls.session.application_survey = cls.survey
+        cls.session.save()
 
-        # Create previous survey
-        self.previous_survey = SurveyFactory(session=self.session)
+        cls.previous_survey = SurveyFactory(session=cls.session)
 
-        # Create users
-        self.user1 = UserFactory()
-        self.user2 = UserFactory()
-        self.user3 = UserFactory()
+        cls.user1 = UserFactory()
+        cls.user2 = UserFactory()
+        cls.user3 = UserFactory()
 
-        # Create team
-        self.team = TeamFactory(session=self.session)
+        cls.team = TeamFactory(session=cls.session)
 
     def test_for_survey(self):
         """Test filtering responses by survey."""
@@ -581,16 +579,17 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
 class SessionMembershipQuerySetTestCase(TestCase):
     """Test SessionMembershipQuerySet methods."""
 
-    def setUp(self):
-        """Create test data using factories."""
-        self.session = SessionFactory()
-        self.team = TeamFactory(session=self.session)
+    @classmethod
+    def setUpTestData(cls):
+        """Create shared test data once for the class."""
+        cls.session = SessionFactory()
+        cls.team = TeamFactory(session=cls.session)
 
         # Create users with different roles
-        self.djangonaut_user = UserFactory()
-        self.captain_user = UserFactory()
-        self.navigator_user = UserFactory()
-        self.organizer_user = UserFactory()
+        cls.djangonaut_user = UserFactory()
+        cls.captain_user = UserFactory()
+        cls.navigator_user = UserFactory()
+        cls.organizer_user = UserFactory()
 
     def test_accepted_filters_djangonauts_with_accepted_true(self):
         """Test that accepted() only includes Djangonauts with accepted=True."""
@@ -914,20 +913,21 @@ class SessionMembershipQuerySetTestCase(TestCase):
 class EnforceDjangonautAccessControlTestCase(TestCase):
     """Test SessionMembershipQuerySet.enforce_djangonaut_access_control()."""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         today = timezone.now().date()
-        self.upcoming_session = SessionFactory(
+        cls.upcoming_session = SessionFactory(
             start_date=today + timedelta(days=30),
             end_date=today + timedelta(days=90),
             djangonauts_have_access=False,
         )
-        self.active_session = SessionFactory(
+        cls.active_session = SessionFactory(
             start_date=today - timedelta(days=10),
             end_date=today + timedelta(days=60),
             djangonauts_have_access=False,
         )
-        self.upcoming_team = TeamFactory(session=self.upcoming_session)
-        self.active_team = TeamFactory(session=self.active_session)
+        cls.upcoming_team = TeamFactory(session=cls.upcoming_session)
+        cls.active_team = TeamFactory(session=cls.active_session)
 
     def test_excludes_djangonaut_before_start_without_access(self):
         """Djangonaut on upcoming session without access flag is excluded."""

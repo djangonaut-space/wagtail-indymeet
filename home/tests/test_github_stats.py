@@ -525,44 +525,46 @@ class StatsReportTests(SimpleTestCase):
 class CollectStatsViewIntegrationTests(TestCase):
     """Integration tests for the collect_stats_view admin interface."""
 
-    def setUp(self):
-        self.staff_user = UserFactory.create(is_staff=True, is_superuser=True)
-        self.client = Client()
-        self.client.force_login(self.staff_user)
+    @classmethod
+    def setUpTestData(cls):
+        cls.staff_user = UserFactory.create(is_staff=True, is_superuser=True)
 
-        self.session = SessionFactory.create(title="Test Session")
-        self.project = ProjectFactory.create(
+        cls.session = SessionFactory.create(title="Test Session")
+        cls.project = ProjectFactory.create(
             name="Django",
             url="https://github.com/test-org/test-repo",
         )
-        self.session.available_projects.add(self.project)
+        cls.session.available_projects.add(cls.project)
 
-        self.team = TeamFactory.create(
-            session=self.session, project=self.project, name="Team Alpha"
+        cls.team = TeamFactory.create(
+            session=cls.session, project=cls.project, name="Team Alpha"
         )
 
-        self.djangonaut1 = UserFactory.create(first_name="Jane", last_name="Doe")
-        UserProfile.objects.filter(user=self.djangonaut1).update(
+        cls.djangonaut1 = UserFactory.create(first_name="Jane", last_name="Doe")
+        UserProfile.objects.filter(user=cls.djangonaut1).update(
             github_username="djangonaut1"
         )
         SessionMembershipFactory.create(
-            session=self.session,
-            user=self.djangonaut1,
-            team=self.team,
+            session=cls.session,
+            user=cls.djangonaut1,
+            team=cls.team,
             role=constants.DJANGONAUT,
         )
 
-        self.djangonaut2 = UserFactory.create(first_name="John", last_name="Smith")
-        UserProfile.objects.filter(user=self.djangonaut2).update(
+        cls.djangonaut2 = UserFactory.create(first_name="John", last_name="Smith")
+        UserProfile.objects.filter(user=cls.djangonaut2).update(
             github_username="djangonaut2"
         )
         SessionMembershipFactory.create(
-            session=self.session,
-            user=self.djangonaut2,
-            team=self.team,
+            session=cls.session,
+            user=cls.djangonaut2,
+            team=cls.team,
             role=constants.DJANGONAUT,
         )
 
+    def setUp(self):
+        self.client = Client()
+        self.client.force_login(self.staff_user)
         self.url = reverse(
             "admin:session_collect_stats", kwargs={"session_id": self.session.id}
         )

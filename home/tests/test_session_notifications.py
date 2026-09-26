@@ -121,6 +121,24 @@ class SessionResultsNotificationTests(TestCase):
         self.assertContains(response, "2")  # waitlisted count
         self.assertContains(response, "2")  # rejected count
 
+    def test_send_session_results_no_warning_first_time(self):
+        """The duplicate-send warning is hidden until results were sent."""
+        url = reverse("admin:session_send_results", args=[self.session.id])
+        response = self.client.get(url)
+
+        self.assertNotContains(response, "admin-warning")
+
+    def test_send_session_results_warns_when_already_sent(self):
+        """A prominent warning shows the earlier send time."""
+        self.session.results_notifications_sent_at = timezone.now()
+        self.session.save()
+        url = reverse("admin:session_send_results", args=[self.session.id])
+        response = self.client.get(url)
+
+        self.assertContains(response, 'class="admin-warning"')
+        self.assertContains(response, "were already sent")
+        self.assertContains(response, "css/admin_help.css")
+
     @override_settings(
         ENVIRONMENT="production",
         BASE_URL="https://djangonaut.space",
