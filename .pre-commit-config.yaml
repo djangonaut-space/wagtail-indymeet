@@ -46,7 +46,7 @@ repos:
     additional_dependencies:
     - black==24.10.0
 - repo: https://github.com/PyCQA/flake8
-  rev: 7.3.0
+  rev: 7.4.1
   hooks:
   - id: flake8
     additional_dependencies:
