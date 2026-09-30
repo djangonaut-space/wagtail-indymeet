@@ -30,6 +30,9 @@ else:
         "https://dev.djangonaut.space",
         "https://staging.djangonaut.space",
     ]
+    # Dokku terminates TLS and proxies over HTTP; django_mcpz.oauth needs
+    # request.is_secure() to reflect that.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "accounts",
@@ -79,6 +82,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_gis",
     "wagtailgeowidget",
+    "django_mcpz",
+    "django_mcpz.bearer_tokens",
+    "django_mcpz.oauth",
 ]
 
 MIDDLEWARE = [
@@ -294,6 +300,11 @@ LOGGING = {
     "loggers": {
         "django.request": {"handlers": [], "level": "ERROR"},
         "home.services.github_stats": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django_mcpz.calls": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
