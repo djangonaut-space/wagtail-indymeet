@@ -6,6 +6,7 @@ from home.views.compare_availability import (
     compare_availability_grid,
 )
 from home.views.events import EventDetailView, EventListView, event_calendar
+from home.mcp import server as team_formation_mcp_server
 from home.views.membership_acceptance import accept_membership_view
 from home.views.resources import resource_link
 from home.views.sessions import SessionDetailView, SessionListView, UserSessionListView
@@ -45,6 +46,7 @@ urlpatterns = [
         EventDetailView.as_view(),
         name="event_detail",
     ),
+    path("mcp/team-formation/", team_formation_mcp_server, name="team_formation_mcp"),
     path("my-sessions/", UserSessionListView.as_view(), name="user_sessions"),
     path("sessions/", SessionListView.as_view(), name="session_list"),
     path("sessions/<slug:slug>/", SessionDetailView.as_view(), name="session_detail"),
