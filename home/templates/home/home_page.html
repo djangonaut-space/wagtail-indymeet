@@ -68,7 +68,7 @@ This is used directly by Wagtail. Don't delete it.
             </div>
           </div>
           <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2 focus-visible:ring-ds-purple"
-             href="{% slugurl "comms" %}">Blog</a>
+             href="{{ comms_url }}">Blog</a>
         </div>
 
 
@@ -180,7 +180,7 @@ This is used directly by Wagtail. Don't delete it.
         </div>
 
         <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2"
-           href="{% slugurl "comms" %}">Blog</a>
+           href="{{ comms_url }}">Blog</a>
 
         {% if not user.is_authenticated %}
           <a class="button-secondary text-white font-bold hover:bg-ds-purple hover:text-white focus-visible:ring-2"
@@ -499,7 +499,7 @@ This is used directly by Wagtail. Don't delete it.
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-20 gap-10">
 
           <div class="bg-white border border-ds-purple/30 p-8 rounded-2xl transition-transform hover:scale-[1.01]">
-            <a href="{% slugurl "comms" %}" aria-labelledby="resource-3"
+            <a href="{{ comms_url }}" aria-labelledby="resource-3"
                class="group flex gap-6 items-start no-underline text-inherit focus-visible:ring-2 focus-visible:ring-ds-purple outline-none">
               <div class="flex flex-col gap-3">
                 <span id="resource-3" class="font-bold text-2xl group-hover:text-ds-purple transition-colors">Communication Center</span>
