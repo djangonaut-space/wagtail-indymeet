@@ -113,7 +113,7 @@ class SignUpView(CreateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class=form_class)
-        if settings.LOAD_TESTING:
+        if settings.LOAD_TESTING | (settings.RECAPTCHA_PUBLIC_KEY == 'dummy_value'):
             form.fields.pop("captcha")
         return form
 
