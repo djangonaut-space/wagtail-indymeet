@@ -1217,6 +1217,44 @@ class SendSessionResultsForm(forms.Form):
     )
 
 
+class SendOfficerResultsForm(forms.Form):
+    """
+    Form for sending captain or navigator application results.
+
+    Once a role's results have been sent, sending again requires explicit
+    confirmation so applicants don't receive duplicate emails by accident.
+    """
+
+    send_interviewed_rejection = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_("Send interviewed applicants a separate notification"),
+        help_text=_(
+            "Applicants who were interviewed for this role but not selected "
+            "receive a different email than those who weren't interviewed."
+        ),
+    )
+    confirm_resend = forms.BooleanField(
+        required=False,
+        label=_("Send again anyway"),
+        help_text=_("Results were already sent. Sending again duplicates emails."),
+    )
+
+    def __init__(self, *args, already_sent: bool = False, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.already_sent = already_sent
+        if not already_sent:
+            del self.fields["confirm_resend"]
+
+    def clean(self) -> dict:
+        cleaned_data = super().clean()
+        if self.already_sent and not cleaned_data.get("confirm_resend"):
+            raise forms.ValidationError(
+                _("These results were already sent. Confirm to send them again.")
+            )
+        return cleaned_data
+
+
 class MembershipAcceptanceForm(forms.Form):
     """Form for users to accept or decline their session membership."""
 

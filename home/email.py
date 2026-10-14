@@ -5,6 +5,12 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
 
+# Backends that never deliver mail, so recipient filtering is unnecessary.
+LOCAL_EMAIL_BACKENDS = {
+    "django.core.mail.backends.console.EmailBackend",
+    "home.email_backends.SubjectFileEmailBackend",
+}
+
 
 def send(
     email_template,
@@ -30,10 +36,10 @@ def send(
     # Only allow emails when:
     # - in production environments
     # - in non-prod environments when the recipient is in allowed emails
-    # - when the backend is sent to the console.
+    # - when the backend is local (console or files).
     if (
         settings.ENVIRONMENT != "production"
-        and settings.EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend"
+        and settings.EMAIL_BACKEND not in LOCAL_EMAIL_BACKENDS
     ):
         # When sending emails in a non-production environment, only
         # allow them to be sent to people approved testing emails.

@@ -1,0 +1,1 @@
+Congratulations! You've been selected as a {{ role }} for {{ session.title }}

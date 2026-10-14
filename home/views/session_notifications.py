@@ -5,6 +5,7 @@ Provides admin interfaces for:
 - Sending session result notifications (accepted/waitlist/rejected)
 - Sending acceptance reminder emails
 - Sending team welcome emails
+- Sending captain and navigator application results
 
 Email sending is handled asynchronously via background tasks.
 """
@@ -13,14 +14,24 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from home import tasks
-from home.forms import SendSessionResultsForm
-from home.models import Session, SessionMembership, UserSurveyResponse, Waitlist
+from home.forms import SendOfficerResultsForm, SendSessionResultsForm
+from home.models import (
+    Session,
+    SessionMembership,
+    Survey,
+    UserSurveyResponse,
+    Waitlist,
+)
+
+OFFICER_ROLE_SLUGS = {
+    role.lower(): role for role in Session.OFFICER_RESULTS_SENT_AT_FIELDS
+}
 
 
 @staff_member_required
@@ -221,3 +232,119 @@ def send_team_welcome_emails_view(
     }
 
     return render(request, "admin/send_team_welcome_emails.html", context)
+
+
+@staff_member_required
+@require_http_methods(["GET", "POST"])
+def send_officer_results_view(
+    request: HttpRequest, session_id: int, role_slug: str
+) -> HttpResponse:
+    """
+    Admin view to send captain or navigator application results.
+
+    Captains and navigators are selected at different points before a session,
+    so each role's results are sent separately. Applicants are the users who
+    responded to the session's survey for the role, and they're split into:
+
+    - Selected: applicants with a SessionMembership for the role
+    - Not selected: applicants with no SessionMembership in the session. Those
+      interviewed for the role can optionally get a separate email.
+
+    Applicants who hold a different role in the session are left out, since
+    they're already taking part.
+    """
+    role = OFFICER_ROLE_SLUGS.get(role_slug)
+    if role is None:
+        raise Http404("Unknown officer role.")
+    session = get_object_or_404(Session, pk=session_id)
+
+    survey = Survey.objects.for_role(session, role).first()
+    if survey is None:
+        messages.error(
+            request,
+            f"'{session.title}' has no {role} application survey. Set a survey's "
+            f"session and role to {role} first.",
+        )
+        return redirect("admin:home_session_changelist")
+
+    applicant_responses = (
+        UserSurveyResponse.objects.filter(survey=survey)
+        .select_related("user", "user__profile")
+        .order_by("user__first_name", "user__email")
+    )
+    members_by_user_id = {
+        membership.user_id: membership
+        for membership in SessionMembership.objects.for_session(session).select_related(
+            "user"
+        )
+    }
+
+    selected_memberships = []
+    interviewed_users = []
+    not_interviewed_users = []
+    for response in applicant_responses:
+        membership = members_by_user_id.get(response.user_id)
+        if membership is None:
+            if response.user.profile.had_interview(role):
+                interviewed_users.append(response.user)
+            else:
+                not_interviewed_users.append(response.user)
+        elif membership.role == role:
+            selected_memberships.append(membership)
+
+    sent_at = session.officer_results_sent_at(role)
+    already_sent = sent_at is not None
+
+    if request.method == "POST":
+        form = SendOfficerResultsForm(request.POST, already_sent=already_sent)
+        if form.is_valid():
+            send_interviewed_rejection = form.cleaned_data["send_interviewed_rejection"]
+            for membership in selected_memberships:
+                tasks.send_officer_accepted_email.enqueue(membership_id=membership.pk)
+            for user in interviewed_users:
+                tasks.send_officer_rejected_email.enqueue(
+                    user_id=user.pk,
+                    session_id=session.pk,
+                    role=role,
+                    interviewed=send_interviewed_rejection,
+                )
+            for user in not_interviewed_users:
+                tasks.send_officer_rejected_email.enqueue(
+                    user_id=user.pk,
+                    session_id=session.pk,
+                    role=role,
+                    interviewed=False,
+                )
+
+            sent_at_field = Session.OFFICER_RESULTS_SENT_AT_FIELDS[role]
+            setattr(session, sent_at_field, timezone.now())
+            session.save(update_fields=[sent_at_field])
+
+            messages.success(
+                request,
+                f"Successfully queued {len(selected_memberships)} selected and "
+                f"{len(interviewed_users) + len(not_interviewed_users)} not selected "
+                f"{role} notifications for '{session.title}'.",
+            )
+            return redirect("admin:home_session_changelist")
+    else:
+        form = SendOfficerResultsForm(already_sent=already_sent)
+
+    context = {
+        "session": session,
+        "role": role,
+        "survey": survey,
+        "form": form,
+        "applicant_count": len(applicant_responses),
+        "selected_memberships": selected_memberships,
+        "interviewed_users": interviewed_users,
+        "not_interviewed_users": not_interviewed_users,
+        "already_sent": already_sent,
+        "sent_at": sent_at,
+        "opts": Session._meta,
+        "site_title": "Django site admin",
+        "site_header": "Django administration",
+        "has_view_permission": True,
+    }
+
+    return render(request, "admin/send_officer_results.html", context)

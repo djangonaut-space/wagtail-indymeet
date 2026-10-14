@@ -62,6 +62,7 @@ from .views.session_discord import (
 )
 from .views.session_notifications import (
     send_acceptance_reminders_view,
+    send_officer_results_view,
     send_session_results_view,
     send_team_welcome_emails_view,
 )
@@ -773,6 +774,10 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "email_actions",
         "discord_actions",
     )
+    readonly_fields = (
+        "navigator_results_notifications_sent_at",
+        "captain_results_notifications_sent_at",
+    )
 
     @admin.display(description="Form Teams")
     def form_teams(self, obj):
@@ -798,6 +803,16 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             (
                 "Send team welcome emails",
                 reverse("admin:session_send_team_welcome_emails", args=[obj.id]),
+            ),
+            (
+                "Send navigator results",
+                reverse(
+                    "admin:session_send_officer_results", args=[obj.id, "navigator"]
+                ),
+            ),
+            (
+                "Send captain results",
+                reverse("admin:session_send_officer_results", args=[obj.id, "captain"]),
             ),
         ]
         return mark_safe(
@@ -862,6 +877,11 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "<int:session_id>/send-team-welcome-emails/",
                 self.admin_site.admin_view(send_team_welcome_emails_view),
                 name="session_send_team_welcome_emails",
+            ),
+            path(
+                "<int:session_id>/send-officer-results/<slug:role_slug>/",
+                self.admin_site.admin_view(send_officer_results_view),
+                name="session_send_officer_results",
             ),
             path(
                 "<int:session_id>/discord-setup/",
@@ -1206,6 +1226,7 @@ class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "editable",
         "deletable",
         "session",
+        "role",
     )
     readonly_fields = (
         "slug",
@@ -1216,12 +1237,13 @@ class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "name",
         "slug",
         "session",
+        "role",
         "question_count",
         "link",
         "responses",
         "latest_response",
     ]
-    list_filter = ["session", "editable", "deletable", "created_at"]
+    list_filter = ["session", "role", "editable", "deletable", "created_at"]
     search_fields = ["name", "description", "session__title"]
     actions = ["copy_survey", "export_to_csv_with_scorers", "import_from_csv"]
 
