@@ -7,6 +7,9 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
+    ignore:
+      # The gdal Python bindings must match the system libgdal version.
+      - dependency-name: "gdal"
     groups:
       python-dependencies:
         patterns:
