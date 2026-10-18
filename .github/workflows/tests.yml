@@ -59,7 +59,7 @@ jobs:
         with:
           node-version-file: 'theme/static_src/package.json'
           cache: 'npm'
-          cache-dependency-path: 'theme/static_src/package.json'
+          cache-dependency-path: 'theme/static_src/package-lock.json'
 
       - name: Install python dependencies
         run: |
@@ -68,7 +68,7 @@ jobs:
 
       - name: Build Tailwind CSS
         run: |
-          npm ci
+          npm ci --prefix theme/static_src
           uv run python manage.py tailwind build
 
       - name: Build test database template
