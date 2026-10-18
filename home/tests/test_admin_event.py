@@ -355,6 +355,39 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertTrue(any("queued for 1" in t for t in message_texts))
         self.assertTrue(any("Skipped 1" in t for t in message_texts))
 
+    @patch("home.tasks.event_notifications.email.send")
+    def test_event_without_zoom_link_still_sends(self, mock_send):
+        opted_in = UserFactory.create(email="opted@example.com")
+        SessionMembershipFactory.create(user=opted_in)
+        event = self._make_event(is_public=True, session=None, zoom_link="")
+
+        self.admin.send_calendar_invites(
+            self._get_request(), Event.objects.filter(pk=event.pk)
+        )
+
+        mock_send.assert_called_once()
+
+    def test_confirmation_page_warns_about_missing_zoom_link(self):
+        event = self._make_event(is_public=False, zoom_link="", title="Zoomless Event")
+
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertContains(response, 'class="warning"')
+        self.assertContains(response, "1 event has no Zoom link yet")
+        self.assertContains(response, "<strong>Zoomless Event</strong>")
+        self.assertContains(response, "Resync to Zoom and Discord")
+
+    def test_confirmation_page_has_no_warning_when_zoom_links_set(self):
+        event = self._make_event(is_public=False, zoom_link="https://zoom.us/j/123")
+
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertNotContains(response, "no Zoom link yet")
+
 
 class EventAdminCalendarInviteEmailActionTests(TestCase):
     """Tests for the calendar_invite_email_action preview action."""
