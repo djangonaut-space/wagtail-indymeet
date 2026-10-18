@@ -50,7 +50,7 @@ wagtail-indymeet/
 - **Backend:** Django 5.2, Wagtail CMS, PostgreSQL + PostGIS (GIS extension), Django REST Framework + GeoJSON APIs
 - **Frontend:** Tailwind CSS, Alpine.js, Three.js (3D globe), Leaflet.js (admin geo-widget)
 - **Package Management:** uv (fast Python package installer)
-- **Deployment:** Dokku (Heroku buildpacks)
+- **Deployment:** Dokku (Dockerfile builder)
 - **Testing:** pytest, pytest-django, playwright
 - **Email:** django-anymail
 - **Blog:** Puput (integrated with Wagtail)
@@ -150,8 +150,8 @@ def process_application(
 ## Deployment
 
 ### Platform
-- **Dokku** with Heroku buildpacks
-- **Important quirk:** Tailwind/npm packages must be copied to root directory for buildpacks, which confuses Dependabot
+- **Dokku** using the `Dockerfile` builder
+- npm dependencies live only in `theme/static_src/` (installed by the `Dockerfile`)
 
 ### Environments
 - **Production:** https://djangonaut.space (deploys from `main` branch)
