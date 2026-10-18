@@ -24,7 +24,7 @@ dependencies = [
     "django-widget-tweaks",
     "dj-database-url",
     "gunicorn",
-    "django-filter>=25.2",
+    "django-filter>=26.2",
     "django-tasks",
     "django-tasks-db",
     "django-import-export",
@@ -33,7 +33,7 @@ dependencies = [
     "djangorestframework-gis",
     "icalendar",
     "requests>=2.34.2",
-    "pygithub>=2.9.1",
+    "pygithub>=2.10.0",
     "django-crontask",
 ]
 
@@ -54,9 +54,9 @@ test = [
     "factory_boy",
     "unittest_parametrize",
     "faker",
-    "responses>=0.26.2",
+    "responses>=0.26.3",
     "pytest-xdist>=3.8.0",
-    "time-machine>=3.4.0",
+    "time-machine>=3.5.1",
 ]
 dev = [
     "pre-commit",
