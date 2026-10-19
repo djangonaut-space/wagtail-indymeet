@@ -331,7 +331,9 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
           to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
 
         Renders an intermediate confirmation page listing the computed
-        recipients first; nothing is queued until the user confirms.
+        recipients first; nothing is queued until the user confirms. The page
+        warns about events that don't have a Zoom link yet, since their invites
+        would go out without a way to join the meeting.
         """
         if request.POST.get("apply"):
             queued = 0
@@ -369,6 +371,11 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             **self.admin_site.each_context(request),
             "title": "Confirm sending calendar invites",
             "events": events,
+            "missing_zoom_events": [
+                item["event"]
+                for item in events
+                if not item["already_sent"] and not item["event"].zoom_link
+            ],
             "opts": self.model._meta,
             "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
         }
