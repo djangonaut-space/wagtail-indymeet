@@ -57,22 +57,58 @@ class GenerateICalendarTests(TestCase):
             vevent.decoded("DTEND"),
             datetime(2024, 3, 15, 20, 0, tzinfo=dt_timezone.utc),
         )
-        self.assertIn(self.event.slug, str(vevent["URL"]))
-        self.assertEqual(str(vevent["DESCRIPTION"]), "A fun Django meetup.")
+        self.assertEqual(str(vevent["URL"]), self.event.get_full_url())
+        self.assertEqual(
+            str(vevent["DESCRIPTION"]),
+            f"A fun Django meetup.\n\nEvent details: {self.event.get_full_url()}",
+        )
+        self.assertNotIn("LOCATION", vevent)
 
-    def test_description_omitted_when_blank(self):
+    def test_description_without_event_description(self):
         event = EventFactory.create(
             start_time=datetime(2024, 4, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2024, 4, 1, 11, 0, tzinfo=dt_timezone.utc),
             description="",
         )
         vevent = _get_vevent(generate_icalendar(event))
+        self.assertEqual(
+            str(vevent["DESCRIPTION"]), f"Event details: {event.get_full_url()}"
+        )
+
+    def test_unpublished_event_omits_event_page(self):
+        event = EventFactory.create(is_published=False, description="")
+        vevent = _get_vevent(generate_icalendar(event))
+        self.assertNotIn("URL", vevent)
         self.assertNotIn("DESCRIPTION", vevent)
 
-    def test_vevent_location_set_from_zoom_link(self):
-        event = EventFactory.create(zoom_link="https://zoom.us/j/123")
+    def test_unpublished_event_with_zoom_link(self):
+        event = EventFactory.create(
+            is_published=False,
+            zoom_link="https://zoom.us/j/123",
+            description="Bring questions.",
+        )
+        vevent = _get_vevent(generate_icalendar(event))
+        self.assertEqual(str(vevent["URL"]), "https://zoom.us/j/123")
+        self.assertEqual(
+            str(vevent["DESCRIPTION"]),
+            "Join Zoom meeting: https://zoom.us/j/123\n\nBring questions.",
+        )
+
+    def test_zoom_link_is_primary_link(self):
+        """The Zoom link, not Discord or the event page, is what people click."""
+        event = EventFactory.create(
+            zoom_link="https://zoom.us/j/123",
+            description="See the event on Discord: https://discord.com/events/1/2",
+        )
         vevent = _get_vevent(generate_icalendar(event))
         self.assertEqual(str(vevent["LOCATION"]), "https://zoom.us/j/123")
+        self.assertEqual(str(vevent["URL"]), "https://zoom.us/j/123")
+        self.assertEqual(
+            str(vevent["DESCRIPTION"]),
+            "Join Zoom meeting: https://zoom.us/j/123\n\n"
+            "See the event on Discord: https://discord.com/events/1/2\n\n"
+            f"Event details: {event.get_full_url()}",
+        )
 
 
 class SendEventCalendarInviteTaskTests(TestCase):
