@@ -3,6 +3,7 @@ import io
 from datetime import date, timedelta
 
 import factory
+from django import forms
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
@@ -17,6 +18,7 @@ from home.factories import UserSurveyResponseFactory
 from home.forms import CollectStatsForm
 from home.forms import CreateUserSurveyResponseForm
 from home.forms import EditUserSurveyResponseForm
+from home.forms import GitHubUsernameField
 from home.forms import SurveyCSVExportForm, SurveyCSVImportForm
 from home.models import Question
 from home.models import Result
@@ -41,7 +43,10 @@ class GitHubUsernameNormalizationTests(TestCase):
             ("tim-schilling", "tim-schilling"),
             ("https://github.com/tim-schilling", "tim-schilling"),
             ("http://github.com/tim-schilling/", "tim-schilling"),
-            (" https://www.github.com/Tim-Schilling?tab=repositories ", "Tim-Schilling"),
+            (
+                " https://www.github.com/Tim-Schilling?tab=repositories ",
+                "Tim-Schilling",
+            ),
             ("https://github.com/" + "a" * 39, "a" * 39),
         ):
             with self.subTest(value=value):
@@ -55,6 +60,9 @@ class GitHubUsernameNormalizationTests(TestCase):
                     },
                 )
                 self.assertTrue(form.is_valid(), form.errors)
+                self.assertNotIn(
+                    "maxlength", form.fields["github_username"].widget.attrs
+                )
                 form.save()
                 user.profile.refresh_from_db()
                 self.assertEqual(user.profile.github_username, expected)
@@ -72,6 +80,24 @@ class GitHubUsernameNormalizationTests(TestCase):
         form.save()
         response.user.profile.refresh_from_db()
         self.assertEqual(response.user.profile.github_username, "tim-schilling")
+
+
+class GitHubUsernameFieldTests(SimpleTestCase):
+    def test_non_profile_urls_are_not_rewritten(self):
+        field = GitHubUsernameField(max_length=39)
+        for value in (
+            "https://example.com/tim",
+            "https://github.com/tim/repository",
+            "https://github.com.evil.test/tim",
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(field.clean(value), value)
+
+    def test_username_length_limit_still_applies_after_normalization(self):
+        field = GitHubUsernameField(max_length=39)
+        self.assertEqual(field.clean("https://github.com/" + "a" * 39), "a" * 39)
+        with self.assertRaisesMessage(forms.ValidationError, "39 characters"):
+            field.clean("https://github.com/" + "a" * 40)
 
 
 class UserSurveyResponseFormTests(TestCase):

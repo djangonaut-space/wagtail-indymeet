@@ -86,6 +86,12 @@ class GitHubUsernameField(forms.CharField):
         )
         return match.group(1) if match else value
 
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        # The URL can be longer than the username's server-side limit.
+        attrs.pop("maxlength", None)
+        return attrs
+
 
 class BaseSurveyForm(forms.Form):
     def __init__(self, *args, survey, user, **kwargs):
