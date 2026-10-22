@@ -29,6 +29,51 @@ from home.models import UserSurveyResponse
 User = get_user_model()
 
 
+class GitHubUsernameNormalizationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.survey = SurveyFactory()
+        cls.question = QuestionFactory(survey=cls.survey, type_field="text")
+        SessionFactory.create_active(cls.survey)
+
+    def test_create_response_stores_username_from_profile_url(self):
+        for value, expected in (
+            ("tim-schilling", "tim-schilling"),
+            ("https://github.com/tim-schilling", "tim-schilling"),
+            ("http://github.com/tim-schilling/", "tim-schilling"),
+            (" https://www.github.com/Tim-Schilling?tab=repositories ", "Tim-Schilling"),
+            ("https://github.com/" + "a" * 39, "a" * 39),
+        ):
+            with self.subTest(value=value):
+                user = UserFactory()
+                form = CreateUserSurveyResponseForm(
+                    survey=self.survey,
+                    user=user,
+                    data={
+                        f"field_survey_{self.question.id}": "Yup",
+                        "github_username": value,
+                    },
+                )
+                self.assertTrue(form.is_valid(), form.errors)
+                form.save()
+                user.profile.refresh_from_db()
+                self.assertEqual(user.profile.github_username, expected)
+
+    def test_edit_response_also_normalizes_profile_url(self):
+        response = UserSurveyResponseFactory(survey=self.survey)
+        form = EditUserSurveyResponseForm(
+            instance=response,
+            data={
+                f"field_survey_{self.question.id}": "Yup",
+                "github_username": "https://github.com/tim-schilling/",
+            },
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        response.user.profile.refresh_from_db()
+        self.assertEqual(response.user.profile.github_username, "tim-schilling")
+
+
 class UserSurveyResponseFormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
