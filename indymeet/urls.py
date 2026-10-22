@@ -16,6 +16,9 @@ urlpatterns = [
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("accounts/", include("accounts.urls"), name="accounts"),
+    # OAuth for hosted MCP clients (ChatGPT, Claude.ai); see docs/integrations/mcp.md.
+    path("mcp/oauth/", include("django_mcpz.oauth.urls")),
+    path("", include("django_mcpz.oauth.wellknown")),
     path("", include("home.urls")),
     path("", include("puput.urls")),
 ]
