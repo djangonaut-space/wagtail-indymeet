@@ -1,5 +1,6 @@
 import csv
 import io
+import re
 from datetime import date
 
 from django import forms
@@ -71,6 +72,19 @@ def get_response_value(data: dict, question: Question) -> str:
         if question.type_field == TypeField.MULTI_SELECT
         else data[field_name]
     )
+
+
+class GitHubUsernameField(forms.CharField):
+    """Accept a profile URL as well as a username, before length validation."""
+
+    def to_python(self, value):
+        value = super().to_python(value)
+        match = re.fullmatch(
+            r"https?://(?:www\.)?github\.com/([a-zA-Z0-9-]+)/?(?:[?#].*)?",
+            value,
+            flags=re.IGNORECASE,
+        )
+        return match.group(1) if match else value
 
 
 class BaseSurveyForm(forms.Form):
@@ -208,7 +222,7 @@ class BaseSurveyForm(forms.Form):
                     )
 
                 # Add GitHub username field for application sessions
-                self.fields["github_username"] = forms.CharField(
+                self.fields["github_username"] = GitHubUsernameField(
                     max_length=39,
                     label=_("GitHub Username"),
                     help_text=_("Your GitHub username (required for participation)"),
