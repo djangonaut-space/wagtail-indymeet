@@ -1,0 +1,8 @@
+Hello {{ name }},
+
+Thank you for taking the time to interview with us to be a {{ role }} for {{ session.title }}. After careful consideration, we aren't able to offer you a {{ role }} position this session.
+
+Your interview is on record, so you won't need to interview for this role again when you apply for a future session. We hope you'll apply again! 🤗
+
+Sincerely,
+Djangonaut Space Organizers

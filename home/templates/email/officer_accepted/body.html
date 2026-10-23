@@ -1,0 +1,26 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}You've been selected as a {{ role }}!{% endblock preheader %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Congratulations! You've been selected to be a <strong>{{ role }}</strong> for <strong>{{ session.title }}</strong>. 🎊
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Thank you for volunteering your time to support the next group of Djangonauts. The session runs from <strong>{{ session.start_date|date:"F d, Y" }}</strong> to <strong>{{ session.end_date|date:"F d, Y" }}</strong>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Please reply to this email to confirm that you're still available. We'll follow up with your team details once teams are formed.
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    All the best,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}
