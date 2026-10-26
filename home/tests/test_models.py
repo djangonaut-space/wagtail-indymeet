@@ -4,6 +4,7 @@ from datetime import timezone as dt_timezone
 
 from django.core import mail
 from django.test import TestCase, override_settings
+from django.utils import timezone
 import time_machine
 
 from accounts.factories import DiscordMemberFactory, UserFactory
@@ -20,7 +21,7 @@ from home.factories import (
     UserQuestionResponseFactory,
     UserSurveyResponseFactory,
 )
-from home.models import SessionMembership, Team, TypeField
+from home.models import EventCalendarInvite, SessionMembership, Team, TypeField
 from home.models.talk import Talk, TalkSpeaker
 from home.services.github_stats import Author
 from django.contrib.gis.geos import Point
@@ -795,6 +796,59 @@ class EventModelValidationTests(TestCase):
         with self.assertRaises(ValidationError) as ctx:
             event.full_clean()
         self.assertIn("description", ctx.exception.message_dict)
+
+
+class EventCalendarInviteTests(TestCase):
+    """Tests for the per-recipient calendar invite tracking on Event."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.session = SessionFactory.create()
+        cls.member = UserFactory.create(email="member@example.com")
+        SessionMembershipFactory.create(session=cls.session, user=cls.member)
+        cls.declined = UserFactory.create(email="declined@example.com")
+        SessionMembershipFactory.create(
+            session=cls.session, user=cls.declined, accepted=False
+        )
+
+    def _event(self, **kwargs):
+        kwargs.setdefault("extra_emails", ["guest@example.com"])
+        return EventFactory.create(session=self.session, **kwargs)
+
+    def test_recipients_combine_members_and_extra_emails(self):
+        event = self._event()
+        self.assertEqual(
+            event.get_calendar_invite_recipients(),
+            ["guest@example.com", "member@example.com"],
+        )
+
+    def test_declined_member_is_not_a_recipient(self):
+        """Only accepted memberships are invited."""
+        event = self._event()
+        self.assertNotIn("declined@example.com", event.get_calendar_invite_recipients())
+
+    def test_duplicate_extra_email_is_one_recipient(self):
+        """A member listed in extra_emails in another case isn't invited twice."""
+        event = self._event(extra_emails=["Member@Example.com"])
+
+        self.assertEqual(event.get_calendar_invite_recipients(), ["Member@Example.com"])
+
+    def test_pending_recipients_excludes_already_emailed(self):
+        event = self._event()
+        EventCalendarInvite.objects.create(
+            event=event, email="member@example.com", sent_at=timezone.now()
+        )
+
+        self.assertEqual(
+            event.pending_calendar_invite_recipients(), ["guest@example.com"]
+        )
+
+    def test_pending_recipients_includes_queued_invites(self):
+        """An invite that hasn't gone out yet still needs sending."""
+        event = self._event()
+        EventCalendarInvite.objects.create(event=event, email="member@example.com")
+
+        self.assertIn("member@example.com", event.pending_calendar_invite_recipients())
 
 
 class ProjectTests(TestCase):
