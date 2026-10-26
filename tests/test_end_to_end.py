@@ -34,7 +34,11 @@ from home.factories import (
 )
 from home.models import Session, SessionMembership, Survey, Team, UserSurveyResponse
 from django.contrib.gis.geos import Point
+from django.conf import settings
+from wagtail.coreutils import get_supported_content_language_variant
+from wagtail.models import Locale, Page as WagtailPage, Site
 
+from home.models.blog import HomePage
 from home.models.talk import Talk, TalkSpeaker
 from tests.timezones import (
     DEFAULT_TIMEZONE,
@@ -1217,3 +1221,76 @@ class TestCompareAvailability:
         self.assert_click_pins_slot(page)
         self.assert_click_same_cell_unpins(page)
         self.assert_unpin_button_clears_fixed_slot(page)
+
+
+class TestHomePageAboutMenu:
+    """Keyboard accessibility of the desktop About dropdown in the home page nav."""
+
+    ABOUT_LINKS = [
+        "Newsletter",
+        "Store",
+        "Media",
+        "Sessions",
+        "Impact Report",
+        "Talks Map",
+        "Contact",
+    ]
+
+    @pytest.fixture
+    def home_page(self, page: Page) -> Page:
+        """Serve the Wagtail HomePage at ``/``.
+
+        The live server's transactional teardown can flush the Locale, HomePage
+        and Site created by migrations, so recreate them when they're missing.
+        """
+        Locale.objects.get_or_create(
+            language_code=get_supported_content_language_variant(settings.LANGUAGE_CODE)
+        )
+        home = HomePage.objects.first()
+        if home is None:
+            root = WagtailPage.get_first_root_node() or WagtailPage.add_root(
+                title="Root", slug="root"
+            )
+            home = root.add_child(instance=HomePage(title="Home", slug="home"))
+        Site.objects.update_or_create(
+            is_default_site=True,
+            defaults={"hostname": "localhost", "root_page": home},
+        )
+        page.set_viewport_size({"width": 1280, "height": 800})
+        page.goto("/")
+        return page
+
+    @pytest.mark.playwright
+    def test_about_menu_keyboard_navigation(self, home_page: Page):
+        nav = home_page.get_by_role("navigation", name="Main navigation")
+        about = nav.get_by_role("button", name="About")
+        menu_links = [nav.get_by_role("link", name=name) for name in self.ABOUT_LINKS]
+
+        expect(about).to_have_attribute("aria-haspopup", "true")
+        expect(about).to_have_attribute("aria-expanded", "false")
+        expect(menu_links[0]).to_be_hidden()
+
+        about.focus()
+        expect(about).to_have_attribute("aria-expanded", "true")
+        expect(menu_links[0]).to_be_visible()
+
+        # Tabbing through the submenu keeps it open.
+        for link in menu_links:
+            home_page.keyboard.press("Tab")
+            expect(link).to_be_focused()
+            expect(link).to_be_visible()
+
+        # Tabbing out of the last submenu link collapses the menu.
+        home_page.keyboard.press("Tab")
+        expect(nav.get_by_role("link", name="Blog")).to_be_focused()
+        expect(about).to_have_attribute("aria-expanded", "false")
+        expect(menu_links[-1]).to_be_hidden()
+
+        # Escape closes the menu while focus is inside it.
+        about.focus()
+        expect(menu_links[0]).to_be_visible()
+        home_page.keyboard.press("Tab")
+        expect(menu_links[0]).to_be_focused()
+        home_page.keyboard.press("Escape")
+        expect(about).to_have_attribute("aria-expanded", "false")
+        expect(menu_links[0]).to_be_hidden()

@@ -185,6 +185,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     actions = [
         "copy_event",
         "send_calendar_invites",
+        "reset_calendar_invites_sent",
         preview_email.calendar_invite_email_action,
         "resync_event",
     ]
@@ -198,6 +199,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     ]
     list_filter = ("session", CalendarInvitesSentFilter)
     readonly_fields = (
+        "calendar_invites_sent_at",
         "zoom_meeting_id",
         "zoom_synced_at",
         "discord_event_id",
@@ -330,7 +332,9 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
           to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
 
         Renders an intermediate confirmation page listing the computed
-        recipients first; nothing is queued until the user confirms.
+        recipients first; nothing is queued until the user confirms. The page
+        warns about events that don't have a Zoom link yet, since their invites
+        would go out without a way to join the meeting.
         """
         if request.POST.get("apply"):
             queued = 0
@@ -368,10 +372,31 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             **self.admin_site.each_context(request),
             "title": "Confirm sending calendar invites",
             "events": events,
+            "missing_zoom_events": [
+                item["event"]
+                for item in events
+                if not item["already_sent"] and not item["event"].zoom_link
+            ],
             "opts": self.model._meta,
             "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
         }
         return render(request, "admin/send_calendar_invites_confirmation.html", context)
+
+    @admin.action(description="Reset calendar invites sent so they can be resent")
+    def reset_calendar_invites_sent(self, request, queryset) -> None:
+        """Clear ``calendar_invites_sent_at`` so the send action will run again.
+
+        The send action skips events that already had invites sent, so this is
+        the deliberate step for resending after a change members need to see.
+        """
+        reset = queryset.filter(calendar_invites_sent_at__isnull=False).update(
+            calendar_invites_sent_at=None
+        )
+        self.message_user(
+            request,
+            f"Reset calendar invites sent for {reset} event(s).",
+            messages.SUCCESS,
+        )
 
     @admin.action(description="Resync to Zoom and Discord")
     def resync_event(self, request, queryset) -> None:
@@ -720,9 +745,14 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
                 messages.WARNING,
             )
             return
+
         message = render_to_string(
             "admin/availability_overlap_message.html",
-            {"results": results, "total_members": len(user_roles)},
+            {
+                "results": results,
+                "total_members": len(user_roles),
+                "request": request,
+            },
         )
         self.message_user(request, mark_safe(message))
 
@@ -759,6 +789,13 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
 class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     inlines = [SessionMembershipInline]
     filter_horizontal = ("available_projects",)
+    readonly_fields = (
+        "results_notifications_sent_at",
+        "djangonauts_have_access",
+        "discord_category_id",
+        "discord_announcements_channel_id",
+        "discord_capnav_channel_id",
+    )
     actions = [
         "auto_allocate_teams_action",
         preview_email.rejection_email_action,
@@ -1542,6 +1579,7 @@ class TutorialEvaluationAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "result",
     ]
     raw_id_fields = ["user_survey_response"]
+    readonly_fields = ["evaluated_at", "pending", "reminder_sent_at"]
     search_fields = [
         "user_survey_response__user__email",
         "user_survey_response__user__first_name",

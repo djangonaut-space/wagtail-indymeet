@@ -52,14 +52,14 @@ jobs:
           sudo apt-get install -y libgdal-dev g++ gdal-bin libpq-dev
 
       - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Set up Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: 'theme/static_src/package.json'
           cache: 'npm'
-          cache-dependency-path: 'theme/static_src/package.json'
+          cache-dependency-path: 'theme/static_src/package-lock.json'
 
       - name: Install python dependencies
         run: |
@@ -68,7 +68,7 @@ jobs:
 
       - name: Build Tailwind CSS
         run: |
-          npm ci
+          npm ci --prefix theme/static_src
           uv run python manage.py tailwind build
 
       - name: Build test database template
@@ -89,11 +89,11 @@ jobs:
         run: uv run pytest --tracing retain-on-failure -m playwright -n auto --dist loadscope --cov --cov-branch --cov-report=xml --cov-append --cov-report=term
 
       - name: Upload results to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         name: Upload playwright traces
         if: ${{ !cancelled() }}
         with:

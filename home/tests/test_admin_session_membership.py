@@ -205,6 +205,46 @@ class FindBestAvailabilityOverlapsActionTests(TestCase):
 
         self.assertIn("View 1 unavailable member(s)", message)
         self.assertIn("/django-admin/home/sessionmembership/?user_id__in=", message)
+        self.assertNotIn("session__id__exact", message)
+
+    def test_unavailable_member_link_preserves_request_querystring(self):
+        """Test the link keeps whatever filters were active on the changelist.
+
+        This is what prevents a member with memberships in more than one
+        session from being shown once per session: whichever filter (e.g.
+        session) narrowed the admin list before the action ran stays applied
+        on the follow-up link.
+        """
+        UserAvailability.objects.create(
+            user=self.user1,
+            slots=[24.0, 24.5],
+        )
+        UserAvailability.objects.create(
+            user=self.user2,
+            slots=[24.0, 24.5],
+        )
+        UserAvailability.objects.create(
+            user=self.user3,
+            slots=[30.0, 30.5],
+        )
+
+        request = self.factory.get(
+            f"/admin/home/sessionmembership/?session__id__exact={self.session.id}"
+        )
+        request.session = {}
+        request._messages = FallbackStorage(request)
+
+        queryset = SessionMembership.objects.filter(
+            id__in=[self.membership1.id, self.membership2.id, self.membership3.id]
+        )
+
+        self.model_admin.find_best_availability_overlaps_action(request, queryset)
+
+        message_list = list(request._messages)
+        message = str(message_list[0].message)
+
+        self.assertIn("View 1 unavailable member(s)", message)
+        self.assertIn(f"session__id__exact={self.session.id}", message)
 
     def test_action_shows_all_members_available(self):
         """Test message when all members are available for a time slot."""

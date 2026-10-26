@@ -181,7 +181,7 @@ environment variables:
 
 | Old mechanism | New mechanism |
 |---------------|---------------|
-| `indymeet.settings.production` — Sentry | `SENTRY_DNS` env var |
+| `indymeet.settings.production` — Sentry | `SENTRY_DSN` env var |
 | `indymeet.settings.production` — email backend | `EMAIL_BACKEND` env var |
 | `DEBUG=True` hardcoded in `dev.py` | `DEBUG` env var |
 | `DJANGO_SETTINGS_MODULE=indymeet.settings.test` | `DJANGO_SETTINGS_MODULE=indymeet.settings` |

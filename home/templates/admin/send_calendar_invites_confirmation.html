@@ -2,6 +2,16 @@
 {% load i18n %}
 
 {% block content %}
+{% if missing_zoom_events %}
+<ul class="messagelist">
+    <li class="warning">
+        {{ missing_zoom_events|length }} event{{ missing_zoom_events|length|pluralize }} {{ missing_zoom_events|length|pluralize:"has,have" }} no Zoom link yet:
+        {% for event in missing_zoom_events %}<strong>{{ event.title }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}.
+        {{ missing_zoom_events|length|pluralize:"Its,Their" }} invite{{ missing_zoom_events|length|pluralize }} will be sent without a way to join the meeting.
+        Wait for the Zoom sync to finish, or use the &ldquo;Resync to Zoom and Discord&rdquo; action, before sending.
+    </li>
+</ul>
+{% endif %}
 <div class="module">
     <table>
         <thead>
@@ -10,6 +20,7 @@
                 <th>Session</th>
                 <th>Public</th>
                 <th>Published</th>
+                <th>Zoom link</th>
                 <th>Recipients</th>
             </tr>
         </thead>
@@ -20,6 +31,7 @@
                 <td>{{ item.event.session|default:"—" }}</td>
                 <td>{{ item.event.is_public|yesno:"Yes,No" }}</td>
                 <td>{{ item.event.is_published|yesno:"Yes,No" }}</td>
+                <td>{% if item.event.zoom_link %}{{ item.event.zoom_link }}{% else %}<strong>Missing</strong>{% endif %}</td>
                 <td>
                     {% if item.already_sent %}
                         Already sent &mdash; will be skipped.
