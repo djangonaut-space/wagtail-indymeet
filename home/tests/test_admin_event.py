@@ -355,6 +355,39 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertTrue(any("queued for 1" in t for t in message_texts))
         self.assertTrue(any("Skipped 1" in t for t in message_texts))
 
+    @patch("home.tasks.event_notifications.email.send")
+    def test_event_without_zoom_link_still_sends(self, mock_send):
+        opted_in = UserFactory.create(email="opted@example.com")
+        SessionMembershipFactory.create(user=opted_in)
+        event = self._make_event(is_public=True, session=None, zoom_link="")
+
+        self.admin.send_calendar_invites(
+            self._get_request(), Event.objects.filter(pk=event.pk)
+        )
+
+        mock_send.assert_called_once()
+
+    def test_confirmation_page_warns_about_missing_zoom_link(self):
+        event = self._make_event(is_public=False, zoom_link="", title="Zoomless Event")
+
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertContains(response, 'class="warning"')
+        self.assertContains(response, "1 event has no Zoom link yet")
+        self.assertContains(response, "<strong>Zoomless Event</strong>")
+        self.assertContains(response, "Resync to Zoom and Discord")
+
+    def test_confirmation_page_has_no_warning_when_zoom_links_set(self):
+        event = self._make_event(is_public=False, zoom_link="https://zoom.us/j/123")
+
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertNotContains(response, "no Zoom link yet")
+
 
 class EventAdminCalendarInviteEmailActionTests(TestCase):
     """Tests for the calendar_invite_email_action preview action."""
@@ -404,6 +437,42 @@ class EventAdminCalendarInviteEmailActionTests(TestCase):
         mock_send.assert_not_called()
         stored = list(request._messages)
         self.assertEqual(stored[0].level, messages.ERROR)
+
+
+class EventAdminResetCalendarInvitesSentTests(TestCase):
+    """Tests for the reset_calendar_invites_sent admin action."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = UserFactory.create(
+            email="admin@example.com", is_staff=True, is_superuser=True
+        )
+
+    def _get_request(self):
+        request = RequestFactory().post("/admin/home/event/")
+        request.user = self.superuser
+        middleware = SessionMiddleware(lambda req: None)
+        middleware.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        return request
+
+    def test_clears_sent_at(self):
+        """Only events that had invites sent are counted as reset."""
+        sent = EventFactory.create(calendar_invites_sent_at=timezone.now())
+        unsent = EventFactory.create()
+        request = self._get_request()
+
+        EventAdmin(Event, AdminSite()).reset_calendar_invites_sent(
+            request, Event.objects.filter(pk__in=[sent.pk, unsent.pk])
+        )
+
+        sent.refresh_from_db()
+        self.assertIsNone(sent.calendar_invites_sent_at)
+        self.assertEqual(
+            [str(m) for m in request._messages],
+            ["Reset calendar invites sent for 1 event(s)."],
+        )
 
 
 class EventAdminResyncEventActionTests(TestCase):
@@ -619,6 +688,12 @@ class EventAdminReadonlyFieldsTests(TestCase):
         readonly = EventAdmin(Event, AdminSite()).readonly_fields
         self.assertIn("zoom_meeting_id", readonly)
         self.assertIn("discord_event_id", readonly)
+
+    def test_calendar_invites_sent_at_is_readonly(self):
+        """The send action relies on this to skip events, so it's only
+        cleared through the reset action."""
+        readonly = EventAdmin(Event, AdminSite()).readonly_fields
+        self.assertIn("calendar_invites_sent_at", readonly)
 
     def test_fieldsets_include_every_editable_field(self):
         """Every field the form would otherwise render must be grouped

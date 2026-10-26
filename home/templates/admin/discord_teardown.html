@@ -1,8 +1,18 @@
 {% extends "admin/base_site.html" %}
-{% load i18n %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_help.css' %}">
+{% endblock %}
 
 {% block content %}
 <h1>Tear down Discord - {{ session.title }}</h1>
+
+<div class="admin-warning" role="alert">
+    <strong class="admin-warning-title">This is hard to undo</strong>
+    <p>Role removals apply guild-wide, not just to this session's members.</p>
+</div>
 
 <div class="module">
     <h2>Summary</h2>
@@ -15,7 +25,6 @@
         <li>Navigators, Captains, Session Organizers, and Djangonauts receive their alumni roles (Past Navigators, Past Captains, Past Session Organizers, stars)</li>
         <li>The active Navigators, Captains, Session Organizers, and Djangonauts roles are removed from <strong>everyone on the server</strong></li>
     </ul>
-    <p><strong>Warning:</strong> this is hard to undo. Role removals apply guild-wide, not just to this session's members.</p>
     <p>Teardown runs in the background; a report will be emailed to you when it completes.</p>
 </div>
 

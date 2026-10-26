@@ -11,8 +11,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from django.urls import reverse
-
 from accounts.models import UserAvailability
 from home.models import Session, SessionMembership, Team
 from home.slots import FLOAT_COMPARISON_THRESHOLD, HOURS_PER_WEEK, SLOT_INCREMENT, Slot
@@ -75,18 +73,6 @@ class AvailabilityWindow:
     @property
     def unavailable_member_ids(self) -> list[int]:
         return [user.id for user in self.unavailable_users]
-
-    @property
-    def admin_unavailable_url(self) -> str | None:
-        """Build admin URL for filtering unavailable members."""
-        ids = [str(id) for id in self.unavailable_member_ids]
-        if not ids:
-            return None
-        ids_str = ",".join(ids)
-        return (
-            reverse("admin:home_sessionmembership_changelist")
-            + f"?user_id__in={ids_str}"
-        )
 
     @property
     def start_datetime(self) -> datetime:
