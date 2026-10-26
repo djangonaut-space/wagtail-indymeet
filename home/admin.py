@@ -5,7 +5,16 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Exists, F, Max, OuterRef, Prefetch, TextField, QuerySet
+from django.db.models import (
+    Count,
+    Exists,
+    F,
+    Max,
+    OuterRef,
+    Prefetch,
+    TextField,
+    QuerySet,
+)
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -1747,9 +1756,9 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def _record_interview(
         self, request, queryset: QuerySet, field: str, passed: bool
     ) -> None:
-        updated = UserProfile.objects.filter(
-            user__in=queryset.values("user")
-        ).update(**{field: passed})
+        updated = UserProfile.objects.filter(user__in=queryset.values("user")).update(
+            **{field: passed}
+        )
         self.message_user(
             request,
             f"Updated {field.replace('_', ' ')} to {passed} for {updated} profile(s).",
