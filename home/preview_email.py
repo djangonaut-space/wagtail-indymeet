@@ -7,6 +7,7 @@ Provides functions to send preview emails to admin users for visual testing.
 from home import constants
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from . import email
@@ -244,8 +245,13 @@ def calendar_invite_email(recipient_email: str, event: Event) -> None:
         event: Event to use for preview data
     """
     ical_data = generate_icalendar(event)
+    # Invites are addressed to one person at a time, so look the recipient up
+    # to preview the same greeting a real recipient would get.
+    user = get_user_model().objects.filter(email__iexact=recipient_email).first()
     context = {
         "event": event,
+        "user": user,
+        "name": user.first_name if user else "",
         "cta_link": event.get_full_url(),
     }
 

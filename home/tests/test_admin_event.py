@@ -17,7 +17,7 @@ from django.utils.formats import date_format
 from accounts.factories import UserFactory
 from home.admin import CalendarInvitesSentFilter, EventAdmin
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
-from home.models import Event
+from home.models import Event, EventCalendarInvite
 from home.operations import EventSyncDecision, EventSyncStatus
 from home.preview_email import calendar_invite_email_action
 from home.templatetags.email_tags import time_is_link
@@ -117,6 +117,10 @@ class EventAdminCopyActionTests(TestCase):
                 "end_time_1": "20:00:00",
                 "is_public": True,
                 "extra_emails": "sessions@djangonaut.space",
+                # The change form carries the read-only calendar invite
+                # inline, whose management form it validates.
+                "calendar_invites-TOTAL_FORMS": "0",
+                "calendar_invites-INITIAL_FORMS": "0",
                 "_save": "Save",
             },
         )
@@ -234,8 +238,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Unconfirmed Event", response.content)
         mock_send.assert_not_called()
-        event.refresh_from_db()
-        self.assertIsNone(event.calendar_invites_sent_at)
+        self.assertFalse(event.calendar_invites.exists())
 
     @patch("home.tasks.event_notifications.email.send")
     def test_session_event_sends_to_session_members(self, mock_send):
@@ -251,9 +254,11 @@ class EventAdminSendCalendarInvitesTests(TestCase):
             self._get_request(), Event.objects.filter(pk=event.pk)
         )
 
-        mock_send.assert_called_once()
-        event.refresh_from_db()
-        self.assertIsNotNone(event.calendar_invites_sent_at)
+        self.assertEqual(
+            {call[1]["recipient_list"][0] for call in mock_send.call_args_list},
+            {"member1@example.com", "member2@example.com"},
+        )
+        self.assertEqual(event.calendar_invites.sent().count(), 2)
 
     @patch("home.tasks.event_notifications.email.send")
     def test_public_event_no_session_sends_to_opted_in_users(self, mock_send):
@@ -270,9 +275,9 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         )
 
         mock_send.assert_called_once()
-        bcc = mock_send.call_args[1]["bcc_list"]
-        self.assertIn("opted@example.com", bcc)
-        self.assertNotIn("nope@example.com", bcc)
+        self.assertEqual(
+            mock_send.call_args[1]["recipient_list"], ["opted@example.com"]
+        )
 
     @patch("home.tasks.event_notifications.email.send")
     def test_private_event_no_session_sends_no_email(self, mock_send):
@@ -314,46 +319,41 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertIn("1", str(stored[0]))
 
     @patch("home.tasks.event_notifications.email.send")
-    def test_skipped_message_shows_skipped_count(self, mock_send):
-        """A warning message is shown with the number of events skipped."""
-        event = self._make_event(
-            is_public=False, calendar_invites_sent_at=datetime.now(dt_timezone.utc)
+    def test_already_invited_recipients_are_not_remailed(self, mock_send):
+        """Re-running the action mails nobody when every recipient has an invite."""
+        opted_in = UserFactory.create(email="opted@example.com")
+        SessionMembershipFactory.create(user=opted_in)
+        event = self._make_event(is_public=True, session=None)
+
+        self.admin.send_calendar_invites(
+            self._get_request(), Event.objects.filter(pk=event.pk)
         )
-        request = self._get_request()
+        mock_send.reset_mock()
 
-        self.admin.send_calendar_invites(request, Event.objects.filter(pk=event.pk))
+        self.admin.send_calendar_invites(
+            self._get_request(), Event.objects.filter(pk=event.pk)
+        )
 
-        stored = list(request._messages)
-        self.assertEqual(len(stored), 1)
-        self.assertIn("Skipped 1 event(s)", str(stored[0]))
         mock_send.assert_not_called()
 
     @patch("home.tasks.event_notifications.email.send")
-    def test_batch_with_sent_and_unsent_events_reports_both_outcomes(self, mock_send):
-        """Selecting a mix of already-sent and pending events sends to the pending ones
-        and skips the rest, showing separate success and warning messages."""
-        opted_in = UserFactory.create(email="opted@example.com")
-        SessionMembershipFactory.create(user=opted_in)
-
-        already_sent = self._make_event(
-            slug="ev-sent",
-            is_public=True,
-            session=None,
-            calendar_invites_sent_at=datetime.now(dt_timezone.utc),
-        )
-        pending = self._make_event(slug="ev-pending", is_public=True, session=None)
-        request = self._get_request()
-
+    def test_confirmation_page_shows_pending_recipients(self, mock_send):
+        """The confirmation page lists only the recipients who would be mailed."""
+        invited = UserFactory.create(email="invited@example.com")
+        SessionMembershipFactory.create(user=invited)
+        event = self._make_event(is_public=True, session=None)
         self.admin.send_calendar_invites(
-            request,
-            Event.objects.filter(pk__in=[already_sent.pk, pending.pk]),
+            self._get_request(), Event.objects.filter(pk=event.pk)
         )
 
-        mock_send.assert_called_once()
-        message_texts = [str(m) for m in request._messages]
-        self.assertEqual(len(message_texts), 2)
-        self.assertTrue(any("queued for 1" in t for t in message_texts))
-        self.assertTrue(any("Skipped 1" in t for t in message_texts))
+        latecomer = UserFactory.create(email="latecomer@example.com")
+        SessionMembershipFactory.create(user=latecomer)
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertContains(response, "latecomer@example.com")
+        self.assertNotContains(response, "invited@example.com")
 
     @patch("home.tasks.event_notifications.email.send")
     def test_event_without_zoom_link_still_sends(self, mock_send):
@@ -457,18 +457,33 @@ class EventAdminResetCalendarInvitesSentTests(TestCase):
         request._messages = FallbackStorage(request)
         return request
 
-    def test_clears_sent_at(self):
-        """Only events that had invites sent are counted as reset."""
-        sent = EventFactory.create(calendar_invites_sent_at=timezone.now())
+    def test_clears_recipient_sent_at(self):
+        """Resetting makes the next send mail every recipient again."""
+        event = EventFactory.create()
+        invite = EventCalendarInvite.objects.create(
+            event=event, email="guest@example.com", sent_at=timezone.now()
+        )
+
+        EventAdmin(Event, AdminSite()).reset_calendar_invites_sent(
+            self._get_request(), Event.objects.filter(pk=event.pk)
+        )
+
+        invite.refresh_from_db()
+        self.assertIsNone(invite.sent_at)
+
+    def test_counts_only_events_with_sent_invites(self):
+        sent = EventFactory.create()
+        EventCalendarInvite.objects.create(
+            event=sent, email="guest@example.com", sent_at=timezone.now()
+        )
         unsent = EventFactory.create()
+        EventCalendarInvite.objects.create(event=unsent, email="queued@example.com")
         request = self._get_request()
 
         EventAdmin(Event, AdminSite()).reset_calendar_invites_sent(
             request, Event.objects.filter(pk__in=[sent.pk, unsent.pk])
         )
 
-        sent.refresh_from_db()
-        self.assertIsNone(sent.calendar_invites_sent_at)
         self.assertEqual(
             [str(m) for m in request._messages],
             ["Reset calendar invites sent for 1 event(s)."],
@@ -544,7 +559,11 @@ class EventAdminResyncEventActionTests(TestCase):
         event = EventFactory.create(
             zoom_link="https://zoom.us/j/y",
             discord_event_id="d1",
-            calendar_invites_sent_at=datetime(2024, 1, 1, tzinfo=dt_timezone.utc),
+        )
+        EventCalendarInvite.objects.create(
+            event=event,
+            email="guest@example.com",
+            sent_at=datetime(2024, 1, 1, tzinfo=dt_timezone.utc),
         )
         request = self._get_request()
 
@@ -671,10 +690,14 @@ class CalendarInvitesSentFilterTests(TestCase):
 
     def test_splits_events_by_sent_status(self):
         """The yes/no filter values partition events by invite-sent status."""
-        sent = EventFactory.create(
-            calendar_invites_sent_at=datetime.now(dt_timezone.utc)
+        sent = EventFactory.create()
+        EventCalendarInvite.objects.create(
+            event=sent,
+            email="guest@example.com",
+            sent_at=datetime.now(dt_timezone.utc),
         )
-        unsent = EventFactory.create(calendar_invites_sent_at=None)
+        unsent = EventFactory.create()
+        EventCalendarInvite.objects.create(event=unsent, email="queued@example.com")
         queryset = Event.objects.filter(pk__in=[sent.pk, unsent.pk])
 
         self.assertEqual(self._filtered("yes", queryset), {sent})
@@ -689,11 +712,10 @@ class EventAdminReadonlyFieldsTests(TestCase):
         self.assertIn("zoom_meeting_id", readonly)
         self.assertIn("discord_event_id", readonly)
 
-    def test_calendar_invites_sent_at_is_readonly(self):
-        """The send action relies on this to skip events, so it's only
-        cleared through the reset action."""
+    def test_calendar_invites_sent_is_readonly(self):
+        """It's derived from the invite records, so there is nothing to edit."""
         readonly = EventAdmin(Event, AdminSite()).readonly_fields
-        self.assertIn("calendar_invites_sent_at", readonly)
+        self.assertIn("calendar_invites_sent", readonly)
 
     def test_fieldsets_include_every_editable_field(self):
         """Every field the form would otherwise render must be grouped

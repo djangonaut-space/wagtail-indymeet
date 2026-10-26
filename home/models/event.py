@@ -1,14 +1,16 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxLengthValidator
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from modelcluster.models import ClusterableModel
 from wagtail.snippets.models import register_snippet
 
 from home.integrations.discord.service import DESCRIPTION_MAX, LOCATION_MAX, NAME_MAX
-from home.managers import EventQuerySet
+from home.managers import EventCalendarInviteQuerySet, EventQuerySet
 
 
 @register_snippet
@@ -100,12 +102,13 @@ class Event(ClusterableModel):
         ),
     )
 
-    calendar_invites_sent_at = models.DateTimeField(
-        null=True,
+    calendar_invite_recipients = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="home.EventCalendarInvite",
+        related_name="calendar_invite_events",
         blank=True,
-        help_text="The date and time calendar invites were successfully sent.",
+        help_text="Users who have been given a calendar invite for this event.",
     )
-
     zoom_meeting_id = models.CharField(
         max_length=32,
         blank=True,
@@ -154,28 +157,102 @@ class Event(ClusterableModel):
             },
         )
 
-    def get_calendar_invite_recipients(self) -> list[str]:
-        """Return email addresses to receive a calendar invite for this event.
+    def get_calendar_invite_users(self):
+        """Return users who should receive a calendar invite for this event.
 
-        - Session event: all members of that session who have an email address plus extra_emails.
-        - Public event (no session): all users opted in to event updates plus extra_emails.
-        - Private event (no session): Only extra_emails.
+        - Session event: all accepted members of that session.
+        - Public event (no session): all accepted session members.
+        - Private event (no session): nobody; only extra_emails are invited.
         """
         from home.models import SessionMembership
 
-        recipients = self.extra_emails or []
-        emails = []
+        user_model = get_user_model()
         if self.session_id:
-            emails = list(
-                SessionMembership.objects.for_session(self.session)
-                .accepted()
-                .values_list("user__email", flat=True)
-                .distinct()
-            )
+            memberships = SessionMembership.objects.for_session(self.session).accepted()
         elif self.is_public:
-            emails = list(
-                SessionMembership.objects.accepted()
-                .values_list("user__email", flat=True)
-                .distinct()
+            memberships = SessionMembership.objects.accepted()
+        else:
+            return user_model.objects.none()
+        return user_model.objects.filter(pk__in=memberships.values("user_id")).exclude(
+            email=""
+        )
+
+    def get_calendar_invite_recipients(self) -> list[str]:
+        """Return email addresses to receive a calendar invite for this event.
+
+        The event's extra_emails are always included alongside the users from
+        ``get_calendar_invite_users``.
+        """
+        # Keyed by lowercased address so an extra_email that duplicates a
+        # member isn't mailed twice; the value keeps the original casing.
+        recipients = {
+            address.lower(): address for address in (self.extra_emails or []) if address
+        }
+        for address in self.get_calendar_invite_users().values_list("email", flat=True):
+            recipients.setdefault(address.lower(), address)
+        return sorted(recipients.values())
+
+    def pending_calendar_invite_recipients(self) -> list[str]:
+        """Return recipients who have not been emailed an invite yet.
+
+        What the next send would mail, both for the admin to show before
+        anything is queued and for the send itself to work from.
+        """
+        already_sent = {
+            address.lower()
+            for address in self.calendar_invites.sent().values_list("email", flat=True)
+        }
+        return [
+            address
+            for address in self.get_calendar_invite_recipients()
+            if address.lower() not in already_sent
+        ]
+
+
+class EventCalendarInvite(models.Model):
+    """One recipient's calendar invite for an event.
+
+    An invite is both the intent to email someone and the record that it
+    happened, which is what keeps a send per-recipient: each address is mailed
+    on its own and stamped on its own, so a retry reaches nobody else and a
+    later send only reaches people who have no invite yet.
+
+    Addresses from ``Event.extra_emails`` belong to guests with no account
+    here, so ``user`` is empty for those and the email address is the
+    recipient of record.
+    """
+
+    event = models.ForeignKey(
+        "Event",
+        related_name="calendar_invites",
+        on_delete=models.CASCADE,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        related_name="event_calendar_invites",
+        on_delete=models.CASCADE,
+    )
+    email = models.EmailField()
+    sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="The date and time this invite was successfully sent.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = EventCalendarInviteQuerySet.as_manager()
+
+    class Meta:
+        ordering = ("email",)
+        constraints = [
+            models.UniqueConstraint(
+                "event",
+                Lower("email"),
+                name="home_eventcalendarinvite_event_email_unq",
             )
-        return list(set(emails + recipients))
+        ]
+
+    def __str__(self) -> str:
+        return self.email

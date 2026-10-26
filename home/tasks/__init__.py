@@ -3,7 +3,10 @@ from home.tasks.discord_session import (
     setup_session_discord,
     teardown_session_discord,
 )
-from home.tasks.event_notifications import send_event_calendar_invite
+from home.tasks.event_notifications import (
+    send_calendar_invite_email,
+    send_event_calendar_invite,
+)
 from home.tasks.session_announcements import (
     email_organizers_for_announcement,
     post_announcement,
@@ -30,6 +33,7 @@ __all__ = [
     "schedule_pending_announcements",
     "send_accepted_email",
     "send_acceptance_reminder_email",
+    "send_calendar_invite_email",
     "send_event_calendar_invite",
     "send_membership_acceptance_email",
     "send_rejected_email",
