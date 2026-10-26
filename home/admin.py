@@ -5,7 +5,16 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Exists, F, Max, OuterRef, Prefetch, TextField
+from django.db.models import (
+    Count,
+    Exists,
+    F,
+    Max,
+    OuterRef,
+    Prefetch,
+    TextField,
+    QuerySet,
+)
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -18,6 +27,7 @@ from github import GithubException
 from import_export import fields, resources
 from import_export.admin import ExportMixin
 
+from accounts.models import UserProfile
 from home import constants
 from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
@@ -62,6 +72,7 @@ from .views.session_discord import (
 )
 from .views.session_notifications import (
     send_acceptance_reminders_view,
+    send_officer_results_view,
     send_session_results_view,
     send_team_welcome_emails_view,
 )
@@ -794,6 +805,8 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "discord_category_id",
         "discord_announcements_channel_id",
         "discord_capnav_channel_id",
+        "navigator_results_notifications_sent_at",
+        "captain_results_notifications_sent_at",
     )
     actions = [
         "auto_allocate_teams_action",
@@ -835,6 +848,16 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             (
                 "Send team welcome emails",
                 reverse("admin:session_send_team_welcome_emails", args=[obj.id]),
+            ),
+            (
+                "Send navigator results",
+                reverse(
+                    "admin:session_send_officer_results", args=[obj.id, "navigator"]
+                ),
+            ),
+            (
+                "Send captain results",
+                reverse("admin:session_send_officer_results", args=[obj.id, "captain"]),
             ),
         ]
         return mark_safe(
@@ -899,6 +922,11 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "<int:session_id>/send-team-welcome-emails/",
                 self.admin_site.admin_view(send_team_welcome_emails_view),
                 name="session_send_team_welcome_emails",
+            ),
+            path(
+                "<int:session_id>/send-officer-results/<slug:role_slug>/",
+                self.admin_site.admin_view(send_officer_results_view),
+                name="session_send_officer_results",
             ),
             path(
                 "<int:session_id>/discord-setup/",
@@ -1243,6 +1271,7 @@ class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "editable",
         "deletable",
         "session",
+        "role",
     )
     readonly_fields = (
         "slug",
@@ -1253,12 +1282,13 @@ class SurveyAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "name",
         "slug",
         "session",
+        "role",
         "question_count",
         "link",
         "responses",
         "latest_response",
     ]
-    list_filter = ["session", "editable", "deletable", "created_at"]
+    list_filter = ["session", "role", "editable", "deletable", "created_at"]
     search_fields = ["name", "description", "session__title"]
     actions = ["copy_survey", "export_to_csv_with_scorers", "import_from_csv"]
 
@@ -1715,7 +1745,25 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         "user__last_name",
     ]
     inlines = [TutorialEvaluationInline, UserQuestionResponseInline]
-    actions = ["evaluate_tutorial_submission_action"]
+    actions = (
+        "evaluate_tutorial_submission_action",
+        "mark_passed_captain_interview",
+        "mark_failed_captain_interview",
+        "mark_passed_navigator_interview",
+        "mark_failed_navigator_interview",
+    )
+
+    def _record_interview(
+        self, request, queryset: QuerySet, field: str, passed: bool
+    ) -> None:
+        updated = UserProfile.objects.filter(user__in=queryset.values("user")).update(
+            **{field: passed}
+        )
+        self.message_user(
+            request,
+            f"Updated {field.replace('_', ' ')} to {passed} for {updated} profile(s).",
+            messages.SUCCESS,
+        )
 
     def get_queryset(self, request):
         return (
@@ -1771,3 +1819,19 @@ class UserSurveyResponseAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             "each response shortly.",
             messages.SUCCESS,
         )
+
+    @admin.action(description="Record captain interview as passed")
+    def mark_passed_captain_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_captain_interview", True)
+
+    @admin.action(description="Record captain interview as not passed")
+    def mark_failed_captain_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_captain_interview", False)
+
+    @admin.action(description="Record navigator interview as passed")
+    def mark_passed_navigator_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_navigator_interview", True)
+
+    @admin.action(description="Record navigator interview as not passed")
+    def mark_failed_navigator_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_navigator_interview", False)

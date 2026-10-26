@@ -1,0 +1,8 @@
+Hello {{ name }},
+
+Thank you for offering to volunteer as a {{ role }} for {{ session.title }}. We received more interest than we have spots for, and we aren't able to offer you a {{ role }} position this session.
+
+We'd love for you to apply again for a future session. Volunteers like you are what make Djangonaut Space possible. 🤗
+
+Sincerely,
+Djangonaut Space Organizers

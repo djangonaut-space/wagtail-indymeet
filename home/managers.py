@@ -589,6 +589,10 @@ class SurveyQuerySet(QuerySet):
             )
         )
 
+    def for_role(self, session, role: str):
+        """Filter to the session's application survey for a volunteer role."""
+        return self.filter(session=session, role=role)
+
 
 class TestimonialQuerySet(QuerySet):
     """QuerySet for Testimonial with filtering methods."""
