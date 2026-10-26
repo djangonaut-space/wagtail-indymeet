@@ -40,6 +40,7 @@ from .forms import (
 from .models import (
     Announcement,
     Event,
+    EventCalendarInvite,
     Project,
     ProjectPreference,
     Question,
@@ -155,10 +156,10 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
 
 
 class CalendarInvitesSentFilter(admin.SimpleListFilter):
-    """Filter Events by whether calendar invites have been sent.
+    """Filter Events by whether any calendar invite has been emailed.
 
-    ``calendar_invites_sent_at`` is a datetime, not a boolean, so this maps
-    "sent"/"not sent" to a null/not-null check.
+    An event counts as sent once a single recipient has been emailed, which
+    an Exists subquery answers without the join duplicating event rows.
     """
 
     title = "calendar invites sent"
@@ -171,16 +172,43 @@ class CalendarInvitesSentFilter(admin.SimpleListFilter):
         )
 
     def queryset(self, request, queryset):
+        has_sent_invite = Exists(
+            EventCalendarInvite.objects.filter(
+                event=OuterRef("pk"), sent_at__isnull=False
+            )
+        )
         if self.value() == "yes":
-            return queryset.filter(calendar_invites_sent_at__isnull=False)
+            return queryset.filter(has_sent_invite)
         elif self.value() == "no":
-            return queryset.filter(calendar_invites_sent_at__isnull=True)
+            return queryset.filter(~has_sent_invite)
         return queryset
+
+
+class EventCalendarInviteInline(admin.TabularInline):
+    """Who has been sent a calendar invite for the event, and when.
+
+    Read-only: invites are created by the send action, and editing them here
+    would silently change who the next send reaches.
+    """
+
+    model = EventCalendarInvite
+    extra = 0
+    can_delete = False
+    fields = ("email", "user", "sent_at", "created_at")
+    readonly_fields = fields
+    verbose_name_plural = "Calendar invites"
+
+    def has_add_permission(self, request, obj) -> bool:
+        return False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user")
 
 
 @admin.register(Event)
 class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     model = Event
+    inlines = [EventCalendarInviteInline]
     actions = [
         "copy_event",
         "send_calendar_invites",
@@ -192,13 +220,13 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = [
         "title",
         "start_time_link",
-        "calendar_invites_sent_at",
+        "calendar_invites_sent",
         "zoom_synced",
         "discord_synced",
     ]
     list_filter = ("session", CalendarInvitesSentFilter)
     readonly_fields = (
-        "calendar_invites_sent_at",
+        "calendar_invites_sent",
         "zoom_meeting_id",
         "zoom_synced_at",
         "discord_event_id",
@@ -218,7 +246,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                     "is_public",
                     "session",
                     "extra_emails",
-                    "calendar_invites_sent_at",
+                    "calendar_invites_sent",
                 )
             },
         ),
@@ -229,6 +257,20 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         ("Zoom", {"fields": ("zoom_link", "zoom_meeting_id", "zoom_synced_at")}),
         ("Discord", {"fields": ("discord_event_id", "discord_synced_at")}),
     )
+
+    def get_queryset(self, request):
+        """Annotate the derived calendar invite send time.
+
+        Applies to the change form as well as the changelist, since both read
+        the model admin's queryset.
+        """
+        return super().get_queryset(request).with_calendar_invites_sent_at()
+
+    @admin.display(
+        description="Calendar invites sent", ordering="calendar_invites_sent_at"
+    )
+    def calendar_invites_sent(self, obj: Event):
+        return obj.calendar_invites_sent_at
 
     @admin.display(description="Zoom synced", boolean=True, ordering="zoom_synced_at")
     def zoom_synced(self, obj: Event) -> bool:
@@ -330,40 +372,31 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         - Private event (no session): no extra recipients; the task still sends
           to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
 
+        Recipients who already have an invite are skipped individually, so
+        running this again after new members join only mails the new people.
+        Use the reset action to deliberately resend to everyone.
+
         Renders an intermediate confirmation page listing the computed
         recipients first; nothing is queued until the user confirms. The page
         warns about events that don't have a Zoom link yet, since their invites
         would go out without a way to join the meeting.
         """
         if request.POST.get("apply"):
-            queued = 0
-            skipped = 0
-            for event in queryset:
-                if event.calendar_invites_sent_at:
-                    skipped += 1
-                    continue
-                tasks.send_event_calendar_invite.enqueue(event_id=event.pk)
-                queued += 1
+            for event_id in queryset.values_list("pk", flat=True):
+                tasks.send_event_calendar_invite.enqueue(event_id=event_id)
 
-            if queued:
-                self.message_user(
-                    request,
-                    f"Calendar invites queued for {queued} event(s).",
-                    messages.SUCCESS,
-                )
-            if skipped:
-                self.message_user(
-                    request,
-                    f"Skipped {skipped} event(s) that already had invites sent.",
-                    messages.WARNING,
-                )
+            self.message_user(
+                request,
+                f"Calendar invites queued for {queryset.count()} event(s).",
+                messages.SUCCESS,
+            )
             return None
 
         events = [
             {
                 "event": event,
                 "recipients": event.get_calendar_invite_recipients(),
-                "already_sent": bool(event.calendar_invites_sent_at),
+                "pending": event.pending_calendar_invite_recipients(),
             }
             for event in queryset
         ]
@@ -383,14 +416,14 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
     @admin.action(description="Reset calendar invites sent so they can be resent")
     def reset_calendar_invites_sent(self, request, queryset) -> None:
-        """Clear ``calendar_invites_sent_at`` so the send action will run again.
+        """Clear every sent stamp so the send action mails everyone again.
 
-        The send action skips events that already had invites sent, so this is
+        The send action only mails recipients without an invite yet, so this is
         the deliberate step for resending after a change members need to see.
         """
-        reset = queryset.filter(calendar_invites_sent_at__isnull=False).update(
-            calendar_invites_sent_at=None
-        )
+        invites = EventCalendarInvite.objects.filter(event__in=queryset).sent()
+        reset = invites.values("event").distinct().count()
+        invites.update(sent_at=None)
         self.message_user(
             request,
             f"Reset calendar invites sent for {reset} event(s).",
@@ -406,15 +439,22 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         """
         queued = 0
         not_configured = 0
-        already_invited = 0
+        synced_event_ids = []
         for event in queryset:
             decision = dispatch_event_sync(event)
             if decision.status is EventSyncStatus.QUEUED:
                 queued += 1
-                if event.calendar_invites_sent_at:
-                    already_invited += 1
+                synced_event_ids.append(event.pk)
             else:
                 not_configured += 1
+
+        already_invited = (
+            EventCalendarInvite.objects.filter(event_id__in=synced_event_ids)
+            .sent()
+            .values("event")
+            .distinct()
+            .count()
+        )
 
         if queued:
             self.message_user(

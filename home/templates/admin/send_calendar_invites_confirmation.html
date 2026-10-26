@@ -33,10 +33,12 @@
                 <td>{{ item.event.is_published|yesno:"Yes,No" }}</td>
                 <td>{% if item.event.zoom_link %}{{ item.event.zoom_link }}{% else %}<strong>Missing</strong>{% endif %}</td>
                 <td>
-                    {% if item.already_sent %}
-                        Already sent &mdash; will be skipped.
+                    {% if item.pending %}
+                        {{ item.pending|length }} of {{ item.recipients|length }} to be emailed:
+                        {{ item.pending|join:", " }}
                     {% elif item.recipients %}
-                        {{ item.recipients|length }}: {{ item.recipients|join:", " }}
+                        All {{ item.recipients|length }} recipients have already been
+                        emailed &mdash; nothing will be sent.
                     {% else %}
                         None
                     {% endif %}
