@@ -8,6 +8,7 @@ from django.db.models import (
     Count,
     Exists,
     F,
+    Max,
     OuterRef,
     Prefetch,
     Q,
@@ -47,7 +48,13 @@ class UserQuestionResponseQuerySet(QuerySet):
         )
 
 
+EVERYONE_AUDIENCES = [constants.EventAudience.PUBLIC, constants.EventAudience.COMMUNITY]
+
+
 class EventQuerySet(QuerySet):
+    def with_calendar_invites_sent_at(self):
+        return self.annotate(calendar_invites_sent_at=Max("calendar_invites__sent_at"))
+
     def published(self):
         return self.filter(is_published=True)
 
@@ -57,29 +64,32 @@ class EventQuerySet(QuerySet):
     def past(self):
         return self.filter(start_time__lte=timezone.now())
 
-    def public(self):
-        return self.filter(is_public=True)
-
-    def private(self):
-        return self.filter(is_public=False)
+    def visible_to_everyone(self):
+        """Public and community events."""
+        return self.filter(audience__in=EVERYONE_AUDIENCES)
 
     def for_user(self, user):
-        """Return events visible to the given user.
-
-        Public events are visible to everyone.
-        Private events are only visible to authenticated users with a
-        SessionMembership for the event's linked session.
-        """
+        """Return events visible to the user; session events need a membership."""
         if user.is_anonymous:
-            return self.public()
+            return self.visible_to_everyone()
         return self.filter(
-            Q(is_public=True)
+            Q(audience__in=EVERYONE_AUDIENCES)
             | Q(
-                is_public=False,
+                audience=constants.EventAudience.SESSION,
                 session__isnull=False,
                 session__session_memberships__user=user,
             )
         ).distinct()
+
+
+class EventCalendarInviteQuerySet(QuerySet):
+    def unsent(self):
+        """Invites still waiting to be emailed."""
+        return self.filter(sent_at__isnull=True)
+
+    def sent(self):
+        """Invites that have been emailed."""
+        return self.filter(sent_at__isnull=False)
 
 
 class SessionQuerySet(QuerySet):
