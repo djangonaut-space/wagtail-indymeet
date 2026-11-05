@@ -130,6 +130,7 @@ class SendEventCalendarInviteTaskTests(TestCase):
             title="Sprint Planning",
             start_time=datetime(2024, 5, 10, 15, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2024, 5, 10, 16, 0, tzinfo=dt_timezone.utc),
+            audience=Event.Audience.SESSION,
             session=self.session,
             extra_emails=["contact@djangonaut.space"],
         )
@@ -264,21 +265,25 @@ class SendEventCalendarInviteTaskTests(TestCase):
     @patch("home.tasks.event_notifications.email.send")
     def test_does_nothing_if_no_recipients(self, mock_send):
         """Task exits silently if no recipients are found."""
-        event = EventFactory.create(is_public=False, session=None, extra_emails=[])
+        event = EventFactory.create(
+            audience=Event.Audience.PUBLIC, session=None, extra_emails=[]
+        )
         send_event_calendar_invite.call(event_id=event.pk)
         mock_send.assert_not_called()
         self.assertFalse(event.calendar_invites.exists())
 
-    def test_private_event_with_no_extra_emails_has_no_recipients(self):
-        """A private event with no extra_emails has no recipients."""
-        event = EventFactory.create(is_public=False, session=None, extra_emails=[])
+    def test_public_event_with_no_extra_emails_has_no_recipients(self):
+        """A public event with no extra_emails has no recipients."""
+        event = EventFactory.create(
+            audience=Event.Audience.PUBLIC, session=None, extra_emails=[]
+        )
         self.assertEqual(event.get_calendar_invite_recipients(), [])
 
     @patch("home.tasks.event_notifications.email.send")
-    def test_private_event_sends_to_extra_emails(self, mock_send):
-        """The invite task sends to extra_emails even for private, session-less events."""
+    def test_public_event_sends_to_extra_emails(self, mock_send):
+        """The invite task sends to extra_emails for public events."""
         event = EventFactory.create(
-            is_public=False,
+            audience=Event.Audience.PUBLIC,
             session=None,
             extra_emails=["sessions@djangonaut.space"],
         )
@@ -293,7 +298,7 @@ class SendCalendarInviteEmailTaskTests(TestCase):
     """Tests for the per-recipient send_calendar_invite_email task."""
 
     def setUp(self):
-        self.event = EventFactory.create(is_public=False, session=None)
+        self.event = EventFactory.create(audience=Event.Audience.PUBLIC, session=None)
         self.invite = EventCalendarInvite.objects.create(
             event=self.event, email="guest@example.com"
         )

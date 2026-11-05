@@ -21,7 +21,7 @@ from home.factories import (
     UserQuestionResponseFactory,
     UserSurveyResponseFactory,
 )
-from home.models import EventCalendarInvite, SessionMembership, Team, TypeField
+from home.models import Event, EventCalendarInvite, SessionMembership, Team, TypeField
 from home.models.talk import Talk, TalkSpeaker
 from home.services.github_stats import Author
 from django.contrib.gis.geos import Point
@@ -813,7 +813,9 @@ class EventCalendarInviteTests(TestCase):
 
     def _event(self, **kwargs):
         kwargs.setdefault("extra_emails", ["guest@example.com"])
-        return EventFactory.create(session=self.session, **kwargs)
+        return EventFactory.create(
+            audience=Event.Audience.SESSION, session=self.session, **kwargs
+        )
 
     def test_recipients_combine_members_and_extra_emails(self):
         event = self._event()

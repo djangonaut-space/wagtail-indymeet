@@ -50,31 +50,33 @@ class EventQuerySetTestCase(TestCase):
         )
 
         cls.public_event = EventFactory.create(
-            is_public=True,
+            audience=Event.Audience.PUBLIC,
             start_time=datetime(2025, 1, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2025, 1, 1, 11, 0, tzinfo=dt_timezone.utc),
         )
+        cls.community_event = EventFactory.create(
+            audience=Event.Audience.COMMUNITY,
+            start_time=datetime(2025, 1, 2, 10, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2025, 1, 2, 11, 0, tzinfo=dt_timezone.utc),
+        )
         cls.private_event = EventFactory.create(
-            is_public=False,
+            audience=Event.Audience.SESSION,
             session=cls.session,
             start_time=datetime(2025, 2, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2025, 2, 1, 11, 0, tzinfo=dt_timezone.utc),
         )
 
-    def test_public_returns_only_public_events(self):
-        qs = Event.objects.public()
+    def test_visible_to_everyone_excludes_session_events(self):
+        qs = Event.objects.visible_to_everyone()
         self.assertIn(self.public_event, qs)
+        self.assertIn(self.community_event, qs)
         self.assertNotIn(self.private_event, qs)
-
-    def test_private_returns_only_private_events(self):
-        qs = Event.objects.private()
-        self.assertIn(self.private_event, qs)
-        self.assertNotIn(self.public_event, qs)
 
     def test_for_user_anonymous_returns_only_public(self):
         anon = AnonymousUser()
         qs = Event.objects.for_user(anon)
         self.assertIn(self.public_event, qs)
+        self.assertIn(self.community_event, qs)
         self.assertNotIn(self.private_event, qs)
 
     def test_for_user_member_sees_public_and_session_private(self):
@@ -88,9 +90,9 @@ class EventQuerySetTestCase(TestCase):
         self.assertNotIn(self.private_event, qs)
 
     def test_for_user_private_event_without_session_not_visible_to_non_member(self):
-        """A private event with no session is not visible to any authenticated user."""
+        """A session event with no session is not visible to any authenticated user."""
         orphan_private = EventFactory.create(
-            is_public=False,
+            audience=Event.Audience.SESSION,
             session=None,
             start_time=datetime(2025, 3, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2025, 3, 1, 11, 0, tzinfo=dt_timezone.utc),

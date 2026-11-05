@@ -18,7 +18,7 @@
             <tr>
                 <th>Event</th>
                 <th>Session</th>
-                <th>Public</th>
+                <th>Audience</th>
                 <th>Published</th>
                 <th>Zoom link</th>
                 <th>Recipients</th>
@@ -29,7 +29,7 @@
             <tr>
                 <td>{{ item.event.title }}</td>
                 <td>{{ item.event.session|default:"—" }}</td>
-                <td>{{ item.event.is_public|yesno:"Yes,No" }}</td>
+                <td>{{ item.event.get_audience_display }}</td>
                 <td>{{ item.event.is_published|yesno:"Yes,No" }}</td>
                 <td>{% if item.event.zoom_link %}{{ item.event.zoom_link }}{% else %}<strong>Missing</strong>{% endif %}</td>
                 <td>

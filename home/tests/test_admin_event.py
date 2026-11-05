@@ -115,7 +115,7 @@ class EventAdminCopyActionTests(TestCase):
                 "start_time_1": "18:00:00",
                 "end_time_0": "2025-07-01",
                 "end_time_1": "20:00:00",
-                "is_public": True,
+                "audience": "community",
                 "extra_emails": "sessions@djangonaut.space",
                 # The change form carries the read-only calendar invite
                 # inline, whose management form it validates.
@@ -157,7 +157,7 @@ class EventAdminGetChangeformInitialDataTests(TestCase):
             description="A great event.",
             zoom_link="https://zoom.us/j/existing",
             video_link="https://youtube.example.com/watch?v=abc",
-            is_public=True,
+            audience=Event.Audience.COMMUNITY,
             extra_emails=["sessions@djangonaut.space"],
         )
 
@@ -178,7 +178,7 @@ class EventAdminGetChangeformInitialDataTests(TestCase):
         self.assertEqual(initial["zoom_link"], "")
         self.assertEqual(initial["video_link"], "")
         self.assertFalse(initial["is_published"])
-        self.assertTrue(initial["is_public"])
+        self.assertEqual(initial["audience"], Event.Audience.COMMUNITY)
         self.assertEqual(initial["extra_emails"], ["sessions@djangonaut.space"])
 
     def test_no_copy_from_returns_normal_initial(self):
@@ -229,7 +229,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
     def test_shows_confirmation_page_without_apply(self, mock_send):
         """Without the apply flag, the action renders a confirmation page and
         queues nothing."""
-        event = self._make_event(is_public=False, title="Unconfirmed Event")
+        event = self._make_event(title="Unconfirmed Event")
 
         response = self.admin.send_calendar_invites(
             self._get_request(apply=False), Event.objects.filter(pk=event.pk)
@@ -248,7 +248,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         member2 = UserFactory.create(email="member2@example.com")
         SessionMembershipFactory.create(session=session, user=member1)
         SessionMembershipFactory.create(session=session, user=member2)
-        event = self._make_event(session=session, is_public=True)
+        event = self._make_event(session=session, audience=Event.Audience.SESSION)
 
         self.admin.send_calendar_invites(
             self._get_request(), Event.objects.filter(pk=event.pk)
@@ -261,14 +261,14 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertEqual(event.calendar_invites.sent().count(), 2)
 
     @patch("home.tasks.event_notifications.email.send")
-    def test_public_event_no_session_sends_to_opted_in_users(self, mock_send):
-        """A public event with no session sends to users who are accepted session members."""
+    def test_community_event_sends_to_accepted_members(self, mock_send):
+        """A community event sends to everyone who is an accepted session member."""
         opted_in = UserFactory.create(email="opted@example.com")
         SessionMembershipFactory.create(user=opted_in)
 
         UserFactory.create(email="nope@example.com")
 
-        event = self._make_event(is_public=True, session=None)
+        event = self._make_event(audience=Event.Audience.COMMUNITY, session=None)
 
         self.admin.send_calendar_invites(
             self._get_request(), Event.objects.filter(pk=event.pk)
@@ -280,9 +280,11 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         )
 
     @patch("home.tasks.event_notifications.email.send")
-    def test_private_event_no_session_sends_no_email(self, mock_send):
-        """A private event with no extra_emails sends no email because there are no recipients."""
-        event = self._make_event(is_public=False, session=None, extra_emails=[])
+    def test_public_event_sends_no_email_without_extra_emails(self, mock_send):
+        """A public event invites no members, so without extra_emails nobody is mailed."""
+        opted_in = UserFactory.create(email="opted@example.com")
+        SessionMembershipFactory.create(user=opted_in)
+        event = self._make_event(audience=Event.Audience.PUBLIC, extra_emails=[])
 
         self.admin.send_calendar_invites(
             self._get_request(), Event.objects.filter(pk=event.pk)
@@ -296,8 +298,12 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         opted_in = UserFactory.create(email="opted@example.com")
         SessionMembershipFactory.create(user=opted_in)
 
-        event1 = self._make_event(slug="ev-1", is_public=True, session=None)
-        event2 = self._make_event(slug="ev-2", is_public=True, session=None)
+        event1 = self._make_event(
+            slug="ev-1", audience=Event.Audience.COMMUNITY, session=None
+        )
+        event2 = self._make_event(
+            slug="ev-2", audience=Event.Audience.COMMUNITY, session=None
+        )
 
         self.admin.send_calendar_invites(
             self._get_request(),
@@ -309,7 +315,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
     @patch("home.tasks.event_notifications.email.send")
     def test_success_message_shows_queued_count(self, mock_send):
         """A success message is shown with the number of events processed."""
-        event = self._make_event(is_public=False)
+        event = self._make_event()
         request = self._get_request()
 
         self.admin.send_calendar_invites(request, Event.objects.filter(pk=event.pk))
@@ -323,7 +329,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         """Re-running the action mails nobody when every recipient has an invite."""
         opted_in = UserFactory.create(email="opted@example.com")
         SessionMembershipFactory.create(user=opted_in)
-        event = self._make_event(is_public=True, session=None)
+        event = self._make_event(audience=Event.Audience.COMMUNITY, session=None)
 
         self.admin.send_calendar_invites(
             self._get_request(), Event.objects.filter(pk=event.pk)
@@ -341,7 +347,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         """The confirmation page lists only the recipients who would be mailed."""
         invited = UserFactory.create(email="invited@example.com")
         SessionMembershipFactory.create(user=invited)
-        event = self._make_event(is_public=True, session=None)
+        event = self._make_event(audience=Event.Audience.COMMUNITY, session=None)
         self.admin.send_calendar_invites(
             self._get_request(), Event.objects.filter(pk=event.pk)
         )
@@ -359,7 +365,9 @@ class EventAdminSendCalendarInvitesTests(TestCase):
     def test_event_without_zoom_link_still_sends(self, mock_send):
         opted_in = UserFactory.create(email="opted@example.com")
         SessionMembershipFactory.create(user=opted_in)
-        event = self._make_event(is_public=True, session=None, zoom_link="")
+        event = self._make_event(
+            audience=Event.Audience.COMMUNITY, session=None, zoom_link=""
+        )
 
         self.admin.send_calendar_invites(
             self._get_request(), Event.objects.filter(pk=event.pk)
@@ -368,7 +376,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         mock_send.assert_called_once()
 
     def test_confirmation_page_warns_about_missing_zoom_link(self):
-        event = self._make_event(is_public=False, zoom_link="", title="Zoomless Event")
+        event = self._make_event(zoom_link="", title="Zoomless Event")
 
         response = self.admin.send_calendar_invites(
             self._get_request(apply=False), Event.objects.filter(pk=event.pk)
@@ -379,8 +387,18 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         self.assertContains(response, "<strong>Zoomless Event</strong>")
         self.assertContains(response, "Resync to Zoom and Discord")
 
+    def test_confirmation_page_shows_audience(self):
+        event = self._make_event(audience=Event.Audience.COMMUNITY)
+
+        response = self.admin.send_calendar_invites(
+            self._get_request(apply=False), Event.objects.filter(pk=event.pk)
+        )
+
+        self.assertContains(response, "<th>Audience</th>", html=True)
+        self.assertContains(response, "<td>Community</td>", html=True)
+
     def test_confirmation_page_has_no_warning_when_zoom_links_set(self):
-        event = self._make_event(is_public=False, zoom_link="https://zoom.us/j/123")
+        event = self._make_event(zoom_link="https://zoom.us/j/123")
 
         response = self.admin.send_calendar_invites(
             self._get_request(apply=False), Event.objects.filter(pk=event.pk)

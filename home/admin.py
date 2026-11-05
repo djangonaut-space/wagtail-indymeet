@@ -216,11 +216,12 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = [
         "title",
         "start_time_link",
+        "audience",
         "calendar_invites_sent",
         "zoom_synced",
         "discord_synced",
     ]
-    list_filter = ("session", CalendarInvitesSentFilter)
+    list_filter = ("audience", "session", CalendarInvitesSentFilter)
     readonly_fields = (
         "calendar_invites_sent",
         "zoom_meeting_id",
@@ -239,7 +240,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                     "end_time",
                     "description",
                     "is_published",
-                    "is_public",
+                    "audience",
                     "session",
                     "extra_emails",
                     "calendar_invites_sent",
@@ -332,7 +333,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                     "is_published": False,
                     "zoom_link": "",
                     "video_link": "",
-                    "is_public": source.is_public,
+                    "audience": source.audience,
                     "extra_emails": source.extra_emails,
                     "session": source.session_id,
                 }
@@ -362,11 +363,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     def send_calendar_invites(self, request, queryset):
         """Queue calendar invite emails for each selected event.
 
-        Recipients are determined by the event's session and visibility:
-        - Session event: all members of that session who have an email address.
-        - Public event (no session): all users opted in to event updates.
-        - Private event (no session): no extra recipients; the task still sends
-          to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
+        Recipients come from ``Event.get_calendar_invite_recipients``.
 
         Renders an intermediate confirmation page listing the computed
         recipients first; nothing is queued until the user confirms. The page
