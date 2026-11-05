@@ -8,6 +8,7 @@ from django.db.models import (
     Count,
     Exists,
     F,
+    Max,
     OuterRef,
     Prefetch,
     Q,
@@ -48,6 +49,9 @@ class UserQuestionResponseQuerySet(QuerySet):
 
 
 class EventQuerySet(QuerySet):
+    def with_calendar_invites_sent_at(self):
+        return self.annotate(calendar_invites_sent_at=Max("calendar_invites__sent_at"))
+
     def published(self):
         return self.filter(is_published=True)
 
@@ -80,6 +84,16 @@ class EventQuerySet(QuerySet):
                 session__session_memberships__user=user,
             )
         ).distinct()
+
+
+class EventCalendarInviteQuerySet(QuerySet):
+    def unsent(self):
+        """Invites still waiting to be emailed."""
+        return self.filter(sent_at__isnull=True)
+
+    def sent(self):
+        """Invites that have been emailed."""
+        return self.filter(sent_at__isnull=False)
 
 
 class SessionQuerySet(QuerySet):

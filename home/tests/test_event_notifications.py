@@ -7,11 +7,17 @@ from datetime import timezone as dt_timezone
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.utils import timezone
 from icalendar import Calendar
 
-from home.factories import EventFactory
+from accounts.factories import UserFactory
+from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.icalendar_utils import generate_icalendar
-from home.tasks.event_notifications import send_event_calendar_invite
+from home.models import Event, EventCalendarInvite
+from home.tasks.event_notifications import (
+    send_calendar_invite_email,
+    send_event_calendar_invite,
+)
 
 
 def _get_vevent(ical_bytes: bytes):
@@ -115,54 +121,139 @@ class SendEventCalendarInviteTaskTests(TestCase):
     """Tests for the send_event_calendar_invite task."""
 
     def setUp(self):
+        self.session = SessionFactory.create()
+        self.member = UserFactory.create(
+            email="participant@example.com", first_name="Robin"
+        )
+        SessionMembershipFactory.create(session=self.session, user=self.member)
         self.event = EventFactory.create(
             title="Sprint Planning",
             start_time=datetime(2024, 5, 10, 15, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2024, 5, 10, 16, 0, tzinfo=dt_timezone.utc),
+            session=self.session,
             extra_emails=["contact@djangonaut.space"],
         )
 
+    def _sent_to(self, mock_send) -> set[str]:
+        return {
+            address
+            for call in mock_send.call_args_list
+            for address in call[1]["recipient_list"]
+        }
+
     @patch("home.tasks.event_notifications.email.send")
-    def test_sends_calendar_invite_email(self, mock_send):
-        """Task sends one email with correct template, bcc_list, context, and .ics attachment."""
-        # Mock get_calendar_invite_recipients on the Event class
-        with patch(
-            "home.tasks.event_notifications.Event.get_calendar_invite_recipients",
-            return_value=["participant@example.com", "contact@djangonaut.space"],
-        ):
-            send_event_calendar_invite.call(event_id=self.event.pk)
+    def test_sends_one_email_per_recipient(self, mock_send):
+        """Each recipient is the sole addressee of their own email."""
+        send_event_calendar_invite.call(event_id=self.event.pk)
 
-        mock_send.assert_called_once()
-        call_kwargs = mock_send.call_args[1]
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            self._sent_to(mock_send),
+            {"participant@example.com", "contact@djangonaut.space"},
+        )
+        for call in mock_send.call_args_list:
+            self.assertEqual(len(call[1]["recipient_list"]), 1)
+            self.assertIsNone(call[1].get("bcc_list"))
 
-        self.assertEqual(call_kwargs["email_template"], "event_calendar_invite")
-        self.assertEqual(call_kwargs["from_email"], "sessions@djangonaut.space")
-        self.assertEqual(call_kwargs["recipient_list"], ["sessions@djangonaut.space"])
-        self.assertIn("participant@example.com", call_kwargs["bcc_list"])
-        self.assertIn("contact@djangonaut.space", call_kwargs["bcc_list"])
-        self.assertEqual(call_kwargs["context"]["event"], self.event)
-        self.assertIn("cta_link", call_kwargs["context"])
+    @patch("home.tasks.event_notifications.email.send")
+    def test_email_content(self, mock_send):
+        """Each email uses the invite template, names the recipient, and attaches the .ics."""
+        send_event_calendar_invite.call(event_id=self.event.pk)
 
-        filename, content, mimetype = call_kwargs["attachments"][0]
+        by_recipient = {
+            call[1]["recipient_list"][0]: call[1] for call in mock_send.call_args_list
+        }
+        member_call = by_recipient["participant@example.com"]
+        self.assertEqual(member_call["email_template"], "event_calendar_invite")
+        self.assertEqual(member_call["from_email"], "sessions@djangonaut.space")
+        self.assertEqual(member_call["context"]["event"], self.event)
+        self.assertEqual(member_call["context"]["user"], self.member)
+        self.assertEqual(member_call["context"]["name"], "Robin")
+        self.assertIn("cta_link", member_call["context"])
+
+        filename, content, mimetype = member_call["attachments"][0]
         self.assertEqual(filename, "event.ics")
         self.assertEqual(mimetype, "text/calendar")
         self.assertEqual(str(_get_vevent(content)["SUMMARY"]), "Sprint Planning")
 
-    @patch("home.tasks.event_notifications.email.send")
-    def test_idempotency(self, mock_send):
-        """Task only sends email once even if called multiple times."""
-        # Mock recipients so it doesn't return early
-        with patch(
-            "home.tasks.event_notifications.Event.get_calendar_invite_recipients",
-            return_value=["test@example.com"],
-        ):
-            # First call
-            send_event_calendar_invite.call(event_id=self.event.pk)
-            self.assertEqual(mock_send.call_count, 1)
+        # extra_emails belong to guests with no account, so there's no name.
+        guest_call = by_recipient["contact@djangonaut.space"]
+        self.assertIsNone(guest_call["context"]["user"])
+        self.assertEqual(guest_call["context"]["name"], "")
 
-            # Second call
-            send_event_calendar_invite.call(event_id=self.event.pk)
-            self.assertEqual(mock_send.call_count, 1)
+    @patch("home.tasks.event_notifications.email.send")
+    def test_tracks_recipients(self, mock_send):
+        """An invite is recorded per recipient, linked to the user where there is one."""
+        send_event_calendar_invite.call(event_id=self.event.pk)
+
+        invites = {invite.email: invite for invite in self.event.calendar_invites.all()}
+        self.assertEqual(
+            set(invites), {"participant@example.com", "contact@djangonaut.space"}
+        )
+        self.assertEqual(invites["participant@example.com"].user, self.member)
+        self.assertIsNone(invites["contact@djangonaut.space"].user)
+        for invite in invites.values():
+            self.assertIsNotNone(invite.sent_at)
+        self.assertEqual(
+            list(self.event.calendar_invite_recipients.all()), [self.member]
+        )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_rerun_only_mails_new_recipients(self, mock_send):
+        """A second run skips recipients already invited and picks up new members."""
+        send_event_calendar_invite.call(event_id=self.event.pk)
+        mock_send.reset_mock()
+
+        latecomer = UserFactory.create(email="latecomer@example.com")
+        SessionMembershipFactory.create(session=self.session, user=latecomer)
+        send_event_calendar_invite.call(event_id=self.event.pk)
+
+        mock_send.assert_called_once()
+        self.assertEqual(self._sent_to(mock_send), {"latecomer@example.com"})
+        self.assertEqual(self.event.calendar_invites.count(), 3)
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_queued_invite_is_rescheduled(self, mock_send):
+        """An invite queued but never sent is sent, without a second invite."""
+        EventCalendarInvite.objects.create(
+            event=self.event, email="participant@example.com"
+        )
+
+        send_event_calendar_invite.call(event_id=self.event.pk)
+
+        self.assertEqual(self.event.calendar_invites.count(), 2)
+        self.assertEqual(
+            self._sent_to(mock_send),
+            {"participant@example.com", "contact@djangonaut.space"},
+        )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_queued_invite_matches_recipient_in_any_case(self, mock_send):
+        """Invites are unique per address regardless of case."""
+        EventCalendarInvite.objects.create(
+            event=self.event, email="Participant@Example.com"
+        )
+
+        send_event_calendar_invite.call(event_id=self.event.pk)
+
+        self.assertEqual(self.event.calendar_invites.count(), 2)
+        self.assertEqual(
+            self._sent_to(mock_send),
+            {"Participant@Example.com", "contact@djangonaut.space"},
+        )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_annotated_send_time_follows_the_invites(self, mock_send):
+        """The event's send time is the most recent delivery to any recipient."""
+        annotated = Event.objects.with_calendar_invites_sent_at()
+        self.assertIsNone(annotated.get(pk=self.event.pk).calendar_invites_sent_at)
+
+        send_event_calendar_invite.call(event_id=self.event.pk)
+
+        self.assertEqual(
+            annotated.get(pk=self.event.pk).calendar_invites_sent_at,
+            self.event.calendar_invites.sent().latest("sent_at").sent_at,
+        )
 
     @patch("home.tasks.event_notifications.email.send")
     def test_does_nothing_for_nonexistent_event(self, mock_send):
@@ -173,10 +264,10 @@ class SendEventCalendarInviteTaskTests(TestCase):
     @patch("home.tasks.event_notifications.email.send")
     def test_does_nothing_if_no_recipients(self, mock_send):
         """Task exits silently if no recipients are found."""
-        event = EventFactory.create(extra_emails=[])
-        with patch.object(event, "get_calendar_invite_recipients", return_value=[]):
-            send_event_calendar_invite.call(event_id=event.pk)
+        event = EventFactory.create(is_public=False, session=None, extra_emails=[])
+        send_event_calendar_invite.call(event_id=event.pk)
         mock_send.assert_not_called()
+        self.assertFalse(event.calendar_invites.exists())
 
     def test_private_event_with_no_extra_emails_has_no_recipients(self):
         """A private event with no extra_emails has no recipients."""
@@ -193,5 +284,39 @@ class SendEventCalendarInviteTaskTests(TestCase):
         )
         send_event_calendar_invite.call(event_id=event.pk)
         mock_send.assert_called_once()
-        bcc = mock_send.call_args[1]["bcc_list"]
-        self.assertIn("sessions@djangonaut.space", bcc)
+        self.assertEqual(
+            mock_send.call_args[1]["recipient_list"], ["sessions@djangonaut.space"]
+        )
+
+
+class SendCalendarInviteEmailTaskTests(TestCase):
+    """Tests for the per-recipient send_calendar_invite_email task."""
+
+    def setUp(self):
+        self.event = EventFactory.create(is_public=False, session=None)
+        self.invite = EventCalendarInvite.objects.create(
+            event=self.event, email="guest@example.com"
+        )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_marks_invite_sent(self, mock_send):
+        send_calendar_invite_email.call(invite_id=self.invite.pk)
+
+        mock_send.assert_called_once()
+        self.invite.refresh_from_db()
+        self.assertIsNotNone(self.invite.sent_at)
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_skips_already_sent_invite(self, mock_send):
+        """A recipient is never mailed twice, so a repeated run is harmless."""
+        self.invite.sent_at = timezone.now()
+        self.invite.save(update_fields=["sent_at"])
+
+        send_calendar_invite_email.call(invite_id=self.invite.pk)
+
+        mock_send.assert_not_called()
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_does_nothing_for_nonexistent_invite(self, mock_send):
+        send_calendar_invite_email.call(invite_id=999_999)
+        mock_send.assert_not_called()
