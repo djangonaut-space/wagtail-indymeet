@@ -156,31 +156,28 @@ def collect_stats_view(request: HttpRequest, session_id: int) -> HttpResponse:
 
 
 class CalendarInvitesSentFilter(admin.SimpleListFilter):
-    """Filter Events by whether any calendar invite has been emailed.
-
-    An event counts as sent once a single recipient has been emailed, which
-    an Exists subquery answers without the join duplicating event rows.
-    """
+    """Filter Events by how many of their calendar invites have been emailed."""
 
     title = "calendar invites sent"
     parameter_name = "calendar_invites_sent"
 
     def lookups(self, request, model_admin):
         return (
-            ("yes", "Sent"),
-            ("no", "Not sent"),
+            ("none", "None sent"),
+            ("any", "Any sent"),
+            ("all", "All sent"),
         )
 
     def queryset(self, request, queryset):
-        has_sent_invite = Exists(
-            EventCalendarInvite.objects.filter(
-                event=OuterRef("pk"), sent_at__isnull=False
-            )
-        )
-        if self.value() == "yes":
-            return queryset.filter(has_sent_invite)
-        elif self.value() == "no":
-            return queryset.filter(~has_sent_invite)
+        invites = EventCalendarInvite.objects.filter(event=OuterRef("pk"))
+        has_sent = Exists(invites.sent())
+        has_unsent = Exists(invites.unsent())
+        if self.value() == "none":
+            return queryset.filter(~has_sent)
+        elif self.value() == "any":
+            return queryset.filter(has_sent)
+        elif self.value() == "all":
+            return queryset.filter(has_sent, ~has_unsent)
         return queryset
 
 
@@ -212,7 +209,6 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     actions = [
         "copy_event",
         "send_calendar_invites",
-        "reset_calendar_invites_sent",
         preview_email.calendar_invite_email_action,
         "resync_event",
     ]
@@ -372,10 +368,6 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         - Private event (no session): no extra recipients; the task still sends
           to the event's ``extra_emails`` (e.g. sessions@djangonaut.space).
 
-        Recipients who already have an invite are skipped individually, so
-        running this again after new members join only mails the new people.
-        Use the reset action to deliberately resend to everyone.
-
         Renders an intermediate confirmation page listing the computed
         recipients first; nothing is queued until the user confirms. The page
         warns about events that don't have a Zoom link yet, since their invites
@@ -405,30 +397,12 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             "title": "Confirm sending calendar invites",
             "events": events,
             "missing_zoom_events": [
-                item["event"]
-                for item in events
-                if not item["already_sent"] and not item["event"].zoom_link
+                item["event"] for item in events if not item["event"].zoom_link
             ],
             "opts": self.model._meta,
             "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
         }
         return render(request, "admin/send_calendar_invites_confirmation.html", context)
-
-    @admin.action(description="Reset calendar invites sent so they can be resent")
-    def reset_calendar_invites_sent(self, request, queryset) -> None:
-        """Clear every sent stamp so the send action mails everyone again.
-
-        The send action only mails recipients without an invite yet, so this is
-        the deliberate step for resending after a change members need to see.
-        """
-        invites = EventCalendarInvite.objects.filter(event__in=queryset).sent()
-        reset = invites.values("event").distinct().count()
-        invites.update(sent_at=None)
-        self.message_user(
-            request,
-            f"Reset calendar invites sent for {reset} event(s).",
-            messages.SUCCESS,
-        )
 
     @admin.action(description="Resync to Zoom and Discord")
     def resync_event(self, request, queryset) -> None:

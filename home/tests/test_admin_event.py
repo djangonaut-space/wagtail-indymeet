@@ -439,57 +439,6 @@ class EventAdminCalendarInviteEmailActionTests(TestCase):
         self.assertEqual(stored[0].level, messages.ERROR)
 
 
-class EventAdminResetCalendarInvitesSentTests(TestCase):
-    """Tests for the reset_calendar_invites_sent admin action."""
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.superuser = UserFactory.create(
-            email="admin@example.com", is_staff=True, is_superuser=True
-        )
-
-    def _get_request(self):
-        request = RequestFactory().post("/admin/home/event/")
-        request.user = self.superuser
-        middleware = SessionMiddleware(lambda req: None)
-        middleware.process_request(request)
-        request.session.save()
-        request._messages = FallbackStorage(request)
-        return request
-
-    def test_clears_recipient_sent_at(self):
-        """Resetting makes the next send mail every recipient again."""
-        event = EventFactory.create()
-        invite = EventCalendarInvite.objects.create(
-            event=event, email="guest@example.com", sent_at=timezone.now()
-        )
-
-        EventAdmin(Event, AdminSite()).reset_calendar_invites_sent(
-            self._get_request(), Event.objects.filter(pk=event.pk)
-        )
-
-        invite.refresh_from_db()
-        self.assertIsNone(invite.sent_at)
-
-    def test_counts_only_events_with_sent_invites(self):
-        sent = EventFactory.create()
-        EventCalendarInvite.objects.create(
-            event=sent, email="guest@example.com", sent_at=timezone.now()
-        )
-        unsent = EventFactory.create()
-        EventCalendarInvite.objects.create(event=unsent, email="queued@example.com")
-        request = self._get_request()
-
-        EventAdmin(Event, AdminSite()).reset_calendar_invites_sent(
-            request, Event.objects.filter(pk__in=[sent.pk, unsent.pk])
-        )
-
-        self.assertEqual(
-            [str(m) for m in request._messages],
-            ["Reset calendar invites sent for 1 event(s)."],
-        )
-
-
 class EventAdminResyncEventActionTests(TestCase):
     """Tests for the resync_event admin action."""
 
@@ -689,19 +638,29 @@ class CalendarInvitesSentFilterTests(TestCase):
         return set(filter_instance.queryset(request, queryset))
 
     def test_splits_events_by_sent_status(self):
-        """The yes/no filter values partition events by invite-sent status."""
-        sent = EventFactory.create()
+        """none/any/all partition events by how many invites were emailed."""
+        now = datetime.now(dt_timezone.utc)
+        all_sent = EventFactory.create()
         EventCalendarInvite.objects.create(
-            event=sent,
-            email="guest@example.com",
-            sent_at=datetime.now(dt_timezone.utc),
+            event=all_sent, email="guest@example.com", sent_at=now
+        )
+        partly_sent = EventFactory.create()
+        EventCalendarInvite.objects.create(
+            event=partly_sent, email="guest@example.com", sent_at=now
+        )
+        EventCalendarInvite.objects.create(
+            event=partly_sent, email="queued@example.com"
         )
         unsent = EventFactory.create()
         EventCalendarInvite.objects.create(event=unsent, email="queued@example.com")
-        queryset = Event.objects.filter(pk__in=[sent.pk, unsent.pk])
+        no_invites = EventFactory.create()
+        queryset = Event.objects.filter(
+            pk__in=[all_sent.pk, partly_sent.pk, unsent.pk, no_invites.pk]
+        )
 
-        self.assertEqual(self._filtered("yes", queryset), {sent})
-        self.assertEqual(self._filtered("no", queryset), {unsent})
+        self.assertEqual(self._filtered("none", queryset), {unsent, no_invites})
+        self.assertEqual(self._filtered("any", queryset), {all_sent, partly_sent})
+        self.assertEqual(self._filtered("all", queryset), {all_sent})
 
 
 class EventAdminReadonlyFieldsTests(TestCase):

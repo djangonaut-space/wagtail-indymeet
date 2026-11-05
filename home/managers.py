@@ -50,12 +50,6 @@ class UserQuestionResponseQuerySet(QuerySet):
 
 class EventQuerySet(QuerySet):
     def with_calendar_invites_sent_at(self):
-        """Annotate when each event's calendar invites last went out.
-
-        The invite records are the only account of what was sent, so the
-        event-level time is derived from them rather than stored: it is the
-        most recent delivery, and null while nobody has been emailed yet.
-        """
         return self.annotate(calendar_invites_sent_at=Max("calendar_invites__sent_at"))
 
     def published(self):

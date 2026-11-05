@@ -11,13 +11,7 @@ from home.models import Event, EventCalendarInvite
 
 
 def _record_pending_invites(event: Event) -> None:
-    """Record an invite for every recipient of the event not yet emailed.
-
-    Recipients are resolved here rather than once up front, so a later send
-    picks up people who joined the session in the meantime. A recipient whose
-    invite is already queued conflicts with the per-event unique constraint
-    and keeps the invite they have.
-    """
+    """Record an invite for every recipient of the event not yet emailed."""
     users = {user.email.lower(): user for user in event.get_calendar_invite_users()}
     EventCalendarInvite.objects.bulk_create(
         [
@@ -37,11 +31,7 @@ def send_event_calendar_invite(event_id: int) -> None:
     Each recipient is mailed by its own task, so one bad address or a retry
     can't affect anybody else's invite. Every invite not yet emailed is
     (re)scheduled, which picks up both people who joined the session since the
-    last send and invites whose send never ran. Scheduling one twice is
-    harmless: each send locks its invite and re-checks that it is unsent.
-
-    The invites and the sends queued for them commit together, so a failure
-    part way through leaves neither behind.
+    last send and invites whose send never ran.
 
     Args:
         event_id: The ID of the Event to send invites for.
