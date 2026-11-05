@@ -1,5 +1,7 @@
 """Tests for custom QuerySet methods."""
 
+import time_machine
+
 from home import constants
 from home.slots import Slot
 from datetime import datetime
@@ -300,6 +302,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
 
         self.assertEqual(qs.count(), 0)
 
+    @time_machine.travel("2024-06-17", tick=False)
     def test_with_availability_overlap_uses_user_timezones(self):
         """Availability overlap filter compares derived UTC slots."""
         UserAvailabilityFactory(
