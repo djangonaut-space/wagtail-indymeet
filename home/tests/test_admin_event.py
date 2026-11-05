@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.formats import date_format
 
 from accounts.factories import UserFactory
-from home.admin import CalendarInvitesSentFilter, EventAdmin
+from home.admin import CalendarInvitesSentFilter, EventAdmin, InviteSentFilter
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import Event, EventCalendarInvite
 from home.operations import EventSyncDecision, EventSyncStatus
@@ -705,3 +705,26 @@ class EventAdminReadonlyFieldsTests(TestCase):
 
         form = admin_instance.get_form(request)
         self.assertTrue(set(form.base_fields).issubset(fielded))
+
+
+class InviteSentFilterTests(TestCase):
+    def test_filters_by_sent_status(self):
+        event = EventFactory.create()
+        sent = EventCalendarInvite.objects.create(
+            event=event, email="sent@example.com", sent_at=timezone.now()
+        )
+        unsent = EventCalendarInvite.objects.create(
+            event=event, email="queued@example.com"
+        )
+        queryset = EventCalendarInvite.objects.all()
+
+        def filtered(value):
+            request = RequestFactory().get("/", {"sent": value} if value else {})
+            instance = InviteSentFilter(
+                request, request.GET.copy(), EventCalendarInvite, None
+            )
+            return set(instance.queryset(request, queryset))
+
+        self.assertEqual(filtered("yes"), {sent})
+        self.assertEqual(filtered("no"), {unsent})
+        self.assertEqual(filtered(None), {sent, unsent})

@@ -450,6 +450,36 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             )
 
 
+class InviteSentFilter(admin.SimpleListFilter):
+    title = "sent"
+    parameter_name = "sent"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "Sent"), ("no", "Not sent"))
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.sent()
+        if self.value() == "no":
+            return queryset.unsent()
+        return queryset
+
+
+@admin.register(EventCalendarInvite)
+class EventCalendarInviteAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
+    """Read-only view of calendar invites; they're created by the send action."""
+
+    list_display = ("email", "event", "user", "sent_at", "created_at")
+    list_filter = (InviteSentFilter, "event")
+    search_fields = ("email", "event__title", "user__email")
+    list_select_related = ("event", "user")
+    readonly_fields = ("event", "user", "email", "sent_at", "created_at")
+    ordering = ("-created_at",)
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+
 @admin.register(Project)
 class ProjectAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_display = ("name", "url")
