@@ -6,6 +6,7 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.factories import UserFactory
@@ -74,6 +75,54 @@ class AnnouncementAdminTests(TestCase):
         )
 
         mock_task.enqueue.assert_not_called()
+
+    def _change(self, announcement, button):
+        self.client.force_login(self.superuser)
+        return self.client.post(
+            reverse("admin:home_announcement_change", args=[announcement.pk]),
+            {
+                "session": self.session.pk,
+                "post_date": announcement.post_date.isoformat(),
+                "message": "Edited",
+                "needs_approval": "on",
+                button: "1",
+            },
+        )
+
+    def test_save_and_approve(self):
+        announcement = AnnouncementFactory(
+            session=self.session, needs_approval=True, approved_at=None
+        )
+
+        response = self._change(announcement, "_save_approve")
+
+        self.assertRedirects(response, reverse("admin:home_announcement_changelist"))
+        announcement.refresh_from_db()
+        self.assertEqual(announcement.message, "Edited")
+        self.assertIsNotNone(announcement.approved_at)
+
+    def test_other_saves_do_not_approve(self):
+        announcement = AnnouncementFactory(
+            session=self.session, needs_approval=True, approved_at=None
+        )
+
+        self._change(announcement, "_continue")
+
+        announcement.refresh_from_db()
+        self.assertEqual(announcement.message, "Edited")
+        self.assertIsNone(announcement.approved_at)
+
+    def test_form_shows_approve_instead_of_save(self):
+        announcement = AnnouncementFactory(session=self.session)
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(
+            reverse("admin:home_announcement_change", args=[announcement.pk])
+        )
+
+        self.assertContains(response, 'name="_save_approve"')
+        self.assertContains(response, 'name="_continue"')
+        self.assertNotContains(response, 'name="_save"')
 
     def test_queryset_scoping(self):
         """Organizers see only their sessions' announcements; superusers see all."""
