@@ -1,4 +1,25 @@
+import re
+
+from django import forms
 from django.db.models.fields import related
+
+GITHUB_PROFILE_URL = re.compile(
+    r"^(?:https?://)?(?:www\.)?github\.com/(?P<username>[^/?#\s]+)", re.IGNORECASE
+)
+
+
+class GitHubUsernameField(forms.CharField):
+    """A username field that reduces a pasted profile URL to the username.
+
+    Users often paste their profile link. Normalizing in ``to_python`` runs
+    before the length validators, so a long URL isn't rejected for its length.
+    """
+
+    def to_python(self, value):
+        value = super().to_python(value)
+        if match := GITHUB_PROFILE_URL.match(value):
+            return match["username"]
+        return value.removeprefix("@")
 
 
 class ReverseDefaultOneToOneDescriptor(related.ReverseOneToOneDescriptor):
