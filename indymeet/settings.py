@@ -212,6 +212,9 @@ EMAIL_BACKEND = os.getenv(
     # .env.docker if you want emails printed to the Docker logs instead.
     "django.core.mail.backends.locmem.EmailBackend",
 )
+# Used by home.email_backends.SubjectFileEmailBackend (set EMAIL_BACKEND to it
+# in .env to write each email to its own file instead of the console).
+EMAIL_FILE_PATH = os.getenv("EMAIL_FILE_PATH", os.path.join(BASE_DIR, "tmp", "emails"))
 
 if EMAIL_BACKEND == "anymail.backends.mailjet.EmailBackend":
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")

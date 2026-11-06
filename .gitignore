@@ -41,3 +41,6 @@ yarn.lock
 
 # Ignore local settings override
 indymeet/settings/local.py
+
+# Local emails written by home.email_backends.SubjectFileEmailBackend
+tmp/
