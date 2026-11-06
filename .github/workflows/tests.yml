@@ -23,7 +23,9 @@ jobs:
       EMAIL_BACKEND: "django.core.mail.backends.locmem.EmailBackend"
       TASK_BACKEND: "django_tasks.backends.immediate.ImmediateBackend"
       STATICFILES_BACKEND: "django.contrib.staticfiles.storage.StaticFilesStorage"
-    runs-on: ubuntu-latest
+    # Pinned because the ubuntugis PPA, which provides the GDAL version the
+    # gdal Python package is pinned to, has no Ubuntu 26.04 release.
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     services:

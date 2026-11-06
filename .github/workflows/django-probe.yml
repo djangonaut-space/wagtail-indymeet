@@ -10,7 +10,9 @@ permissions: {}
 
 jobs:
   django-probe:
-    runs-on: ubuntu-latest
+    # Pinned because the ubuntugis PPA, which provides the GDAL version the
+    # gdal Python package is pinned to, has no Ubuntu 26.04 release.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
