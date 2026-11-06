@@ -260,8 +260,6 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
 
         Applies to the change form as well as the changelist, since both read
         the model admin's queryset.
-
-        Not filtered by session: any session organizer may manage any event.
         """
         return super().get_queryset(request).with_calendar_invites_sent_at()
 
