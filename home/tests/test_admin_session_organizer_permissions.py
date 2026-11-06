@@ -3,9 +3,13 @@
 from home import constants
 from unittest.mock import Mock
 
+from io import StringIO
+
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import Group
+from django.core.management import call_command
 from django.test import TestCase, RequestFactory
+from django.urls import reverse
 
 from accounts.factories import UserFactory
 from home.admin import (
@@ -19,6 +23,7 @@ from home.admin import (
     WaitlistAdmin,
 )
 from home.factories import (
+    EventFactory,
     QuestionFactory,
     SessionFactory,
     SessionMembershipFactory,
@@ -29,6 +34,8 @@ from home.factories import (
     WaitlistFactory,
 )
 from home.models import (
+    Event,
+    EventCalendarInvite,
     Session,
     SessionMembership,
     Survey,
@@ -546,3 +553,98 @@ class UserQuestionResponseAdminPermissionsTests(
         qs = self.model_admin.get_queryset(request)
 
         self.assertEqual(qs.count(), 0)
+
+
+class OrganizerEventAdminViewTests(TestCase):
+    """Organizers with the real group permissions can manage every event,
+    not only those for sessions they organize."""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("setup_session_organizers_group", stdout=StringIO())
+        cls.session = SessionFactory.create()
+        cls.organizer = UserFactory.create(is_staff=True)
+        cls.organizer.groups.add(Group.objects.get(name="Session Organizers"))
+        SessionMembershipFactory.create(
+            user=cls.organizer, session=cls.session, role=constants.ORGANIZER
+        )
+        cls.other_event = EventFactory.create(
+            session=SessionFactory.create(), audience=Event.Audience.SESSION
+        )
+        cls.invite = EventCalendarInvite.objects.create(
+            event=cls.other_event, email="a@example.com"
+        )
+
+    def setUp(self):
+        self.client.force_login(self.organizer)
+
+    def test_changelist(self):
+        response = self.client.get(reverse("admin:home_event_changelist"))
+
+        self.assertContains(response, self.other_event.title)
+
+    def test_change_other_session_event(self):
+        response = self.client.get(
+            reverse("admin:home_event_change", args=[self.other_event.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="title"')
+
+    def test_invite_changelist(self):
+        response = self.client.get(reverse("admin:home_eventcalendarinvite_changelist"))
+
+        self.assertContains(response, self.invite.email)
+
+    def test_add_event(self):
+        response = self.client.post(
+            reverse("admin:home_event_add"),
+            {
+                "title": "Kickoff",
+                "slug": "kickoff",
+                "start_time_0": "2026-07-01",
+                "start_time_1": "18:00:00",
+                "end_time_0": "2026-07-01",
+                "end_time_1": "20:00:00",
+                "audience": Event.Audience.SESSION,
+                "session": self.session.pk,
+                "calendar_invites-TOTAL_FORMS": "0",
+                "calendar_invites-INITIAL_FORMS": "0",
+                "_save": "Save",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("admin:home_event_changelist"),
+            fetch_redirect_response=False,
+        )
+        self.assertTrue(
+            Event.objects.filter(slug="kickoff", session=self.session).exists()
+        )
+
+    def test_add_sessionless_community_event(self):
+        response = self.client.post(
+            reverse("admin:home_event_add"),
+            {
+                "title": "Guest speaker",
+                "slug": "guest-speaker",
+                "start_time_0": "2026-07-01",
+                "start_time_1": "18:00:00",
+                "end_time_0": "2026-07-01",
+                "end_time_1": "20:00:00",
+                "audience": Event.Audience.COMMUNITY,
+                "calendar_invites-TOTAL_FORMS": "0",
+                "calendar_invites-INITIAL_FORMS": "0",
+                "_save": "Save",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("admin:home_event_changelist"),
+            fetch_redirect_response=False,
+        )
+        self.assertTrue(
+            Event.objects.filter(slug="guest-speaker", session=None).exists()
+        )

@@ -28,6 +28,12 @@ class SetupSessionOrganizersGroupCommandTestCase(TestCase):
         self.assertIn("add_sessionmembership", permission_codenames)
         self.assertIn("change_sessionmembership", permission_codenames)
         self.assertIn("form_team", permission_codenames)
+        self.assertIn("view_event", permission_codenames)
+        self.assertIn("add_event", permission_codenames)
+        self.assertIn("change_event", permission_codenames)
+        self.assertNotIn("delete_event", permission_codenames)
+        self.assertIn("view_eventcalendarinvite", permission_codenames)
+        self.assertIn("delete_eventcalendarinvite", permission_codenames)
 
     def test_command_is_idempotent(self):
         """Test that running command multiple times works correctly."""

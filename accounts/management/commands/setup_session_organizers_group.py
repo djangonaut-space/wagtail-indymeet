@@ -11,6 +11,8 @@ from django.db.models import Q
 from accounts.models import CustomUser, UserAvailability, UserProfile
 from home.models import (
     Announcement,
+    Event,
+    EventCalendarInvite,
     Project,
     ResourceLink,
     Session,
@@ -30,6 +32,9 @@ class Command(BaseCommand):
         permissions_to_add = [
             (Announcement, ["view", "add", "change"]),
             (CustomUser, ["view"]),
+            (Event, ["view", "add", "change"]),
+            # Deleting an invite lets the send action email that person again.
+            (EventCalendarInvite, ["view", "delete"]),
             (ResourceLink, ["view", "add"]),
             (Session, ["view", "add", "change"]),
             (Survey, ["view", "add"]),
