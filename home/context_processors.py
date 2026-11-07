@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.utils import timezone
+from wagtail.models import Page
 
 from accounts.models import UserAvailability
 from home.models import Session, SessionMembership
@@ -51,3 +52,17 @@ def alert_about_status(request):
             ):
                 context["user_needs_to_update_availability"] = True
     return context
+
+
+def nav_comms_link(request):
+    """
+    Include commonly used url for blog page in 'comms' slug
+    to avoid multiple hits to the database on each page load.
+
+    If page is missing, defaults to empty.
+    """
+    page = Page.objects.filter(slug="comms").first()
+    try:
+        return {"comms_url": page.url}
+    except AttributeError:
+        return {"comms_url": ""}
