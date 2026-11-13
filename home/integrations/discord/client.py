@@ -135,15 +135,37 @@ class DiscordClient:
         response = self._request("GET", f"/guilds/{guild_id}/roles")
         return response.json()
 
-    def create_guild_role(self, *, guild_id: str, name: str) -> dict:
+    def create_guild_role(
+        self,
+        *,
+        guild_id: str,
+        name: str,
+        hoist: bool = False,
+        mentionable: bool = False,
+    ) -> dict:
         """Create a guild role with default permissions and return it as JSON.
 
         Roles created here inherit @everyone's permissions; they exist purely
-        as channel-access markers, not permission grants.
+        as channel-access markers, not permission grants. ``hoist`` lists the
+        role's members separately in the member list.
         """
-        response = self._request(
-            "POST", f"/guilds/{guild_id}/roles", json={"name": name}
-        )
+        payload: dict = {"name": name}
+        if hoist:
+            payload["hoist"] = True
+        if mentionable:
+            payload["mentionable"] = True
+        response = self._request("POST", f"/guilds/{guild_id}/roles", json=payload)
+        return response.json()
+
+    def modify_guild_role_positions(
+        self, *, guild_id: str, positions: list[dict]
+    ) -> list[dict]:
+        """Reorder roles; ``positions`` is a list of ``{"id", "position"}``.
+
+        Discord can't set a position when creating a role, so new roles land at
+        the bottom until moved here. Returns all guild roles.
+        """
+        response = self._request("PATCH", f"/guilds/{guild_id}/roles", json=positions)
         return response.json()
 
     def search_guild_members(

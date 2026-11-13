@@ -1053,6 +1053,16 @@ class AnnouncementAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         """Filter announcements to only those for sessions the user organizes."""
         return super().get_queryset(request).for_admin_site(request.user)
 
+    def save_model(self, request, obj, form, change) -> None:
+        """Approve on "Save and approve"; other save buttons never approve.
+
+        Announcements are often edited before they go out, so organizers can
+        approve in the same step instead of a separate edit.
+        """
+        if "_save_approve" in request.POST and not obj.approved_at:
+            obj.approved_at = timezone.now()
+        super().save_model(request, obj, form, change)
+
     @admin.display(description="Roles this message will ping")
     def mentioned_roles(self, obj) -> str:
         """Which ``@names`` in the copy resolve to a real Discord role.

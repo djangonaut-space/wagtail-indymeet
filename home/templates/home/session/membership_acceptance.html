@@ -20,6 +20,9 @@
                     <p class="text-purple-800">
                         You confirmed your participation in <strong>{{ membership.session.title }}</strong> on {{ accepted_at|date:"F d, Y" }}.
                     </p>
+                    <p class="text-purple-800 mt-2">
+                        Welcome emails are sent about a week before the session starts.
+                    </p>
                 </div>
             {% else %}
                 <div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6">
@@ -42,6 +45,9 @@
             <div class="bg-purple-50 border border-purple-200 rounded-md p-4 mb-6">
                 <p class="text-purple-800">
                     Congratulations! You've been accepted to <strong>{{ membership.session.title }}</strong>. Please confirm your participation.
+                </p>
+                <p class="text-purple-800 mt-2">
+                    Welcome emails are sent about a week before the session starts.
                 </p>
             </div>
 

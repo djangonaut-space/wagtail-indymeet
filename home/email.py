@@ -2,8 +2,19 @@ from typing import Optional
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
+from django.template import Context
+from django.template.loader import get_template, render_to_string
 from django.urls import reverse
+
+
+def render_plain_text(template_name: str, context: dict) -> str:
+    """Render a plain text template without HTML autoescaping.
+
+    Subjects and text bodies aren't HTML, so escaping would turn
+    characters like quotes into entities such as ``&quot;``.
+    """
+    template = get_template(template_name).template
+    return template.render(Context(context, autoescape=False))
 
 
 def send(
@@ -60,12 +71,12 @@ def send(
         "email_subscriptions"
     )
     # Strip the newline character that our formatter is likely to add in.
-    subject = render_to_string(
+    subject = render_plain_text(
         f"email/{email_template}/subject.txt", email_context
     ).strip()
     if settings.ENVIRONMENT != "production":
         subject = f"[{settings.ENVIRONMENT}] " + subject
-    text = render_to_string(f"email/{email_template}/body.txt", email_context)
+    text = render_plain_text(f"email/{email_template}/body.txt", email_context)
     html = render_to_string(f"email/{email_template}/body.html", email_context)
 
     msg = EmailMultiAlternatives(

@@ -210,12 +210,22 @@ def _guild_role_map() -> dict[str, str]:
     return {role["name"].casefold(): role["id"] for role in roles}
 
 
-def _ensure_role(name: str, role_map: dict[str, str], roles_created: list[str]) -> str:
+def _ensure_role(
+    name: str,
+    role_map: dict[str, str],
+    roles_created: list[str],
+    *,
+    hoist: bool = False,
+    mentionable: bool = False,
+) -> str:
     """Return the role id for ``name``, creating the role when absent."""
     key = name.casefold()
     if key not in role_map:
         role = discord_client.create_guild_role(
-            guild_id=settings.DISCORD_GUILD_ID, name=name
+            guild_id=settings.DISCORD_GUILD_ID,
+            name=name,
+            hoist=hoist,
+            mentionable=mentionable,
         )
         role_map[key] = role["id"]
         roles_created.append(name)
@@ -507,11 +517,62 @@ class DiscordSessionSetup(_DiscordSessionAction):
         return bool(reserved)
 
     def ensure_team_roles(self) -> None:
-        """Create any missing per-team role; team channels gate access by it."""
+        """Create any missing per-team role; team channels gate access by it.
+
+        New roles are hoisted and mentionable so teams show up in the member
+        list and can be pinged, and are moved above Navigators so their
+        members are listed under the team rather than the program role.
+        """
+        existing_role_ids = set(self.role_map.values())
         self.team_role_ids = {
-            team.pk: _ensure_role(team.name, self.role_map, self.report.roles_created)
+            team.pk: _ensure_role(
+                team.name,
+                self.role_map,
+                self.report.roles_created,
+                hoist=True,
+                mentionable=True,
+            )
             for team in self.teams
         }
+        new_role_ids = [
+            role_id
+            for role_id in self.team_role_ids.values()
+            if role_id not in existing_role_ids
+        ]
+        if new_role_ids:
+            self._move_above_navigators(new_role_ids)
+
+    def _move_above_navigators(self, role_ids: list[str]) -> None:
+        """Place roles directly above the Navigators role.
+
+        Every role whose position changes is sent, not just the moved ones,
+        because Discord doesn't define how it settles a partial reorder with
+        clashing positions.
+        """
+        navigators_id = self.role_map[NAVIGATORS_ROLE.casefold()]
+        moving = set(role_ids)
+        try:
+            roles = discord_client.get_guild_roles(guild_id=settings.DISCORD_GUILD_ID)
+            current_positions = {role["id"]: role["position"] for role in roles}
+            # Bottom to top; @everyone is always first at position 0.
+            ordered_ids = [
+                role["id"]
+                for role in sorted(roles, key=lambda role: role["position"])
+                if role["id"] not in moving
+            ]
+            insert_at = ordered_ids.index(navigators_id) + 1
+            ordered_ids[insert_at:insert_at] = role_ids
+            discord_client.modify_guild_role_positions(
+                guild_id=settings.DISCORD_GUILD_ID,
+                positions=[
+                    {"id": role_id, "position": position}
+                    for position, role_id in enumerate(ordered_ids)
+                    if current_positions[role_id] != position
+                ],
+            )
+        except requests.HTTPError:
+            logger.exception("Failed to reorder team roles")
+            self.report.errors.append("Failed to move team roles above Navigators.")
 
     def setup_category(self) -> None:
         """Create or adopt the session's category and persist its id.
