@@ -7,11 +7,14 @@ allowing views to return immediately while emails are processed in the backgroun
 
 from home import constants
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django_tasks import task
 
 from home import email
 from home.models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
+
+User = get_user_model()
 
 
 @task()
@@ -228,6 +231,70 @@ def send_membership_acceptance_email(membership_id: int) -> None:
         from_email=settings.SESSIONS_FROM_EMAIL,
         email_template="session_accepted",
         recipient_list=[membership.user.email],
+        context=context,
+    )
+
+
+@task()
+def send_officer_accepted_email(membership_id: int) -> None:
+    """
+    Send a selection email to a captain or navigator.
+
+    Args:
+        membership_id: The ID of the officer's SessionMembership
+    """
+    membership = SessionMembership.objects.select_related("user", "session").get(
+        pk=membership_id
+    )
+
+    context = {
+        "user": membership.user,
+        "name": membership.user.first_name or membership.user.email,
+        "session": membership.session,
+        "membership": membership,
+        "role": membership.get_role_display(),
+    }
+
+    email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
+        email_template="officer_accepted",
+        recipient_list=[membership.user.email],
+        context=context,
+    )
+
+
+@task()
+def send_officer_rejected_email(
+    user_id: int, session_id: int, role: str, interviewed: bool
+) -> None:
+    """
+    Send a not-selected email to a captain or navigator applicant.
+
+    Applicants who were interviewed for the role get a separate email that
+    acknowledges the interview.
+
+    Args:
+        user_id: The ID of the applicant
+        session_id: The ID of the Session
+        role: The officer role applied for (constants.CAPTAIN or constants.NAVIGATOR)
+        interviewed: Whether to send the email for interviewed applicants
+    """
+    session = Session.objects.get(pk=session_id)
+    user = User.objects.get(pk=user_id)
+
+    context = {
+        "user": user,
+        "name": user.first_name or user.email,
+        "session": session,
+        "role": role,
+    }
+
+    email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
+        email_template=(
+            "officer_rejected_interviewed" if interviewed else "officer_rejected"
+        ),
+        recipient_list=[user.email],
         context=context,
     )
 

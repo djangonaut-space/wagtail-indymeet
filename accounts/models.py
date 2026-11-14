@@ -232,6 +232,11 @@ class DiscordMember(models.Model):
 
 
 class UserProfile(models.Model):
+    INTERVIEW_FIELDS = {
+        constants.CAPTAIN: "passed_captain_interview",
+        constants.NAVIGATOR: "passed_navigator_interview",
+    }
+
     user = DefaultOneToOneField(
         "CustomUser", create=True, on_delete=models.CASCADE, related_name="profile"
     )
@@ -278,6 +283,18 @@ class UserProfile(models.Model):
         default="",
         help_text="IANA timezone name detected from the user's browser.",
     )
+    passed_captain_interview = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Admin only. None = not interviewed, True = passed, "
+        "False = did not pass. Interviews are not repeated across sessions.",
+    )
+    passed_navigator_interview = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Admin only. None = not interviewed, True = passed, "
+        "False = did not pass. Interviews are not repeated across sessions.",
+    )
 
     class Meta:
         constraints = [
@@ -290,6 +307,10 @@ class UserProfile(models.Model):
                 name="unique_discord_username_ci",
             )
         ]
+
+    def had_interview(self, role: str) -> bool:
+        """Whether the user was interviewed for an officer role, passed or not."""
+        return getattr(self, self.INTERVIEW_FIELDS[role]) is not None
 
     def __str__(self):
         return self.user.username

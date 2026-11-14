@@ -7,6 +7,7 @@ from home.slots import Slot
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone as dt_timezone
+import time_machine
 
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
@@ -375,6 +376,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
 
         self.assertEqual(qs.count(), 0)
 
+    @time_machine.travel("2024-06-17", tick=False)
     def test_with_navigator_overlap_uses_user_timezones(self):
         """Navigator overlap filter compares derived UTC slots."""
         navigator = UserFactory()
@@ -443,6 +445,7 @@ class UserSurveyResponseQuerySetTestCase(TestCase):
 
         self.assertEqual(qs.count(), 0)
 
+    @time_machine.travel("2024-06-17", tick=False)
     def test_with_captain_overlap_uses_user_timezones(self):
         """Captain overlap filter compares derived UTC slots."""
         captain = UserFactory()
