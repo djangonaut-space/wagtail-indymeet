@@ -245,6 +245,29 @@ class EditUserSurveyResponseFormTests(TestCase):
             user_survey_response.userquestionresponse_set.get().value, "Yup"
         )
 
+    def test_github_profile_url_saved_as_username(self):
+        """A pasted profile URL is stored as the bare username."""
+        SessionFactory.create_active(self.simple_survey)
+        for value in (
+            "https://github.com/tim-schilling",
+            "http://www.github.com/tim-schilling/",
+            "github.com/tim-schilling?tab=repositories",
+            "@tim-schilling",
+            "tim-schilling",
+        ):
+            with self.subTest(value=value):
+                form = EditUserSurveyResponseForm(
+                    instance=self.user_survey_response,
+                    data={
+                        f"field_survey_{self.simple_survey_question.id}": "Yup",
+                        "github_username": value,
+                    },
+                )
+                self.assertTrue(form.is_valid(), form.errors)
+                form.save()
+                self.user.profile.refresh_from_db()
+                self.assertEqual(self.user.profile.github_username, "tim-schilling")
+
     def test_edit_non_editable_response_raises_non_field_error(self):
         """Test that attempting to edit a non-editable response adds a non-field error."""
         form = EditUserSurveyResponseForm(

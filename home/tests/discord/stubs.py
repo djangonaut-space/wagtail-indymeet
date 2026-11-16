@@ -22,14 +22,14 @@ GUILD_URL = f"{BASE_URL}/guilds/{GUILD_ID}"
 BOT_ROLE_ID = "r-bot"
 
 STANDING_GUILD_ROLES = [
-    {"id": "guild-1", "name": "@everyone"},
-    {"id": BOT_ROLE_ID, "name": "Djangonaut Bot"},
-    {"id": "r-dj", "name": "Djangonauts"},
-    {"id": "r-cap", "name": "Captains"},
-    {"id": "r-nav", "name": "Navigators"},
-    {"id": "r-org", "name": "Session Organizers"},
-    {"id": "r-adm", "name": "Admins"},
-    {"id": "r-adv", "name": "Advisors"},
+    {"id": "guild-1", "name": "@everyone", "position": 0},
+    {"id": BOT_ROLE_ID, "name": "Djangonaut Bot", "position": 1},
+    {"id": "r-dj", "name": "Djangonauts", "position": 2},
+    {"id": "r-cap", "name": "Captains", "position": 3},
+    {"id": "r-nav", "name": "Navigators", "position": 4},
+    {"id": "r-org", "name": "Session Organizers", "position": 5},
+    {"id": "r-adm", "name": "Admins", "position": 6},
+    {"id": "r-adv", "name": "Advisors", "position": 7},
 ]
 
 
@@ -67,7 +67,8 @@ def stub_discord_api(
     (creates), per channel id -> status code (updates), per channel id
     (deletes), or per user id (guild-member updates).
     """
-    roles = list(STANDING_GUILD_ROLES if roles is None else roles)
+    # Copied per role because creating and reordering roles edits positions.
+    roles = [dict(role) for role in (STANDING_GUILD_ROLES if roles is None else roles)]
     counters = {"role": 0, "channel": 0}
     channel_path = re.compile(rf"{re.escape(BASE_URL)}/channels/[^/]+$")
     member_path = re.compile(rf"{re.escape(GUILD_URL)}/members/[^/]+$")
@@ -80,11 +81,23 @@ def stub_discord_api(
     def create_role(request):
         counters["role"] += 1
         payload = json.loads(request.body)
-        role = {"id": f"new-role-{counters['role']}", **payload}
+        # Discord puts new roles just above @everyone and shifts the rest up.
+        for existing in roles:
+            if existing.get("position", 0) >= 1:
+                existing["position"] += 1
+        role = {"id": f"new-role-{counters['role']}", "position": 1, **payload}
         # Visible to a later GET, the way the real server behaves — the role
         # mirror re-reads the list after setup has created its team roles.
         roles.append(role)
         return 200, {}, json.dumps(role)
+
+    @_endpoint(rsps.PATCH, f"{GUILD_URL}/roles")
+    def reorder_roles(request):
+        positions = {item["id"]: item["position"] for item in json.loads(request.body)}
+        for role in roles:
+            if role["id"] in positions:
+                role["position"] = positions[role["id"]]
+        return 200, {}, json.dumps(roles)
 
     @_endpoint(rsps.GET, f"{GUILD_URL}/channels")
     def get_channels(request):
@@ -176,6 +189,24 @@ def role_creations() -> list[str]:
         _body(call)["name"]
         for call in rsps.calls
         if call.request.method == "POST" and _path(call).endswith("/roles")
+    ]
+
+
+def role_creation_payloads() -> list[dict]:
+    """POSTed guild role payloads, in call order."""
+    return [
+        _body(call)
+        for call in rsps.calls
+        if call.request.method == "POST" and _path(call).endswith("/roles")
+    ]
+
+
+def role_position_updates() -> list[list[dict]]:
+    """PATCHed role position lists, in call order."""
+    return [
+        _body(call)
+        for call in rsps.calls
+        if call.request.method == "PATCH" and _path(call).endswith("/roles")
     ]
 
 

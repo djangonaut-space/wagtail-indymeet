@@ -10,7 +10,7 @@ Please confirm your acceptance by visiting {{ acceptance_url }} and let us know 
 
 The Djangonaut Program aims to level up the Django code contributions from our community and to help you become a future leader of Django. 💪 This is an 8 week group mentoring program with an emphasis on sustainability and longevity.
 
-The duration of this program is {{ session.start_date|date:"F d, Y" }} - {{ session.end_date|date:"F d, Y" }}.
+The duration of this program is {{ session.start_date|date:"F d, Y" }} - {{ session.end_date|date:"F d, Y" }}. Welcome emails with your team details are sent about a week before the start.
 
 If you choose to join this cohort, you will be supported by experienced members of the community working to ensure your success on the program. This includes:
 

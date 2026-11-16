@@ -9,7 +9,7 @@ import time_machine
 from accounts.factories import UserFactory
 from home import constants
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
-from home.models import SessionMembership
+from home.models import Event, SessionMembership
 from tests.timezones import CENTRAL_EUROPEAN_TIMEZONE
 
 
@@ -42,7 +42,7 @@ class EventViewTests(TestCase):
         self.assertContains(response, "No past events.")
 
     def test_list_upcoming_events_no_past(self):
-        upcoming_event = self.create_upcoming_event(is_public=True)
+        upcoming_event = self.create_upcoming_event()
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed("home/event_list.html")
@@ -52,8 +52,8 @@ class EventViewTests(TestCase):
         self.assertContains(response, upcoming_event.get_absolute_url())
 
     def test_list_upcoming_events_and_past(self):
-        upcoming_event = self.create_upcoming_event(is_public=True)
-        past_event = self.create_past_event(is_public=True)
+        upcoming_event = self.create_upcoming_event()
+        past_event = self.create_past_event()
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed("home/event_list.html")
@@ -65,7 +65,7 @@ class EventViewTests(TestCase):
         self.assertContains(response, past_event.get_absolute_url())
 
     def test_event_detail(self):
-        upcoming_event = self.create_upcoming_event(is_public=True)
+        upcoming_event = self.create_upcoming_event()
         timezone.activate(CENTRAL_EUROPEAN_TIMEZONE)  # UTC + 1
         response = self.client.get(upcoming_event.get_absolute_url())
         self.assertEqual(response.status_code, 200)
@@ -93,7 +93,7 @@ class PrivateEventAccessTests(TestCase):
         cls.private_event = EventFactory.create(
             start_time=datetime(2023, 2, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2023, 2, 1, 11, 0, tzinfo=dt_timezone.utc),
-            is_public=False,
+            audience=Event.Audience.SESSION,
             session=cls.session,
         )
 
@@ -132,8 +132,33 @@ class PrivateEventAccessTests(TestCase):
         public_event = EventFactory.create(
             start_time=datetime(2023, 3, 1, 10, 0, tzinfo=dt_timezone.utc),
             end_time=datetime(2023, 3, 1, 11, 0, tzinfo=dt_timezone.utc),
-            is_public=True,
         )
         response = self.client.get(reverse("event_list"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, public_event.title)
+
+
+class UnpublishedEventDetailTests(TestCase):
+    """Unpublished events are drafts: only staff can open them."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.event = EventFactory.create(
+            start_time=datetime(2023, 4, 1, 10, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2023, 4, 1, 11, 0, tzinfo=dt_timezone.utc),
+            is_published=False,
+        )
+
+    def test_detail_returns_404_for_anonymous(self):
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertEqual(response.status_code, 404)
+
+    def test_detail_returns_404_for_non_staff(self):
+        self.client.force_login(UserFactory.create())
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertEqual(response.status_code, 404)
+
+    def test_detail_is_previewable_by_staff(self):
+        self.client.force_login(UserFactory.create(is_staff=True))
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertEqual(response.status_code, 200)

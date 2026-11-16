@@ -18,6 +18,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from accounts.fields import GitHubUsernameField
 from accounts.models import CustomUser
 from accounts.models import DiscordMember
 from accounts.models import UserProfile
@@ -208,7 +209,7 @@ class BaseSurveyForm(forms.Form):
                     )
 
                 # Add GitHub username field for application sessions
-                self.fields["github_username"] = forms.CharField(
+                self.fields["github_username"] = GitHubUsernameField(
                     max_length=39,
                     label=_("GitHub Username"),
                     help_text=_("Your GitHub username (required for participation)"),

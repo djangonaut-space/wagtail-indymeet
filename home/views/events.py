@@ -23,8 +23,10 @@ class EventDetailView(DetailView):
     template_name = "home/event_detail.html"
 
     def get_queryset(self):
-        """Restrict queryset to events visible to the current user."""
-        return Event.objects.for_user(self.request.user)
+        """Published events visible to the user; staff see all to preview drafts."""
+        if self.request.user.is_staff:
+            return Event.objects.all()
+        return Event.objects.published().for_user(self.request.user)
 
     def get_object(self, queryset=None):
         """Get event by slug, year, and month."""

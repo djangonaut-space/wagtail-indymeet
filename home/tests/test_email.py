@@ -3,6 +3,7 @@ from django.test import TestCase, override_settings
 
 from accounts.factories import UserFactory
 from home import email
+from home.factories import EventFactory
 
 
 class EmailSendTests(TestCase):
@@ -168,6 +169,22 @@ class EmailSendTests(TestCase):
 
         # No emails should be sent
         self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(ENVIRONMENT="production")
+    def test_plain_text_not_escaped(self):
+        """Quotes stay as-is in the subject and text body, but not the HTML."""
+        event = EventFactory.create(title='Talk - "Quotes & more"')
+        email.send(
+            email_template="event_calendar_invite",
+            recipient_list=["test@example.com"],
+            context={"event": event, "name": "Test", "cta_link": ""},
+        )
+
+        message = mail.outbox[0]
+        self.assertEqual(message.subject, 'You\'re invited: Talk - "Quotes & more"')
+        self.assertIn('Talk - "Quotes & more"', message.body)
+        html = message.alternatives[0].content
+        self.assertIn("Talk - &quot;Quotes &amp; more&quot;", html)
 
     @override_settings(ENVIRONMENT="production")
     def test_send_email_with_empty_context(self):

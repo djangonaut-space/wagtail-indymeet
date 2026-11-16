@@ -4,7 +4,7 @@
 {% block preheader %}You're invited: {{ event.title }}{% endblock preheader %}
 
 {% block greeting %}
-  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello 👋</p>
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello{% if name %} {{ name }}{% endif %} 👋</p>
 {% endblock greeting %}
 
 {% block before_cta %}

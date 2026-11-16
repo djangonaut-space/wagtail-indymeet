@@ -1,7 +1,7 @@
 {% load email_tags %}
 You're invited: {{ event.title }}
 
-Hello,
+Hello{% if name %} {{ name }}{% endif %},
 
 You are invited to join us for {{ event.title }} on {{ event.start_time|date:"l, F j, Y" }} at ({{ event.start_time|time_is_link }}).
 

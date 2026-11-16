@@ -39,15 +39,19 @@ from home.integrations.discord.session_service import (
     MemberResolution,
     build_team_messages,
 )
+from home.integrations.discord.service import discord_client
 from home.tests.discord.stubs import (
     BOT_ROLE_ID,
+    GUILD_ID,
     STANDING_GUILD_ROLES,
     channel_creations,
     channel_deletions,
     channel_updates,
     member,
     member_role_updates,
+    role_creation_payloads,
     role_creations,
+    role_position_updates,
     stub_discord_api,
 )
 
@@ -362,6 +366,72 @@ class SetupTeamChannelStepTests(TestCase):
         self.assertEqual(setup.report.roles_created, ["Bee"])
 
     @rsps.activate
+    def test_new_team_role_is_hoisted_mentionable_above_navigators(self):
+        stub_discord_api()
+        setup = DiscordSessionSetup(self.session)
+        setup.role_map = dict(ROLE_MAP)
+
+        setup.ensure_team_roles()
+
+        self.assertEqual(
+            role_creation_payloads(),
+            [{"name": "Bee", "hoist": True, "mentionable": True}],
+        )
+        # The new role is created at position 1, pushing Navigators to 5.
+        self.assertEqual(
+            role_position_updates(),
+            [
+                [
+                    {"id": BOT_ROLE_ID, "position": 1},
+                    {"id": "r-dj", "position": 2},
+                    {"id": "r-cap", "position": 3},
+                    {"id": "r-nav", "position": 4},
+                    {"id": "new-role-1", "position": 5},
+                ]
+            ],
+        )
+
+    @rsps.activate
+    def test_new_team_roles_sit_between_navigators_and_existing_team(self):
+        """Roles above Navigators keep their positions and aren't sent."""
+        TeamFactory.create(session=self.session, name="Cat")
+        roles = [
+            *STANDING_GUILD_ROLES[:5],
+            {"id": "r-ant", "name": "Ant", "position": 5},
+            *(
+                dict(role, position=role["position"] + 1)
+                for role in STANDING_GUILD_ROLES[5:]
+            ),
+        ]
+        stub_discord_api(roles=roles)
+        setup = DiscordSessionSetup(self.session)
+        setup.role_map = dict(ROLE_MAP, ant="r-ant")
+
+        setup.ensure_team_roles()
+
+        positions = {
+            role["name"]: role["position"]
+            for role in discord_client.get_guild_roles(guild_id=GUILD_ID)
+        }
+        self.assertEqual(
+            sorted(positions, key=positions.get),
+            [
+                "@everyone",
+                "Djangonaut Bot",
+                "Djangonauts",
+                "Captains",
+                "Navigators",
+                "Bee",
+                "Cat",
+                "Ant",
+                "Session Organizers",
+                "Admins",
+                "Advisors",
+            ],
+        )
+        self.assertNotIn("r-ant", [item["id"] for item in role_position_updates()[0]])
+
+    @rsps.activate
     def test_ensure_team_roles_reuses_existing_role(self):
         stub_discord_api()
         setup = DiscordSessionSetup(self.session)
@@ -370,6 +440,7 @@ class SetupTeamChannelStepTests(TestCase):
         setup.ensure_team_roles()
 
         self.assertEqual(role_creations(), [])
+        self.assertEqual(role_position_updates(), [])
         self.assertEqual(setup.team_role_ids, {self.team.pk: "r-bee"})
 
     @rsps.activate

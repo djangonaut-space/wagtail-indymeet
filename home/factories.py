@@ -38,6 +38,7 @@ class EventFactory(factory.django.DjangoModelFactory):
     start_time = factory.Faker("date_time", tzinfo=dt_timezone.utc)
     end_time = factory.Faker("date_time", tzinfo=dt_timezone.utc)
     is_published = True
+    audience = Event.Audience.PUBLIC
 
 
 class ResourceLinkFactory(factory.django.DjangoModelFactory):

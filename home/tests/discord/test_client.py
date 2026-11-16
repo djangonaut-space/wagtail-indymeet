@@ -63,6 +63,29 @@ class DiscordClientSessionMethodsTests(TestCase):
         self.assertEqual(request_json(rsps.calls[0]), {"name": "Team Bee"})
 
     @rsps.activate
+    def test_create_guild_role_hoisted_and_mentionable(self):
+        rsps.add(rsps.POST, f"{BASE_URL}/guilds/123/roles", json={"id": "9"})
+
+        self.client.create_guild_role(
+            guild_id="123", name="Team Bee", hoist=True, mentionable=True
+        )
+
+        self.assertEqual(
+            request_json(rsps.calls[0]),
+            {"name": "Team Bee", "hoist": True, "mentionable": True},
+        )
+
+    @rsps.activate
+    def test_modify_guild_role_positions(self):
+        rsps.add(rsps.PATCH, f"{BASE_URL}/guilds/123/roles", json=[])
+
+        self.client.modify_guild_role_positions(
+            guild_id="123", positions=[{"id": "9", "position": 5}]
+        )
+
+        self.assertEqual(request_json(rsps.calls[0]), [{"id": "9", "position": 5}])
+
+    @rsps.activate
     def test_search_guild_members(self):
         rsps.add(
             rsps.GET,
