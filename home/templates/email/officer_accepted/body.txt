@@ -1,0 +1,10 @@
+Hello {{ name }},
+
+Congratulations! You've been selected to be a {{ role }} for {{ session.title }}. 🎊
+
+Thank you for volunteering your time to support the next group of Djangonauts. The session runs from {{ session.start_date|date:"F d, Y" }} to {{ session.end_date|date:"F d, Y" }}.
+
+Please reply to this email to confirm that you're still available. We'll follow up with your team details once teams are formed.
+
+All the best,
+Djangonaut Space Organizers

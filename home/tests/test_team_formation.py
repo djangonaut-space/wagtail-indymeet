@@ -6,6 +6,7 @@ import re
 from django.contrib.admin.sites import site
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+import time_machine
 
 from accounts.factories import UserAvailabilityFactory, UserFactory
 from accounts.models import CustomUser, UserAvailability
@@ -461,6 +462,7 @@ class TeamFormationViewTestCase(TestCase):
         self.assertIn(f'value="{applicant_with_overlap.id}"', content)
         self.assertNotIn(f'value="{applicant_no_overlap.id}"', content)
 
+    @time_machine.travel("2024-06-17", tick=False)
     def test_filter_by_navigator_overlap_uses_user_timezones(self):
         """Navigator overlap filter handles applicants in another timezone."""
         team = TeamFactory(session=self.session, name="Timezone Team")
@@ -559,6 +561,7 @@ class TeamFormationViewTestCase(TestCase):
         self.assertIn(f'value="{applicant_with_overlap.id}"', content)
         self.assertNotIn(f'value="{applicant_no_overlap.id}"', content)
 
+    @time_machine.travel("2024-06-17", tick=False)
     def test_filter_by_captain_overlap_uses_user_timezones(self):
         """Captain overlap filter handles applicants in another timezone."""
         team = TeamFactory(session=self.session, name="Timezone Captain Team")

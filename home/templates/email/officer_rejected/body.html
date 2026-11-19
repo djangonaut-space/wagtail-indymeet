@@ -1,0 +1,22 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}{{ role }} Application Decision{% endblock preheader %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Thank you for offering to volunteer as a <strong>{{ role }}</strong> for <strong>{{ session.title }}</strong>. We received more interest than we have spots for, and we aren't able to offer you a {{ role }} position this session.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    We'd love for you to apply again for a future session. Volunteers like you are what make Djangonaut Space possible. 🤗
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Sincerely,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}

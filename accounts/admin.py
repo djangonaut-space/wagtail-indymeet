@@ -188,8 +188,20 @@ class UserProfileAdmin(
     inlines = (LinksInline,)
     model = UserProfile
     resource_classes = [UserProfileExportResource, UserProfileImportResource]
-    list_display = ("user", "github_username", "discord_member")
+    list_display = (
+        "user",
+        "github_username",
+        "discord_member",
+        "passed_captain_interview",
+        "passed_navigator_interview",
+    )
     list_select_related = ("user", "discord_member")
+    actions = (
+        "mark_passed_captain_interview",
+        "mark_failed_captain_interview",
+        "mark_passed_navigator_interview",
+        "mark_failed_navigator_interview",
+    )
     autocomplete_fields = (
         "discord_member",
         "user",
@@ -203,7 +215,38 @@ class UserProfileAdmin(
         "discord_member__nickname",
         "discord_member__discord_id",
     )
-    list_filter = (RelatedUserPastDjangonautFilter, RelatedUserPastSessionMemberFilter)
+    list_filter = (
+        RelatedUserPastDjangonautFilter,
+        RelatedUserPastSessionMemberFilter,
+        "passed_captain_interview",
+        "passed_navigator_interview",
+    )
+
+    def _record_interview(
+        self, request, queryset: QuerySet, field: str, passed: bool
+    ) -> None:
+        updated = queryset.update(**{field: passed})
+        self.message_user(
+            request,
+            f"Updated {field.replace('_', ' ')} to {passed} for {updated} profile(s).",
+            messages.SUCCESS,
+        )
+
+    @admin.action(description="Record captain interview as passed")
+    def mark_passed_captain_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_captain_interview", True)
+
+    @admin.action(description="Record captain interview as not passed")
+    def mark_failed_captain_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_captain_interview", False)
+
+    @admin.action(description="Record navigator interview as passed")
+    def mark_passed_navigator_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_navigator_interview", True)
+
+    @admin.action(description="Record navigator interview as not passed")
+    def mark_failed_navigator_interview(self, request, queryset: QuerySet) -> None:
+        self._record_interview(request, queryset, "passed_navigator_interview", False)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "discord_member":

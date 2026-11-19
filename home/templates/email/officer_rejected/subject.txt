@@ -1,0 +1,1 @@
+{{ role }} Application Decision for {{ session.title }}

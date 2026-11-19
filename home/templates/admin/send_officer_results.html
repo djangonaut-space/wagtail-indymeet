@@ -1,0 +1,96 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Send {{ role }} Result Notifications - {{ session.title }}</h1>
+
+{% if already_sent %}
+<div class="messagelist">
+    <div class="warning">
+        {{ role }} results notifications were already sent on {{ sent_at|date:"F d, Y \a\t g:i A" }}.
+        Sending again will result in duplicate emails.
+    </div>
+</div>
+{% endif %}
+
+<div class="module">
+    <h2>Summary</h2>
+    <p>Applicants are users who responded to <strong>{{ survey.name }}</strong>.</p>
+    <ul>
+        <li><strong>Selected:</strong> {{ selected_memberships|length }} applicant(s) with a {{ role }} session membership</li>
+        <li><strong>Not selected, interviewed:</strong> {{ interviewed_users|length }} applicant(s) interviewed for {{ role }}</li>
+        <li><strong>Not selected, not interviewed:</strong> {{ not_interviewed_users|length }} applicant(s)</li>
+    </ul>
+    <p><strong>Total applicants:</strong> {{ applicant_count }}</p>
+    <p class="help">Applicants with a different role in this session are not emailed.</p>
+</div>
+
+<div class="module">
+    <h2>Selected</h2>
+    <ul>
+        {% for membership in selected_memberships %}
+        <li>{{ membership.user.get_full_name|default:membership.user.email }} ({{ membership.user.email }})</li>
+        {% empty %}
+        <li>None</li>
+        {% endfor %}
+    </ul>
+    <h2>Not selected, interviewed</h2>
+    <ul>
+        {% for user in interviewed_users %}
+        <li>{{ user.get_full_name|default:user.email }} ({{ user.email }})</li>
+        {% empty %}
+        <li>None</li>
+        {% endfor %}
+    </ul>
+    <h2>Not selected, not interviewed</h2>
+    <ul>
+        {% for user in not_interviewed_users %}
+        <li>{{ user.get_full_name|default:user.email }} ({{ user.email }})</li>
+        {% empty %}
+        <li>None</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% if not applicant_count %}
+<div class="messagelist">
+    <div class="error">
+        No emails will be sent because nobody has responded to {{ survey.name }}.
+    </div>
+</div>
+<p><a href="{% url 'admin:home_session_changelist' %}" class="button">Back to Session List</a></p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="messagelist">
+        <div class="error">
+            {{ form.non_field_errors }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% for field in form %}
+    <div class="form-row{% if field.errors %} errors{% endif %}">
+        <div class="checkbox-row">
+            {{ field }}
+            <label for="{{ field.id_for_label }}" class="vCheckboxLabel">{{ field.label }}</label>
+            {% if field.help_text %}
+            <p class="help">{{ field.help_text }}</p>
+            {% endif %}
+            {{ field.errors }}
+        </div>
+    </div>
+    {% endfor %}
+
+    <p><strong>Are you sure you want to send these notifications?</strong></p>
+
+    <div class="submit-row">
+        <input type="submit" value="Send Notifications" class="default" />
+        <a href="{% url 'admin:home_session_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}

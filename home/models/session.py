@@ -147,6 +147,22 @@ class Session(models.Model):
             "Note: This marks when tasks were enqueued, not when all emails completed."
         ),
     )
+    navigator_results_notifications_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Timestamp when navigator application result notifications were "
+            "queued for delivery."
+        ),
+    )
+    captain_results_notifications_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Timestamp when captain application result notifications were "
+            "queued for delivery."
+        ),
+    )
     discord_invite_url = models.URLField(
         blank=True,
         help_text=_("This should be a newly generated invite to the Discord server."),
@@ -205,6 +221,15 @@ class Session(models.Model):
     @property
     def short_name_slug(self) -> str:
         return slugify(self.short_name)
+
+    OFFICER_RESULTS_SENT_AT_FIELDS = {
+        constants.CAPTAIN: "captain_results_notifications_sent_at",
+        constants.NAVIGATOR: "navigator_results_notifications_sent_at",
+    }
+
+    def officer_results_sent_at(self, role: str) -> datetime.datetime | None:
+        """When the results for an officer role were last queued, if ever."""
+        return getattr(self, self.OFFICER_RESULTS_SENT_AT_FIELDS[role])
 
     def application_start_anywhere_on_earth(self):
         aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))

@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 
+from home import constants
 from home.managers import (
     SurveyQuerySet,
     UserQuestionResponseQuerySet,
@@ -17,6 +18,11 @@ from home.models.base import BaseModel
 
 
 class Survey(BaseModel):
+    ROLES = (
+        (constants.CAPTAIN, _("Captain")),
+        (constants.NAVIGATOR, _("Navigator")),
+    )
+
     name = models.CharField(max_length=200)
     description = models.TextField(default="")
     slug = models.SlugField(max_length=225, default="")
@@ -29,8 +35,29 @@ class Survey(BaseModel):
     session = models.ForeignKey(
         "home.Session", on_delete=models.SET_NULL, null=True, blank=True
     )
+    role = models.CharField(
+        max_length=64,
+        choices=ROLES,
+        null=True,
+        blank=True,
+        help_text=_(
+            "The volunteer role this survey is the application for. Leave blank "
+            "for Djangonaut applications and general surveys."
+        ),
+    )
 
     objects = models.Manager.from_queryset(SurveyQuerySet)()
+
+    class Meta:
+        constraints = [
+            # Officer results look up a session's survey by role, so each
+            # role may only have one application survey per session.
+            models.UniqueConstraint(
+                fields=["session", "role"],
+                condition=models.Q(role__isnull=False),
+                name="unique_session_role_survey",
+            )
+        ]
 
     def __str__(self):
         return self.name

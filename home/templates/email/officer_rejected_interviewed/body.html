@@ -1,0 +1,22 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}{{ role }} Application Decision{% endblock preheader %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Thank you for taking the time to interview with us to be a <strong>{{ role }}</strong> for <strong>{{ session.title }}</strong>. After careful consideration, we aren't able to offer you a {{ role }} position this session.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    Your interview is on record, so you won't need to interview for this role again when you apply for a future session. We hope you'll apply again! 🤗
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Sincerely,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}

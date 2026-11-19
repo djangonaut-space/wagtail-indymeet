@@ -89,17 +89,24 @@ This is the web application for the Djangonaut Space mentoring program. The plat
    git clone https://github.com/djangonaut-space/wagtail-indymeet.git
    ```
 
-2. Have docker running and then run:
+2. Create the ".env" file:
+   ```sh
+   cp .env.docker .env
+   ```
+
+3. Have docker running and then run:
    ```sh
    docker compose up --watch
    ```
 
-3. In a new terminal, run any setup commands you need such as
+
+4. In a new terminal, run any setup commands you need such as
    ```sh
+   docker compose exec django uv run python manage.py migrate
    docker compose exec django uv run python manage.py createsuperuser
    ```
 
-4. Go to: http://127.0.0.1:8000/ and enjoy!
+5. Go to: http://127.0.0.1:8000/ and enjoy!
 
 
 ### Creating fixtures for local testing
