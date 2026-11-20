@@ -15,7 +15,12 @@ from django.utils import timezone
 from django.utils.formats import date_format
 
 from accounts.factories import UserFactory
-from home.admin import CalendarInvitesSentFilter, EventAdmin, InviteSentFilter
+from home.admin import (
+    CalendarInvitesSentFilter,
+    EventAdmin,
+    EventCalendarInviteAdmin,
+    InviteSentFilter,
+)
 from home.factories import EventFactory, SessionFactory, SessionMembershipFactory
 from home.models import Event, EventCalendarInvite
 from home.operations import EventSyncDecision, EventSyncStatus
@@ -254,8 +259,9 @@ class EventAdminSendCalendarInvitesTests(TestCase):
             self._get_request(), Event.objects.filter(pk=event.pk)
         )
 
+        mock_send.assert_called_once()
         self.assertEqual(
-            {call[1]["recipient_list"][0] for call in mock_send.call_args_list},
+            set(mock_send.call_args.kwargs["bcc_list"]),
             {"member1@example.com", "member2@example.com"},
         )
         self.assertEqual(event.calendar_invites.sent().count(), 2)
@@ -275,9 +281,7 @@ class EventAdminSendCalendarInvitesTests(TestCase):
         )
 
         mock_send.assert_called_once()
-        self.assertEqual(
-            mock_send.call_args[1]["recipient_list"], ["opted@example.com"]
-        )
+        self.assertEqual(mock_send.call_args.kwargs["bcc_list"], ["opted@example.com"])
 
     @patch("home.tasks.event_notifications.email.send")
     def test_public_event_sends_no_email_without_extra_emails(self, mock_send):
@@ -728,3 +732,83 @@ class InviteSentFilterTests(TestCase):
         self.assertEqual(filtered("yes"), {sent})
         self.assertEqual(filtered("no"), {unsent})
         self.assertEqual(filtered(None), {sent, unsent})
+
+
+class EventCalendarInviteAdminResendTests(TestCase):
+    """Tests for the resend_invites action."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = UserFactory.create(is_staff=True, is_superuser=True)
+        cls.event = EventFactory.create()
+        cls.other_event = EventFactory.create()
+
+    def setUp(self):
+        self.admin = EventCalendarInviteAdmin(EventCalendarInvite, AdminSite())
+
+    def _get_request(self):
+        request = RequestFactory().post("/admin/home/eventcalendarinvite/")
+        request.user = self.superuser
+        SessionMiddleware(lambda req: None).process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+        return request
+
+    def test_changelist_documents_action(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(reverse("admin:home_eventcalendarinvite_changelist"))
+
+        self.assertContains(response, "Help: actions &amp; columns on this page")
+        self.assertContains(response, "<strong>Resend selected invites</strong>")
+
+    def _invite(self, event: Event, address: str) -> EventCalendarInvite:
+        return EventCalendarInvite.objects.create(
+            event=event, email=address, sent_at=timezone.now()
+        )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_resends_only_selected(self, mock_send):
+        """Selected invites are emailed again; the rest of the event isn't."""
+        selected = [self._invite(self.event, f"a{i}@example.com") for i in range(2)]
+        untouched = self._invite(self.event, "skip@example.com")
+        request = self._get_request()
+
+        self.admin.resend_invites(
+            request,
+            EventCalendarInvite.objects.filter(pk__in=[i.pk for i in selected]),
+        )
+
+        mock_send.assert_called_once()
+        self.assertEqual(
+            set(mock_send.call_args.kwargs["bcc_list"]),
+            {"a0@example.com", "a1@example.com"},
+        )
+        self.assertFalse(self.event.calendar_invites.unsent().exists())
+        untouched_sent_at = untouched.sent_at
+        untouched.refresh_from_db()
+        self.assertEqual(untouched.sent_at, untouched_sent_at)
+        self.assertIn("Resending 2", str(list(request._messages)[0]))
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_batches_per_event(self, mock_send):
+        """Invites for different events never share an email."""
+        self._invite(self.event, "one@example.com")
+        self._invite(self.other_event, "two@example.com")
+
+        self.admin.resend_invites(
+            self._get_request(), EventCalendarInvite.objects.all()
+        )
+
+        self.assertEqual(
+            sorted(
+                (c.kwargs["context"]["event"].pk, tuple(c.kwargs["bcc_list"]))
+                for c in mock_send.call_args_list
+            ),
+            sorted(
+                [
+                    (self.event.pk, ("one@example.com",)),
+                    (self.other_event.pk, ("two@example.com",)),
+                ]
+            ),
+        )

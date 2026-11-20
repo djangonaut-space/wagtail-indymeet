@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date, timedelta
 
 from django import forms
@@ -5,7 +6,17 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Exists, F, Max, OuterRef, Prefetch, TextField
+from django.db import transaction
+from django.db.models import (
+    Count,
+    Exists,
+    F,
+    Max,
+    OuterRef,
+    Prefetch,
+    QuerySet,
+    TextField,
+)
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -22,6 +33,7 @@ from home import constants
 from home.integrations.discord.service import resolve_role_mentions
 from home.operations import EventSyncStatus, dispatch_event_sync
 from home.services.github_stats import GitHubStatsCollector
+from home.tasks.event_notifications import queue_calendar_invite_batches
 from home.tasks.tutorial_evaluations import (
     evaluate_tutorial_submission_now,
     send_tutorial_reminder_now,
@@ -475,9 +487,29 @@ class EventCalendarInviteAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     list_select_related = ("event", "user")
     readonly_fields = ("event", "user", "email", "sent_at", "created_at")
     ordering = ("-created_at",)
+    actions = ("resend_invites",)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
+
+    @admin.action(description="Resend selected invites")
+    def resend_invites(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """Email the selected invites again, in BCC batches per event."""
+        invite_ids_by_event = defaultdict(list)
+        for event_id, invite_id in queryset.order_by("event_id", "pk").values_list(
+            "event_id", "pk"
+        ):
+            invite_ids_by_event[event_id].append(invite_id)
+
+        with transaction.atomic():
+            queryset.update(sent_at=None)
+            for invite_ids in invite_ids_by_event.values():
+                queue_calendar_invite_batches(invite_ids)
+
+        count = sum(len(ids) for ids in invite_ids_by_event.values())
+        self.message_user(
+            request, f"Resending {count} calendar invite(s).", messages.SUCCESS
+        )
 
 
 @admin.register(Project)

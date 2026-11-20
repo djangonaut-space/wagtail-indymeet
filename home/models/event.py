@@ -224,9 +224,9 @@ class EventCalendarInvite(models.Model):
     """One recipient's calendar invite for an event.
 
     An invite is both the intent to email someone and the record that it
-    happened, which is what keeps a send per-recipient: each address is mailed
-    on its own and stamped on its own, so a retry reaches nobody else and a
-    later send only reaches people who have no invite yet.
+    happened. Invites are mailed in small BCC batches and each is stamped when
+    its batch goes out, so a retry only reaches that batch and a later send
+    only reaches people who have no invite yet.
 
     Addresses from ``Event.extra_emails`` belong to guests with no account
     here, so ``user`` is empty for those and the email address is the
