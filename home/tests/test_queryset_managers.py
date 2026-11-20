@@ -66,28 +66,85 @@ class EventQuerySetTestCase(TestCase):
             end_time=datetime(2025, 2, 1, 11, 0, tzinfo=dt_timezone.utc),
         )
 
-    def test_visible_to_everyone_excludes_session_events(self):
-        qs = Event.objects.visible_to_everyone()
-        self.assertIn(self.public_event, qs)
-        self.assertIn(self.community_event, qs)
-        self.assertNotIn(self.private_event, qs)
+        cls.unpublished_public_event = EventFactory.create(
+            audience=Event.Audience.PUBLIC,
+            is_published=False,
+        )
+        cls.unpublished_community_event = EventFactory.create(
+            audience=Event.Audience.COMMUNITY,
+            is_published=False,
+        )
+        cls.unpublished_private_event = EventFactory.create(
+            audience=Event.Audience.SESSION,
+            session=cls.session,
+            is_published=False,
+        )
 
-    def test_for_user_anonymous_returns_only_public(self):
-        anon = AnonymousUser()
-        qs = Event.objects.for_user(anon)
-        self.assertIn(self.public_event, qs)
-        self.assertIn(self.community_event, qs)
-        self.assertNotIn(self.private_event, qs)
+    def test_for_url(self):
+        qs = Event.objects.for_url(2025, 1, self.public_event.slug)
+        self.assertQuerySetEqual(qs, [self.public_event])
 
-    def test_for_user_member_sees_public_and_session_private(self):
+    def test_for_url_wrong_month(self):
+        qs = Event.objects.for_url(2025, 2, self.public_event.slug)
+        self.assertQuerySetEqual(qs, [])
+
+    def test_requires_login(self):
+        self.assertCountEqual(
+            Event.objects.requires_login(),
+            [
+                self.community_event,
+                self.unpublished_community_event,
+                self.private_event,
+                self.unpublished_private_event,
+            ],
+        )
+
+    def test_for_user_anonymous(self):
+        """Anonymous visitors only see published public events."""
+        qs = Event.objects.for_user(AnonymousUser())
+        self.assertQuerySetEqual(qs, [self.public_event])
+
+    def test_for_user_member(self):
+        """is_published only gates public events."""
         qs = Event.objects.for_user(self.member_user)
-        self.assertIn(self.public_event, qs)
-        self.assertIn(self.private_event, qs)
+        self.assertCountEqual(
+            qs,
+            [
+                self.public_event,
+                self.community_event,
+                self.unpublished_community_event,
+                self.private_event,
+                self.unpublished_private_event,
+            ],
+        )
 
-    def test_for_user_non_member_sees_only_public(self):
+    def test_for_user_non_member(self):
         qs = Event.objects.for_user(self.non_member_user)
-        self.assertIn(self.public_event, qs)
-        self.assertNotIn(self.private_event, qs)
+        self.assertQuerySetEqual(qs, [self.public_event])
+
+    def test_for_user_unaccepted_member(self):
+        """An unaccepted Djangonaut isn't part of the community yet."""
+        user = UserFactory.create()
+        SessionMembershipFactory.create(
+            user=user, role=constants.DJANGONAUT, accepted=False
+        )
+        qs = Event.objects.for_user(user)
+        self.assertQuerySetEqual(qs, [self.public_event])
+
+    def test_for_user_member_of_other_session(self):
+        user = UserFactory.create()
+        SessionMembershipFactory.create(
+            user=user, role=constants.DJANGONAUT, accepted=True
+        )
+        qs = Event.objects.for_user(user)
+        self.assertCountEqual(
+            qs,
+            [
+                self.public_event,
+                self.community_event,
+                self.unpublished_community_event,
+            ],
+        )
 
     def test_for_user_private_event_without_session_not_visible_to_non_member(self):
         """A session event with no session is not visible to any authenticated user."""

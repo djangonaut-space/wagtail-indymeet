@@ -48,9 +48,6 @@ class UserQuestionResponseQuerySet(QuerySet):
         )
 
 
-EVERYONE_AUDIENCES = [constants.EventAudience.PUBLIC, constants.EventAudience.COMMUNITY]
-
-
 class EventQuerySet(QuerySet):
     def with_calendar_invites_sent_at(self):
         return self.annotate(calendar_invites_sent_at=Max("calendar_invites__sent_at"))
@@ -64,16 +61,30 @@ class EventQuerySet(QuerySet):
     def past(self):
         return self.filter(start_time__lte=timezone.now())
 
-    def visible_to_everyone(self):
-        """Public and community events."""
-        return self.filter(audience__in=EVERYONE_AUDIENCES)
+    def for_url(self, year: int, month: int, slug: str):
+        """Filter to the event at ``Event.get_absolute_url``."""
+        return self.filter(slug=slug, start_time__year=year, start_time__month=month)
+
+    def requires_login(self):
+        """Community and session events, which only logged in users can see."""
+        return self.exclude(audience=constants.EventAudience.PUBLIC)
 
     def for_user(self, user):
-        """Return events visible to the user; session events need a membership."""
+        """Return events visible to the user.
+
+        ``is_published`` only applies to public events. Community events
+        require any accepted membership, session events a membership in
+        that session.
+        """
+        public = Q(audience=constants.EventAudience.PUBLIC, is_published=True)
         if user.is_anonymous:
-            return self.visible_to_everyone()
+            return self.filter(public)
         return self.filter(
-            Q(audience__in=EVERYONE_AUDIENCES)
+            public
+            | Q(
+                Exists(user.session_memberships.accepted()),
+                audience=constants.EventAudience.COMMUNITY,
+            )
             | Q(
                 audience=constants.EventAudience.SESSION,
                 session__isnull=False,
