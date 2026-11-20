@@ -114,9 +114,14 @@ class PrivateEventAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, self.private_event.title)
 
-    def test_detail_returns_404_for_anonymous_on_private_event(self):
-        response = self.client.get(self.private_event.get_absolute_url())
-        self.assertEqual(response.status_code, 404)
+    def test_detail_redirects_anonymous_to_login(self):
+        url = self.private_event.get_absolute_url()
+        response = self.client.get(url)
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={url}",
+            fetch_redirect_response=False,
+        )
 
     def test_detail_returns_404_for_non_member_on_private_event(self):
         self.client.force_login(self.non_member_user)
@@ -138,8 +143,85 @@ class PrivateEventAccessTests(TestCase):
         self.assertContains(response, public_event.title)
 
 
-class UnpublishedEventDetailTests(TestCase):
-    """Unpublished events are drafts: only staff can open them."""
+class CommunityEventDetailTests(TestCase):
+    """Community events are emailed to every accepted member of any session,
+    so they can all open them."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.session = SessionFactory.create()
+        cls.event = EventFactory.create(
+            start_time=datetime(2026, 12, 1, 0, 30, tzinfo=dt_timezone.utc),
+            end_time=datetime(2026, 12, 1, 1, 30, tzinfo=dt_timezone.utc),
+            audience=Event.Audience.COMMUNITY,
+            session=cls.session,
+        )
+        SessionMembershipFactory.create(
+            session=cls.session, role=constants.DJANGONAUT, accepted=True
+        )
+        cls.other_session_member = UserFactory.create()
+        SessionMembershipFactory.create(
+            user=cls.other_session_member, role=constants.DJANGONAUT, accepted=True
+        )
+
+    def test_anonymous_redirects_to_login(self):
+        url = self.event.get_absolute_url()
+        response = self.client.get(url)
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={url}",
+            fetch_redirect_response=False,
+        )
+
+    def test_user_without_membership(self):
+        self.client.force_login(UserFactory.create())
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertEqual(response.status_code, 404)
+
+    def test_unaccepted_member(self):
+        user = UserFactory.create()
+        SessionMembershipFactory.create(
+            user=user, role=constants.DJANGONAUT, accepted=False
+        )
+        self.client.force_login(user)
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertEqual(response.status_code, 404)
+
+    def test_member_of_other_session(self):
+        self.client.force_login(self.other_session_member)
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+
+    def test_unpublished(self):
+        """is_published only gates public events."""
+        event = EventFactory.create(
+            start_time=datetime(2026, 12, 2, 10, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2026, 12, 2, 11, 0, tzinfo=dt_timezone.utc),
+            audience=Event.Audience.COMMUNITY,
+            is_published=False,
+        )
+        self.client.force_login(self.other_session_member)
+        response = self.client.get(event.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+
+    def test_unpublished_anonymous_redirects_to_login(self):
+        event = EventFactory.create(
+            start_time=datetime(2026, 12, 2, 10, 0, tzinfo=dt_timezone.utc),
+            end_time=datetime(2026, 12, 2, 11, 0, tzinfo=dt_timezone.utc),
+            audience=Event.Audience.COMMUNITY,
+            is_published=False,
+        )
+        url = event.get_absolute_url()
+        response = self.client.get(url)
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={url}",
+            fetch_redirect_response=False,
+        )
+
+
+class UnpublishedPublicEventDetailTests(TestCase):
+    """Unpublished public events are drafts: only staff can open them."""
 
     @classmethod
     def setUpTestData(cls):

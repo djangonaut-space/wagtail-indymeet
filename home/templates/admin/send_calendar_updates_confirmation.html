@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="module">
+    <table>
+        <thead>
+            <tr>
+                <th>Event</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Recipients</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in events %}
+            <tr>
+                <td>{{ item.event.title }}</td>
+                <td>{{ item.event.start_time }}</td>
+                <td>{{ item.event.end_time }}</td>
+                <td>
+                    {% if item.recipients %}
+                        {{ item.recipients|length }} to be emailed:
+                        {{ item.recipients|join:", " }}
+                    {% else %}
+                        None &mdash; no invites have been sent for this event yet.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="send_calendar_updates">
+    {% for item in events %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ item.event.pk }}">
+    {% endfor %}
+    <p><strong>Are you sure you want to email the new time to these people?</strong></p>
+    <div class="submit-row">
+        <input type="submit" name="apply" value="Send update" class="default" />
+        <a href="{% url 'admin:home_event_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+
+{% endblock %}

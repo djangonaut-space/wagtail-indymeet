@@ -1,0 +1,33 @@
+{% extends "email/base.html" %}
+{% load email_tags %}
+
+{% block preheader %}Time changed: {{ event.title }}{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello 👋</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The time for <strong>{{ event.title }}</strong> has changed. It's now on <strong><a href="{{ event.start_time|time_is_link }}" style="color: #5c0287;">{{ event.start_time|date:"l, F j, Y" }}</a></strong> at <strong><a href="{{ event.start_time|time_is_link }}" style="color: #5c0287;">{{ event.start_time|date:"g:i A e" }}</a></strong>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    {% if event.zoom_link %}<strong>Zoom:</strong> <a href="{{ event.zoom_link }}" style="color: #5c0287;">{{ event.zoom_link }}</a><br>{% endif %}
+    <strong>Start:</strong> <a href="{{ event.start_time|time_is_link }}" style="color: #5c0287;">{{ event.start_time|date:"l, F j, Y g:i A e" }}</a><br>
+    <strong>End:</strong> <a href="{{ event.end_time|time_is_link }}" style="color: #5c0287;">{{ event.end_time|date:"l, F j, Y g:i A e" }}</a>
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    The updated calendar invite (.ics) is attached. Opening it should move the event in your calendar. If the event now shows up twice, delete the one at the old time.
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}View Event Details{% endblock cta_button_text %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Thank you,<br>
+    Djangonaut Space Organizers
+  </p>
+{% endblock after_cta %}
