@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from datetime import timezone as dt_timezone
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib import messages
@@ -13,6 +14,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
+from icalendar import Calendar
 
 from accounts.factories import UserFactory
 from home.admin import (
@@ -33,6 +35,14 @@ ZOOM_SETTINGS = dict(
     ZOOM_CLIENT_SECRET="secret",
 )
 ZOOM_DISABLED = dict(ZOOM_ACCOUNT_ID="", ZOOM_CLIENT_ID="", ZOOM_CLIENT_SECRET="")
+
+
+def _get_sequence(ical_bytes: bytes) -> int:
+    """Return the SEQUENCE of the first VEVENT in raw .ics bytes."""
+    vevent = next(
+        c for c in Calendar.from_ical(ical_bytes).walk() if c.name == "VEVENT"
+    )
+    return vevent["SEQUENCE"]
 
 
 class EventAdminCopyActionTests(TestCase):
@@ -606,6 +616,86 @@ class EventAdminSaveModelTests(TestCase):
 
         stored = [str(m) for m in request._messages]
         self.assertTrue(any("Send calendar invites" in m for m in stored))
+
+
+@patch(
+    "home.admin.dispatch_event_sync",
+    return_value=EventSyncDecision(EventSyncStatus.QUEUED, "Syncing now."),
+)
+@patch("home.tasks.event_notifications.email.send")
+class EventAdminTimeChangeTests(TestCase):
+    """Updated invites are only emailed through the admin action."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.admin = EventAdmin(Event, AdminSite())
+        self.superuser = UserFactory.create(is_staff=True, is_superuser=True)
+        self.event = EventFactory.create(audience=Event.Audience.PUBLIC, session=None)
+        EventCalendarInvite.objects.create(
+            event=self.event, email="sent@example.com", sent_at=timezone.now()
+        )
+        EventCalendarInvite.objects.create(event=self.event, email="queued@example.com")
+
+    def _get_request(self, apply: bool = False):
+        request = self.factory.post(
+            "/admin/home/event/", {"apply": "1"} if apply else {}
+        )
+        request.user = self.superuser
+        SessionMiddleware(lambda req: None).process_request(request)
+        request._messages = FallbackStorage(request)
+        return request
+
+    def _save(self, changed_data: list[str]) -> list[str]:
+        request = self._get_request()
+        form = SimpleNamespace(changed_data=changed_data)
+        self.admin.save_model(request, self.event, form=form, change=True)
+        return [str(m) for m in request._messages]
+
+    def test_save_warns_without_sending(self, mock_send, _mock_dispatch):
+        stored = self._save(["start_time"])
+
+        mock_send.assert_not_called()
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.calendar_sequence, 0)
+        self.assertTrue(any("Send time(s) changed" in m for m in stored))
+
+    def test_no_warning_for_other_changes(self, mock_send, _mock_dispatch):
+        stored = self._save(["title"])
+
+        self.assertFalse(any("Send time(s) changed" in m for m in stored))
+
+    def test_no_warning_without_sent_invites(self, mock_send, _mock_dispatch):
+        self.event.calendar_invites.sent().delete()
+
+        stored = self._save(["end_time"])
+
+        self.assertFalse(any("Send time(s) changed" in m for m in stored))
+
+    def test_action_confirms_recipients(self, mock_send, _mock_dispatch):
+        """Nothing is sent until the recipients are confirmed."""
+        response = self.admin.send_calendar_updates(
+            self._get_request(), Event.objects.filter(pk=self.event.pk)
+        )
+
+        mock_send.assert_not_called()
+        content = " ".join(response.content.decode().split())
+        self.assertIn("1 to be emailed: sent@example.com", content)
+        self.assertNotIn("queued@example.com", content)
+        self.assertIn('value="send_calendar_updates"', content)
+
+    def test_action_emails_update(self, mock_send, _mock_dispatch):
+        """Only people already sent an invite get the update."""
+        request = self._get_request(apply=True)
+
+        self.admin.send_calendar_updates(
+            request, Event.objects.filter(pk=self.event.pk)
+        )
+
+        mock_send.assert_called_once()
+        kwargs = mock_send.call_args.kwargs
+        self.assertEqual(kwargs["email_template"], "event_calendar_update")
+        self.assertEqual(kwargs["bcc_list"], ["sent@example.com"])
+        self.assertEqual(_get_sequence(kwargs["attachments"][0][1]), 1)
 
 
 class EventAdminSyncedDisplayTests(TestCase):

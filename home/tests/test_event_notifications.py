@@ -18,7 +18,9 @@ from home.models import Event, EventCalendarInvite
 from home.tasks.event_notifications import (
     CALENDAR_INVITE_BATCH_SIZE,
     send_calendar_invite_batch,
+    send_calendar_update_batch,
     send_event_calendar_invite,
+    send_event_calendar_update,
 )
 
 
@@ -50,7 +52,16 @@ class GenerateICalendarTests(TestCase):
         cal = Calendar.from_ical(ical)
         self.assertEqual(str(cal["PRODID"]), "-//Djangonaut Space//djangonaut.space//")
         self.assertEqual(str(cal["VERSION"]), "2.0")
-        self.assertEqual(str(cal["METHOD"]), "PUBLISH")
+        self.assertEqual(str(cal["METHOD"]), "REQUEST")
+
+    def test_meeting_request_fields(self):
+        """Calendars need an organizer, attendee and sequence to apply updates."""
+        event = EventFactory.create(calendar_sequence=3)
+        vevent = _get_vevent(generate_icalendar(event))
+        self.assertEqual(vevent["SEQUENCE"], 3)
+        self.assertEqual(str(vevent["ORGANIZER"]), "mailto:sessions@djangonaut.space")
+        self.assertEqual(vevent["ORGANIZER"].params["CN"], "Djangonaut Space")
+        self.assertEqual(str(vevent["ATTENDEE"]), "mailto:sessions@djangonaut.space")
 
     def test_vevent_fields(self):
         """VEVENT contains all expected fields from the event."""
@@ -355,3 +366,87 @@ class SendCalendarInviteBatchTaskTests(TestCase):
             send_calendar_invite_batch.call(invite_ids=[self.invite.pk, self.other.pk])
 
         self.assertEqual(self.event.calendar_invites.unsent().count(), 2)
+
+
+class SendEventCalendarUpdateTaskTests(TestCase):
+    """Tests for the send_event_calendar_update task."""
+
+    def setUp(self):
+        self.event = EventFactory.create(
+            title="Sprint Planning",
+            audience=Event.Audience.PUBLIC,
+            session=None,
+            calendar_sequence=1,
+        )
+
+    def _invite(self, address: str, sent: bool = True) -> EventCalendarInvite:
+        return EventCalendarInvite.objects.create(
+            event=self.event,
+            email=address,
+            sent_at=timezone.now() if sent else None,
+        )
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_sends_to_already_invited(self, mock_send):
+        """People whose invite hasn't gone out yet will get the new time with it."""
+        self._invite("sent@example.com")
+        self._invite("queued@example.com", sent=False)
+
+        send_event_calendar_update.call(event_id=self.event.pk)
+
+        mock_send.assert_called_once()
+        kwargs = mock_send.call_args.kwargs
+        self.assertEqual(kwargs["email_template"], "event_calendar_update")
+        self.assertEqual(kwargs["recipient_list"], ["sessions@djangonaut.space"])
+        self.assertEqual(kwargs["bcc_list"], ["sent@example.com"])
+        vevent = _get_vevent(kwargs["attachments"][0][1])
+        self.assertEqual(str(vevent["UID"]), f"event-{self.event.pk}@djangonaut.space")
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_raises_sequence_each_time(self, mock_send):
+        """Each update must outrank the last for calendars to apply it."""
+        self._invite("sent@example.com")
+
+        send_event_calendar_update.call(event_id=self.event.pk)
+        send_event_calendar_update.call(event_id=self.event.pk)
+
+        sequences = [
+            _get_vevent(c.kwargs["attachments"][0][1])["SEQUENCE"]
+            for c in mock_send.call_args_list
+        ]
+        self.assertEqual(sequences, [2, 3])
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_batches(self, mock_send):
+        for i in range(CALENDAR_INVITE_BATCH_SIZE + 1):
+            self._invite(f"person{i}@example.com")
+
+        send_event_calendar_update.call(event_id=self.event.pk)
+
+        batch_sizes = [len(c.kwargs["bcc_list"]) for c in mock_send.call_args_list]
+        self.assertEqual(batch_sizes, [CALENDAR_INVITE_BATCH_SIZE, 1])
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_does_not_change_sent_at(self, mock_send):
+        invite = self._invite("sent@example.com")
+
+        send_event_calendar_update.call(event_id=self.event.pk)
+
+        sent_at = invite.sent_at
+        invite.refresh_from_db()
+        self.assertEqual(invite.sent_at, sent_at)
+
+    @patch("home.tasks.event_notifications.email.send")
+    def test_batch_with_no_invites(self, mock_send):
+        send_calendar_update_batch.call(invite_ids=[999_999])
+        mock_send.assert_not_called()
+
+    @override_settings(ENVIRONMENT="production")
+    def test_rendered_email(self):
+        self._invite("sent@example.com")
+
+        send_event_calendar_update.call(event_id=self.event.pk)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Time changed: Sprint Planning")
+        self.assertIn("The time for Sprint Planning has changed", mail.outbox[0].body)

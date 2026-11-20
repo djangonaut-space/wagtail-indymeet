@@ -3,8 +3,10 @@
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
+from django.conf import settings
 from icalendar import Calendar
 from icalendar import Event as CalEvent
+from icalendar import vCalAddress
 
 
 def _description(event) -> str:
@@ -25,15 +27,21 @@ def _description(event) -> str:
 
 
 def generate_icalendar(event) -> bytes:
-    """Generate an iCalendar (.ics) file for a given event.
+    """Generate an iCalendar (.ics) meeting invite for a given event.
+
+    It's sent as a meeting request (METHOD:REQUEST) so that when the event
+    changes, a new invite with the same UID and a higher SEQUENCE moves the
+    existing calendar entry instead of adding a second one. Invites are BCC'd,
+    so the only attendee listed is the sessions inbox; real recipients can't
+    be named without exposing everyone's address. Replies from the apps that
+    let recipients RSVP go to the organizer, sessions@.
 
     Calendar clients that render the URL property as the clickable link
     (e.g. Apple Calendar) get the Zoom join link when one is set, falling
     back to the event page only when it's published on the website.
 
     Args:
-        event: An Event model instance with start_time, end_time, title,
-               zoom_link, description, is_published, and get_full_url().
+        event: An Event model instance
 
     Returns:
         Bytes of the .ics file content.
@@ -41,11 +49,19 @@ def generate_icalendar(event) -> bytes:
     cal = Calendar()
     cal.add("prodid", "-//Djangonaut Space//djangonaut.space//")
     cal.add("version", "2.0")
-    cal.add("method", "PUBLISH")
+    cal.add("method", "REQUEST")
+
+    mailbox = f"mailto:{settings.SESSIONS_FROM_EMAIL}"
+    organizer = vCalAddress(mailbox)
+    organizer.params["cn"] = "Djangonaut Space"
+    attendee = vCalAddress(mailbox)
 
     cal_event = CalEvent()
     cal_event.add("uid", f"event-{event.pk}@djangonaut.space")
+    cal_event.add("sequence", event.calendar_sequence)
     cal_event.add("dtstamp", datetime.now(tz=dt_timezone.utc))
+    cal_event.add("organizer", organizer)
+    cal_event.add("attendee", attendee)
     cal_event.add("summary", event.title)
     cal_event.add("dtstart", event.start_time)
     cal_event.add("dtend", event.end_time)

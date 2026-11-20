@@ -16,16 +16,17 @@
                 <ul>
                     <li><strong>Copy selected event and open as new</strong> <code>[runs immediately]</code> &mdash; requires exactly one selected event; opens the add form pre-filled with that event's data so you can review, edit, and save it as a new event. Nothing is saved until you submit that form.</li>
                     <li>
-                        <strong>Send calendar invites to event members</strong> <code>[shows a confirmation page]</code> &mdash; shows the computed recipients and current session/Public/Published settings for the selected events; invites are only queued once you confirm. Only sends once per event &mdash; skipped for events that already have invites sent. Recipients depend on the event:
+                        <strong>Send calendar invites to event members</strong> <code>[shows a confirmation page]</code> &mdash; shows the computed recipients and current session/Public/Published settings for the selected events; invites are only queued once you confirm. You can use this multiple times. Resending invites will only resend invites to those who haven't gotten them. Recipients depend on the audience, plus the event's extra emails:
                         <ul>
-                            <li>Session event &mdash; all members of that session who have an email address.</li>
-                            <li>Public event (no session) &mdash; all users opted in to event updates.</li>
-                            <li>Private event (no session) &mdash; no extra recipients; still sends to the event's configured extra emails (e.g. sessions@djangonaut.space).</li>
+                            <li>Session &mdash; the linked session's accepted members.</li>
+                            <li>Community &mdash; everyone who has ever been an accepted session member.</li>
+                            <li>Public &mdash; only the extra emails.</li>
                         </ul>
                     </li>
                     <li><strong>Resync to Zoom and Discord</strong> <code>[runs immediately]</code> &mdash; force-resyncs the selected events, updating the existing Zoom meeting/Discord event even if already synced. If calendar invites were already sent, recipients' calendars won't reflect the updated details.</li>
+                    <li><strong>Send time(s) changed calendar updates</strong> <code>[shows a confirmation page]</code> &mdash; emails an updated invite to everyone already sent one. People whose invite hasn't been sent aren't emailed.</li>
                 </ul>
-                Only "Send calendar invites to event members" shows a confirmation page first &mdash; the other actions run right away when you choose them from the dropdown and click "Go".
+                Only "Send calendar invites to event members" and "Send time(s) changed calendar updates" show a confirmation page first &mdash; the other actions run right away when you choose them from the dropdown and click "Go".
             </dd>
 
             <dt>List columns</dt>
