@@ -221,6 +221,7 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
     actions = [
         "copy_event",
         "send_calendar_invites",
+        "send_calendar_updates",
         preview_email.calendar_invite_email_action,
         "resync_event",
     ]
@@ -309,6 +310,15 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
         outcome to the user.
         """
         super().save_model(request, obj, form, change)
+        time_changed = change and {"start_time", "end_time"} & set(form.changed_data)
+        if time_changed and obj.calendar_invites.sent().exists():
+            self.message_user(
+                request,
+                "Calendar invites were already sent for this event. Use the "
+                '"Send time(s) changed calendar updates" action to update '
+                "their calendars.",
+                messages.WARNING,
+            )
         decision = dispatch_event_sync(obj)
         level = (
             messages.WARNING
@@ -412,6 +422,42 @@ class EventAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
             "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
         }
         return render(request, "admin/send_calendar_invites_confirmation.html", context)
+
+    @admin.action(description="Send time(s) changed calendar updates")
+    def send_calendar_updates(
+        self, request: HttpRequest, queryset: QuerySet
+    ) -> HttpResponse | None:
+        """Email an updated invite to everyone already sent one.
+
+        Shows a confirmation page listing who will be emailed first; nothing
+        is queued until the user confirms.
+        """
+        if request.POST.get("apply"):
+            for event_id in queryset.values_list("pk", flat=True):
+                tasks.send_event_calendar_update.enqueue(event_id=event_id)
+            self.message_user(
+                request,
+                f"Emailing the new time for {queryset.count()} event(s).",
+                messages.SUCCESS,
+            )
+            return None
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Confirm emailing the new time",
+            "events": [
+                {
+                    "event": event,
+                    "recipients": list(
+                        event.calendar_invites.sent().values_list("email", flat=True)
+                    ),
+                }
+                for event in queryset
+            ],
+            "opts": self.model._meta,
+            "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+        }
+        return render(request, "admin/send_calendar_updates_confirmation.html", context)
 
     @admin.action(description="Resync to Zoom and Discord")
     def resync_event(self, request, queryset) -> None:

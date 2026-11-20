@@ -117,6 +117,14 @@ class Event(ClusterableModel):
         blank=True,
         help_text="Users who have been given a calendar invite for this event.",
     )
+    calendar_sequence = models.PositiveIntegerField(
+        default=0,
+        editable=False,
+        help_text=(
+            "Revision number sent in calendar invites. Calendars only replace "
+            "an event with an invite that has a higher number."
+        ),
+    )
     zoom_meeting_id = models.CharField(
         max_length=32,
         blank=True,

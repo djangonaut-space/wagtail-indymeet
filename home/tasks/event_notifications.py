@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 from django_tasks import task
 
@@ -55,24 +56,96 @@ def send_event_calendar_invite(event_id: int) -> None:
         )
 
 
+def _batches(invite_ids: list[int]) -> list[list[int]]:
+    return [
+        invite_ids[start : start + CALENDAR_INVITE_BATCH_SIZE]
+        for start in range(0, len(invite_ids), CALENDAR_INVITE_BATCH_SIZE)
+    ]
+
+
 def queue_calendar_invite_batches(invite_ids: list[int]) -> None:
     """Queue a send task for each batch of invites.
 
     Args:
         invite_ids: IDs of unsent invites, all for the same event.
     """
-    for start in range(0, len(invite_ids), CALENDAR_INVITE_BATCH_SIZE):
-        send_calendar_invite_batch.enqueue(
-            invite_ids=invite_ids[start : start + CALENDAR_INVITE_BATCH_SIZE]
+    for batch in _batches(invite_ids):
+        send_calendar_invite_batch.enqueue(invite_ids=batch)
+
+
+def _email_invite(event: Event, addresses: list[str], email_template: str) -> None:
+    """Email the event's .ics to the addresses in one BCC'd message.
+
+    Mailjet requires a To address, so the email is addressed to the sessions
+    inbox.
+    """
+    to_address = settings.SESSIONS_FROM_EMAIL
+    email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
+        email_template=email_template,
+        recipient_list=[to_address],
+        bcc_list=[
+            address for address in addresses if address.lower() != to_address.lower()
+        ],
+        context={
+            "event": event,
+            "cta_link": event.get_full_url(),
+        },
+        attachments=[("event.ics", generate_icalendar(event), "text/calendar")],
+    )
+
+
+@task()
+def send_event_calendar_update(event_id: int) -> None:
+    """Email the updated invite to everyone already sent one for the event.
+
+    The sequence goes up first, so the new .ics shares the original's UID with
+    a higher SEQUENCE and calendars move the existing entry rather than adding
+    a second one. Invites not sent yet are skipped; their send reads the event
+    when it runs, so it already has the new details.
+
+    Args:
+        event_id: The ID of the Event that changed.
+    """
+    with transaction.atomic():
+        Event.objects.filter(pk=event_id).update(
+            calendar_sequence=F("calendar_sequence") + 1
         )
+        invite_ids = list(
+            EventCalendarInvite.objects.filter(event_id=event_id)
+            .sent()
+            .order_by("pk")
+            .values_list("id", flat=True)
+        )
+        for batch in _batches(invite_ids):
+            send_calendar_update_batch.enqueue(invite_ids=batch)
+
+
+@task()
+def send_calendar_update_batch(invite_ids: list[int]) -> None:
+    """Email a batch of recipients the updated calendar invite.
+
+    Args:
+        invite_ids: The IDs of the EventCalendarInvites to send the update to.
+            They must all belong to the same event.
+    """
+    invites = list(
+        EventCalendarInvite.objects.select_related("event").filter(pk__in=invite_ids)
+    )
+    if not invites:
+        return
+    _email_invite(
+        invites[0].event,
+        [invite.email for invite in invites],
+        "event_calendar_update",
+    )
 
 
 @task()
 def send_calendar_invite_batch(invite_ids: list[int]) -> None:
     """Email a batch of recipients their calendar invite and record the delivery.
 
-    Recipients are BCC'd so they don't see each other's addresses. Mailjet
-    requires a To address, so the email is addressed to the sessions inbox.
+    Recipients are BCC'd so they don't see each other's addresses.
 
     Idempotent per recipient: the invites are locked and re-checked as unsent,
     so neither a repeated fan-out nor a concurrent worker can email the same
@@ -94,22 +167,10 @@ def send_calendar_invite_batch(invite_ids: list[int]) -> None:
         if not invites:
             return
 
-        event = invites[0].event
-        to_address = settings.SESSIONS_FROM_EMAIL
-        email.send(
-            from_email=settings.SESSIONS_FROM_EMAIL,
-            email_template="event_calendar_invite",
-            recipient_list=[to_address],
-            bcc_list=[
-                invite.email
-                for invite in invites
-                if invite.email.lower() != to_address.lower()
-            ],
-            context={
-                "event": event,
-                "cta_link": event.get_full_url(),
-            },
-            attachments=[("event.ics", generate_icalendar(event), "text/calendar")],
+        _email_invite(
+            invites[0].event,
+            [invite.email for invite in invites],
+            "event_calendar_invite",
         )
         EventCalendarInvite.objects.filter(
             pk__in=[invite.pk for invite in invites]

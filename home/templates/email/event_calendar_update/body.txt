@@ -1,0 +1,21 @@
+{% load email_tags %}
+Time changed: {{ event.title }}
+
+Hello,
+
+The time for {{ event.title }} has changed. It's now on {{ event.start_time|date:"l, F j, Y" }} ({{ event.start_time|time_is_link }}).
+
+{% if event.zoom_link %}
+Zoom: {{ event.zoom_link }}
+{% endif %}
+
+Start: {{ event.start_time|date:"l, F j, Y g:i A e" }} ({{ event.start_time|time_is_link }})
+End: {{ event.end_time|date:"l, F j, Y g:i A e" }} ({{ event.end_time|time_is_link }})
+
+The updated calendar invite (.ics) is attached. Opening it should move the event in your calendar. If the event now shows up twice, delete the one at the old time.
+
+View event details at: {{ event.get_full_url }}
+
+Thank you,
+
+Djangonaut Space Organizers
