@@ -1,0 +1,37 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_help.css' %}">
+{% endblock %}
+
+{% block search %}
+<details class="help-block">
+    <summary>Help: actions &amp; columns on this page</summary>
+    <div class="help-block-content">
+        <dl>
+            <dt>What happens automatically</dt>
+            <dd>
+                Invites are created by the "Send calendar invites to event members" action on the events page. They're emailed in BCC batches of up to 40 people, so recipients don't see each other's addresses. Each person is only sent an invite once; sending an event's invites again only reaches people who don't have one yet.
+            </dd>
+
+            <dt>Bulk actions (the "Action:" dropdown below the list)</dt>
+            <dd>
+                <ul>
+                    <li><strong>Resend selected invites</strong> <code>[runs immediately]</code> &mdash; emails the selected people their invite again, for example someone who lost the email. Works whether or not the invite was already sent. Invites for different events go out in separate emails.</li>
+                </ul>
+            </dd>
+
+            <dt>List columns</dt>
+            <dd>
+                <ul>
+                    <li><strong>Sent at</strong> &mdash; when the invite was last emailed; blank means it's queued and hasn't gone out yet. Resending replaces this time.</li>
+                    <li><strong>User</strong> &mdash; the member the invite is for; blank for the event's extra emails, which don't belong to an account.</li>
+                </ul>
+            </dd>
+        </dl>
+    </div>
+</details>
+{{ block.super }}
+{% endblock %}
