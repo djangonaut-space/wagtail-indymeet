@@ -34,11 +34,7 @@ from home.factories import (
 )
 from home.models import Session, SessionMembership, Survey, Team, UserSurveyResponse
 from django.contrib.gis.geos import Point
-from django.conf import settings
-from wagtail.coreutils import get_supported_content_language_variant
-from wagtail.models import Locale, Page as WagtailPage, Site
 
-from home.models.blog import HomePage
 from home.models.talk import Talk, TalkSpeaker
 from tests.timezones import (
     DEFAULT_TIMEZONE,
@@ -1238,24 +1234,7 @@ class TestHomePageAboutMenu:
 
     @pytest.fixture
     def home_page(self, page: Page) -> Page:
-        """Serve the Wagtail HomePage at ``/``.
-
-        The live server's transactional teardown can flush the Locale, HomePage
-        and Site created by migrations, so recreate them when they're missing.
-        """
-        Locale.objects.get_or_create(
-            language_code=get_supported_content_language_variant(settings.LANGUAGE_CODE)
-        )
-        home = HomePage.objects.first()
-        if home is None:
-            root = WagtailPage.get_first_root_node() or WagtailPage.add_root(
-                title="Root", slug="root"
-            )
-            home = root.add_child(instance=HomePage(title="Home", slug="home"))
-        Site.objects.update_or_create(
-            is_default_site=True,
-            defaults={"hostname": "localhost", "root_page": home},
-        )
+        """Serve the Wagtail HomePage at ``/``."""
         page.set_viewport_size({"width": 1280, "height": 800})
         page.goto("/")
         return page

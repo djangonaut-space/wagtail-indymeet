@@ -1,15 +1,24 @@
 from datetime import timedelta
 from io import StringIO
 
+from django.apps import apps
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
+from wagtail.models import Collection, Page, Site
 
 from accounts.factories import UserFactory
 from home import constants
 from home.factories import SessionFactory, SessionMembershipFactory
+from home.models import HomePage
 from home.models.session import SessionMembership
+from home.receivers import (
+    WAGTAIL_PLACEHOLDER_TITLE,
+    ensure_site_structure,
+    is_fully_migrated,
+)
 
 
 class OrganizerReceiversHandlersTestCase(TestCase):
@@ -93,3 +102,54 @@ class OrganizerReceiversHandlersTestCase(TestCase):
         user.refresh_from_db()
         self.assertNotIn(self.group, user.groups.all())
         self.assertFalse(user.is_staff)
+
+
+class EnsureSiteStructureTests(TestCase):
+    def test_recreates_missing_rows(self):
+        """Simulates what a flush leaves behind: no site or home page."""
+        Site.objects.all().delete()
+        HomePage.objects.all().delete()
+
+        ensure_site_structure(sender=apps.get_app_config("home"))
+
+        self.assertEqual(self.client.get("/").status_code, 200)
+        self.assertEqual(HomePage.objects.count(), 1)
+
+    def test_replaces_wagtail_placeholder(self):
+        """A new database has Wagtail's welcome page as the site root, not a HomePage."""
+        HomePage.objects.all().delete()
+        placeholder = Page.get_first_root_node().add_child(
+            instance=Page(title=WAGTAIL_PLACEHOLDER_TITLE, slug="home")
+        )
+        Site.objects.create(
+            hostname="localhost", root_page=placeholder, is_default_site=True
+        )
+
+        ensure_site_structure(sender=apps.get_app_config("home"))
+
+        self.assertFalse(Page.objects.filter(pk=placeholder.pk).exists())
+        self.assertIsInstance(Site.objects.get().root_page.specific, HomePage)
+
+    def test_keeps_other_home_page(self):
+        """A "home" page that isn't Wagtail's untouched placeholder is never deleted."""
+        HomePage.objects.all().delete()
+        page = Page.get_first_root_node().add_child(
+            instance=Page(title="Our home", slug="home")
+        )
+
+        with self.assertRaises(ValidationError):
+            ensure_site_structure(sender=apps.get_app_config("home"))
+
+        self.assertTrue(Page.objects.filter(pk=page.pk).exists())
+
+    def test_keeps_existing_rows(self):
+        site = Site.objects.get()
+        counts = (Page.objects.count(), Collection.objects.count())
+
+        ensure_site_structure(sender=apps.get_app_config("home"), plan=[])
+
+        self.assertEqual(Site.objects.get(), site)
+        self.assertEqual((Page.objects.count(), Collection.objects.count()), counts)
+
+    def test_fully_migrated(self):
+        self.assertTrue(is_fully_migrated("default"))

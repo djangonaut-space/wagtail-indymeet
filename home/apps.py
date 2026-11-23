@@ -9,6 +9,9 @@ class HomeAppConfig(AppConfig):
     def ready(self):
         from wagtail.admin.userbar import AccessibilityItem
 
+        # Receivers import models, so they can't be imported before the app is ready.
+        from home import receivers  # noqa: F401
+
         @hooks.register("construct_wagtail_userbar")
         def remove_frontend_accessibility_checks(request, items, page=None):
             """
