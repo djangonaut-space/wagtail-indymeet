@@ -59,6 +59,7 @@ from .models import (
     ResourceLink,
     Session,
     SessionMembership,
+    SessionMembershipNotification,
     Survey,
     Team,
     Testimonial,
@@ -75,6 +76,7 @@ from .views.session_discord import (
 )
 from .views.session_notifications import (
     send_acceptance_reminders_view,
+    send_final_emails_view,
     send_session_results_view,
     send_team_welcome_emails_view,
 )
@@ -719,6 +721,7 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         "discord_member",
         "accepted",
         "acceptance_deadline",
+        "final_email_sent_at",
     )
     list_filter = ("session", "role", "accepted", UserWithMembershipFilter)
     search_fields = (
@@ -733,13 +736,22 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         "send_acceptance_emails_action",
         "find_best_availability_overlaps_action",
         "compare_availability_action",
+        "resend_final_email_action",
         preview_email.acceptance_email_action,
         preview_email.reminder_email_action,
+        preview_email.final_email_action,
     ]
 
     @admin.display(description="User Email", ordering="user__email")
     def user_email(self, obj: SessionMembership) -> str:
         return obj.user.email
+
+    @admin.display(
+        description="Final email sent", ordering="notification__final_email_sent_at"
+    )
+    def final_email_sent_at(self, obj: SessionMembership):
+        notification = getattr(obj, "notification", None)
+        return notification.final_email_sent_at if notification else None
 
     @admin.display(description="Navigator")
     def navigator(self, obj: SessionMembership) -> str:
@@ -785,7 +797,9 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         return (
             super()
             .get_queryset(request)
-            .select_related("user__profile__discord_member", "session", "team")
+            .select_related(
+                "user__profile__discord_member", "session", "team", "notification"
+            )
             .prefetch_related("team__session_memberships__user")
             .for_admin_site(request.user)
         )
@@ -826,6 +840,26 @@ class SessionMembershipAdmin(ExportMixin, DescriptiveSearchMixin, admin.ModelAdm
         self.message_user(
             request,
             f"Successfully queued {queued_count} acceptance email(s).",
+            messages.SUCCESS,
+        )
+
+    @admin.action(description="Resend final email and certificate")
+    def resend_final_email_action(self, request, queryset):
+        """Send the final email again, e.g. after correcting someone's name.
+
+        Clearing the sent timestamp first lets the normal send task run again.
+        Only accepted Djangonauts receive it.
+        """
+        SessionMembershipNotification.objects.for_memberships(queryset).update(
+            final_email_sent_at=None
+        )
+        membership_ids = list(
+            queryset.final_email_recipients().values_list("id", flat=True)
+        )
+        tasks.schedule_final_emails.enqueue(membership_ids=membership_ids)
+        self.message_user(
+            request,
+            f"Queued {len(membership_ids)} final email(s).",
             messages.SUCCESS,
         )
 
@@ -955,6 +989,10 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "Send team welcome emails",
                 reverse("admin:session_send_team_welcome_emails", args=[obj.id]),
             ),
+            (
+                "Send final emails",
+                reverse("admin:session_send_final_emails", args=[obj.id]),
+            ),
         ]
         return mark_safe(
             "<br />".join([f"<a href={href}>{action}</a>" for action, href in actions])
@@ -1018,6 +1056,11 @@ class SessionAdmin(DescriptiveSearchMixin, admin.ModelAdmin):
                 "<int:session_id>/send-team-welcome-emails/",
                 self.admin_site.admin_view(send_team_welcome_emails_view),
                 name="session_send_team_welcome_emails",
+            ),
+            path(
+                "<int:session_id>/send-final-emails/",
+                self.admin_site.admin_view(send_final_emails_view),
+                name="session_send_final_emails",
             ),
             path(
                 "<int:session_id>/discord-setup/",

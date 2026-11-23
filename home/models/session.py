@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 
 from home import constants
 from home.managers import (
+    SessionMembershipNotificationQuerySet,
     SessionMembershipQuerySet,
     SessionQuerySet,
     TeamQuerySet,
@@ -183,6 +184,13 @@ class Session(models.Model):
         help_text=_(
             "This should be the Program Suggestion Box Google Form from the "
             "session organizer drive folder."
+        ),
+    )
+    exit_survey_url = models.URLField(
+        blank=True,
+        help_text=_(
+            "Exit survey linked from the final email Djangonauts receive "
+            "when the session ends."
         ),
     )
     djangonauts_have_access = models.BooleanField(
@@ -530,6 +538,24 @@ class SessionMembership(models.Model):
     def is_organizer(self) -> bool:
         """Check if this membership has the Organizer role."""
         return self.role == constants.ORGANIZER
+
+
+class SessionMembershipNotification(models.Model):
+    """Tracks which emails a session member has been sent."""
+
+    session_membership = models.OneToOneField(
+        SessionMembership, on_delete=models.CASCADE, related_name="notification"
+    )
+    final_email_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When the end of session email was sent."),
+    )
+
+    objects = models.Manager.from_queryset(SessionMembershipNotificationQuerySet)()
+
+    def __str__(self) -> str:
+        return f"Notifications for {self.session_membership_id}"
 
 
 class WaitlistQuerySet(models.QuerySet):

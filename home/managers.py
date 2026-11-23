@@ -143,6 +143,10 @@ class SessionQuerySet(QuerySet):
         """
         return self.exclude(discord_category_id="")
 
+    def ending_on(self, date: datetime.date) -> SessionQuerySet:
+        """Sessions whose last day is ``date``."""
+        return self.filter(end_date=date)
+
     def get_accepting_applications(self) -> Session | None:
         aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
         aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
@@ -174,9 +178,21 @@ class SessionMembershipQuerySet(QuerySet):
         """Filter memberships for a specific session."""
         return self.filter(session=session)
 
+    def for_sessions(self, sessions: QuerySet) -> SessionMembershipQuerySet:
+        """Filter memberships for any of ``sessions``."""
+        return self.filter(session__in=sessions)
+
     def for_team(self, team):
         """Filter memberships for a specific team."""
         return self.filter(team=team)
+
+    def final_email_unsent(self) -> SessionMembershipQuerySet:
+        """Memberships that haven't been sent the end of session email."""
+        return self.exclude(notification__final_email_sent_at__isnull=False)
+
+    def final_email_recipients(self) -> SessionMembershipQuerySet:
+        """Accepted Djangonauts who haven't been sent the final email."""
+        return self.djangonauts().accepted().final_email_unsent()
 
     def djangonauts(self):
         """Filter to only Djangonauts."""
@@ -266,6 +282,18 @@ class SessionMembershipQuerySet(QuerySet):
             QuerySet of accepted SessionMembership objects for the user.
         """
         return self.filter(user=user).accepted()
+
+
+class SessionMembershipNotificationQuerySet(QuerySet):
+    def for_memberships(
+        self, memberships: QuerySet
+    ) -> SessionMembershipNotificationQuerySet:
+        """Filter notifications for any of ``memberships``."""
+        return self.filter(session_membership__in=memberships)
+
+    def final_email_unsent(self) -> SessionMembershipNotificationQuerySet:
+        """Notifications for members who haven't been sent the final email."""
+        return self.filter(final_email_sent_at__isnull=True)
 
 
 class UserSurveyResponseQuerySet(QuerySet):

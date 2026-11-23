@@ -10,6 +10,11 @@ from django.contrib import admin, messages
 from django.urls import reverse
 
 from . import email
+from .certificates import (
+    certificate_filename,
+    certificate_name,
+    generate_certificate_pdf,
+)
 from .icalendar_utils import generate_icalendar
 from .models import (
     Event,
@@ -76,6 +81,39 @@ def reminder_email(recipient_email: str, membership: SessionMembership) -> None:
         email_template="acceptance_reminder",
         recipient_list=[recipient_email],
         context=context,
+    )
+
+
+def final_email(recipient_email: str, membership: SessionMembership) -> None:
+    """
+    Send a preview of the final email with the member's real certificate.
+
+    Args:
+        recipient_email: Email address to send preview to
+        membership: SessionMembership to use for preview data
+    """
+    user = membership.user
+    session = membership.session
+    name = certificate_name(user)
+
+    context = {
+        "user": user,
+        "name": user.first_name or user.username,
+        "session": session,
+    }
+
+    email.send(
+        from_email=settings.SESSIONS_FROM_EMAIL,
+        email_template="final_email",
+        recipient_list=[recipient_email],
+        context=context,
+        attachments=[
+            (
+                certificate_filename(name, session.end_date),
+                generate_certificate_pdf(name, session.end_date),
+                "application/pdf",
+            )
+        ],
     )
 
 
@@ -298,6 +336,27 @@ def reminder_email_action(modeladmin, request, queryset):
     modeladmin.message_user(
         request,
         f"Preview of reminder email sent to {request.user.email}",
+        messages.SUCCESS,
+    )
+
+
+@admin.action(description="Preview final email and certificate (send to me)")
+def final_email_action(modeladmin, request, queryset):
+    """Send the final email, with the member's real certificate, to the admin user."""
+    membership = queryset.djangonauts().select_related("user", "session").first()
+    if not membership:
+        modeladmin.message_user(
+            request,
+            "No Djangonaut membership found in selection",
+            messages.ERROR,
+        )
+        return
+
+    final_email(request.user.email, membership)
+
+    modeladmin.message_user(
+        request,
+        f"Preview of final email sent to {request.user.email}",
         messages.SUCCESS,
     )
 

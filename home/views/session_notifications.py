@@ -5,6 +5,7 @@ Provides admin interfaces for:
 - Sending session result notifications (accepted/waitlist/rejected)
 - Sending acceptance reminder emails
 - Sending team welcome emails
+- Sending final emails and certificates the scheduled task missed
 
 Email sending is handled asynchronously via background tasks.
 """
@@ -221,3 +222,43 @@ def send_team_welcome_emails_view(
     }
 
     return render(request, "admin/send_team_welcome_emails.html", context)
+
+
+@staff_member_required
+@require_http_methods(["GET", "POST"])
+def send_final_emails_view(request: HttpRequest, session_id: int) -> HttpResponse:
+    """
+    Admin view to send final emails and certificates by hand.
+
+    schedule_final_emails sends them on the session's end date, so this is
+    only for sessions it missed. Djangonauts who were already sent one are
+    skipped; the session membership admin can resend to individuals.
+    """
+    session = get_object_or_404(Session, pk=session_id)
+    unsent_memberships = (
+        SessionMembership.objects.for_session(session)
+        .final_email_recipients()
+        .select_related("user")
+    )
+
+    if request.method == "POST":
+        membership_ids = list(unsent_memberships.values_list("id", flat=True))
+        tasks.schedule_final_emails.enqueue(membership_ids=membership_ids)
+        messages.success(
+            request,
+            f"Successfully queued {len(membership_ids)} final email(s) "
+            f"for '{session.title}'.",
+        )
+        return redirect("admin:home_session_changelist")
+
+    context = {
+        "session": session,
+        "unsent_memberships": unsent_memberships,
+        "sends_in_future": session.end_date >= timezone.now().date(),
+        "opts": Session._meta,
+        "site_title": "Django site admin",
+        "site_header": "Django administration",
+        "has_view_permission": True,
+    }
+
+    return render(request, "admin/send_final_emails.html", context)

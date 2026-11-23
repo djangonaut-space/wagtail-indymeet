@@ -5,13 +5,29 @@ These tasks handle sending various notification emails asynchronously,
 allowing views to return immediately while emails are processed in the background.
 """
 
+from crontask import cron
+from django.db import transaction
+from django.utils import timezone
+
 from home import constants
 from django.conf import settings
 from django.urls import reverse
 from django_tasks import task
 
 from home import email
-from home.models import Session, SessionMembership, Team, UserSurveyResponse, Waitlist
+from home.certificates import (
+    certificate_filename,
+    certificate_name,
+    generate_certificate_pdf,
+)
+from home.models import (
+    Session,
+    SessionMembership,
+    Team,
+    UserSurveyResponse,
+    Waitlist,
+    SessionMembershipNotification,
+)
 
 
 @task()
@@ -269,3 +285,70 @@ def reject_waitlisted_user(waitlist_id: int) -> None:
     # Mark as notified instead of deleting
     waitlist_entry.notified_at = timezone.now()
     waitlist_entry.save(update_fields=["notified_at"])
+
+
+@cron("0 15 * * *")
+@task()
+def schedule_final_emails(membership_ids: list[int] | None = None) -> None:
+    """Enqueue final emails for accepted Djangonauts who haven't had one.
+
+    The daily run passes no ids and covers sessions ending today. Sessions
+    that ended earlier are skipped so past cohorts aren't emailed when this
+    first runs. The admin passes ``membership_ids`` to send missed emails or
+    resend corrected ones.
+    """
+    if membership_ids is None:
+        sessions = Session.objects.ending_on(timezone.now().date())
+        memberships = SessionMembership.objects.for_sessions(sessions)
+    else:
+        memberships = SessionMembership.objects.filter(id__in=membership_ids)
+    for membership_id in memberships.final_email_recipients().values_list(
+        "id", flat=True
+    ):
+        send_final_email.enqueue(membership_id=membership_id)
+
+
+@task()
+def send_final_email(membership_id: int) -> None:
+    """Send one member their final email and certificate, unless already sent.
+
+    The notification row is locked during the send and re-checked after the
+    lock is acquired, so overlapping runs can't email someone twice.
+    """
+    SessionMembershipNotification.objects.get_or_create(
+        session_membership_id=membership_id
+    )
+    with transaction.atomic():
+        notification = (
+            SessionMembershipNotification.objects.select_for_update(
+                no_key=True, of=("self",)
+            )
+            .select_related("session_membership__user", "session_membership__session")
+            .final_email_unsent()
+            .filter(session_membership_id=membership_id)
+            .first()
+        )
+        if notification is None:
+            return
+        user = notification.session_membership.user
+        session = notification.session_membership.session
+        name = certificate_name(user)
+        email.send(
+            from_email=settings.SESSIONS_FROM_EMAIL,
+            email_template="final_email",
+            recipient_list=[user.email],
+            context={
+                "user": user,
+                "name": user.first_name or user.username,
+                "session": session,
+            },
+            attachments=[
+                (
+                    certificate_filename(name, session.end_date),
+                    generate_certificate_pdf(name, session.end_date),
+                    "application/pdf",
+                )
+            ],
+        )
+        notification.final_email_sent_at = timezone.now()
+        notification.save(update_fields=["final_email_sent_at"])

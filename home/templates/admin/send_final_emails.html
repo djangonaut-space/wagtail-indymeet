@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Send Final Emails - {{ session.title }}</h1>
+
+<div class="messagelist">
+    <div class="warning">
+        {% if sends_in_future %}
+            <strong>This doesn't need to be done manually. Final emails and certificates are sent automatically on {{ session.end_date|date:"Y-m-d" }} at 15:00 UTC.</strong>
+        {% else %}
+            <strong>This doesn't need to be done manually. Final emails and certificates were sent automatically on {{ session.end_date|date:"Y-m-d" }} at 15:00 UTC. Only send them now if they were missed.</strong>
+        {% endif %}
+    </div>
+</div>
+
+<div class="module">
+    <h2>Summary</h2>
+    <p>This will send the final email and certificate to <strong>{{ unsent_memberships|length }}</strong> accepted Djangonaut(s) who haven't been sent one. To send one again, use <strong>Resend final email and certificate</strong> on the <a href="{% url 'admin:home_sessionmembership_changelist' %}?session__id__exact={{ session.id }}">session memberships</a>.</p>
+
+    {% if unsent_memberships %}
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for membership in unsent_memberships %}
+            <tr>
+                <td>{{ membership.user.get_full_name|default:membership.user.username }}</td>
+                <td>{{ membership.user.email }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+{% if not unsent_memberships %}
+<div class="messagelist">
+    <div class="info">
+        Every accepted Djangonaut has already been sent their final email.
+    </div>
+</div>
+<p><a href="{% url 'admin:home_session_changelist' %}" class="button">Back to Session List</a></p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+    <p><strong>Are you sure you want to send these final emails now?</strong></p>
+    <div class="submit-row">
+        <input type="submit" value="Send Final Emails" class="default" />
+        <a href="{% url 'admin:home_session_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}

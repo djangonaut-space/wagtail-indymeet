@@ -17,8 +17,10 @@ from home.tasks.session_announcements import (
 )
 from home.tasks.session_notifications import (
     reject_waitlisted_user,
+    schedule_final_emails,
     send_accepted_email,
     send_acceptance_reminder_email,
+    send_final_email,
     send_membership_acceptance_email,
     send_rejected_email,
     send_team_welcome_email,
@@ -32,6 +34,7 @@ __all__ = [
     "post_announcement",
     "reject_waitlisted_user",
     "schedule_approval_emails",
+    "schedule_final_emails",
     "schedule_pending_announcements",
     "send_accepted_email",
     "send_acceptance_reminder_email",
@@ -39,6 +42,7 @@ __all__ = [
     "send_calendar_update_batch",
     "send_event_calendar_invite",
     "send_event_calendar_update",
+    "send_final_email",
     "send_membership_acceptance_email",
     "send_rejected_email",
     "send_team_welcome_email",
