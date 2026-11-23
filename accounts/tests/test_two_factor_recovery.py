@@ -4,16 +4,20 @@ import re
 from datetime import timedelta
 
 import time_machine
+from django.contrib import admin
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import SESSION_KEY
 from django.contrib.auth.models import Permission
 from django.core import mail
+from django.core.exceptions import PermissionDenied
 from django.test import override_settings
+from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts import two_factor
+from accounts.models import CustomUser
 from accounts.tests.test_two_factor import create_user
 from accounts.tests.test_two_factor import enable_two_factor
 from accounts.tests.test_two_factor import PASSWORD
@@ -185,6 +189,28 @@ class SendRecoveryEmailAdminActionTests(TestCase):
         )
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.locked_out_user.email])
+
+    def test_no_success_message_when_every_user_is_skipped(self):
+        other_user = create_user()
+        self.client.force_login(self.superuser)
+
+        response = self.run_action(other_user)
+
+        self.assertNotContains(response, "Sent a two-factor recovery email")
+        self.assertContains(response, "Skipped users without two-factor")
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_action_refuses_non_superusers_even_if_invoked_directly(self):
+        request = RequestFactory().post(self.changelist_url)
+        request.user = create_user(is_staff=True)
+        user_admin = admin.site.get_model_admin(CustomUser)
+
+        with self.assertRaises(PermissionDenied):
+            user_admin.send_two_factor_recovery_email(
+                request, CustomUser.objects.filter(pk=self.locked_out_user.pk)
+            )
+
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_action_is_not_available_to_other_staff(self):
         staff = create_user(is_staff=True)

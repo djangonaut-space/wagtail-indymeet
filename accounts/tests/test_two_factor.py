@@ -101,6 +101,15 @@ class TwoFactorHelperTests(TestCase):
         )
         self.assertFalse(set(old_codes) & set(new_codes))
 
+    def test_verify_login_token_without_two_factor(self):
+        self.assertIsNone(two_factor.verify_login_token(self.user, "123456"))
+
+    def test_verify_login_token_without_recovery_codes(self):
+        enable_two_factor(self.user)
+        StaticDevice.objects.filter(user=self.user).delete()
+
+        self.assertIsNone(two_factor.verify_login_token(self.user, "abcdefgh"))
+
     def test_disable_removes_devices_for_that_user_only(self):
         other_user = UserFactory.create()
         enable_two_factor(self.user)

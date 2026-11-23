@@ -3,7 +3,6 @@
 from typing import Any
 
 from django.contrib import messages
-from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
@@ -258,14 +257,7 @@ class TwoFactorRecoverView(FormView):
         return kwargs
 
     def form_valid(self, form: PasswordConfirmationForm) -> HttpResponse:
-        user = authenticate(
-            self.request,
-            username=self.recovering_user.get_username(),
-            password=form.cleaned_data["password"],
-        )
-        if user is None:
-            form.add_error("password", _("Incorrect password."))
-            return self.form_invalid(form)
+        user = self.recovering_user
         two_factor.disable_two_factor(user)
         two_factor.clear_pending_login(self.request)
         self.request.session.pop(RECOVERY_TOKEN_SESSION_KEY, None)

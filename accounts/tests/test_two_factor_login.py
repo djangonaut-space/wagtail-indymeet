@@ -193,9 +193,8 @@ class CodeStepTests(TwoFactorLoginTestCase):
         self.assertNotLoggedIn()
 
         with time_machine.travel(timezone.now() + timedelta(seconds=5)):
-            if current_code(other_device) != current_code(self.device):
-                self.submit_code(current_code(other_device))
-                self.assertNotLoggedIn()
+            self.submit_code(current_code(other_device))
+            self.assertNotLoggedIn()
 
     def test_password_step_expires(self):
         self.submit_password()
