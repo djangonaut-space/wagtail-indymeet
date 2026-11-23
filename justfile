@@ -32,6 +32,10 @@ superuser:
 migrate *args:
     {{django}} uv run python manage.py migrate {{args}}
 
+# Show database migration sql
+sqlmigrate *args:
+    {{django}} uv run python manage.py sqlmigrate {{args}}
+
 # Create new migrations
 makemigrations *args:
     {{django}} uv run python manage.py makemigrations {{args}}
