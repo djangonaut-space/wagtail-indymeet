@@ -48,7 +48,8 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgdal-dev gdal-bin libpq-dev
+          sudo apt-get install -y libgdal-dev gdal-bin libpq-dev \
+            libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0
 
       - name: Install uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3

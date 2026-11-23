@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Djangonaut Space Certificate</title>
+    {% comment %}
+      Ported from https://github.com/djangonaut-space/certificate-automation,
+      created by Sarah Abderemane (@sabderemane) and Emmanuel Katchy (@TobeTek).
+
+      Rendered to PDF by WeasyPrint (see home/certificates.py), not a browser.
+      WeasyPrint
+      can't pick a weight from variable fonts and draws box-shadow as a
+      rectangle, so the fonts are static files and the shadow is a third shape.
+    {% endcomment %}
+    <style>
+      @page {
+        size: 960px 600px;
+        margin: 0;
+      }
+
+      @font-face {
+        font-family: "Fraunces";
+        font-weight: 400;
+        src: url("fonts/fraunces-regular.ttf") format("truetype");
+      }
+
+      @font-face {
+        font-family: "Inter";
+        font-weight: 400;
+        src: url("fonts/inter-regular.ttf") format("truetype");
+      }
+
+      @font-face {
+        font-family: "Indie Flower";
+        font-weight: 400;
+        src: url("fonts/indie-flower-regular.ttf") format("truetype");
+      }
+
+      :root {
+        --royal-purple: #5c0287;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .fraunces {
+        font-family: "Fraunces", serif;
+      }
+
+      .indie-flower {
+        font-family: "Indie Flower", cursive;
+      }
+
+      .inter {
+        font-family: "Inter", sans-serif;
+      }
+
+      .corner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-bottom-right-radius: 100%;
+      }
+
+      .corner--shadow {
+        width: 357px;
+        height: 306px;
+        background: rgba(0, 0, 0, 0.12);
+      }
+
+      .corner--outer {
+        width: 350px;
+        height: 300px;
+        background: #682181e5;
+      }
+
+      .corner--inner {
+        width: 300px;
+        height: 270px;
+        background: var(--royal-purple);
+      }
+
+      #rocket-logo {
+        position: absolute;
+        top: 60px;
+        left: 60px;
+        width: 120px;
+        height: 120px;
+        background: url("rocket-icon.svg") no-repeat;
+      }
+
+      #certificate {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 96px;
+        margin-left: 30%;
+        width: 60%;
+        text-align: center;
+      }
+
+      #certificate__heading {
+        font-size: 38px;
+        font-weight: 400;
+        margin: 32px 0 10px;
+      }
+
+      #certificate__byline {
+        font-size: 20px;
+      }
+
+      #certificate__name,
+      #certificate__date > time {
+        font-size: 24px;
+        color: var(--royal-purple);
+        border-bottom: 1px solid black;
+      }
+
+      #certificate__name {
+        width: 80%;
+        margin-top: 80px;
+        padding-bottom: 10px;
+      }
+
+      .footer {
+        position: absolute;
+        bottom: 36px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      #certificate__date {
+        margin-left: 5%;
+        font-size: 16px;
+      }
+
+      #certificate__date > time {
+        padding: 0 36px;
+      }
+
+      #djangonaut-space-logo {
+        width: 125px;
+        height: 70px;
+        margin-right: 5%;
+        background: url("djangonaut-space-logo.svg") no-repeat;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="corner corner--shadow"></div>
+    <div class="corner corner--outer"></div>
+    <div class="corner corner--inner"></div>
+    <div id="rocket-logo"></div>
+
+    <div id="certificate">
+      <h2 id="certificate__heading" class="fraunces">
+        Certificate of <br />
+        Achievement
+      </h2>
+      <div id="certificate__byline" class="inter">awarded to</div>
+      <p id="certificate__name" class="indie-flower">{{ name }}</p>
+      <p id="certificate__description" class="inter">
+        This certificate is presented in recognition of your dedication,
+        effort <br />
+        and contributions. You have made a positive impact on the <br />
+        community and we are grateful for your support.
+      </p>
+    </div>
+
+    <footer class="footer">
+      <div id="certificate__date">
+        <span class="inter">Date: </span>
+        <time datetime="{{ date|date:'Y-m-d' }}" class="indie-flower">{{ date|date:"Y-m-d" }}</time>
+      </div>
+      <div id="djangonaut-space-logo"></div>
+    </footer>
+  </body>
+</html>

@@ -14,6 +14,7 @@ repos:
   - id: check-toml
   - id: end-of-file-fixer
   - id: trailing-whitespace
+    exclude: ^home/static/certificates/fonts/.*-OFL\.txt$  # Licences are kept verbatim
 - repo: https://github.com/rstcheck/rstcheck
   rev: v6.3.1
   hooks:
