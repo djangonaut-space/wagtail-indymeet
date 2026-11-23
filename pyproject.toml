@@ -35,6 +35,8 @@ dependencies = [
     "pygithub>=2.10.0",
     "django-crontask",
     "weasyprint>=70.0",
+    "django-otp>=1.7",
+    "segno>=1.6",
 ]
 
 [tool.uv.sources]

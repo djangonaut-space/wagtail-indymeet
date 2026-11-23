@@ -693,6 +693,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-otp"
+version = "1.7.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d0/e9/db4349d7a866e6d5153b31fa740b17f5893723715edf7d1673615d9f462c/django_otp-1.7.5.tar.gz", hash = "sha256:7f554d21dcd035550c3b8e3f154b1f422fee71fdc75c8a3bf96e42a2ea6dafcc", size = 79637, upload-time = "2026-10-16T14:48:48.98Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/bc/bda771669006e7e112bed31a330636ff0b3c3407b053c10c492368c35f6f/django_otp-1.7.5-py3-none-any.whl", hash = "sha256:475d4111e07d61616996f098d08d29884da6397273a11f53c1b8e8c75d27e1dc", size = 73805, upload-time = "2026-10-16T14:48:47.793Z" },
+]
+
+[[package]]
 name = "django-permissionedforms"
 version = "0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -838,6 +850,7 @@ dependencies = [
     { name = "django-extensions" },
     { name = "django-filter" },
     { name = "django-import-export" },
+    { name = "django-otp" },
     { name = "django-recaptcha" },
     { name = "django-storages" },
     { name = "django-tailwind" },
@@ -852,6 +865,7 @@ dependencies = [
     { name = "pygithub" },
     { name = "python-dotenv" },
     { name = "requests" },
+    { name = "segno" },
     { name = "sentry-sdk", extra = ["django"] },
     { name = "six" },
     { name = "supervisor" },
@@ -893,6 +907,7 @@ requires-dist = [
     { name = "django-extensions" },
     { name = "django-filter", specifier = ">=26.2" },
     { name = "django-import-export" },
+    { name = "django-otp", specifier = ">=1.7" },
     { name = "django-recaptcha", specifier = ">=4" },
     { name = "django-storages" },
     { name = "django-tailwind" },
@@ -907,6 +922,7 @@ requires-dist = [
     { name = "pygithub", specifier = ">=2.10.0" },
     { name = "python-dotenv" },
     { name = "requests", specifier = ">=2.34.2" },
+    { name = "segno", specifier = ">=1.6" },
     { name = "sentry-sdk", extras = ["django"] },
     { name = "six" },
     { name = "supervisor" },
@@ -1842,6 +1858,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9f/47/f216a33221db8eff328987661cf18371afee89c62a62b434b963d6b509c9/responses-0.26.3.tar.gz", hash = "sha256:b0c11ca8131b8b227b8d5108e6ed39772222bd5aab030ed430e8f99057c4c409", size = 86335, upload-time = "2026-08-26T19:17:24.373Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6d/86/ca7958de70cb0752350575e98229368a3a2f746a2942034b3364e17312bb/responses-0.26.3-py3-none-any.whl", hash = "sha256:74474f799334ac4f37d93b6437ecc3bb1bb5c77a8d31780a338643be2dce0af8", size = 36289, upload-time = "2026-08-26T19:17:23.176Z" },
+]
+
+[[package]]
+name = "segno"
+version = "1.6.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1c/2e/b396f750c53f570055bf5a9fc1ace09bed2dff013c73b7afec5702a581ba/segno-1.6.6.tar.gz", hash = "sha256:e60933afc4b52137d323a4434c8340e0ce1e58cec71439e46680d4db188f11b3", size = 1628586, upload-time = "2025-03-12T22:12:53.324Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/02/12c73fd423eb9577b97fc1924966b929eff7074ae6b2e15dd3d30cb9e4ae/segno-1.6.6-py3-none-any.whl", hash = "sha256:28c7d081ed0cf935e0411293a465efd4d500704072cdb039778a2ab8736190c7", size = 76503, upload-time = "2025-03-12T22:12:48.106Z" },
 ]
 
 [[package]]

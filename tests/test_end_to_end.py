@@ -734,9 +734,9 @@ class TestTeamFormation:
         admin.save()
         page.goto("/django-admin/")
         # Fill login form using accessible role-based selectors
-        page.get_by_role("textbox", name="username").fill("admin")
-        page.get_by_role("textbox", name="password").fill("adminpass123")
-        page.get_by_role("button", name="Log in").click()
+        page.get_by_label("Username").fill("admin")
+        page.get_by_label("Password").fill("adminpass123")
+        page.get_by_role("button", name="Login").click()
 
         # Wait for navigation after login
         page.wait_for_load_state("networkidle")

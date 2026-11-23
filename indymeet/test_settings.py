@@ -16,3 +16,6 @@ TASKS = {
         "BACKEND": "django_tasks.backends.immediate.ImmediateBackend",
     }
 }
+
+# Tests opt in to the two-factor deadline explicitly with override_settings.
+TWO_FACTOR_REQUIRED_FROM = None

@@ -4,10 +4,12 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
 from home import constants
 
+from . import two_factor
 from .models import CustomUser
 from .models import UserAvailability
 from .models import UserProfile
@@ -287,3 +289,131 @@ class DeleteAccountForm(forms.Form):
             )
 
         return password
+
+
+class PasswordConfirmationForm(forms.Form):
+    """
+    Ask a signed-in user for their password before a sensitive change.
+
+    Guards two-factor settings against someone using an unattended session.
+    """
+
+    password = forms.CharField(
+        label=_("Current password"),
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+
+    def __init__(self, *args, user: CustomUser, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_password(self) -> str:
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise ValidationError(_("Incorrect password."), code="incorrect_password")
+        return password
+
+
+class TwoFactorSetupForm(PasswordConfirmationForm):
+    """Confirm a new authenticator app by checking a code it generated."""
+
+    token = forms.CharField(
+        label=_("6-digit code from your authenticator app"),
+        max_length=12,
+        widget=forms.TextInput(
+            attrs={
+                "autocomplete": "one-time-code",
+                "inputmode": "numeric",
+                "autocapitalize": "off",
+            }
+        ),
+    )
+
+    field_order = ["token", "password"]
+
+    def __init__(self, *args, device: TOTPDevice, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.device = device
+
+    def clean_token(self) -> str:
+        """Accept codes typed with spaces, as authenticator apps display them."""
+        token = "".join(self.cleaned_data["token"].split())
+        if not token.isdigit():
+            raise ValidationError(
+                _("Enter the 6-digit code shown in your authenticator app."),
+                code="invalid_token",
+            )
+        return token
+
+    def clean(self) -> dict:
+        """
+        Verify the code only once every other field is valid.
+
+        Each failed verification makes django-otp enforce a longer wait, so a
+        wrong password shouldn't also count as a wrong code.
+        """
+        cleaned_data = super().clean()
+        if self.errors:
+            return cleaned_data
+        allowed, _reason = self.device.verify_is_allowed()
+        if not allowed:
+            self.add_error(
+                "token",
+                ValidationError(
+                    _("Too many incorrect codes. Wait a moment and try again."),
+                    code="throttled",
+                ),
+            )
+        elif not self.device.verify_token(cleaned_data["token"]):
+            self.add_error(
+                "token",
+                ValidationError(
+                    _(
+                        "That code is not valid. Check the time on your device "
+                        "and enter the newest code."
+                    ),
+                    code="invalid_token",
+                ),
+            )
+        return cleaned_data
+
+
+class TwoFactorVerifyForm(forms.Form):
+    """The second login step: an authenticator code or a recovery code."""
+
+    token = forms.CharField(
+        label=_("Authentication code"),
+        help_text=_(
+            "Enter the 6-digit code from your authenticator app, or one of "
+            "your recovery codes."
+        ),
+        max_length=20,
+        widget=forms.TextInput(
+            attrs={
+                "autocomplete": "one-time-code",
+                "autocapitalize": "off",
+                "autocorrect": "off",
+                "spellcheck": "false",
+                "autofocus": True,
+            }
+        ),
+    )
+
+    def __init__(self, *args, user: CustomUser, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.device = None
+
+    def clean_token(self) -> str:
+        token = self.cleaned_data["token"]
+        try:
+            self.device = two_factor.verify_login_token(self.user, token)
+        except two_factor.TwoFactorThrottled:
+            raise ValidationError(
+                _("Too many incorrect codes. Wait a moment and try again."),
+                code="throttled",
+            ) from None
+        if self.device is None:
+            raise ValidationError(_("That code is not valid."), code="invalid_token")
+        return token
