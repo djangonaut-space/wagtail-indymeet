@@ -1,7 +1,13 @@
-from django.contrib.auth import views as auth_views
 from django.urls import include
 from django.urls import path
 
+from .two_factor_views import TwoFactorDisableView
+from .two_factor_views import TwoFactorLoginView
+from .two_factor_views import TwoFactorRecoverView
+from .two_factor_views import TwoFactorRecoveryCodesView
+from .two_factor_views import TwoFactorSetupView
+from .two_factor_views import TwoFactorVerifyView
+from .two_factor_views import TwoFactorView
 from .views import ActivateAccountView
 from .views import CustomPasswordResetView
 from .views import DeleteAccountView
@@ -16,8 +22,13 @@ from .views import UpdateUserView
 urlpatterns = [
     path(
         "login/",
-        auth_views.LoginView.as_view(redirect_authenticated_user=True),
+        TwoFactorLoginView.as_view(),
         name="login",
+    ),
+    path(
+        "login/verify/",
+        TwoFactorVerifyView.as_view(),
+        name="two_factor_verify",
     ),
     path(
         "password_reset/",
@@ -57,5 +68,26 @@ urlpatterns = [
         "delete/",
         DeleteAccountView.as_view(),
         name="delete_account",
+    ),
+    path("two-factor/", TwoFactorView.as_view(), name="two_factor"),
+    path(
+        "two-factor/setup/",
+        TwoFactorSetupView.as_view(),
+        name="two_factor_setup",
+    ),
+    path(
+        "two-factor/recovery-codes/",
+        TwoFactorRecoveryCodesView.as_view(),
+        name="two_factor_recovery_codes",
+    ),
+    path(
+        "two-factor/recover/<str:token>/",
+        TwoFactorRecoverView.as_view(),
+        name="two_factor_recover",
+    ),
+    path(
+        "two-factor/disable/",
+        TwoFactorDisableView.as_view(),
+        name="two_factor_disable",
     ),
 ]

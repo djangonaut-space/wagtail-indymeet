@@ -1,4 +1,5 @@
 import os
+from datetime import date
 
 import dj_database_url
 import sentry_sdk
@@ -66,6 +67,9 @@ INSTALLED_APPS = [
     "django.forms",
     # other
     "crontask",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
     "django_extensions",
     "django_filters",
     "django_tasks",
@@ -86,6 +90,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
+    "accounts.middleware.RequireTwoFactorMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -110,6 +116,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "home.context_processors.alert_about_status",
+                "accounts.context_processors.two_factor_reminder",
                 "home.context_processors.nav_session_links",
             ],
         },
@@ -330,6 +337,25 @@ if CLOUDFLARE_BEARER_TOKEN and CLOUDFLARE_ZONE_ID:
 # The value for production is "production". Email subjects are prefixed with
 # the environment name when ENVIRONMENT != "production".
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "dev")
+
+# Two-factor authentication (django-otp). The issuer is the account label shown
+# in authenticator apps; non-production environments are suffixed so entries for
+# staging and production can be told apart.
+OTP_TOTP_ISSUER = (
+    "Djangonaut Space"
+    if ENVIRONMENT == "production"
+    else f"Djangonaut Space ({ENVIRONMENT})"
+)
+# Keep TOTP secrets and their QR codes out of the Django admin.
+OTP_ADMIN_HIDE_SENSITIVE_DATA = True
+# The date (YYYY-MM-DD) from which every user must have two-factor
+# authentication. Leave unset to keep it optional. Once set, users without it
+# see a reminder banner until the date, and are made to set it up from then on.
+TWO_FACTOR_REQUIRED_FROM = (
+    date.fromisoformat(os.environ["TWO_FACTOR_REQUIRED_FROM"])
+    if os.environ.get("TWO_FACTOR_REQUIRED_FROM")
+    else None
+)
 
 BASE_URL = os.getenv(
     "BASE_URL",

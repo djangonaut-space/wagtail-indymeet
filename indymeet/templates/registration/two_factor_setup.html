@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% translate "Set up two-factor authentication | Djangonaut Space" %}{% endblock %}
+{% block meta_title %}{% translate "Set up two-factor authentication | Djangonaut Space" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<main class="section my-3 mx-5">
+    <div class="section-container max-w-3xl">
+        <h1 class="text-5xl mb-6">{% translate "Set up two-factor authentication" %}</h1>
+
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-2">{% translate "1. Scan the QR code" %}</h2>
+            <p class="text-gray-600 mb-4">
+                {% translate "Open your authenticator app and scan this QR code to add your Djangonaut Space account." %}
+            </p>
+            <img src="{{ qr_code }}" width="220" height="220"
+                 alt="{% translate 'QR code for setting up your authenticator app' %}">
+            <p class="text-gray-600 mt-4 mb-1">
+                {% translate "Can't scan it? Enter this setup key in your app instead:" %}
+            </p>
+            <p><code class="break-all" data-testid="manual-entry-key">{{ manual_entry_key }}</code></p>
+        </div>
+
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-2">{% translate "2. Confirm the code" %}</h2>
+            <p class="text-gray-600 mb-4">
+                {% translate "Enter the code your app shows and your password to finish." %}
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                {{ form }}
+                <div class="flex gap-4 items-center mt-4">
+                    <button type="submit" class="action-button">{% translate "Turn on two-factor authentication" %}</button>
+                    <a href="{% url 'two_factor' %}">{% translate "Cancel" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock content %}

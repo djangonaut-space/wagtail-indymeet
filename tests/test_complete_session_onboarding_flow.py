@@ -190,9 +190,9 @@ class TestCompleteSessionOnboardingFlow:
     def admin_login(self, page: Page, admin_user: CustomUser):
         """Helper to login as admin."""
         page.goto("/django-admin/")
-        page.get_by_role("textbox", name="username").fill(admin_user.username)
-        page.get_by_role("textbox", name="password").fill("testpass123")
-        page.get_by_role("button", name="Log in").click()
+        page.get_by_label("Username").fill(admin_user.username)
+        page.get_by_label("Password").fill("testpass123")
+        page.get_by_role("button", name="Login").click()
         page.wait_for_load_state("networkidle")
 
     def admin_create_project(
