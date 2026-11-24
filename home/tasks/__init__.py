@@ -17,6 +17,7 @@ from home.tasks.session_announcements import (
 )
 from home.tasks.session_notifications import (
     reject_waitlisted_user,
+    schedule_exit_survey_reminders,
     schedule_final_emails,
     send_accepted_email,
     send_acceptance_reminder_email,
@@ -34,6 +35,7 @@ __all__ = [
     "post_announcement",
     "reject_waitlisted_user",
     "schedule_approval_emails",
+    "schedule_exit_survey_reminders",
     "schedule_final_emails",
     "schedule_pending_announcements",
     "send_accepted_email",

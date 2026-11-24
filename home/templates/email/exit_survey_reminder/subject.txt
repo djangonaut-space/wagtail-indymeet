@@ -1,0 +1,1 @@
+Add the exit survey for {{ session.title }} before {{ session.end_date|date:"Y-m-d" }}

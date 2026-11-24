@@ -16,9 +16,17 @@ from django.utils import timezone
 from accounts.factories import UserFactory
 from home import constants, preview_email
 from home.admin import SessionMembershipAdmin
-from home.factories import SessionFactory, SessionMembershipFactory
+from home.factories import (
+    OrganizerFactory,
+    SessionFactory,
+    SessionMembershipFactory,
+)
 from home.models import Session, SessionMembership, SessionMembershipNotification
-from home.tasks.session_notifications import schedule_final_emails, send_final_email
+from home.tasks.session_notifications import (
+    schedule_exit_survey_reminders,
+    schedule_final_emails,
+    send_final_email,
+)
 
 END_DATE = datetime.date(2026, 11, 23)
 
@@ -92,6 +100,56 @@ class ScheduleFinalEmailsTests(TestCase):
         schedule_final_emails.call(membership_ids=[recipient.pk])
 
         self.assertEqual([m.to for m in mail.outbox], [[recipient.user.email]])
+
+
+@override_settings(ENVIRONMENT="production", BASE_URL="https://djangonaut.space")
+class ExitSurveyReminderTests(TestCase):
+    def setUp(self):
+        self.end_date = timezone.now().date() + datetime.timedelta(days=7)
+
+    def test_emails_organizers(self):
+        session = SessionFactory.create(end_date=self.end_date)
+        organizer = OrganizerFactory.create(session=session)
+        SessionMembershipFactory.create(session=session)
+
+        schedule_exit_survey_reminders.call()
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, [organizer.user.email])
+        self.assertIn(
+            f"https://djangonaut.space/django-admin/home/session/{session.pk}/change/",
+            message.body,
+        )
+
+    def test_skips_sessions_with_survey_url(self):
+        session = SessionFactory.create(
+            end_date=self.end_date, exit_survey_url="https://example.com/survey"
+        )
+        OrganizerFactory.create(session=session)
+        schedule_exit_survey_reminders.call()
+        self.assertEqual(mail.outbox, [])
+
+    def test_skips_sessions_already_emailed(self):
+        """Final emails sent early from the admin can't include the link anymore."""
+        session = SessionFactory.create(end_date=self.end_date)
+        OrganizerFactory.create(session=session)
+        SessionMembershipNotification.objects.create(
+            session_membership=SessionMembershipFactory.create(session=session),
+            final_email_sent_at=timezone.now(),
+        )
+        schedule_exit_survey_reminders.call()
+        self.assertEqual(mail.outbox, [])
+
+    def test_only_sessions_ending_in_a_week(self):
+        """Matching one date means each session is reminded once, not every day."""
+        for days in (6, 8):
+            session = SessionFactory.create(
+                end_date=self.end_date + datetime.timedelta(days=days - 7)
+            )
+            OrganizerFactory.create(session=session)
+        schedule_exit_survey_reminders.call()
+        self.assertEqual(mail.outbox, [])
 
 
 @override_settings(ENVIRONMENT="production")

@@ -1,0 +1,20 @@
+{% extends "email/base.html" %}
+{% load email_tags %}
+
+{% block preheader %}{{ session.title }} needs an exit survey URL before its final email goes out.{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello,</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>{{ session.title }}</strong> needs its exit survey URL. Create the google form and add the URL to the session before <strong><a href="{{ session.end_date|time_is_link:'1500' }}" style="color: #5c0287;">{{ session.end_date|date:"l, j F Y" }} at 15:00 UTC</a></strong>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    At that time, every Djangonaut is automatically sent their final email and certificate. Without the URL, the final email won't ask them to fill out the exit survey.
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button_text %}Edit session{% endblock cta_button_text %}

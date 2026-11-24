@@ -1,0 +1,9 @@
+{% load email_tags %}Hello,
+
+{{ session.title }} needs its exit survey URL. Create the google form and add the URL to the session before {{ session.end_date|date:"l, j F Y" }} at 15:00 UTC ({{ session.end_date|time_is_link:"1500" }}):
+{{ cta_link }}
+
+At that time, every Djangonaut is automatically sent their final email and certificate. Without the URL, the final email won't ask them to fill out the exit survey.
+
+Best regards,
+Djangonaut Space

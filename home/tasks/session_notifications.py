@@ -5,6 +5,8 @@ These tasks handle sending various notification emails asynchronously,
 allowing views to return immediately while emails are processed in the background.
 """
 
+import datetime
+
 from crontask import cron
 from django.db import transaction
 from django.utils import timezone
@@ -306,6 +308,45 @@ def schedule_final_emails(membership_ids: list[int] | None = None) -> None:
         "id", flat=True
     ):
         send_final_email.enqueue(membership_id=membership_id)
+
+
+EXIT_SURVEY_REMINDER_DAYS = 7
+
+
+@cron("0 15 * * *")
+@task()
+def schedule_exit_survey_reminders() -> None:
+    """Remind organizers when a session's final email has no exit survey link.
+
+    Runs a week before the final email goes out. Only sessions ending exactly
+    EXIT_SURVEY_REMINDER_DAYS from today match, so each session is reminded
+    once. Sessions whose final emails were already sent from the admin are
+    skipped, since adding the link would no longer reach anyone.
+    """
+    end_date = timezone.now().date() + datetime.timedelta(
+        days=EXIT_SURVEY_REMINDER_DAYS
+    )
+    sessions = (
+        Session.objects.ending_on(end_date).without_exit_survey().final_emails_unsent()
+    )
+    for session in sessions:
+        organizer_emails = list(
+            session.session_memberships.organizers().values_list(
+                "user__email", flat=True
+            )
+        )
+        if not organizer_emails:
+            continue
+        email.send(
+            from_email=settings.SESSIONS_FROM_EMAIL,
+            email_template="exit_survey_reminder",
+            recipient_list=organizer_emails,
+            context={
+                "session": session,
+                "cta_link": settings.BASE_URL
+                + reverse("admin:home_session_change", args=[session.id]),
+            },
+        )
 
 
 @task()

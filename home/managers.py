@@ -147,6 +147,16 @@ class SessionQuerySet(QuerySet):
         """Sessions whose last day is ``date``."""
         return self.filter(end_date=date)
 
+    def without_exit_survey(self) -> SessionQuerySet:
+        """Sessions whose final email has no exit survey link yet."""
+        return self.filter(exit_survey_url="")
+
+    def final_emails_unsent(self) -> SessionQuerySet:
+        """Sessions where no member has been sent the final email yet."""
+        return self.exclude(
+            session_memberships__notification__final_email_sent_at__isnull=False
+        )
+
     def get_accepting_applications(self) -> Session | None:
         aoe_early_timezone = datetime.timezone(datetime.timedelta(hours=12))
         aoe_late_timezone = datetime.timezone(datetime.timedelta(hours=-12))
