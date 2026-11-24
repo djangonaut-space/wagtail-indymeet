@@ -3,9 +3,11 @@ Signal handlers for managing user groups and staff status based on SessionMember
 and for syncing users to the Buttondown newsletter.
 """
 
+from allauth.account.models import EmailAddress
 from home import constants
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.db.models import Q
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
@@ -105,3 +107,44 @@ def sync_buttondown_on_membership_delete(
     if not buttondown_enabled() or not instance.user.profile.email_confirmed:
         return
     sync_user_to_buttondown.enqueue(instance.user_id)
+
+
+@receiver(
+    post_save,
+    sender=UserProfile,
+    dispatch_uid="accounts.mirror_email_confirmation_to_allauth",
+)
+def mirror_email_confirmation_to_allauth(
+    sender, instance: UserProfile, created: bool, raw: bool, **kwargs
+) -> None:
+    """
+    Copy the user's email and ``email_confirmed`` into allauth's ``EmailAddress``.
+
+    ``UserProfile.email_confirmed`` stays the source of truth. allauth reads its
+    own table to refuse two-factor setup on an unconfirmed address (so nobody
+    can lock the real owner out of an account registered with their email) and
+    to know where it may send a sign-in confirmation code.
+
+    A profile's creation is skipped: it happens while the user is still being
+    created, and allauth's GitHub signup expects to write the first
+    ``EmailAddress`` rows itself. Every signup flow saves the profile again.
+    """
+    if raw or created:
+        return
+    user = instance.user
+    email = user.email.lower()
+    EmailAddress.objects.filter(
+        Q(user=user) & ~Q(email__iexact=email)
+        # Emails are unique per user, so another user's row is out of date.
+        | ~Q(user=user) & Q(email__iexact=email)
+    ).delete()
+    if email:
+        EmailAddress.objects.update_or_create(
+            user=user,
+            email__iexact=email,
+            defaults={
+                "email": email,
+                "verified": instance.email_confirmed,
+                "primary": True,
+            },
+        )

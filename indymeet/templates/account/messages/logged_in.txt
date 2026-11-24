@@ -1,0 +1,1 @@
+{# Left empty so logging in doesn't show a message, as before allauth. #}

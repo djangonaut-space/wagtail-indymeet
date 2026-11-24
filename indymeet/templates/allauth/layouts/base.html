@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% comment %}
+    The layout every django-allauth page extends. It places allauth's pages
+    inside the site's own base template; the pieces they are built from are
+    styled in allauth/elements/.
+{% endcomment %}
+{% load static %}
+{% block title %}{% block head_title %}{% endblock head_title %} | Djangonaut Space{% endblock title %}
+{% block title_suffix %}{% endblock title_suffix %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+{% endblock extra_css %}
+{% block content_class %} mx-auto max-w-xl px-2 py-8 md:px-4{% endblock content_class %}

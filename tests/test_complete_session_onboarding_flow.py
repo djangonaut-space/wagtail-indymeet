@@ -164,7 +164,7 @@ class TestCompleteSessionOnboardingFlow:
         # Login
         self.logout(page)
         page.goto(reverse("login"))
-        page.locator("#id_username").fill(username)
+        page.locator("#id_login").fill(username)
         page.locator("#id_password").fill("testpass123")
         page.get_by_role("button", name="Login").click()
         page.wait_for_load_state("networkidle")
@@ -189,6 +189,9 @@ class TestCompleteSessionOnboardingFlow:
 
     def admin_login(self, page: Page, admin_user: CustomUser):
         """Helper to login as admin."""
+        # A signed-in user without admin access is refused rather than offered
+        # the login form, so start from a signed-out browser.
+        page.context.clear_cookies()
         page.goto("/django-admin/")
         page.get_by_label("Username").fill(admin_user.username)
         page.get_by_label("Password").fill("testpass123")
@@ -789,7 +792,7 @@ class TestCompleteSessionOnboardingFlow:
         # Login as djangonaut A
         self.logout(page)
         page.goto(reverse("login"))
-        page.locator("#id_username").fill("djangonaut_a")
+        page.locator("#id_login").fill("djangonaut_a")
         page.locator("#id_password").fill("testpass123")
         page.get_by_role("button", name="Login").click()
         page.wait_for_load_state("networkidle")
@@ -811,7 +814,7 @@ class TestCompleteSessionOnboardingFlow:
         # Login as djangonaut B
         self.logout(page)
         page.goto(reverse("login"))
-        page.locator("#id_username").fill("djangonaut_b")
+        page.locator("#id_login").fill("djangonaut_b")
         page.locator("#id_password").fill("testpass123")
         page.get_by_role("button", name="Login").click()
         page.wait_for_load_state("networkidle")
@@ -954,7 +957,7 @@ class TestCompleteSessionOnboardingFlow:
         def verify_team_access(username: str, expected_members: list[str], logout=True):
             self.logout(page)
             page.goto(reverse("login"))
-            page.locator("#id_username").fill(username)
+            page.locator("#id_login").fill(username)
             page.locator("#id_password").fill("testpass123")
             page.get_by_role("button", name="Login").click()
             page.wait_for_load_state("networkidle")
@@ -1183,7 +1186,7 @@ class TestCompleteSessionOnboardingFlow:
         # Login as navigator (who has availability and overlaps with team members)
         self.logout(page)
         page.goto(reverse("login"))
-        page.locator("#id_username").fill("navigator1")
+        page.locator("#id_login").fill("navigator1")
         page.locator("#id_password").fill("testpass123")
         page.get_by_role("button", name="Login").click()
         page.wait_for_load_state("networkidle")

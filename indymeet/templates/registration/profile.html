@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n wagtailcore_tags static %}
+{% load i18n wagtailcore_tags static socialaccount %}
 
 {% block title %}{% translate "Profile | Djangonaut Space" %}{% endblock %}
 {% block meta_title %}{% translate "Profile | Djangonaut Space" %}{% endblock %}
@@ -192,10 +192,17 @@
                   <span class="text-gray-500"><i class="fa-solid fa-x"></i> {% translate "Off" %}</span>
                   {% endif %}
               </p>
-              <a href="{% url 'two_factor' %}"
+              <a href="{% url 'mfa_index' %}"
                  class="inline-block px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">
                   {% translate "Manage two-factor authentication" %}
               </a>
+              {% get_providers as socialaccount_providers %}
+              {% if socialaccount_providers %}
+              <a href="{% url 'socialaccount_connections' %}"
+                 class="inline-block px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                  {% translate "Manage GitHub sign-in" %}
+              </a>
+              {% endif %}
           </div>
         </div>
 

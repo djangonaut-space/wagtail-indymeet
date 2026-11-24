@@ -1,0 +1,8 @@
+{% load i18n %}
+<li>
+    <a href="{{ attrs.href }}"
+       class="inline-block rounded border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50">
+        <i class="fa-brands fa-{{ attrs.provider_id }}"></i>
+        {% blocktranslate with name=attrs.name %}Continue with {{ name }}{% endblocktranslate %}
+    </a>
+</li>

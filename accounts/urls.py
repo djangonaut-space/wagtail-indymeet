@@ -1,13 +1,9 @@
+from allauth.account import views as allauth_views
+from allauth.urls import build_provider_urlpatterns
+from django.contrib.auth import views as auth_views
 from django.urls import include
 from django.urls import path
 
-from .two_factor_views import TwoFactorDisableView
-from .two_factor_views import TwoFactorLoginView
-from .two_factor_views import TwoFactorRecoverView
-from .two_factor_views import TwoFactorRecoveryCodesView
-from .two_factor_views import TwoFactorSetupView
-from .two_factor_views import TwoFactorVerifyView
-from .two_factor_views import TwoFactorView
 from .views import ActivateAccountView
 from .views import CustomPasswordResetView
 from .views import DeleteAccountView
@@ -19,26 +15,51 @@ from .views import UpdateEmailSubscriptionView
 from .views import UpdateTimezoneView
 from .views import UpdateUserView
 
+# django-allauth handles login, two-factor authentication and GitHub sign-in.
+# Its views are routed one by one rather than through ``allauth.urls`` because
+# signup, email confirmation and password reset remain this project's own, and
+# allauth's versions of those must not be reachable alongside them.
+#
+# allauth looks up some pages by its own URL names, so the project's signup,
+# logout and password reset are also registered under the names it expects.
 urlpatterns = [
+    path("login/", allauth_views.login, name="login"),
+    path("login/", allauth_views.login, name="account_login"),
+    path("logout/", auth_views.LogoutView.as_view(), name="account_logout"),
+    path("inactive/", allauth_views.account_inactive, name="account_inactive"),
     path(
-        "login/",
-        TwoFactorLoginView.as_view(),
-        name="login",
+        "reauthenticate/",
+        allauth_views.reauthenticate,
+        name="account_reauthenticate",
     ),
     path(
-        "login/verify/",
-        TwoFactorVerifyView.as_view(),
-        name="two_factor_verify",
+        "reauthenticate/code/",
+        allauth_views.request_reauthentication_code,
+        name="account_request_reauthentication_code",
     ),
+    path(
+        "reauthenticate/code/confirm/",
+        allauth_views.confirm_reauthentication_code,
+        name="account_confirm_reauthentication_code",
+    ),
+    path("two-factor/", include("allauth.mfa.urls")),
+    path("social/", include("allauth.socialaccount.urls")),
+    *build_provider_urlpatterns(),
     path(
         "password_reset/",
         CustomPasswordResetView.as_view(),
         name="password_reset",
     ),
+    path(
+        "password_reset/",
+        CustomPasswordResetView.as_view(),
+        name="account_reset_password",
+    ),
     path("", include("django.contrib.auth.urls")),
     path("profile/", profile, name="profile"),
     path("profile/update/", UpdateUserView.as_view(), name="update_user"),
     path("signup/", SignUpView.as_view(), name="signup"),
+    path("signup/", SignUpView.as_view(), name="account_signup"),
     path(
         "activate/<uidb64>/<token>",
         ActivateAccountView.as_view(),
@@ -68,26 +89,5 @@ urlpatterns = [
         "delete/",
         DeleteAccountView.as_view(),
         name="delete_account",
-    ),
-    path("two-factor/", TwoFactorView.as_view(), name="two_factor"),
-    path(
-        "two-factor/setup/",
-        TwoFactorSetupView.as_view(),
-        name="two_factor_setup",
-    ),
-    path(
-        "two-factor/recovery-codes/",
-        TwoFactorRecoveryCodesView.as_view(),
-        name="two_factor_recovery_codes",
-    ),
-    path(
-        "two-factor/recover/<str:token>/",
-        TwoFactorRecoverView.as_view(),
-        name="two_factor_recover",
-    ),
-    path(
-        "two-factor/disable/",
-        TwoFactorDisableView.as_view(),
-        name="two_factor_disable",
     ),
 ]

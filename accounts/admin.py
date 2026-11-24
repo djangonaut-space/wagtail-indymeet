@@ -1,3 +1,5 @@
+from allauth.mfa.admin import AuthenticatorAdmin as BaseAuthenticatorAdmin
+from allauth.mfa.models import Authenticator
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import (
@@ -6,7 +8,6 @@ from django.contrib.auth.admin import (
 )
 from django.contrib.auth.models import Group
 from django.contrib import admin as django_admin
-from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.db.models import Exists, OuterRef, QuerySet
 from django.http import HttpRequest
@@ -17,7 +18,6 @@ from import_export.fields import Field
 from import_export.resources import ModelResource
 from import_export.widgets import ForeignKeyWidget
 
-from accounts import two_factor
 from accounts.models import (
     ButtondownAccount,
     CustomUser,
@@ -143,7 +143,7 @@ class LinksInline(admin.StackedInline):
 class CustomUserAdmin(ExportMixin, DescriptiveSearchMixin, BaseUserAdmin):
     model = CustomUser
     resource_classes = [CustomUserResource]
-    actions = ["compare_availability_action", "send_two_factor_recovery_email"]
+    actions = ["compare_availability_action"]
     search_fields = (
         "first_name",
         "last_name",
@@ -182,48 +182,6 @@ class CustomUserAdmin(ExportMixin, DescriptiveSearchMixin, BaseUserAdmin):
 
         url = reverse("compare_availability")
         return HttpResponseRedirect(f"{url}?users={','.join(map(str, user_ids))}")
-
-    def get_actions(self, request: HttpRequest) -> dict:
-        """Only offer two-factor recovery to superusers."""
-        actions = super().get_actions(request)
-        if not request.user.is_superuser:
-            actions.pop("send_two_factor_recovery_email", None)
-        return actions
-
-    @admin.action(description="Send two-factor recovery email to selected users")
-    def send_two_factor_recovery_email(
-        self, request: HttpRequest, queryset: QuerySet[CustomUser]
-    ) -> None:
-        """
-        Email locked-out users a link for resetting two-factor authentication.
-
-        Sending is recorded in each user's admin history. The link alone
-        can't remove the second factor; the user also needs their password.
-        """
-        if not request.user.is_superuser:
-            raise PermissionDenied
-        sent = 0
-        skipped = []
-        for user in queryset:
-            if not two_factor.has_two_factor(user):
-                skipped.append(user.username)
-                continue
-            two_factor.send_recovery_email(user)
-            self.log_change(request, user, "Sent two-factor recovery email.")
-            sent += 1
-        if sent:
-            self.message_user(
-                request,
-                f"Sent a two-factor recovery email to {sent} user(s).",
-                messages.SUCCESS,
-            )
-        if skipped:
-            self.message_user(
-                request,
-                "Skipped users without two-factor authentication: "
-                + ", ".join(skipped),
-                messages.WARNING,
-            )
 
 
 @admin.register(UserProfile)
@@ -363,3 +321,51 @@ class CustomGroupAdmin(BaseGroupAdmin):
         )
 
     actions = ["recreate_session_organizers_group"]
+
+
+admin.site.unregister(Authenticator)
+
+
+@admin.register(Authenticator)
+class AuthenticatorAdmin(BaseAuthenticatorAdmin):
+    """
+    Lets a superuser reset two-factor authentication for a locked-out user.
+
+    Deleting a user's authenticator means their next login only needs a
+    password, after which they can set up two-factor authentication again.
+    Nothing here can be added or edited, and the stored secrets are not shown.
+    """
+
+    fields = ("user", "type", "created_at", "last_used_at")
+    search_fields = ("user__username", "user__email")
+    list_select_related = ("user",)
+
+    def has_module_permission(self, request: HttpRequest) -> bool:
+        return request.user.is_superuser
+
+    def has_view_permission(
+        self, request: HttpRequest, obj: Authenticator | None = None
+    ) -> bool:
+        return request.user.is_superuser
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: Authenticator | None = None
+    ) -> bool:
+        return request.user.is_superuser
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(
+        self, request: HttpRequest, obj: Authenticator | None = None
+    ) -> bool:
+        return False
+
+    def delete_model(self, request: HttpRequest, obj: Authenticator) -> None:
+        """Remove the user's recovery codes along with their authenticator app."""
+        Authenticator.objects.filter(user=obj.user).delete()
+
+    def delete_queryset(
+        self, request: HttpRequest, queryset: QuerySet[Authenticator]
+    ) -> None:
+        Authenticator.objects.filter(user__in=queryset.values("user")).delete()

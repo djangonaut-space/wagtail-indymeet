@@ -1,407 +1,348 @@
-"""Tests for enrolling in, and managing, two-factor authentication."""
+"""
+Tests for two-factor authentication, which django-allauth provides.
 
-from datetime import timedelta
+These cover how allauth is wired into this project (routing, templates, emails,
+the confirmed-email rule) and the routes that must not skip the code step.
+"""
 
-import time_machine
+from allauth.account.models import EmailAddress
+from allauth.core.context import request_context
+from allauth.mfa.models import Authenticator
+from django.contrib.auth import SESSION_KEY
+from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
+from django.core.cache import cache
 from django.test import override_settings
+from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
-from django_otp.oath import totp
-from django_otp.plugins.otp_static.models import StaticDevice
-from django_otp.plugins.otp_static.models import StaticToken
-from django_otp.plugins.otp_totp.models import TOTPDevice
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
-from accounts import two_factor
-from accounts.factories import UserFactory
-from accounts.models import CustomUser
+from accounts.tests.two_factor_helpers import create_user
+from accounts.tests.two_factor_helpers import current_code
+from accounts.tests.two_factor_helpers import enable_two_factor
+from accounts.tests.two_factor_helpers import reauthenticate
+from accounts.tests.two_factor_helpers import recovery_codes
+from accounts.tests.two_factor_helpers import submit_password
+from accounts.tokens import account_activation_token
+from accounts.two_factor import has_two_factor
 
-PASSWORD = "testpassword123"
-
-
-def current_code(device: TOTPDevice) -> str:
-    """Return the code an authenticator app would show for the device right now."""
-    token = totp(device.bin_key, step=device.step, t0=device.t0, digits=device.digits)
-    return f"{token:0{device.digits}d}"
+ACTIVATE_URL = "/accounts/two-factor/totp/activate/"
+CODE_URL = "/accounts/two-factor/authenticate/"
 
 
-def create_user(**kwargs) -> CustomUser:
-    user = UserFactory.create(**kwargs)
-    user.set_password(PASSWORD)
-    user.save()
-    return user
+class TwoFactorTestCase(TestCase):
+    def setUp(self):
+        # allauth remembers used codes in the cache so they can't be replayed.
+        cache.clear()
+        self.user = create_user()
 
 
-def enable_two_factor(user: CustomUser) -> list[str]:
-    """Enrol the user and return their recovery codes."""
-    return two_factor.enable_two_factor(two_factor.get_or_create_pending_device(user))
-
-
-class TwoFactorHelperTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = UserFactory.create()
-
-    def test_pending_device_does_not_enable_two_factor(self):
-        two_factor.get_or_create_pending_device(self.user)
-
-        self.assertFalse(two_factor.has_two_factor(self.user))
-
-    def test_pending_device_is_reused(self):
-        first = two_factor.get_or_create_pending_device(self.user)
-        second = two_factor.get_or_create_pending_device(self.user)
-
-        self.assertEqual(first.pk, second.pk)
-        self.assertEqual(TOTPDevice.objects.filter(user=self.user).count(), 1)
-
-    def test_stale_pending_device_is_replaced(self):
-        first = two_factor.get_or_create_pending_device(self.user)
-
-        with time_machine.travel(
-            timezone.now() + two_factor.PENDING_DEVICE_MAX_AGE + timedelta(minutes=1)
-        ):
-            second = two_factor.get_or_create_pending_device(self.user)
-
-        self.assertNotEqual(first.key, second.key)
-        self.assertEqual(TOTPDevice.objects.filter(user=self.user).count(), 1)
-
-    def test_replacing_stale_pending_device_keeps_confirmed_device(self):
-        enable_two_factor(self.user)
-        confirmed = TOTPDevice.objects.get(user=self.user)
-
-        with time_machine.travel(
-            timezone.now() + two_factor.PENDING_DEVICE_MAX_AGE + timedelta(minutes=1)
-        ):
-            two_factor.get_or_create_pending_device(self.user)
-
-        self.assertTrue(TOTPDevice.objects.filter(pk=confirmed.pk).exists())
-
-    def test_enable_confirms_device_and_creates_recovery_codes(self):
-        codes = enable_two_factor(self.user)
-
-        self.assertTrue(two_factor.has_two_factor(self.user))
-        self.assertEqual(len(set(codes)), two_factor.RECOVERY_CODE_COUNT)
-        self.assertEqual(
-            two_factor.remaining_recovery_codes(self.user),
-            two_factor.RECOVERY_CODE_COUNT,
-        )
-
-    def test_generate_recovery_codes_replaces_existing_codes(self):
-        old_codes = enable_two_factor(self.user)
-
-        new_codes = two_factor.generate_recovery_codes(self.user)
-
-        self.assertEqual(StaticDevice.objects.filter(user=self.user).count(), 1)
-        self.assertCountEqual(
-            StaticToken.objects.filter(device__user=self.user).values_list(
-                "token", flat=True
-            ),
-            new_codes,
-        )
-        self.assertFalse(set(old_codes) & set(new_codes))
-
-    def test_verify_login_token_without_two_factor(self):
-        self.assertIsNone(two_factor.verify_login_token(self.user, "123456"))
-
-    def test_verify_login_token_without_recovery_codes(self):
-        enable_two_factor(self.user)
-        StaticDevice.objects.filter(user=self.user).delete()
-
-        self.assertIsNone(two_factor.verify_login_token(self.user, "abcdefgh"))
-
-    def test_disable_removes_devices_for_that_user_only(self):
-        other_user = UserFactory.create()
-        enable_two_factor(self.user)
-        enable_two_factor(other_user)
-
-        two_factor.disable_two_factor(self.user)
-
-        self.assertFalse(two_factor.has_two_factor(self.user))
-        self.assertEqual(two_factor.remaining_recovery_codes(self.user), 0)
-        self.assertTrue(two_factor.has_two_factor(other_user))
-        self.assertEqual(
-            two_factor.remaining_recovery_codes(other_user),
-            two_factor.RECOVERY_CODE_COUNT,
-        )
-
-    def test_qr_code_and_manual_key_describe_the_device(self):
-        device = two_factor.get_or_create_pending_device(self.user)
-
-        self.assertTrue(
-            two_factor.get_qr_code_data_uri(device).startswith("data:image/svg+xml")
-        )
-        self.assertIn(
-            f"secret={two_factor.get_manual_entry_key(device)}", device.config_url
-        )
-        self.assertIn("issuer=Djangonaut%20Space", device.config_url)
-
-
-class TwoFactorOverviewViewTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = create_user()
-        cls.url = reverse("two_factor")
-
-    def test_requires_login(self):
-        response = self.client.get(self.url)
-
-        self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
-
-    def test_shows_setup_link_when_disabled(self):
+@override_settings(ENVIRONMENT="production")
+class ActivationTests(TwoFactorTestCase):
+    def setUp(self):
+        super().setUp()
         self.client.force_login(self.user)
 
-        response = self.client.get(self.url)
+    def activate(self):
+        reauthenticate(self.client)
+        secret = self.client.get(ACTIVATE_URL).context["form"].secret
+        # allauth sends its notification once the change is committed, which
+        # in a TestCase is after the request (and its allauth context) is over.
+        request = RequestFactory().get(ACTIVATE_URL)
+        request.user = self.user
+        with request_context(request), self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(ACTIVATE_URL, {"code": current_code(secret)})
+        return response
 
-        self.assertContains(response, "Two-factor authentication is off")
-        self.assertContains(response, reverse("two_factor_setup"))
-        self.assertNotContains(response, reverse("two_factor_disable"))
+    def test_urls(self):
+        self.assertEqual(reverse("mfa_index"), "/accounts/two-factor/")
+        self.assertEqual(reverse("mfa_activate_totp"), ACTIVATE_URL)
+        self.assertEqual(reverse("mfa_authenticate"), CODE_URL)
 
-    def test_shows_management_links_when_enabled(self):
+    def test_anonymous_user_is_sent_to_login(self):
+        self.client.logout()
+
+        response = self.client.get(reverse("mfa_index"))
+
+        self.assertRedirects(
+            response, f"{reverse('login')}?next={reverse('mfa_index')}"
+        )
+
+    def test_overview_uses_the_site_layout(self):
+        response = self.client.get(reverse("mfa_index"))
+
+        self.assertTemplateUsed(response, "base.html")
+        self.assertContains(response, "An authenticator app is not active.")
+
+    def test_setup_asks_for_the_password_first(self):
+        response = self.client.get(ACTIVATE_URL)
+
+        self.assertRedirects(
+            response, f"{reverse('account_reauthenticate')}?next={ACTIVATE_URL}"
+        )
+
+    def test_wrong_password_does_not_reach_setup(self):
+        self.client.post(reverse("account_reauthenticate"), {"password": "wrong"})
+
+        response = self.client.get(ACTIVATE_URL)
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_setup_shows_qr_code_and_secret(self):
+        reauthenticate(self.client)
+
+        response = self.client.get(ACTIVATE_URL)
+
+        self.assertContains(response, "data:image/svg+xml;base64,")
+        self.assertContains(response, response.context["form"].secret)
+        self.assertIn("issuer=Djangonaut%20Space", response.context["totp_url"])
+
+    def test_valid_code_turns_two_factor_on_and_shows_recovery_codes(self):
+        response = self.activate()
+
+        self.assertRedirects(response, reverse("mfa_view_recovery_codes"))
+        self.assertTrue(has_two_factor(self.user))
+        codes = recovery_codes(self.user)
+        self.assertEqual(len(codes), 10)
+        self.assertContains(self.client.get(response.url), codes[0])
+
+    def test_user_is_emailed_when_two_factor_is_turned_on(self):
+        self.activate()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
+        self.assertIn("Authenticator App Activated", mail.outbox[0].subject)
+
+    @override_settings(ENVIRONMENT="staging")
+    def test_notification_is_not_emailed_to_real_users_outside_production(self):
+        self.activate()
+
+        self.assertEqual(mail.outbox, [])
+
+    @override_settings(
+        ENVIRONMENT="staging", ALLOWED_EMAILS_FOR_TESTING=["astronaut@example.com"]
+    )
+    def test_notification_is_emailed_to_allowed_testers_outside_production(self):
+        self.activate()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
+
+    def test_notification_goes_to_the_email_on_the_user_record(self):
+        """Even if allauth's copy of the address has fallen behind."""
+        EmailAddress.objects.filter(user=self.user).update(email="old@example.com")
+
+        self.activate()
+
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
+
+    def test_wrong_code_does_not_turn_two_factor_on(self):
+        reauthenticate(self.client)
+        self.client.get(ACTIVATE_URL)
+
+        response = self.client.post(ACTIVATE_URL, {"code": "000000"})
+
+        self.assertContains(response, "Incorrect code.")
+        self.assertFalse(has_two_factor(self.user))
+
+    def test_unconfirmed_email_cannot_turn_two_factor_on(self):
+        self.user.profile.email_confirmed = False
+        self.user.profile.save()
+        reauthenticate(self.client)
+
+        response = self.client.get(ACTIVATE_URL, follow=True)
+
+        self.assertRedirects(response, reverse("mfa_index"))
+        self.assertContains(response, "until you have verified your email address")
+
+    def test_turning_off_removes_authenticator_and_recovery_codes(self):
         enable_two_factor(self.user)
-        self.client.force_login(self.user)
+        reauthenticate(self.client)
 
-        response = self.client.get(self.url)
+        response = self.client.post(reverse("mfa_deactivate_totp"))
 
-        self.assertContains(response, "Two-factor authentication is on")
-        self.assertContains(response, "You have 10 of 10 unused codes left.")
-        self.assertContains(response, reverse("two_factor_recovery_codes"))
-        self.assertContains(response, reverse("two_factor_disable"))
-        self.assertNotContains(response, reverse("two_factor_setup"))
+        self.assertRedirects(response, reverse("mfa_index"))
+        self.assertFalse(Authenticator.objects.filter(user=self.user).exists())
+        self.assertIn("Authenticator App Deactivated", mail.outbox[0].subject)
 
-    def test_profile_links_to_overview(self):
-        self.client.force_login(self.user)
+    def test_turning_off_asks_for_the_password_first(self):
+        enable_two_factor(self.user)
+
+        response = self.client.post(reverse("mfa_deactivate_totp"))
+
+        self.assertIn(reverse("account_reauthenticate"), response.url)
+        self.assertTrue(has_two_factor(self.user))
+
+    def test_recovery_codes_can_be_replaced(self):
+        enable_two_factor(self.user)
+        old_codes = recovery_codes(self.user)
+        reauthenticate(self.client)
+
+        self.client.post(reverse("mfa_generate_recovery_codes"))
+
+        new_codes = recovery_codes(self.user)
+        self.assertEqual(len(new_codes), 10)
+        self.assertNotEqual(new_codes, old_codes)
+
+    def test_profile_shows_whether_two_factor_is_on(self):
+        self.assertContains(self.client.get(reverse("profile")), "fa-x")
+
+        enable_two_factor(self.user)
 
         response = self.client.get(reverse("profile"))
+        self.assertContains(response, reverse("mfa_index"))
+        self.assertTrue(response.context["two_factor_enabled"])
 
-        self.assertContains(response, self.url)
-        self.assertFalse(response.context["two_factor_enabled"])
+    def test_recovery_codes_alone_do_not_count_as_two_factor(self):
+        enable_two_factor(self.user)
+        Authenticator.objects.filter(
+            user=self.user, type=Authenticator.Type.TOTP
+        ).delete()
+
+        self.assertFalse(has_two_factor(self.user))
 
 
-@override_settings(ENVIRONMENT="production")
-class TwoFactorSetupViewTests(TestCase):
+class LoginWithTwoFactorTests(TwoFactorTestCase):
     def setUp(self):
-        self.user = create_user()
-        self.url = reverse("two_factor_setup")
+        super().setUp()
+        self.secret = enable_two_factor(self.user)
 
-    def post_setup(self, token: str, password: str = PASSWORD):
-        return self.client.post(self.url, {"token": token, "password": password})
+    def assertNotLoggedIn(self):
+        self.assertNotIn(SESSION_KEY, self.client.session)
+        self.assertEqual(self.client.get(reverse("profile")).status_code, 302)
 
-    def test_requires_login(self):
-        response = self.client.get(self.url)
+    def test_password_alone_does_not_log_in(self):
+        response = submit_password(self.client, self.user)
 
-        self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
-        self.assertFalse(TOTPDevice.objects.exists())
+        self.assertRedirects(response, CODE_URL)
+        self.assertNotLoggedIn()
 
-    def test_get_shows_qr_code_and_setup_key(self):
-        self.client.force_login(self.user)
+    def test_code_page_uses_the_site_layout(self):
+        submit_password(self.client, self.user)
 
-        response = self.client.get(self.url)
+        response = self.client.get(CODE_URL)
 
-        device = TOTPDevice.objects.get(user=self.user)
-        self.assertFalse(device.confirmed)
-        self.assertContains(response, "data:image/svg+xml")
-        self.assertContains(response, two_factor.get_manual_entry_key(device))
-        self.assertIn("no-store", response.headers["Cache-Control"])
+        self.assertTemplateUsed(response, "base.html")
+        self.assertContains(response, "protected by two-factor authentication")
 
-    def test_reloading_keeps_the_same_secret(self):
-        self.client.force_login(self.user)
+    def test_authenticator_code_completes_login(self):
+        submit_password(self.client, self.user, next="/accounts/availability/")
 
-        first = self.client.get(self.url)
-        second = self.client.get(self.url)
+        response = self.client.post(CODE_URL, {"code": current_code(self.secret)})
 
-        self.assertEqual(
-            first.context["manual_entry_key"], second.context["manual_entry_key"]
+        self.assertRedirects(response, reverse("availability"))
+        self.assertEqual(self.client.session[SESSION_KEY], str(self.user.pk))
+
+    def test_wrong_code_is_rejected(self):
+        submit_password(self.client, self.user)
+
+        response = self.client.post(CODE_URL, {"code": "000000"})
+
+        self.assertContains(response, "Incorrect code.")
+        self.assertNotLoggedIn()
+
+    def test_authenticator_code_cannot_be_replayed(self):
+        code = current_code(self.secret)
+        submit_password(self.client, self.user)
+        self.client.post(CODE_URL, {"code": code})
+        self.client.post(reverse("logout"))
+
+        submit_password(self.client, self.user)
+        response = self.client.post(CODE_URL, {"code": code})
+
+        self.assertContains(response, "Incorrect code.")
+        self.assertNotLoggedIn()
+
+    def test_recovery_code_works_once(self):
+        code = recovery_codes(self.user)[0]
+        submit_password(self.client, self.user)
+
+        response = self.client.post(CODE_URL, {"code": code})
+
+        self.assertRedirects(response, reverse("profile"))
+        self.assertEqual(len(recovery_codes(self.user)), 9)
+
+        self.client.post(reverse("logout"))
+        submit_password(self.client, self.user)
+        response = self.client.post(CODE_URL, {"code": code})
+
+        self.assertContains(response, "Incorrect code.")
+        self.assertNotLoggedIn()
+
+    def test_code_page_needs_a_password_first(self):
+        response = self.client.get(CODE_URL)
+
+        self.assertRedirects(response, reverse("login"))
+
+    def test_cancelling_discards_the_accepted_password(self):
+        submit_password(self.client, self.user)
+
+        self.client.post(reverse("account_logout"))
+
+        self.assertRedirects(self.client.get(CODE_URL), reverse("login"))
+
+    def test_user_without_two_factor_is_not_asked_for_a_code(self):
+        other = create_user("other")
+
+        response = submit_password(self.client, other)
+
+        self.assertRedirects(response, reverse("profile"))
+
+
+class OtherWaysInTests(TwoFactorTestCase):
+    """Routes besides the login form must not stand in for the second factor."""
+
+    def activation_url(self) -> str:
+        return reverse(
+            "activate_account",
+            kwargs={
+                "uidb64": urlsafe_base64_encode(force_bytes(self.user.pk)),
+                "token": account_activation_token.make_token(self.user),
+            },
         )
 
-    def test_valid_code_enables_two_factor(self):
-        self.client.force_login(self.user)
-        self.client.get(self.url)
-        device = TOTPDevice.objects.get(user=self.user)
+    def test_email_confirmation_link_logs_in_without_two_factor(self):
+        response = self.client.get(self.activation_url())
 
-        response = self.post_setup(current_code(device))
+        self.assertRedirects(response, reverse("profile"))
+        self.assertEqual(self.client.session[SESSION_KEY], str(self.user.pk))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "registration/two_factor_recovery_codes.html")
-        self.assertTrue(two_factor.has_two_factor(self.user))
-        codes = response.context["recovery_codes"]
-        self.assertEqual(len(codes), two_factor.RECOVERY_CODE_COUNT)
-        for code in codes:
-            self.assertContains(response, code)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, [self.user.email])
-        self.assertIn("turned on", mail.outbox[0].subject)
-
-    def test_code_with_spaces_is_accepted(self):
-        self.client.force_login(self.user)
-        device = two_factor.get_or_create_pending_device(self.user)
-        code = current_code(device)
-
-        self.post_setup(f" {code[:3]} {code[3:]} ")
-
-        self.assertTrue(two_factor.has_two_factor(self.user))
-
-    def test_invalid_code_is_rejected(self):
-        self.client.force_login(self.user)
-        device = two_factor.get_or_create_pending_device(self.user)
-        wrong_code = f"{(int(current_code(device)) + 1) % 10**6:06d}"
-
-        response = self.post_setup(wrong_code)
-
-        self.assertContains(response, "That code is not valid.")
-        self.assertFalse(two_factor.has_two_factor(self.user))
-        self.assertEqual(two_factor.remaining_recovery_codes(self.user), 0)
-        self.assertEqual(len(mail.outbox), 0)
-
-    def test_non_numeric_code_is_rejected(self):
-        self.client.force_login(self.user)
-
-        response = self.post_setup("abcdef")
-
-        self.assertContains(response, "Enter the 6-digit code")
-        self.assertFalse(two_factor.has_two_factor(self.user))
-
-    def test_wrong_password_is_rejected_without_using_an_attempt(self):
-        self.client.force_login(self.user)
-        device = two_factor.get_or_create_pending_device(self.user)
-
-        response = self.post_setup(current_code(device), password="wrong")
-
-        self.assertContains(response, "Incorrect password.")
-        self.assertFalse(two_factor.has_two_factor(self.user))
-        device.refresh_from_db()
-        self.assertEqual(device.throttling_failure_count, 0)
-
-    def test_repeated_wrong_codes_are_throttled(self):
-        self.client.force_login(self.user)
-        device = two_factor.get_or_create_pending_device(self.user)
-
-        with time_machine.travel(timezone.now(), tick=False) as traveller:
-            self.post_setup("000000" if current_code(device) != "000000" else "111111")
-
-            response = self.post_setup(current_code(device))
-            self.assertContains(response, "Too many incorrect codes.")
-            self.assertFalse(two_factor.has_two_factor(self.user))
-
-            traveller.shift(timedelta(seconds=2))
-            self.post_setup(current_code(device))
-            self.assertTrue(two_factor.has_two_factor(self.user))
-
-    def test_redirects_when_already_enabled(self):
+    def test_email_confirmation_link_does_not_log_in_with_two_factor(self):
         enable_two_factor(self.user)
-        self.client.force_login(self.user)
+        self.user.profile.email_confirmed = False
+        self.user.profile.save()
 
-        response = self.client.get(self.url)
+        response = self.client.get(self.activation_url(), follow=True)
 
-        self.assertRedirects(response, reverse("two_factor"))
-        self.assertEqual(TOTPDevice.objects.filter(user=self.user).count(), 1)
+        self.assertRedirects(response, reverse("login"))
+        self.assertContains(response, "Your email address is confirmed. Please log in.")
+        self.assertNotIn(SESSION_KEY, self.client.session)
+        self.user.profile.refresh_from_db()
+        self.assertTrue(self.user.profile.email_confirmed)
 
+    def test_password_reset_does_not_log_in_or_remove_two_factor(self):
+        enable_two_factor(self.user)
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+        set_password_url = self.client.get(
+            reverse("password_reset_confirm", kwargs={"uidb64": uid, "token": token})
+        ).url
 
-@override_settings(ENVIRONMENT="production")
-class TwoFactorRecoveryCodesViewTests(TestCase):
-    def setUp(self):
-        self.user = create_user()
-        self.url = reverse("two_factor_recovery_codes")
-
-    def test_requires_login(self):
-        response = self.client.post(self.url, {"password": PASSWORD})
-
-        self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
-
-    def test_redirects_when_two_factor_is_disabled(self):
-        self.client.force_login(self.user)
-
-        response = self.client.post(self.url, {"password": PASSWORD})
-
-        self.assertRedirects(response, reverse("two_factor"))
-        self.assertFalse(StaticDevice.objects.exists())
-
-    def test_get_does_not_reveal_or_change_codes(self):
-        codes = enable_two_factor(self.user)
-        self.client.force_login(self.user)
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 200)
-        for code in codes:
-            self.assertNotContains(response, code)
-        self.assertCountEqual(
-            StaticToken.objects.filter(device__user=self.user).values_list(
-                "token", flat=True
-            ),
-            codes,
+        response = self.client.post(
+            set_password_url,
+            {
+                "new_password1": "a-brand-new-passphrase",
+                "new_password2": "a-brand-new-passphrase",
+            },
         )
 
-    def test_wrong_password_keeps_existing_codes(self):
-        codes = enable_two_factor(self.user)
-        self.client.force_login(self.user)
-
-        response = self.client.post(self.url, {"password": "wrong"})
-
-        self.assertContains(response, "Incorrect password.")
-        self.assertCountEqual(
-            StaticToken.objects.filter(device__user=self.user).values_list(
-                "token", flat=True
-            ),
-            codes,
+        self.assertRedirects(response, reverse("password_reset_complete"))
+        self.assertNotIn(SESSION_KEY, self.client.session)
+        self.assertTrue(has_two_factor(self.user))
+        response = self.client.post(
+            reverse("login"),
+            {"login": self.user.username, "password": "a-brand-new-passphrase"},
         )
-        self.assertEqual(len(mail.outbox), 0)
-
-    def test_correct_password_replaces_and_shows_codes(self):
-        old_codes = enable_two_factor(self.user)
-        self.client.force_login(self.user)
-
-        response = self.client.post(self.url, {"password": PASSWORD})
-
-        new_codes = response.context["recovery_codes"]
-        self.assertEqual(len(new_codes), two_factor.RECOVERY_CODE_COUNT)
-        self.assertFalse(set(old_codes) & set(new_codes))
-        for code in new_codes:
-            self.assertContains(response, code)
-        self.assertIn("no-store", response.headers["Cache-Control"])
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("recovery codes", mail.outbox[0].subject)
-
-
-@override_settings(ENVIRONMENT="production")
-class TwoFactorDisableViewTests(TestCase):
-    def setUp(self):
-        self.user = create_user()
-        self.url = reverse("two_factor_disable")
-
-    def test_requires_login(self):
-        response = self.client.post(self.url, {"password": PASSWORD})
-
-        self.assertRedirects(response, f"{reverse('login')}?next={self.url}")
-
-    def test_redirects_when_two_factor_is_disabled(self):
-        self.client.force_login(self.user)
-
-        response = self.client.get(self.url)
-
-        self.assertRedirects(response, reverse("two_factor"))
-
-    def test_wrong_password_keeps_two_factor_enabled(self):
-        enable_two_factor(self.user)
-        self.client.force_login(self.user)
-
-        response = self.client.post(self.url, {"password": "wrong"})
-
-        self.assertContains(response, "Incorrect password.")
-        self.assertTrue(two_factor.has_two_factor(self.user))
-        self.assertEqual(len(mail.outbox), 0)
-
-    def test_correct_password_disables_two_factor(self):
-        enable_two_factor(self.user)
-        self.client.force_login(self.user)
-
-        response = self.client.post(self.url, {"password": PASSWORD}, follow=True)
-
-        self.assertRedirects(response, reverse("two_factor"))
-        self.assertContains(response, "Two-factor authentication has been turned off.")
-        self.assertFalse(two_factor.has_two_factor(self.user))
-        self.assertFalse(TOTPDevice.objects.filter(user=self.user).exists())
-        self.assertFalse(StaticDevice.objects.filter(user=self.user).exists())
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, [self.user.email])
-        self.assertIn("turned off", mail.outbox[0].subject)
+        self.assertRedirects(response, CODE_URL)

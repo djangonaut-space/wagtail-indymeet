@@ -37,7 +37,7 @@
         <div>
             Two-factor authentication will be required for all accounts from
             {{ two_factor_deadline|date:"F j, Y" }}.
-            <a href="{% url 'two_factor_setup' %}" class="underline">Set it up now</a>.
+            <a href="{% url 'mfa_activate_totp' %}" class="underline">Set it up now</a>.
         </div>
         <button type="button"
                 aria-label="Dismiss"

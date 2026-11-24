@@ -11,13 +11,23 @@ from django.shortcuts import redirect
 
 from . import two_factor
 
+SETUP_VIEW_NAME = "mfa_activate_totp"
+
 # Views a user without two-factor authentication can still reach once it is
-# mandatory: setting it up, logging out, and background requests whose
-# response the user never sees.
+# mandatory: setting it up (which needs a recent password check and a confirmed
+# email address), logging out, and background requests whose response the user
+# never sees.
 EXEMPT_VIEW_NAMES = frozenset(
     {
-        "two_factor_setup",
+        SETUP_VIEW_NAME,
+        "mfa_index",
+        "account_reauthenticate",
+        "account_request_reauthentication_code",
+        "account_confirm_reauthentication_code",
+        "activate_account",
+        "resend_email_confirmation",
         "logout",
+        "account_logout",
         "admin:logout",
         "wagtailadmin_logout",
         "update_timezone",
@@ -72,4 +82,4 @@ class RequireTwoFactorMiddleware:
             "Two-factor authentication is now required for all accounts. "
             "Set it up to continue.",
         )
-        return redirect("two_factor_setup")
+        return redirect(SETUP_VIEW_NAME)

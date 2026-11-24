@@ -25,6 +25,6 @@ class LoginViewTest(TestCase):
     def test_unauthenticated_user_sees_login_form(self):
         url = reverse("login") + "?next=/my-sessions/"
         response = self.client.get(url)
-        self.assertTemplateUsed(response, "registration/login.html")
+        self.assertTemplateUsed(response, "account/login.html")
         self.assertContains(response, "Don't have an account?")
         self.assertContains(response, f"{reverse('signup')}?next=/my-sessions/")

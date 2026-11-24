@@ -12,25 +12,26 @@ from django.contrib.auth.forms import PasswordResetForm, _unicode_ci_compare
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.shortcuts import resolve_url
 from django.urls import reverse, reverse_lazy
-from django.utils.encoding import force_bytes
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
-from django.utils.http import urlsafe_base64_encode
 from django.views import View
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import FormView
 from django.views.generic.edit import UpdateView
 
 from home import constants
-from home.email import send
 from home.models import Testimonial
 from home.utils import get_client_ip
 
+from .emails import send_user_confirmation_email
 from .forms import CustomUserChangeForm
 from .forms import CustomUserCreationForm
 from .forms import DeleteAccountForm
@@ -43,6 +44,36 @@ from .tokens import account_activation_token
 from .two_factor import has_two_factor
 
 User = get_user_model()
+
+
+class AdminLoginRedirectView(View):
+    """
+    Stand in for an admin's own login page.
+
+    The Wagtail and Django admins each ship a login form that only checks a
+    password. Sending their login URLs here keeps the main login, which asks
+    for the two-factor code, as the only way to sign in.
+    """
+
+    admin_index: str = ""
+    access_permission: str | None = None
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        admin_index = resolve_url(self.admin_index)
+        if not request.user.is_authenticated:
+            return redirect_to_login(
+                request.GET.get(REDIRECT_FIELD_NAME) or admin_index
+            )
+        if not self.has_admin_access(request):
+            # The login page sends signed-in users back to where they came
+            # from, so redirecting there would loop.
+            raise PermissionDenied
+        return redirect(admin_index)
+
+    def has_admin_access(self, request: HttpRequest) -> bool:
+        if self.access_permission:
+            return request.user.has_perm(self.access_permission)
+        return request.user.is_staff
 
 
 class CustomPasswordResetForm(PasswordResetForm):
@@ -87,31 +118,12 @@ class ActivateAccountView(View):
                     request, "Your email address is confirmed. Please log in."
                 )
                 return redirect("login")
-            login(request, user)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect("profile")
         else:
             # invalid link
             messages.error(request, "Your confirmation link is invalid.")
             return redirect("signup")
-
-
-def send_user_confirmation_email(request, user):
-    invite_link = reverse(
-        "activate_account",
-        kwargs={
-            "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
-            "token": account_activation_token.make_token(user),
-        },
-    )
-    email_context = {
-        "cta_link": request.build_absolute_uri(invite_link),
-        "name": user.get_full_name(),
-    }
-    send(
-        email_template="email_confirmation",
-        recipient_list=[user.email],
-        context=email_context,
-    )
 
 
 class SignUpView(CreateView):

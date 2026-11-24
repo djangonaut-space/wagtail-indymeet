@@ -9,9 +9,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts import two_factor
-from accounts.tests.test_two_factor import create_user
-from accounts.tests.test_two_factor import enable_two_factor
-from accounts.tests.test_two_factor import PASSWORD
+from accounts.tests.two_factor_helpers import create_user
+from accounts.tests.two_factor_helpers import enable_two_factor
+from accounts.tests.two_factor_helpers import reauthenticate
 
 REMINDER = "Two-factor authentication will be required for all accounts from"
 
@@ -43,7 +43,7 @@ class BeforeDeadlineTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, REMINDER)
         self.assertContains(response, days_from_today(30).strftime("%Y"))
-        self.assertContains(response, reverse("two_factor_setup"))
+        self.assertContains(response, reverse("mfa_activate_totp"))
 
     def test_user_with_two_factor_sees_no_reminder(self):
         enable_two_factor(self.user)
@@ -59,22 +59,13 @@ class BeforeDeadlineTests(TestCase):
 
         self.assertNotContains(response, REMINDER)
 
-    def test_overview_mentions_deadline_and_still_offers_turning_off(self):
-        enable_two_factor(self.user)
-
-        response = self.client.get(reverse("two_factor"))
-
-        self.assertContains(response, "will be required for all accounts from")
-        self.assertContains(response, "Turn off two-factor authentication")
-
     def test_two_factor_can_still_be_turned_off(self):
         enable_two_factor(self.user)
+        reauthenticate(self.client)
 
-        response = self.client.post(
-            reverse("two_factor_disable"), {"password": PASSWORD}
-        )
+        response = self.client.post(reverse("mfa_deactivate_totp"))
 
-        self.assertRedirects(response, reverse("two_factor"))
+        self.assertRedirects(response, reverse("mfa_index"))
         self.assertFalse(two_factor.has_two_factor(self.user))
 
 
@@ -83,18 +74,23 @@ class AfterDeadlineTests(TestCase):
     def setUp(self):
         self.user = create_user()
         self.client.force_login(self.user)
-        self.setup_url = reverse("two_factor_setup")
+        self.setup_url = reverse("mfa_activate_totp")
 
     @override_settings(TWO_FACTOR_REQUIRED_FROM=days_from_today(0))
     def test_requirement_starts_on_the_deadline_day(self):
         self.assertTrue(two_factor.is_required())
-        self.assertRedirects(self.client.get(reverse("profile")), self.setup_url)
+        self.assertRedirects(
+            self.client.get(reverse("profile")),
+            self.setup_url,
+            fetch_redirect_response=False,
+        )
 
     def test_user_without_two_factor_is_redirected_to_setup(self):
         for url in (
             reverse("profile"),
             reverse("availability"),
-            reverse("two_factor"),
+            reverse("mfa_view_recovery_codes"),
+            reverse("socialaccount_connections"),
             reverse("admin:index"),
             reverse("wagtailadmin_home"),
         ):
@@ -106,21 +102,51 @@ class AfterDeadlineTests(TestCase):
     def test_post_requests_are_redirected_too(self):
         response = self.client.post(reverse("update_user"), {"first_name": "New"})
 
-        self.assertRedirects(response, self.setup_url)
+        self.assertRedirects(response, self.setup_url, fetch_redirect_response=False)
         self.user.refresh_from_db()
         self.assertNotEqual(self.user.first_name, "New")
 
-    def test_setup_page_is_reachable_and_explains_why(self):
+    def test_redirect_explains_why(self):
         response = self.client.get(reverse("profile"), follow=True)
 
-        self.assertEqual(response.status_code, 200)
         self.assertContains(
             response, "Two-factor authentication is now required for all accounts."
         )
         self.assertNotContains(response, REMINDER)
 
+    def test_setup_can_be_completed(self):
+        """The password check and the setup page itself must stay reachable."""
+        response = self.client.get(self.setup_url)
+        self.assertRedirects(
+            response,
+            f"{reverse('account_reauthenticate')}?next={self.setup_url}",
+        )
+
+        reauthenticate(self.client)
+
+        self.assertEqual(self.client.get(self.setup_url).status_code, 200)
+
+    def test_unconfirmed_user_can_reach_what_they_need_to_confirm_their_email(self):
+        self.user.profile.email_confirmed = False
+        self.user.profile.save()
+        reauthenticate(self.client)
+
+        response = self.client.get(self.setup_url, follow=True)
+
+        self.assertRedirects(response, reverse("mfa_index"))
+        self.assertContains(response, "until you have verified your email address")
+        response = self.client.post(reverse("resend_email_confirmation"))
+        self.assertRedirects(
+            response, reverse("profile"), fetch_redirect_response=False
+        )
+
     def test_user_can_log_out(self):
         self.client.post(reverse("logout"))
+
+        self.assertNotIn(SESSION_KEY, self.client.session)
+
+    def test_user_can_cancel_a_login_from_the_code_step(self):
+        self.client.post(reverse("account_logout"))
 
         self.assertNotIn(SESSION_KEY, self.client.session)
 
@@ -138,11 +164,6 @@ class AfterDeadlineTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def test_pending_setup_does_not_satisfy_the_requirement(self):
-        two_factor.get_or_create_pending_device(self.user)
-
-        self.assertRedirects(self.client.get(reverse("profile")), self.setup_url)
-
     def test_anonymous_users_are_not_redirected(self):
         self.client.logout()
 
@@ -150,24 +171,16 @@ class AfterDeadlineTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def test_overview_offers_replacing_instead_of_turning_off(self):
-        enable_two_factor(self.user)
-
-        response = self.client.get(reverse("two_factor"))
-
-        self.assertContains(response, "Replace authenticator app")
-        self.assertContains(
-            response, "Two-factor authentication is required for all accounts."
-        )
-        self.assertNotContains(response, "Turn off two-factor authentication")
-
     def test_removing_authenticator_leads_straight_back_to_setup(self):
+        """Replacing an authenticator app: remove it, then set up the new one."""
         enable_two_factor(self.user)
-        disable_url = reverse("two_factor_disable")
+        reauthenticate(self.client)
 
-        self.assertContains(self.client.get(disable_url), "Replace your authenticator")
-        response = self.client.post(disable_url, {"password": PASSWORD})
+        self.client.post(reverse("mfa_deactivate_totp"))
 
-        self.assertRedirects(response, self.setup_url)
         self.assertFalse(two_factor.has_two_factor(self.user))
-        self.assertRedirects(self.client.get(reverse("profile")), self.setup_url)
+        self.assertRedirects(
+            self.client.get(reverse("profile")),
+            self.setup_url,
+            fetch_redirect_response=False,
+        )
