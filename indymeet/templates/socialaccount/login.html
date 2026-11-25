@@ -1,0 +1,42 @@
+{% extends "allauth/layouts/base.html" %}
+{% comment %}
+    Shown only when a provider login URL is opened directly; the buttons on
+    the site post straight to the provider.
+{% endcomment %}
+{% load i18n %}
+{% block head_title %}
+    {% if process == "connect" %}
+        {% blocktranslate with name=provider.name %}Connect {{ name }}{% endblocktranslate %}
+    {% else %}
+        {% blocktranslate with name=provider.name %}Log in with {{ name }}{% endblocktranslate %}
+    {% endif %}
+{% endblock head_title %}
+{% block content %}
+    <div class="rounded-xl text-center md:p-16 md:shadow-lg">
+        <h1 class="mb-4 text-4xl font-bold text-gray-800">
+            {% if process == "connect" %}
+                {% blocktranslate with name=provider.name %}Connect {{ name }}{% endblocktranslate %}
+            {% else %}
+                {% blocktranslate with name=provider.name %}Log in with {{ name }}{% endblocktranslate %}
+            {% endif %}
+        </h1>
+        <p class="mb-8 text-gray-600">
+            {% if process == "connect" %}
+                {% blocktranslate with name=provider.name %}You'll be sent to {{ name }} to confirm, then brought back here with the account connected.{% endblocktranslate %}
+            {% else %}
+                {% blocktranslate with name=provider.name %}You'll be sent to {{ name }} to confirm, then brought back here logged in.{% endblocktranslate %}
+            {% endif %}
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit"
+                    class="flex w-full cursor-pointer items-center justify-center gap-3 rounded bg-gray-900 px-4 py-3 font-medium text-white transition-colors hover:bg-gray-700">
+                {% include "socialaccount/snippets/provider_icon.html" with provider_id=provider.id %}
+                <span>{% blocktranslate with name=provider.name %}Continue with {{ name }}{% endblocktranslate %}</span>
+            </button>
+        </form>
+        <p class="mt-6">
+            <a href="{% url 'login' %}" class="text-ds-purple hover:underline">{% translate "Back to login" %}</a>
+        </p>
+    </div>
+{% endblock content %}

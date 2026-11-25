@@ -14,6 +14,7 @@ from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth import SESSION_KEY
 from django.core import mail
 from django.core.cache import cache
+from django.test import Client
 from django.test import override_settings
 from django.test import TestCase
 from django.urls import reverse
@@ -98,7 +99,31 @@ class GitHubOfferedTests(GitHubTestCase):
         response = self.client.get(reverse("login"))
 
         self.assertContains(response, "Continue with GitHub")
-        self.assertContains(response, GITHUB_LOGIN_URL)
+        self.assertContains(
+            response, f'<form method="post" action="{GITHUB_LOGIN_URL}?process=login"'
+        )
+        self.assertContains(response, "<svg")
+
+    def test_login_page_button_keeps_the_next_page(self):
+        response = self.client.get(reverse("login"), {"next": "/accounts/profile/"})
+
+        self.assertContains(
+            response,
+            f'action="{GITHUB_LOGIN_URL}?process=login&amp;next=%2Faccounts%2Fprofile%2F"',
+        )
+
+    def test_login_page_button_goes_straight_to_github(self):
+        client = Client(enforce_csrf_checks=True)
+        token = client.get(reverse("login")).context["csrf_token"]
+
+        response = client.post(
+            f"{GITHUB_LOGIN_URL}?process=login", {"csrfmiddlewaretoken": token}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            response.url.startswith("https://github.com/login/oauth/authorize")
+        )
 
     def test_profile_links_to_github_connections(self):
         self.client.force_login(create_user())
@@ -118,7 +143,8 @@ class GitHubOfferedTests(GitHubTestCase):
         response = self.client.get(GITHUB_LOGIN_URL)
 
         self.assertTemplateUsed(response, "base.html")
-        self.assertContains(response, "Sign In Via GitHub")
+        self.assertContains(response, "Log in with GitHub")
+        self.assertContains(response, "<svg")
 
 
 class GitHubSignupTests(GitHubTestCase):

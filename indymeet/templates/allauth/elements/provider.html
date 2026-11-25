@@ -1,8 +1,15 @@
 {% load i18n %}
+{% comment %}
+    A button rather than a link: posting goes straight to the provider,
+    without allauth's "you are about to sign in" confirmation page.
+{% endcomment %}
 <li>
-    <a href="{{ attrs.href }}"
-       class="inline-block rounded border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50">
-        <i class="fa-brands fa-{{ attrs.provider_id }}"></i>
-        {% blocktranslate with name=attrs.name %}Continue with {{ name }}{% endblocktranslate %}
-    </a>
+    <form method="post" action="{{ attrs.href }}">
+        {% csrf_token %}
+        <button type="submit"
+                class="flex w-full cursor-pointer items-center justify-center gap-3 rounded bg-gray-900 px-4 py-3 font-medium text-white transition-colors hover:bg-gray-700">
+            {% include "socialaccount/snippets/provider_icon.html" with provider_id=attrs.provider_id %}
+            <span>{% blocktranslate with name=attrs.name %}Continue with {{ name }}{% endblocktranslate %}</span>
+        </button>
+    </form>
 </li>

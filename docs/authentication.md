@@ -49,6 +49,13 @@ Only the login page (`account/login.html`) is written out in full, to keep the
 look it had before. `account/messages/logged_in.txt` is empty so that logging
 in doesn't start showing a message.
 
+The "Continue with GitHub" button (`allauth/elements/provider.html`) is a form
+that posts straight to GitHub. allauth's confirmation page
+(`socialaccount/login.html`) therefore only appears when a GitHub login URL is
+opened directly, or after the password check when connecting GitHub from the
+profile. The GitHub logo is an inline SVG in
+`socialaccount/snippets/provider_icon.html`.
+
 **Adapters** (`accounts/adapters.py`) are allauth's extension points:
 
 - `AccountAdapter.send_mail` applies the same rule as `home.email.send`:
@@ -223,5 +230,6 @@ workers run. A shared cache would make them exact.
 - `accounts/forms.py`: `GitHubSignupForm`.
 - `accounts/admin.py`: `AuthenticatorAdmin`, for resetting a locked-out user.
 - `accounts/views.py`: `AdminLoginRedirectView`, and `ActivateAccountView`'s two-factor check.
-- `indymeet/templates/allauth/` and `indymeet/templates/account/`: templates.
+- `indymeet/templates/allauth/`, `indymeet/templates/account/` and
+  `indymeet/templates/socialaccount/`: templates.
 - Tests: `accounts/tests/test_login.py`, `test_two_factor.py`, `test_two_factor_required.py`, `test_authenticator_admin.py`, `test_github_sign_in.py`, `test_email_mirror.py`, and the Playwright test `tests/test_two_factor_flow.py`.
