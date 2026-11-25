@@ -16,10 +16,12 @@ from django.core import mail
 from django.core.cache import cache
 from django.test import Client
 from django.test import override_settings
+from django.test import SimpleTestCase
 from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import CustomUser
+from indymeet.settings import github_provider_settings
 from accounts.tests.two_factor_helpers import create_user
 from accounts.tests.two_factor_helpers import current_code
 from accounts.tests.two_factor_helpers import enable_two_factor
@@ -86,6 +88,19 @@ class GitHubTestCase(TestCase):
         }
         data.update(overrides)
         return data
+
+
+class GitHubSettingsTests(SimpleTestCase):
+    def test_app_is_configured_when_both_credentials_are_set(self):
+        self.assertEqual(
+            github_provider_settings("client-id", "secret"),
+            {"APP": {"client_id": "client-id", "secret": "secret"}},
+        )
+
+    def test_no_app_is_configured_without_both_credentials(self):
+        self.assertEqual(github_provider_settings("", ""), {})
+        self.assertEqual(github_provider_settings("client-id", ""), {})
+        self.assertEqual(github_provider_settings("", "secret"), {})
 
 
 class GitHubOfferedTests(GitHubTestCase):

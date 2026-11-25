@@ -374,12 +374,20 @@ MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
 # GitHub sign-in is offered only when OAuth app credentials are configured.
 GITHUB_OAUTH_CLIENT_ID = os.environ.get("GITHUB_OAUTH_CLIENT_ID", "")
 GITHUB_OAUTH_CLIENT_SECRET = os.environ.get("GITHUB_OAUTH_CLIENT_SECRET", "")
-SOCIALACCOUNT_PROVIDERS = {"github": {}}
-if GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET:
-    SOCIALACCOUNT_PROVIDERS["github"]["APP"] = {
-        "client_id": GITHUB_OAUTH_CLIENT_ID,
-        "secret": GITHUB_OAUTH_CLIENT_SECRET,
-    }
+
+
+def github_provider_settings(client_id: str, secret: str) -> dict:
+    """allauth's GitHub settings; without both credentials no app is configured."""
+    if client_id and secret:
+        return {"APP": {"client_id": client_id, "secret": secret}}
+    return {}
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    "github": github_provider_settings(
+        GITHUB_OAUTH_CLIENT_ID, GITHUB_OAUTH_CLIENT_SECRET
+    )
+}
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 # Connecting or removing GitHub asks for the password again, like two-factor
 # changes do, so an unattended session can't be used to add a way in.
