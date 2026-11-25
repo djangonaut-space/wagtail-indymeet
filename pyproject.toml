@@ -35,6 +35,7 @@ dependencies = [
     "pygithub>=2.10.0",
     "django-crontask",
     "weasyprint>=70.0",
+    "django-allauth[mfa,socialaccount]>=65.22",
 ]
 
 [tool.uv.sources]

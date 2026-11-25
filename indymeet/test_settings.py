@@ -16,3 +16,13 @@ TASKS = {
         "BACKEND": "django_tasks.backends.immediate.ImmediateBackend",
     }
 }
+
+# Tests opt in to the two-factor deadline explicitly with override_settings.
+TWO_FACTOR_REQUIRED_FROM = None
+
+# allauth's rate limits count attempts in the cache, which outlives a test.
+ACCOUNT_RATE_LIMITS = False
+
+# GitHub sign-in is off unless a test turns it on, whatever the local
+# environment has in GITHUB_OAUTH_CLIENT_ID.
+SOCIALACCOUNT_PROVIDERS = {"github": {}}

@@ -1,3 +1,5 @@
+from allauth.mfa.admin import AuthenticatorAdmin as BaseAuthenticatorAdmin
+from allauth.mfa.models import Authenticator
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import (
@@ -8,6 +10,7 @@ from django.contrib.auth.models import Group
 from django.contrib import admin as django_admin
 from django.core.management import call_command
 from django.db.models import Exists, OuterRef, QuerySet
+from django.http import HttpRequest
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from import_export.admin import ExportMixin, ImportExportModelAdmin
@@ -318,3 +321,51 @@ class CustomGroupAdmin(BaseGroupAdmin):
         )
 
     actions = ["recreate_session_organizers_group"]
+
+
+admin.site.unregister(Authenticator)
+
+
+@admin.register(Authenticator)
+class AuthenticatorAdmin(BaseAuthenticatorAdmin):
+    """
+    Lets a superuser reset two-factor authentication for a locked-out user.
+
+    Deleting a user's authenticator means their next login only needs a
+    password, after which they can set up two-factor authentication again.
+    Nothing here can be added or edited, and the stored secrets are not shown.
+    """
+
+    fields = ("user", "type", "created_at", "last_used_at")
+    search_fields = ("user__username", "user__email")
+    list_select_related = ("user",)
+
+    def has_module_permission(self, request: HttpRequest) -> bool:
+        return request.user.is_superuser
+
+    def has_view_permission(
+        self, request: HttpRequest, obj: Authenticator | None = None
+    ) -> bool:
+        return request.user.is_superuser
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: Authenticator | None = None
+    ) -> bool:
+        return request.user.is_superuser
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(
+        self, request: HttpRequest, obj: Authenticator | None = None
+    ) -> bool:
+        return False
+
+    def delete_model(self, request: HttpRequest, obj: Authenticator) -> None:
+        """Remove the user's recovery codes along with their authenticator app."""
+        Authenticator.objects.filter(user=obj.user).delete()
+
+    def delete_queryset(
+        self, request: HttpRequest, queryset: QuerySet[Authenticator]
+    ) -> None:
+        Authenticator.objects.filter(user__in=queryset.values("user")).delete()

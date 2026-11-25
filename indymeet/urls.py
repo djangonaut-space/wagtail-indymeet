@@ -8,11 +8,25 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from accounts.views import AdminLoginRedirectView
 from home.integrations.buttondown.webhook import buttondown_webhook
 
 urlpatterns = [
+    # Both admins ship a password-only login form. Shadow them so the main
+    # login, which asks for the two-factor code, is the only way in.
+    path(
+        "django-admin/login/",
+        AdminLoginRedirectView.as_view(admin_index="admin:index"),
+    ),
     path("django-admin/", admin.site.urls),
     path("webhooks/buttondown/", buttondown_webhook, name="buttondown_webhook"),
+    path(
+        "admin/login/",
+        AdminLoginRedirectView.as_view(
+            admin_index="wagtailadmin_home",
+            access_permission="wagtailadmin.access_admin",
+        ),
+    ),
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("accounts/", include("accounts.urls"), name="accounts"),

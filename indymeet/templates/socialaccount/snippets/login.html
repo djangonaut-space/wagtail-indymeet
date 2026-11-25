@@ -1,0 +1,10 @@
+{% load i18n socialaccount %}
+{% get_providers as socialaccount_providers %}
+{% if socialaccount_providers %}
+    <div class="my-6 flex items-center gap-4 text-sm text-gray-500">
+        <span class="h-px flex-1 bg-gray-200"></span>
+        <span>{% translate "or" %}</span>
+        <span class="h-px flex-1 bg-gray-200"></span>
+    </div>
+    {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+{% endif %}

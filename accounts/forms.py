@@ -1,13 +1,19 @@
+from copy import deepcopy
 from zoneinfo import available_timezones
 
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
+from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
 from home import constants
+from home.utils import get_client_ip
 
+from .emails import send_user_confirmation_email
 from .models import CustomUser
 from .models import UserAvailability
 from .models import UserProfile
@@ -273,6 +279,9 @@ class DeleteAccountForm(forms.Form):
         """Initialize form with user instance for validation."""
         super().__init__(*args, **kwargs)
         self.user = user
+        if user and not user.has_usable_password():
+            # The view has already confirmed who they are with an emailed code.
+            del self.fields["password"]
 
     def clean_password(self):
         """Validate password against user's actual password."""
@@ -287,3 +296,53 @@ class DeleteAccountForm(forms.Form):
             )
 
         return password
+
+
+class GitHubSignupForm(SocialSignupForm):
+    """
+    Finish creating an account for someone signing in with GitHub for the first time.
+
+    allauth pre-fills the username, email and name from GitHub and creates the
+    user. This adds what the regular signup form also asks for, so an account
+    can't be created without accepting the Code of Conduct.
+
+    The email GitHub supplies can't be edited here. allauth keeps a
+    GitHub-verified address over a typed one, so an edit would be silently
+    dropped; the profile page is where to change it afterwards.
+    """
+
+    CONSENT_FIELDS = ("email_consent", "accepted_coc", "receive_newsletter")
+
+    first_name = forms.CharField(max_length=150, required=False)
+    last_name = forms.CharField(max_length=150, required=False)
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if self.initial.get("email"):
+            self.fields["email"].disabled = True
+            self.fields["email"].help_text = _(
+                "From your GitHub account. You can change it on your profile "
+                "after signing up."
+            )
+        for name in self.CONSENT_FIELDS:
+            self.fields[name] = deepcopy(CustomUserCreationForm.base_fields[name])
+
+    def custom_signup(self, request: HttpRequest, user: CustomUser) -> None:
+        """
+        Record consent and decide whether the email still needs confirming.
+
+        allauth has already stored which addresses GitHub vouches for. When the
+        chosen email is one of them there is nothing left to confirm; otherwise
+        the usual confirmation email is sent.
+        """
+        profile = user.profile
+        profile.accepted_coc = self.cleaned_data["accepted_coc"]
+        profile.receiving_newsletter = self.cleaned_data["receive_newsletter"]
+        profile.github_username = self.sociallogin.account.extra_data.get("login", "")
+        profile.email_confirmed = EmailAddress.objects.filter(
+            user=user, email__iexact=user.email, verified=True
+        ).exists()
+        profile._buttondown_ip_address = get_client_ip(request)
+        profile.save()
+        if not profile.email_confirmed:
+            send_user_confirmation_email(request, user)

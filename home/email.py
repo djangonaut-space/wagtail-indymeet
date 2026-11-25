@@ -17,6 +17,25 @@ def render_plain_text(template_name: str, context: dict) -> str:
     return template.render(Context(context, autoescape=False))
 
 
+def allowed_recipients(recipients: list[str]) -> list[str]:
+    """Drop recipients that must not be emailed from this environment.
+
+    Everyone can be emailed in production, and when the console backend is in
+    use. Anywhere else only ``ALLOWED_EMAILS_FOR_TESTING`` may receive email,
+    so a staging site never emails real users.
+    """
+    if (
+        settings.ENVIRONMENT == "production"
+        or settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
+    ):
+        return list(recipients)
+    return [
+        recipient
+        for recipient in recipients
+        if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
+    ]
+
+
 def send(
     email_template,
     recipient_list,
@@ -38,33 +57,11 @@ def send(
         attachments: Optional list of (filename, content, mimetype) tuples
             to attach to the email.
     """
-    # Only allow emails when:
-    # - in production environments
-    # - in non-prod environments when the recipient is in allowed emails
-    # - when the backend is sent to the console.
-    if (
-        settings.ENVIRONMENT != "production"
-        and settings.EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend"
-    ):
-        # When sending emails in a non-production environment, only
-        # allow them to be sent to people approved testing emails.
-        recipient_list = [
-            recipient
-            for recipient in recipient_list
-            if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
-        ]
-        cc_list = [
-            recipient
-            for recipient in (cc_list or [])
-            if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
-        ]
-        bcc_list = [
-            recipient
-            for recipient in (bcc_list or [])
-            if recipient in settings.ALLOWED_EMAILS_FOR_TESTING
-        ]
-        if not recipient_list and not cc_list and not bcc_list:
-            return
+    recipient_list = allowed_recipients(recipient_list)
+    cc_list = allowed_recipients(cc_list or [])
+    bcc_list = allowed_recipients(bcc_list or [])
+    if not recipient_list and not cc_list and not bcc_list:
+        return
 
     email_context = context.copy() if context else {}
     email_context["unsubscribe_link"] = settings.BASE_URL + reverse(

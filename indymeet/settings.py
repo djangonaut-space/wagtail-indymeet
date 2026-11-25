@@ -1,4 +1,5 @@
 import os
+from datetime import date
 
 import dj_database_url
 import sentry_sdk
@@ -66,6 +67,11 @@ INSTALLED_APPS = [
     "django.forms",
     # other
     "crontask",
+    "allauth",
+    "allauth.account",
+    "allauth.mfa",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.github",
     "django_extensions",
     "django_filters",
     "django_tasks",
@@ -86,6 +92,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
+    "accounts.middleware.RequireTwoFactorMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -110,6 +118,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "home.context_processors.alert_about_status",
+                "accounts.context_processors.two_factor_reminder",
                 "home.context_processors.nav_session_links",
             ],
         },
@@ -330,6 +339,71 @@ if CLOUDFLARE_BEARER_TOKEN and CLOUDFLARE_ZONE_ID:
 # The value for production is "production". Email subjects are prefixed with
 # the environment name when ENVIRONMENT != "production".
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "dev")
+
+# Login, two-factor authentication and GitHub sign-in are handled by
+# django-allauth. Signup, email confirmation and password reset are still this
+# project's own views; see docs/authentication.md.
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
+ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "password1*", "password2*"]
+# Email confirmation is tracked on UserProfile.email_confirmed, not by allauth.
+ACCOUNT_EMAIL_VERIFICATION = "none"
+# No "remember me" checkbox: sessions last SESSION_COOKIE_AGE as before.
+ACCOUNT_SESSION_REMEMBER = True
+# Email the user when two-factor authentication or a GitHub connection changes.
+ACCOUNT_EMAIL_NOTIFICATIONS = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = (
+    "" if ENVIRONMENT == "production" else f"[{ENVIRONMENT}] "
+)
+# The signup form already says when an email is taken, so GitHub signup may too.
+ACCOUNT_PREVENT_ENUMERATION = False
+
+# The issuer is the account label shown in authenticator apps; non-production
+# environments are suffixed so staging and production entries can be told apart.
+MFA_TOTP_ISSUER = (
+    "Djangonaut Space"
+    if ENVIRONMENT == "production"
+    else f"Djangonaut Space ({ENVIRONMENT})"
+)
+MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
+
+# GitHub sign-in is offered only when OAuth app credentials are configured.
+GITHUB_OAUTH_CLIENT_ID = os.environ.get("GITHUB_OAUTH_CLIENT_ID", "")
+GITHUB_OAUTH_CLIENT_SECRET = os.environ.get("GITHUB_OAUTH_CLIENT_SECRET", "")
+
+
+def github_provider_settings(client_id: str, secret: str) -> dict:
+    """allauth's GitHub settings; without both credentials no app is configured."""
+    if client_id and secret:
+        return {"APP": {"client_id": client_id, "secret": secret}}
+    return {}
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    "github": github_provider_settings(
+        GITHUB_OAUTH_CLIENT_ID, GITHUB_OAUTH_CLIENT_SECRET
+    )
+}
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
+# Connecting or removing GitHub asks for the password again, like two-factor
+# changes do, so an unattended session can't be used to add a way in.
+SOCIALACCOUNT_REAUTHENTICATION_REQUIRED = True
+# New GitHub users go through a signup form so they accept the Code of Conduct.
+SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_FORMS = {"signup": "accounts.forms.GitHubSignupForm"}
+
+# The date (YYYY-MM-DD) from which every user must have two-factor
+# authentication. Leave unset to keep it optional. Once set, users without it
+# see a reminder banner until the date, and are made to set it up from then on.
+TWO_FACTOR_REQUIRED_FROM = (
+    date.fromisoformat(os.environ["TWO_FACTOR_REQUIRED_FROM"])
+    if os.environ.get("TWO_FACTOR_REQUIRED_FROM")
+    else None
+)
 
 BASE_URL = os.getenv(
     "BASE_URL",
