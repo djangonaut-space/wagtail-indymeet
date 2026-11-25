@@ -213,6 +213,10 @@ EMAIL_BACKEND = os.getenv(
     "django.core.mail.backends.locmem.EmailBackend",
 )
 
+# Used by the SMTP backend. In Docker these point at the Mailpit service.
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
+
 if EMAIL_BACKEND == "anymail.backends.mailjet.EmailBackend":
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
     MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY")

@@ -40,10 +40,12 @@ def send(
     """
     # Only allow emails when:
     # - in production environments
-    # - in non-prod environments when the recipient is in allowed emails
+    # - in local development (DEBUG), where mail goes to Mailpit or the console
+    # - in other non-prod environments when the recipient is in allowed emails
     # - when the backend is sent to the console.
     if (
         settings.ENVIRONMENT != "production"
+        and not settings.DEBUG
         and settings.EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend"
     ):
         # When sending emails in a non-production environment, only

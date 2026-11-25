@@ -106,6 +106,46 @@ class EmailSendTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @override_settings(
+        ENVIRONMENT="dev",
+        DEBUG=True,
+        ALLOWED_EMAILS_FOR_TESTING=[],
+    )
+    def test_send_email_with_debug_allows_all_recipients(self):
+        """Local development delivers every recipient, including CC and BCC."""
+        email.send(
+            email_template="application_created",
+            recipient_list=["one@example.com", "two@example.com"],
+            context={"user": self.user},
+            cc_list=["cc@example.com"],
+            bcc_list=["bcc@example.com"],
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["one@example.com", "two@example.com"])
+        self.assertEqual(message.cc, ["cc@example.com"])
+        self.assertEqual(message.bcc, ["bcc@example.com"])
+        self.assertEqual(
+            message.subject, "[dev] Djangonaut Space Application Submitted"
+        )
+
+    @override_settings(
+        ENVIRONMENT="staging",
+        DEBUG=False,
+        ALLOWED_EMAILS_FOR_TESTING=["allowed@example.com"],
+    )
+    def test_send_email_without_debug_filters_recipients(self):
+        """Deployed non-production sites drop recipients that are not allowed."""
+        email.send(
+            email_template="application_created",
+            recipient_list=["allowed@example.com", "notallowed@example.com"],
+            context={"user": self.user},
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["allowed@example.com"])
+
+    @override_settings(
         ENVIRONMENT="staging",
         ALLOWED_EMAILS_FOR_TESTING=["test@example.com"],
     )
