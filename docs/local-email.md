@@ -1,6 +1,6 @@
 # Testing email locally with Mailpit
 
-The application sends many emails. To see 
+The application sends many emails. To see
 them during development without emailing anyone, the Docker setup runs
 [Mailpit](https://mailpit.axllent.org/), a local mail catcher.
 
