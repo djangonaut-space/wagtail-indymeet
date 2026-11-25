@@ -1,12 +1,15 @@
 from allauth.account import views as allauth_views
+from allauth.account.decorators import reauthentication_required
 from allauth.urls import build_provider_urlpatterns
 from django.contrib.auth import views as auth_views
 from django.urls import include
 from django.urls import path
 
 from .views import ActivateAccountView
+from .views import CustomPasswordChangeView
 from .views import CustomPasswordResetView
 from .views import DeleteAccountView
+from .views import lacks_password
 from .views import profile
 from .views import ResendConfirmationEmailView
 from .views import SignUpView
@@ -54,6 +57,21 @@ urlpatterns = [
         "password_reset/",
         CustomPasswordResetView.as_view(),
         name="account_reset_password",
+    ),
+    # Users without a password (GitHub signups) are sent on to set one, after
+    # confirming it is them with a code sent to their email.
+    path(
+        "password_change/", CustomPasswordChangeView.as_view(), name="password_change"
+    ),
+    path(
+        "password_change/",
+        CustomPasswordChangeView.as_view(),
+        name="account_change_password",
+    ),
+    path(
+        "password/set/",
+        reauthentication_required(allauth_views.password_set, enabled=lacks_password),
+        name="account_set_password",
     ),
     path("", include("django.contrib.auth.urls")),
     path("profile/", profile, name="profile"),

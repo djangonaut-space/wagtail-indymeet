@@ -279,6 +279,9 @@ class DeleteAccountForm(forms.Form):
         """Initialize form with user instance for validation."""
         super().__init__(*args, **kwargs)
         self.user = user
+        if user and not user.has_usable_password():
+            # The view has already confirmed who they are with an emailed code.
+            del self.fields["password"]
 
     def clean_password(self):
         """Validate password against user's actual password."""

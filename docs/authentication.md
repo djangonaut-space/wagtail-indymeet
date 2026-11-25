@@ -180,8 +180,15 @@ all absent or answer 404.
   changed on the profile afterwards.
 - **Two-factor authentication** still applies: a user who has it is asked for
   their code after returning from GitHub.
-- Accounts created through GitHub have no password. One can be set with the
-  password reset form.
+- Accounts created through GitHub have no password. Wherever the site would
+  ask for the current password, these users confirm it is them with a code
+  sent to their email instead (`accounts.views.lacks_password` switches this
+  on). That covers two-factor and GitHub changes, deleting the account, and
+  setting a password: "Change password" in the menu leads them to allauth's
+  set-password page (`/accounts/password/set/`). The code can only go to a
+  confirmed email, so a GitHub user whose email is still unconfirmed has to
+  confirm it first; until then those pages return a 403. The password reset
+  form also works for them.
 
 ### Setting up the GitHub OAuth app
 

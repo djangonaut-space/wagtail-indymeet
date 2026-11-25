@@ -6,6 +6,7 @@ from allauth.socialaccount.models import SocialApp
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import Http404
 from django.http import HttpRequest
+from django.urls import reverse
 
 from home.email import allowed_recipients
 
@@ -32,6 +33,9 @@ class AccountAdapter(DefaultAccountAdapter):
         super().send_notification_mail(
             template_prefix, user, context=context, email=email or user.email
         )
+
+    def get_password_change_redirect_url(self, request: HttpRequest) -> str:
+        return reverse("profile")
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):

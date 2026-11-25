@@ -64,24 +64,30 @@
             </div>
             {% endif %}
 
-            <div class="mb-6">
-                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ form.password.label }} <span class="text-red-600">*</span>
-                </label>
-                {{ form.password }}
-                {% if form.password.errors %}
-                <div class="mt-1 text-sm text-red-600">
-                    {% for error in form.password.errors %}
-                    <p>{{ error }}</p>
-                    {% endfor %}
+            {% if "password" in form.fields %}
+                <div class="mb-6">
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.password.label }} <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.password.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if form.password.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">
+                        {{ form.password.help_text }}
+                    </p>
+                    {% endif %}
                 </div>
-                {% endif %}
-                {% if form.password.help_text %}
-                <p class="mt-1 text-sm text-gray-500">
-                    {{ form.password.help_text }}
+            {% else %}
+                <p class="mb-6 text-gray-700">
+                    {% translate "You confirmed it is you with the code we emailed. Deleting your account needs nothing further." %}
                 </p>
-                {% endif %}
-            </div>
+            {% endif %}
 
             <div class="flex gap-4">
                 <button

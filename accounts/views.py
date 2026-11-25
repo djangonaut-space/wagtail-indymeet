@@ -2,6 +2,7 @@
 from zoneinfo import ZoneInfo
 from zoneinfo import ZoneInfoNotFoundError
 
+from allauth.account.decorators import reauthentication_required
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
@@ -11,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordResetForm, _unicode_ci_compare
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
@@ -20,6 +22,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.shortcuts import resolve_url
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.views import View
@@ -74,6 +77,25 @@ class AdminLoginRedirectView(View):
         if self.access_permission:
             return request.user.has_perm(self.access_permission)
         return request.user.is_staff
+
+
+def lacks_password(request: HttpRequest) -> bool:
+    """
+    Whether the signed-in user has no password, as when they signed up with GitHub.
+
+    Such a user can't be asked for their password to confirm something, so
+    allauth confirms it is them with a code sent to their email instead.
+    """
+    return request.user.is_authenticated and not request.user.has_usable_password()
+
+
+class CustomPasswordChangeView(PasswordChangeView):
+    """Send users who have no password yet to set one instead."""
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        if lacks_password(request):
+            return redirect("account_set_password")
+        return super().dispatch(request, *args, **kwargs)
 
 
 class CustomPasswordResetForm(PasswordResetForm):
@@ -313,8 +335,14 @@ class UpdateTimezoneView(LoginRequiredMixin, View):
         return HttpResponse(status=204)
 
 
+@method_decorator(reauthentication_required(enabled=lacks_password), name="dispatch")
 class DeleteAccountView(LoginRequiredMixin, UserPassesTestMixin, FormView):
-    """Display account deletion confirmation page and process deletion requests."""
+    """
+    Display account deletion confirmation page and process deletion requests.
+
+    Deletion is confirmed with the user's password. A user without one is
+    instead sent through allauth's emailed-code check before reaching the page.
+    """
 
     template_name = "registration/delete_account_confirmation.html"
     form_class = DeleteAccountForm

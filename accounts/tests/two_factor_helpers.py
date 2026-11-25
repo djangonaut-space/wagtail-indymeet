@@ -1,5 +1,6 @@
 """Helpers for tests that involve two-factor authentication."""
 
+import re
 import time
 
 from allauth.mfa.models import Authenticator
@@ -8,6 +9,7 @@ from allauth.mfa.totp.internal.auth import format_hotp_value
 from allauth.mfa.totp.internal.auth import generate_totp_secret
 from allauth.mfa.totp.internal.auth import hotp_value
 from allauth.mfa.totp.internal.auth import TOTP
+from django.core import mail
 from django.test import Client
 from django.urls import reverse
 
@@ -57,3 +59,12 @@ def submit_password(client: Client, user: CustomUser, **extra: str):
 def reauthenticate(client: Client):
     """Confirm the password, as allauth asks before two-factor changes."""
     return client.post(reverse("account_reauthenticate"), {"password": PASSWORD})
+
+
+def reauthenticate_by_code(client: Client) -> None:
+    """Confirm who is signed in with an emailed code, as a user without a password must."""
+    url = reverse("account_request_reauthentication_code")
+    recipient = client.get(url).context["form"].fields["recipient"].choices[0][0]
+    client.post(url, {"recipient": recipient})
+    code = re.search(r"^\S+-\S+$", mail.outbox[-1].body, re.MULTILINE).group()
+    client.post(reverse("account_confirm_reauthentication_code"), {"code": code})

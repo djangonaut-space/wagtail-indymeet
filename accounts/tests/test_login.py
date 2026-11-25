@@ -79,7 +79,6 @@ class UnusedAllauthPagesTests(TestCase):
         for path in (
             "/accounts/password/reset/",
             "/accounts/password/change/",
-            "/accounts/password/set/",
             "/accounts/email/",
             "/accounts/confirm-email/",
             "/accounts/login/code/",
