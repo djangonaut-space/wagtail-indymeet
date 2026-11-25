@@ -107,11 +107,11 @@ class EmailSendTests(TestCase):
 
     @override_settings(
         ENVIRONMENT="dev",
+        DEBUG=True,
         ALLOWED_EMAILS_FOR_TESTING=[],
-        EMAIL_ALLOW_ALL_RECIPIENTS=True,
     )
-    def test_send_email_in_dev_allows_all_recipients_for_mail_catcher(self):
-        """A local mail catcher receives every recipient, including CC and BCC."""
+    def test_send_email_with_debug_allows_all_recipients(self):
+        """Local development delivers every recipient, including CC and BCC."""
         email.send(
             email_template="application_created",
             recipient_list=["one@example.com", "two@example.com"],
@@ -130,12 +130,12 @@ class EmailSendTests(TestCase):
         )
 
     @override_settings(
-        ENVIRONMENT="dev",
+        ENVIRONMENT="staging",
+        DEBUG=False,
         ALLOWED_EMAILS_FOR_TESTING=["allowed@example.com"],
-        EMAIL_ALLOW_ALL_RECIPIENTS=False,
     )
-    def test_send_email_in_dev_filters_when_allow_all_disabled(self):
-        """Without the flag, non-allowed recipients are still dropped."""
+    def test_send_email_without_debug_filters_recipients(self):
+        """Deployed non-production sites drop recipients that are not allowed."""
         email.send(
             email_template="application_created",
             recipient_list=["allowed@example.com", "notallowed@example.com"],

@@ -217,11 +217,6 @@ EMAIL_BACKEND = os.getenv(
 EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
 
-# Outside production, email only goes to ALLOWED_EMAILS_FOR_TESTING. Set this to
-# "true" only when the backend delivers to a local mail catcher such as Mailpit,
-# so every recipient can be inspected without emailing real people.
-EMAIL_ALLOW_ALL_RECIPIENTS = os.getenv("EMAIL_ALLOW_ALL_RECIPIENTS") == "true"
-
 if EMAIL_BACKEND == "anymail.backends.mailjet.EmailBackend":
     MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
     MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY")
