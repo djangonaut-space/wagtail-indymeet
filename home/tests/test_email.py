@@ -106,6 +106,46 @@ class EmailSendTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @override_settings(
+        ENVIRONMENT="dev",
+        ALLOWED_EMAILS_FOR_TESTING=[],
+        EMAIL_ALLOW_ALL_RECIPIENTS=True,
+    )
+    def test_send_email_in_dev_allows_all_recipients_for_mail_catcher(self):
+        """A local mail catcher receives every recipient, including CC and BCC."""
+        email.send(
+            email_template="application_created",
+            recipient_list=["one@example.com", "two@example.com"],
+            context={"user": self.user},
+            cc_list=["cc@example.com"],
+            bcc_list=["bcc@example.com"],
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["one@example.com", "two@example.com"])
+        self.assertEqual(message.cc, ["cc@example.com"])
+        self.assertEqual(message.bcc, ["bcc@example.com"])
+        self.assertEqual(
+            message.subject, "[dev] Djangonaut Space Application Submitted"
+        )
+
+    @override_settings(
+        ENVIRONMENT="dev",
+        ALLOWED_EMAILS_FOR_TESTING=["allowed@example.com"],
+        EMAIL_ALLOW_ALL_RECIPIENTS=False,
+    )
+    def test_send_email_in_dev_filters_when_allow_all_disabled(self):
+        """Without the flag, non-allowed recipients are still dropped."""
+        email.send(
+            email_template="application_created",
+            recipient_list=["allowed@example.com", "notallowed@example.com"],
+            context={"user": self.user},
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["allowed@example.com"])
+
+    @override_settings(
         ENVIRONMENT="staging",
         ALLOWED_EMAILS_FOR_TESTING=["test@example.com"],
     )

@@ -25,6 +25,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     env_file:
       # Later files win, so .env overrides .env.docker for local overrides.
       - ./.env.docker
@@ -37,6 +39,7 @@ services:
     command: "uv run python manage.py db_worker --interval 5"
     depends_on:
       - db
+      - mailpit
     env_file:
       # Later files win, so .env overrides .env.docker for local overrides.
       - ./.env.docker
@@ -49,6 +52,7 @@ services:
     command: "uv run python manage.py crontask --no-heartbeat"
     depends_on:
       - db
+      - mailpit
     env_file:
       # Later files win, so .env overrides .env.docker for local overrides.
       - ./.env.docker
@@ -99,6 +103,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Catches every email sent in development so it can be read in a browser at
+  # http://localhost:8025 instead of reaching a real inbox. Django sends to it
+  # over the Docker network on port 1025.
+  mailpit:
+    image: axllent/mailpit:v1.34.0
+    restart: "unless-stopped"
+    ports:
+      - "8025:8025"
+    expose:
+      - "1025"
 
 volumes:
   postgres_data:

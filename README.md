@@ -101,6 +101,10 @@ This is the web application for the Djangonaut Space mentoring program. The plat
 
 4. Go to: http://127.0.0.1:8000/ and enjoy!
 
+5. Emails sent while developing are caught by Mailpit. Read them at
+   http://localhost:8025 (or run `just mail`). See
+   [docs/local-email.md](docs/local-email.md) for details.
+
 
 ### Creating fixtures for local testing
 

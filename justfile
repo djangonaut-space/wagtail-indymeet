@@ -20,6 +20,10 @@ down:
 logs:
     docker compose logs -f django worker scheduler
 
+# Open the Mailpit inbox that catches emails sent in development
+mail:
+    python3 -m webbrowser http://localhost:8025
+
 # Open a Django shell
 shell:
     {{django}} uv run --with ipython python manage.py shell_plus
