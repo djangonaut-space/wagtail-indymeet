@@ -1,0 +1,38 @@
+{% extends "email/base.html" %}
+
+{% block preheader %}Your two-factor authentication settings changed{% endblock preheader %}
+
+{% block greeting %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">Hello {{ name }},</p>
+{% endblock greeting %}
+
+{% block before_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    {% if change == "enabled" %}
+    Two-factor authentication was just turned on for your Djangonaut Space account ({{ user.username }}). You'll now be asked for a code from your authenticator app when you log in.
+    {% elif change == "disabled" %}
+    Two-factor authentication was just turned off for your Djangonaut Space account ({{ user.username }}). Your account is now protected by your password alone.
+    {% elif change == "reset" %}
+    Two-factor authentication was just reset for your Djangonaut Space account ({{ user.username }}) using a recovery link. Your previous authenticator app and recovery codes no longer work.
+    {% else %}
+    A new set of two-factor recovery codes was just generated for your Djangonaut Space account ({{ user.username }}). Your previous recovery codes no longer work.
+    {% endif %}
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    If this was you, there's nothing else to do.
+  </p>
+{% endblock before_cta %}
+
+{% block cta_button %}{% endblock cta_button %}
+
+{% block after_cta %}
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 16px;">
+    <strong>If this wasn't you</strong>, change your password straight away and contact us at <a href="mailto:hello@djangonaut.space" style="color: #5c0287;">hello@djangonaut.space</a>.
+  </p>
+
+  <p style="font-family: Helvetica, sans-serif; font-size: 16px; font-weight: normal; margin: 0;">
+    Best regards,<br>
+    The Djangonaut Space Team
+  </p>
+{% endblock after_cta %}

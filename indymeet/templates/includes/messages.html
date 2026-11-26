@@ -25,3 +25,24 @@
         so that we can consider you for the upcoming session of Djangonaut Space.
     </div>
 {% endif %}
+
+{% if two_factor_deadline %}
+    <div x-data="{ open: true }"
+         x-init="try { open = !sessionStorage.getItem('twoFactorReminderDismissed') } catch (e) {}"
+         x-show="open"
+         class="my-2 mx-2 px-4 py-3 rounded relative border flex justify-between gap-4
+                bg-orange-100 border-orange-400 text-orange-700"
+         role="alert"
+         data-testid="two-factor-reminder">
+        <div>
+            Two-factor authentication will be required for all accounts from
+            {{ two_factor_deadline|date:"F j, Y" }}.
+            <a href="{% url 'two_factor_setup' %}" class="underline">Set it up now</a>.
+        </div>
+        <button type="button"
+                aria-label="Dismiss"
+                @click="open = false; try { sessionStorage.setItem('twoFactorReminderDismissed', '1') } catch (e) {}">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+{% endif %}

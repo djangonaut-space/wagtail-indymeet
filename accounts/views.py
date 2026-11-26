@@ -40,6 +40,7 @@ from .forms import UserAvailabilityForm
 from .models import UserAvailability
 from .tasks import delete_user_account
 from .tokens import account_activation_token
+from .two_factor import has_two_factor
 
 User = get_user_model()
 
@@ -80,6 +81,12 @@ class ActivateAccountView(View):
             user.profile.email_confirmed = True
             user.profile._buttondown_ip_address = get_client_ip(request)
             user.profile.save()
+            if has_two_factor(user):
+                # An emailed link must not stand in for the user's second factor.
+                messages.success(
+                    request, "Your email address is confirmed. Please log in."
+                )
+                return redirect("login")
             login(request, user)
             return redirect("profile")
         else:
@@ -171,6 +178,7 @@ def profile(request):
     context = {
         "user_responses": request.user.usersurveyresponse_set.select_related("survey"),
         "user_testimonials": testimonials,
+        "two_factor_enabled": has_two_factor(request.user),
     }
     return render(request, "registration/profile.html", context)
 
